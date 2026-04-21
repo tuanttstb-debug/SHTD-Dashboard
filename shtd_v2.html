@@ -597,7 +597,7 @@ textarea.form-control{resize:vertical;min-height:72px;}
 .detail-modal{max-width:1100px;}
 
 /* ===== RESPONSIVE ===== */
-@media(max-width:768px){
+/* Ẩn nút hamburger trên PC */#hamburger { display: none; } /* ===== RESPONSIVE ===== */@media(max-width:768px){   #hamburger { display: flex !important; } /* Hiện nút menu trên mobile */.sidebar-toggle { display: none; } /* Ẩn nút mũi tên thu gọn vì mobile dùng hamburger */.sidebar {     position: fixed; left: -260px; height: 100%;      z-index: 1000; transition: left 0.3s ease;   }   .sidebar.open { left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.6); }      /* Lớp phủ làm tối màn hình khi mở menu trên điện thoại */body.mobile-menu-open::before {     content: ''; position: fixed; inset: 0;      background: rgba(0,0,0,0.5); z-index: 990;   }    .form-grid { grid-template-columns: 1fr; }   .kpi-grid { grid-template-columns: 1fr 1fr; }   .toolbar-right { width: 100%; justify-content: flex-start; }   .dash-grid { grid-template-columns: 1fr; }   .content { padding: 14px; }      /* Cho phép thanh phân trang hiển thị tốt hơn */.pagination { flex-wrap: wrap; justify-content: center; width: 100%; } }{
   .sidebar{position:fixed;left:-256px;height:100%;}
   .sidebar.open{left:0;}
   .form-grid{grid-template-columns:1fr;}
@@ -667,7 +667,7 @@ textarea.form-control{resize:vertical;min-height:72px;}
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-left">
-      <div class="icon-btn" id="hamburger" title="Menu" style="display:none;"><i class="fa-solid fa-bars"></i></div>
+      <div class="icon-btn" id="hamburger" title="Menu"><i class="fa-solid fa-bars"></i></div>
       <div>
         <div class="page-title" id="pageTitle">Executive Dashboard</div>
         <div class="breadcrumb" id="pageBreadcrumb">Tổng quan · Cập nhật <span id="lastUpdated">–</span></div>
@@ -1225,8 +1225,6 @@ const GS_RANGE      = 'Task_Master!A1:W';
 // INIT
 // ═══════════════════════════════════════════
 window.onload = () => {
-  // Task 3: Tự động clear cache mỗi khi tải trang - dữ liệu luôn bắt đầu rỗng
-  // Người dùng cần kết nối lại file DB để tải dữ liệu
   localStorage.removeItem('shtd_v2');
   db.tasks = [];
   db.initiatives = [];
@@ -1234,6 +1232,8 @@ window.onload = () => {
   renderAll();
   updateClock();
   setInterval(updateClock, 30000);
+  
+  // TỰ ĐỘNG KẾT NỐI DB THAY VÌ ĐỒNG BỘ THỦ CÔNG  connectDB();
 };
 
 function persist() {
@@ -1323,8 +1323,20 @@ function setupListeners() {
     document.getElementById('sidebarChevron').className = sb.classList.contains('collapsed') ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left';
   });
 
-  document.getElementById('hamburger').addEventListener('click', () => {
+   document.getElementById('hamburger').addEventListener('click', (e) => {
+    e.stopPropagation();
     document.getElementById('sidebar').classList.toggle('open');
+    document.body.classList.toggle('mobile-menu-open');
+  });
+
+  // Bấm ra ngoài vùng sidebar để đóng menu trên mobiledocument.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+    if (window.innerWidth <= 768 && sidebar.classList.contains('open')) {
+      if (!sidebar.contains(e.target) && e.target.id !== 'hamburger') {
+        sidebar.classList.remove('open');
+        document.body.classList.remove('mobile-menu-open');
+      }
+    }
   });
 
   // Filters with debounce
@@ -1391,7 +1403,9 @@ function navigateTo(view) {
   if (view === 'performance') renderPerfTable();
   document.getElementById('sidebar').classList.remove('open');
 }
-
+function navigateTo(view) {
+  // ... (code cũ giữ nguyên) ...document.getElementById('sidebar').classList.remove('open');
+  document.body.classList.remove('mobile-menu-open'); // Thêm dòng này để xóa lớp phủ đen}
 function copyPath() {
   navigator.clipboard?.writeText('\\\\ho-file01\\NHDN\\Noibo\\Team Số Hóa TD\\Báo cáo tuần')
     .then(() => toast('Đã copy đường dẫn!','success'))
