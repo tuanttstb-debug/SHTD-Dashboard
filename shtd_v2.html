@@ -72,14 +72,17 @@ a{color:inherit;text-decoration:none;}
 ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;}
 
 /* ===== SIDEBAR ===== */
-.sidebar{
-  width:256px;min-width:256px;
-  background:var(--sidebar-bg);
-  color:white;
-  display:flex;flex-direction:column;
-  z-index:200;
-  transition:var(--transition);
-  box-shadow:4px 0 24px rgba(0,0,0,0.15);
+.sidebar {
+  width: 256px;
+  min-width: 256px;
+  background: var(--sidebar-bg);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* 🔥 Thêm dòng này để kích hoạt z-index */
+  z-index: 200;
+  transition: var(--transition);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.15);
 }
 .sidebar.collapsed{width:68px;min-width:68px;}
 .sidebar.collapsed .brand-label,
