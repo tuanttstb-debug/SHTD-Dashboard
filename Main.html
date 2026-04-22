@@ -1242,6 +1242,23 @@ textarea.form-control{resize:vertical;min-height:72px;}
 
 <!-- ===== JAVASCRIPT ===== -->
 <script>
+  // Hàm chuyển đổi chuỗi dd/MM/yyyy từ Google Sheets sang định dạng Date chuẩn của Javascript
+function parseVietnameseDate(dateString) {
+  if (!dateString) return null;
+  // Cắt chuỗi dựa trên dấu gạch chéo
+  const parts = String(dateString).split('/'); 
+  
+  // Nếu đúng định dạng dd/MM/yyyy
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // JS đếm tháng từ 0
+    const year = parseInt(parts[2], 10);
+    return new Date(year, month, day);
+  }
+  
+  // Fallback nếu không phải định dạng trên
+  return new Date(dateString); 
+}
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
