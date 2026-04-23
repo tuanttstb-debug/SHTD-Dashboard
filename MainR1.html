@@ -1726,8 +1726,19 @@ function fmtTuanBC(el) {
   }
 }
 const fmtDate = d => { if (!d) return '–'; const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
-const isOverdue = (end, prog) => { if (!end || parseInt(prog) >= 100) return false; return new Date(end).setHours(0,0,0,0) < new Date().setHours(0,0,0,0); };
-const ragBadge = s => { const c = {Green:'badge-green',Amber:'badge-amber',Red:'badge-red'}[s]||'badge-gray'; return `<span class="badge ${c}">${s||'–'}</span>`; };
+function isOverdue(endDateString, progress) {
+    if (progress >= 100 || !endDateString) return false;
+    
+    // Ép kiểu chuỗi ngày VN ra object Date chuẩn xác
+    const endDateObj = parseVNDate(endDateString);
+    if (!endDateObj || isNaN(endDateObj)) return false; 
+    
+    // So sánh với ngày hiện tại
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Bỏ qua giờ phút giây
+    
+    return endDateObj < today;
+}const ragBadge = s => { const c = {Green:'badge-green',Amber:'badge-amber',Red:'badge-red'}[s]||'badge-gray'; return `<span class="badge ${c}">${s||'–'}</span>`; };
 const stateChip = s => {
   const map = { 'Chưa bắt đầu':'s0','Đang thực hiện':'s1','Hoàn thành chuẩn bị':'s2','Hoàn thành':'s3','Tạm dừng':'s4','Blocked':'s5' };
   return `<span class="state-chip ${map[s]||'s0'}">${s||'–'}</span>`;
