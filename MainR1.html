@@ -1688,8 +1688,9 @@ function extractWorkbook(wb) {
       picAcc:      cAcc   !== -1 ? (r[cAcc]||'Tuantt4') : 'Tuantt4',
       picRes:      picNorm(cRes !== -1 ? r[cRes] : ''),
       picSupport:  cSup   !== -1 ? (r[cSup]||'').toString().trim() : '',
-      startDate:   parseDate(cSt   !== -1 ? r[cSt]   : ''),
-      endDate:     parseDate(cEnd  !== -1 ? r[cEnd]  : ''),
+// Nếu thuộc tính .f bị rỗng (do định dạng là Text), hệ thống sẽ tự động chuyển sang lấy .v
+startDate: row.c[11] ? (row.c[11].f || row.c[11].v || '') : '',
+endDate:   row.c[12] ? (row.c[12].f || row.c[12].v || '') : '',
       progress:    prog,
       // Backward-compat: giữ các field cũ để dashboard không lỗi
       state:       parseState(cState !== -1 ? r[cState] : ''),
