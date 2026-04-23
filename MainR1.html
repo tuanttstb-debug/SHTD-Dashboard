@@ -2809,6 +2809,56 @@ function closeDetailModal() { document.getElementById('detailOverlay').classList
 // ═══════════════════════════════════════════
 function openKbModal() { document.getElementById('kbOverlay').classList.add('open'); }
 function closeKbModal() { document.getElementById('kbOverlay').classList.remove('open'); }
+// Hàm parse chuỗi DD/MM/YYYY từ Google Sheets sang JavaScript Date
+function parseDateString(dateStr) {
+  if (!dateStr) return null;
+  
+  // Kiểm tra nếu dữ liệu đang là chuỗi có chứa dấu "/"
+  if (typeof dateStr === 'string' && dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Trong JS, tháng đếm từ 0 (0-11) nên phải trừ 1
+      const year = parseInt(parts[2], 10);
+      return new Date(year, month, day);
+    }
+  }
+  
+  // Dự phòng nếu hệ thống trả về đúng chuẩn Date sẵn
+  return new Date(dateStr);
+}
+  // Sửa hàm kiểm tra task quá hạn
+function isOverdue(dateStr, progress) {
+  if (progress >= 100 || !dateStr) return false; // Task đã xong thì không quá hạn
+  
+  const deadline = parseDateString(dateStr);
+  if (!deadline || isNaN(deadline)) return false;
+  
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Đưa thời gian hiện tại về 0h để so sánh chính xác từ đầu ngày
+  
+  return deadline < now;
+}
+
+// Sửa hàm in ngày ra màn hình
+function fmtDate(dateStr) {
+  if (!dateStr) return '–';
+  
+  // Vì Apps Script đang nhả về đúng chuỗi text "DD/MM/YYYY" từ Sheets,
+  // anh có thể return luôn chuỗi này để tiết kiệm tài nguyên xử lý cho trình duyệt
+  if (typeof dateStr === 'string' && dateStr.includes('/')) {
+      return dateStr;
+  }
+  
+  // Format lại nếu gặp định dạng khác
+  const d = parseDateString(dateStr);
+  if (isNaN(d)) return '–';
+  
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
 </script>
 </body>
 </html>
