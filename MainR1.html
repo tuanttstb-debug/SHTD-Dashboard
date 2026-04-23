@@ -1243,54 +1243,7 @@ textarea.form-control{resize:vertical;min-height:72px;}
 <!-- ===== JAVASCRIPT ===== -->
 <script>
 // ═══════════════════════════════════════════
-// STATE// 1. Hàm mới: Dịch chuỗi DD/MM/YYYY sang ngày tháng chuẩn
-function parseDateString(dateStr) {
-  if (!dateStr) return null;
-  
-  // Kiểm tra nếu dữ liệu đang là chuỗi có chứa dấu "/"
-  if (typeof dateStr === 'string' && dateStr.includes('/')) {
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Trong JS, tháng đếm từ 0
-      const year = parseInt(parts[2], 10);
-      return new Date(year, month, day);
-    }
-  }
-  return new Date(dateStr); // Dự phòng
-}
-
-// 2. Hàm kiểm tra quá hạn (Đã cập nhật)
-function isOverdue(dateStr, progress) {
-  if (progress >= 100 || !dateStr) return false;
-  
-  const deadline = parseDateString(dateStr);
-  if (!deadline || isNaN(deadline)) return false;
-  
-  const now = new Date();
-  now.setHours(0, 0, 0, 0); 
-  
-  return deadline < now;
-}
-
-// 3. Hàm in ngày ra màn hình (Đã cập nhật)
-function fmtDate(dateStr) {
-  if (!dateStr) return '–';
-  
-  // Nếu đã là chuỗi "DD/MM/YYYY" thì in ra luôn
-  if (typeof dateStr === 'string' && dateStr.includes('/')) {
-      return dateStr;
-  }
-  
-  // Nếu là dạng khác thì format lại
-  const d = parseDateString(dateStr);
-  if (isNaN(d)) return '–';
-  
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
+// STATE
 // ═══════════════════════════════════════════
 let db = { tasks: [], initiatives: [] };
 let sort = { key: 'endDate', dir: 'asc' };
