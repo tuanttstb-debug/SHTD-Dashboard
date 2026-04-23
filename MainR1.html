@@ -1242,6 +1242,37 @@ textarea.form-control{resize:vertical;min-height:72px;}
 
 <!-- ===== JAVASCRIPT ===== -->
 <script>
+  // --- ANH DÁN ĐOẠN CODE NÀY VÀO ĐÂY (NGAY DƯỚI THẺ SCRIPT) ---
+function parseDateString(dateStr) {
+  if (!dateStr) return null;
+  if (typeof dateStr === 'string' && dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+  }
+  return new Date(dateStr);
+}
+
+function isOverdue(dateStr, progress) {
+  if (progress >= 100 || !dateStr) return false;
+  const deadline = parseDateString(dateStr);
+  if (!deadline || isNaN(deadline)) return false;
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); 
+  return deadline < now;
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '–';
+  if (typeof dateStr === 'string' && dateStr.includes('/')) return dateStr;
+  const d = parseDateString(dateStr);
+  if (isNaN(d)) return '–';
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
