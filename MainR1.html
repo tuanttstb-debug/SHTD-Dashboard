@@ -1822,10 +1822,17 @@ async function readFromHandle() {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Không đọc được Google Sheets (HTTP ${res.status}). Kiểm tra quyền "Anyone with link".`);
 
-  const raw  = await res.text();
-  // gviz trả về dạng: google.visualization.Query.setResponse({...})
-  // Cần strip wrapper để lấy JSON thuần
-  const json = JSON.parse(raw.replace(/^[^{]*/, '').replace(/[^}]*$/, ''));
+const responseText = await response.text();
+
+// 1. Loại bỏ rác của Gviz (chữ /*O_o*/ google.visualization...)
+let rawText = responseText.replace(/^[^{]*?\(/, '').replace(/\);\s*$/, '');
+
+// 2. Dọn dẹp thẻ Date() chưa parse được thành chuỗi rỗng để không hỏng JSON
+// (Ta không cần Date raw này vì lát nữa sẽ dùng .f (formatted) chứa text "22/04/2026")
+let safeJsonText = rawText.replace(/Date\(\d+,\d+,\d+(,\d+,\d+,\d+)?\)/g, '""');
+
+// 3. Parse an toàn
+const data = JSON.parse(safeJsonText);
   _parseGvizIntoDb(json);
   persist();
   return true;
