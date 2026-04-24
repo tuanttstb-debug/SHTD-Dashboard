@@ -1688,9 +1688,8 @@ function extractWorkbook(wb) {
       picAcc:      cAcc   !== -1 ? (r[cAcc]||'Tuantt4') : 'Tuantt4',
       picRes:      picNorm(cRes !== -1 ? r[cRes] : ''),
       picSupport:  cSup   !== -1 ? (r[cSup]||'').toString().trim() : '',
-// Nếu thuộc tính .f bị rỗng (do định dạng là Text), hệ thống sẽ tự động chuyển sang lấy .v
-startDate: row.c[11] ? (row.c[11].f || row.c[11].v || '') : '',
-endDate:   row.c[12] ? (row.c[12].f || row.c[12].v || '') : '',
+      startDate:   parseDate(cSt  !== -1 ? r[cSt]  : ''),
+      endDate:     parseDate(cEnd !== -1 ? r[cEnd] : ''),
       progress:    prog,
       // Backward-compat: giữ các field cũ để dashboard không lỗi
       state:       parseState(cState !== -1 ? r[cState] : ''),
@@ -1726,6 +1725,24 @@ function fmtTuanBC(el) {
   }
 }
 const fmtDate = d => { if (!d) return '–'; const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
+
+// parseVNDate: chuyển chuỗi ngày (YYYY-MM-DD hoặc DD/MM/YYYY) sang Date object
+function parseVNDate(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  // Định dạng ISO: YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y,m,d] = s.split('-');
+    return new Date(+y, +m - 1, +d);
+  }
+  // Định dạng VN: DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+    const [d,m,y] = s.split('/');
+    return new Date(+y, +m - 1, +d);
+  }
+  return null;
+}
+
 function isOverdue(endDateString, progress) {
     if (progress >= 100 || !endDateString) return false;
     
@@ -1877,6 +1894,7 @@ function _parseCSVIntoDb(csv) {
   const cAcc=ci(['picaccountable','accountable']), cRes=ci(['picresponsible','responsible']), cSup=ci(['picsupport','support']);
   const cSt=ci(['startdate','start']), cEnd=ci(['deadline']), cProg=ci(['%ht','progress']);
   const cState=ci(['trạngthái','state']), cMs=ci(['milestone']);
+  const cRagM=ci(['ragmanual','rag','healthstatus']);
   const cResult=ci(['kếtquảtuần','kếtquả','result']), cNext=ci(['kếhoạch','nextplan']);
   const cIss=ci(['vướngmắc','issue']), cBLD=ci(['cầnblđ']), cBLDT=ci(['nộidungcầnblđ','nộidung']);
   const cCross=ci(['cross-team','crossteam']), cHl=ci(['highlight','báocáo']);
@@ -1912,7 +1930,7 @@ function _parseCSVIntoDb(csv) {
       team: g(r,cTeam), teamPhoiHop: g(r,cTPh),
       picAcc: g(r,cAcc)||'Tuantt4', picRes: picNorm(g(r,cRes)), picSupport: g(r,cSup),
       startDate: parseDate(g(r,cSt)), endDate: parseDate(g(r,cEnd)), progress: prog,
-      state: st, status: parseRAG(g(r,cState)),
+      state: st, status: parseRAG(g(r,cRagM)||g(r,cState)),
       result: g(r,cResult), nextPlan: g(r,cNext), vuongMac: g(r,cIss),
       canBLD: parseYN(g(r,cBLD)), noiDungBLD: g(r,cBLDT),
       crossTeam: parseYN(g(r,cCross)), highlight: parseYN(g(r,cHl)),
@@ -2654,7 +2672,8 @@ function openTaskModal(task = null) {
     document.getElementById('fState').value = 'Chưa bắt đầu';
     document.getElementById('fRag').value = 'Green';
     document.getElementById('fPicAcc').value = 'Tuantt4';
-    document.getElementById('fStart').valueAsDate = new Date();
+    const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth()+1).padStart(2,'0'); const dd = String(today.getDate()).padStart(2,'0');
+    document.getElementById('fStart').value = `${yyyy}-${mm}-${dd}`;
     populatePicDropdown('');
     autoGenId();
   }
