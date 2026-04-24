@@ -1260,7 +1260,7 @@ let debounceTimer = null;
 
 // ── Google Apps Script Web App config ──
 // Sau khi deploy Apps Script, dán Web App URL vào đây:
-const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzvF51xC-5H7prLIw2bNsdoqbw-1ZoWX7GWyB4CWfiwXmti-OfRUcG9MF0IInqybsMe/exec';  // ← VD: https://script.google.com/macros/s/AKfyc.../exec
+const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz9YwMXhlgf67rJEczCu6KYcntUvExCfVaBJs22zJaW86fIFoOJXxCHPdiGrCa_hgo-/exec';  // ← VD: https://script.google.com/macros/s/AKfyc.../exec
 // Spreadsheet ID để đọc trực tiếp qua public link (không cần login)
 const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
 const GS_RANGE      = 'Task_Master!A1:W';
@@ -1269,16 +1269,26 @@ const GS_RANGE      = 'Task_Master!A1:W';
 // INIT
 // ═══════════════════════════════════════════
 window.onload = async () => {
-  // Luôn bắt đầu với dữ liệu rỗng
-  localStorage.removeItem('shtd_v2');
-  db.tasks = [];
-  db.initiatives = [];
+  // ── FIX A: Load cache localStorage trước (không xóa) ──
+  // Nếu có dữ liệu cache → render ngay, tránh màn hình trắng và tránh write rỗng
+  const cached = localStorage.getItem('shtd_v2');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed && Array.isArray(parsed.tasks)) {
+        db.tasks = parsed.tasks;
+        db.initiatives = parsed.initiatives || [];
+      }
+    } catch(e) { /* cache lỗi → bỏ qua */ }
+  }
   setupListeners();
   renderAll();
   updateClock();
   setInterval(updateClock, 30000);
 
   // Tự động sync Google Sheets nếu đã cấu hình GS_WEBAPP_URL
+  // readFromHandle() thành công → db được cập nhật từ Sheet (source of truth)
+  // readFromHandle() thất bại → db vẫn giữ nguyên từ cache → KHÔNG bị mất
   if (GS_WEBAPP_URL) {
     await autoConnectDB();
   }
@@ -1945,10 +1955,11 @@ async function writeToHandle() {
   if (!GS_WEBAPP_URL) {
     throw new Error('Chưa cấu hình GS_WEBAPP_URL. Xem hướng dẫn triển khai Apps Script.');
   }
+  // ── FIX C: Hard-block ghi rỗng — không bao giờ ghi 0 task lên Sheet ──
+  // Guard này là lớp bảo vệ thứ 2 (lớp 1 đã ở syncAction)
+  // Nếu db.tasks rỗng → throw ngay, KHÔNG ghi, không hỏi confirm
   if (db.tasks.length === 0) {
-    const ok = await uiConfirm('Cảnh báo: Không có Task',
-      'Giao diện hiện KHÔNG có task. Lưu sẽ xóa sạch dữ liệu trên Sheets. Bạn có chắc?', 'danger', 'Vẫn lưu');
-    if (!ok) throw new Error('Hủy lưu.');
+    throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng lên Sheet (0 task). Thao tác đã bị hủy để bảo vệ dữ liệu.');
   }
   const values = [DB_COLS, ...db.tasks.map(taskToRow)];
   const res = await fetch(GS_WEBAPP_URL, {
@@ -1964,16 +1975,45 @@ async function writeToHandle() {
 async function syncAction(action) {
   showLoading('Đang đồng bộ Google Sheets…');
   document.getElementById('syncDot').className = 'status-dot syncing';
+
+  // ── FIX B: Snapshot db trước khi thay đổi để rollback nếu write lỗi ──
+  // KHÔNG gọi readFromHandle() ở đây — tránh race condition ghi đè dữ liệu
+  const snapshot = JSON.parse(JSON.stringify(db));
+
   try {
-    await readFromHandle();
+    // 1. Áp dụng thay đổi vào db (local)
     if (typeof action === 'function') action();
+
+    // 2. Kiểm tra an toàn: không write nếu db đột ngột về 0 mà snapshot có data
+    if (db.tasks.length === 0 && snapshot.tasks.length > 0) {
+      const ok = await uiConfirm(
+        '⚠️ Cảnh báo mất dữ liệu',
+        `Thao tác này sẽ xóa toàn bộ <strong>${snapshot.tasks.length} task</strong> trên Google Sheets. Bạn có chắc chắn?`,
+        'danger', 'Xóa tất cả'
+      );
+      if (!ok) {
+        // Rollback
+        db.tasks = snapshot.tasks;
+        db.initiatives = snapshot.initiatives;
+        toast('Đã hủy thao tác.', 'info');
+        return false;
+      }
+    }
+
+    // 3. Persist local + render
     persist(); renderAll();
+
+    // 4. Ghi lên Sheet — nếu lỗi thì rollback cache (Sheet không bị ghi)
     await writeToHandle();
     document.getElementById('syncDot').className = 'status-dot connected';
     return true;
   } catch(e) {
+    // ── Rollback: khôi phục db về trạng thái trước khi action() ──
+    db.tasks = snapshot.tasks;
+    db.initiatives = snapshot.initiatives;
+    persist(); renderAll();
     console.error(e);
-    toast('Lỗi đồng bộ: ' + e.message, 'error', 6000);
+    toast('❌ Lỗi đồng bộ: ' + e.message + ' — Dữ liệu đã được khôi phục.', 'error', 8000);
     document.getElementById('syncDot').className = 'status-dot';
     return false;
   } finally { hideLoading(); }
