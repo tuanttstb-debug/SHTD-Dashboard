@@ -1726,19 +1726,15 @@ function fmtTuanBC(el) {
 }
 const fmtDate = d => { if (!d) return '–'; const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
 
-// parseVNDate: chuyển chuỗi ngày (YYYY-MM-DD hoặc DD/MM/YYYY) sang Date object
+// parseVNDate: chuyển YYYY-MM-DD hoặc DD/MM/YYYY → Date object
 function parseVNDate(s) {
   if (!s) return null;
   s = String(s).trim();
-  // Định dạng ISO: YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    const [y,m,d] = s.split('-');
-    return new Date(+y, +m - 1, +d);
+    const [y,m,d] = s.split('-'); return new Date(+y, +m-1, +d);
   }
-  // Định dạng VN: DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
-    const [d,m,y] = s.split('/');
-    return new Date(+y, +m - 1, +d);
+    const [d,m,y] = s.split('/'); return new Date(+y, +m-1, +d);
   }
   return null;
 }
@@ -1843,94 +1839,97 @@ function taskToRow(t) {
 }
 
 // ── Đọc Google Sheets công khai (không cần login) ──
+// ── Đọc dữ liệu qua Apps Script Web App (không bị CORS) ──
 async function readFromHandle() {
-  // Dùng Sheets API v4 public endpoint — Sheet phải được share "Anyone with link can view"
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${GS_SHEET_ID}/values/${encodeURIComponent(GS_RANGE)}?valueRenderOption=UNFORMATTED_VALUE&key=AIzaSyD-placeholder`;
-  // Nếu Sheet ở chế độ công khai, dùng CSV export không cần key:
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${GS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Task_Master`;
-  const res = await fetch(csvUrl);
-  if (!res.ok) throw new Error('Không đọc được Google Sheets. Kiểm tra quyền "Anyone with link".');
-  const csv = await res.text();
-  _parseCSVIntoDb(csv);
+  if (!GS_WEBAPP_URL) throw new Error('Chưa cấu hình GS_WEBAPP_URL.');
+  const res = await fetch(GS_WEBAPP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'read' }),
+  });
+  if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
+  const json = await res.json();
+  if (json.status !== 'ok') throw new Error('Lỗi đọc: ' + (json.error || 'unknown'));
+  // json.values = mảng 2D từ getDisplayValues() — row[0] là header
+  _parseArrayIntoDb(json.values);
   persist();
   return true;
 }
 
-// ── Parse CSV từ Google Sheets ──
-function _parseCSVIntoDb(csv) {
-  // Parse CSV đúng chuẩn (xử lý ô có dấu phẩy và xuống dòng trong ngoặc kép)
-  const parseCSVLine = line => {
-    const result = []; let cur = ''; let inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') {
-        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-        else inQ = !inQ;
-      } else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
-      else cur += c;
-    }
-    result.push(cur);
-    return result;
-  };
+// ── Parse mảng 2D từ Apps Script getDisplayValues() → db ──
+function _parseArrayIntoDb(values) {
+  if (!values || values.length < 2) { db.tasks = []; return; }
 
-  // Split thành dòng, tôn trọng ngoặc kép
-  const lines = []; let buf = ''; let inQ = false;
-  for (const c of csv) {
-    if (c === '"') inQ = !inQ;
-    if ((c === '\n') && !inQ) { lines.push(buf); buf = ''; }
-    else buf += c;
-  }
-  if (buf) lines.push(buf);
-
-  if (lines.length < 2) { db.tasks = []; return; }
-
-  const H = parseCSVLine(lines[0]);
   const norm = s => (s||'').toString().toLowerCase().replace(/[\n\s\t_\-\/]+/g,'');
+  const H = values[0];
   const ci = kws => { for (const kw of kws) { const i = H.findIndex(h => norm(h).includes(norm(kw))); if (i !== -1) return i; } return -1; };
 
-  const cId=ci(['id','taskid']), cTuan=ci(['tuầnbc','tuanbc']), cInit=ci(['initiativeid','initiative']);
-  const cCat=ci(['category','danhmục']), cTeam=ci(['teamchính','team']), cTPh=ci(['teamphối','phốihợp']);
-  const cType=ci(['loại(task','loại','type']), cName=ci(['task/deliverable','deliverable','taskname']);
-  const cAcc=ci(['picaccountable','accountable']), cRes=ci(['picresponsible','responsible']), cSup=ci(['picsupport','support']);
-  const cSt=ci(['startdate','start']), cEnd=ci(['deadline']), cProg=ci(['%ht','progress']);
-  const cState=ci(['trạngthái','state']), cMs=ci(['milestone']);
-  const cRagM=ci(['ragmanual','rag','healthstatus']);
-  const cResult=ci(['kếtquảtuần','kếtquả','result']), cNext=ci(['kếhoạch','nextplan']);
-  const cIss=ci(['vướngmắc','issue']), cBLD=ci(['cầnblđ']), cBLDT=ci(['nộidungcầnblđ','nộidung']);
-  const cCross=ci(['cross-team','crossteam']), cHl=ci(['highlight','báocáo']);
+  const cId    = ci(['id','taskid']);
+  const cTuan  = ci(['tu\u1ea7nbc','tuanbc']);
+  const cInit  = ci(['initiativeid','initiative']);
+  const cCat   = ci(['category','danh m\u1ee5c']);
+  const cTeam  = ci(['team ch\u00ednh','team']);
+  const cTPh   = ci(['team ph\u1ed1i','ph\u1ed1i h\u1ee3p']);
+  const cType  = ci(['lo\u1ea1i(task','lo\u1ea1i','type']);
+  const cName  = ci(['task/deliverable','deliverable','taskname']);
+  const cAcc   = ci(['picaccountable','accountable']);
+  const cRes   = ci(['picresponsible','responsible']);
+  const cSup   = ci(['picsupport','support']);
+  const cSt    = ci(['startdate','start']);
+  const cEnd   = ci(['deadline']);
+  const cProg  = ci(['%ht','progress']);
+  const cState = ci(['tr\u1ea1ng th\u00e1i','state']);
+  const cMs    = ci(['milestone']);
+  const cRagM  = ci(['ragmanual','rag','healthstatus']);
+  const cResult= ci(['k\u1ebft qu\u1ea3','result']);
+  const cNext  = ci(['k\u1ebf ho\u1ea1ch','nextplan']);
+  const cIss   = ci(['v\u01b0\u1edbng m\u1eafc','issue']);
+  const cBLD   = ci(['c\u1ea7nbl\u0111']);
+  const cBLDT  = ci(['n\u1ed9i dung c\u1ea7n bl\u0111','n\u1ed9i dung bl\u0111']);
+  const cCross = ci(['cross-team','crossteam']);
+  const cHl    = ci(['highlight','b\u00e1o c\u00e1o']);
 
+  // Apps Script getDisplayValues() luôn trả về string — kể cả ngày "22/04/2026"
   const parseDate = v => {
     if (!v) return '';
+    v = v.toString().trim();
     const p = v.split(/[\/\-]/);
     if (p.length === 3) {
-      if (p[0].length <= 2 && p[2].length === 4) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-      if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
+      if (p[0].length <= 2 && p[2].length === 4)
+        return p[2] + '-' + p[1].padStart(2,'0') + '-' + p[0].padStart(2,'0');
+      if (p[0].length === 4)
+        return p[0] + '-' + p[1].padStart(2,'0') + '-' + p[2].padStart(2,'0');
     }
     return v;
   };
-  const parseRAG   = v => { const s=(v||'').toLowerCase(); if(s.includes('red')||s.includes('đỏ')) return 'Red'; if(s.includes('amber')||s.includes('cam')) return 'Amber'; return 'Green'; };
-  const parseState = v => { if(!v) return 'Chưa bắt đầu'; const s=v.toLowerCase(); if(s.includes('đang')) return 'Đang thực hiện'; if(s.includes('chuẩn bị')) return 'Hoàn thành chuẩn bị'; if(s.includes('hoàn thành')||s.includes('done')) return 'Hoàn thành'; if(s.includes('tạm')) return 'Tạm dừng'; if(s.includes('block')) return 'Blocked'; return 'Chưa bắt đầu'; };
-  const parseYN    = v => { const s=(v||'').toUpperCase().trim(); return (s==='Y'||s==='YES'||s==='CÓ')?'Y':'N'; };
-  const g = (r, c) => c !== -1 ? (r[c]||'').trim() : '';
+  const parseRAG   = v => { const s=(v||'').toLowerCase(); if(s.includes('red')||s.includes('\u0111\u1ecf')) return 'Red'; if(s.includes('amber')||s.includes('cam')) return 'Amber'; return 'Green'; };
+  const parseState = v => { if(!v) return 'Ch\u01b0a b\u1eaft \u0111\u1ea7u'; const s=v.toLowerCase(); if(s.includes('\u0111ang')) return '\u0110ang th\u1ef1c hi\u1ec7n'; if(s.includes('chu\u1ea9n b\u1ecb')) return 'Ho\u00e0n th\u00e0nh chu\u1ea9n b\u1ecb'; if(s.includes('ho\u00e0n th\u00e0nh')||s.includes('done')) return 'Ho\u00e0n th\u00e0nh'; if(s.includes('t\u1ea1m')) return 'T\u1ea1m d\u1eebng'; if(s.includes('block')) return 'Blocked'; return 'Ch\u01b0a b\u1eaft \u0111\u1ea7u'; };
+  const parseYN    = v => { const s=(v||'').toUpperCase().trim(); return (s==='Y'||s==='YES')?'Y':'N'; };
+  const g = (r, c) => c !== -1 ? (r[c]||'').toString().trim() : '';
 
   db.tasks = [];
-  for (let i = 1; i < lines.length; i++) {
-    const r = parseCSVLine(lines[i]);
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
     const name = g(r, cName);
     if (!name) continue;
     let prog = 0;
     const pRaw = g(r, cProg);
-    if (pRaw) { const cv = parseFloat(pRaw.replace('%','')); prog = (!pRaw.includes('%') && cv <= 1) ? Math.round(cv*100) : Math.round(cv)||0; }
+    if (pRaw) {
+      const cv = parseFloat(pRaw.replace('%',''));
+      prog = (!pRaw.includes('%') && cv <= 1) ? Math.round(cv*100) : Math.round(cv)||0;
+    }
     prog = Math.min(100, Math.max(0, prog));
-    const id = g(r, cId) || genId(g(r,cInit)||'BAU', g(r,cTeam), db.tasks);
-    const st = parseState(g(r, cState));
+    const id = g(r,cId) || genId(g(r,cInit)||'BAU', g(r,cTeam), db.tasks);
     db.tasks.push({
       id, tuanBC: g(r,cTuan), initiative: g(r,cInit)||'BAU', category: g(r,cCat),
       name, type: g(r,cType)||'Task', milestone: g(r,cMs),
       team: g(r,cTeam), teamPhoiHop: g(r,cTPh),
       picAcc: g(r,cAcc)||'Tuantt4', picRes: picNorm(g(r,cRes)), picSupport: g(r,cSup),
-      startDate: parseDate(g(r,cSt)), endDate: parseDate(g(r,cEnd)), progress: prog,
-      state: st, status: parseRAG(g(r,cRagM)||g(r,cState)),
+      startDate: parseDate(g(r,cSt)),
+      endDate:   parseDate(g(r,cEnd)),
+      progress: prog,
+      state: parseState(g(r,cState)),
+      status: parseRAG(g(r,cRagM)||g(r,cState)),
       result: g(r,cResult), nextPlan: g(r,cNext), vuongMac: g(r,cIss),
       canBLD: parseYN(g(r,cBLD)), noiDungBLD: g(r,cBLDT),
       crossTeam: parseYN(g(r,cCross)), highlight: parseYN(g(r,cHl)),
@@ -2672,8 +2671,7 @@ function openTaskModal(task = null) {
     document.getElementById('fState').value = 'Chưa bắt đầu';
     document.getElementById('fRag').value = 'Green';
     document.getElementById('fPicAcc').value = 'Tuantt4';
-    const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth()+1).padStart(2,'0'); const dd = String(today.getDate()).padStart(2,'0');
-    document.getElementById('fStart').value = `${yyyy}-${mm}-${dd}`;
+    const _td=new Date();document.getElementById('fStart').value=`${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
     populatePicDropdown('');
     autoGenId();
   }
