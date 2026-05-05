@@ -736,6 +736,16 @@ textarea.form-control{resize:vertical;min-height:72px;}
 
     <!-- ===== DASHBOARD ===== -->
     <section class="view-section active" id="view-dashboard">
+      <!-- ===== QUICK VIEW PANEL ===== -->
+<div id="quickViewPanel" style="margin-bottom:12px;">
+  <!-- Trigger bar -->
+  <div id="qvTriggerBar" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"></div>
+  <!-- Panels -->
+  <div id="qvPanel-done"   class="qv-panel"></div>
+  <div id="qvPanel-plan"   class="qv-panel"></div>
+  <div id="qvPanel-inprog" class="qv-panel"></div>
+  <div id="qvPanel-issues" class="qv-panel"></div>
+</div>
       <!-- Dashboard filter bar -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
         <div style="font-size:13px;font-weight:600;color:var(--text-2);white-space:nowrap;"><i class="fa-solid fa-calendar-week" style="margin-right:5px;color:var(--primary);"></i>Xem theo tuần:</div>
