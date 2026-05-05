@@ -647,6 +647,385 @@ textarea.form-control{resize:vertical;min-height:72px;}
   .topbar{height:56px;}
   .page-title{font-size:15px;}
 }
+  /* ── FAB Trigger Button ── */
+.qv-fab {
+  position: fixed;
+  bottom: 48px; /* trên status bar */
+  right: 24px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.qv-fab-btn {
+  width: 52px; height: 52px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 6px 20px rgba(75,31,175,0.4);
+  transition: var(--transition);
+  position: relative;
+}
+.qv-fab-btn:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(75,31,175,0.55); }
+.qv-fab-btn.active { background: var(--accent); }
+.qv-fab-tooltip {
+  background: var(--text);
+  color: white;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transform: translateX(8px);
+  transition: var(--transition);
+}
+.qv-fab:hover .qv-fab-tooltip { opacity: 1; transform: translateX(0); }
+
+/* ── Topbar shortcut button (tuỳ chọn) ── */
+.qv-topbar-btn {
+  height: 36px; padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; color: var(--text-2); font-size: 13px; font-weight: 600;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.qv-topbar-btn:hover { background: var(--primary-xlight); color: var(--primary); border-color: rgba(75,31,175,0.3); }
+.qv-topbar-btn .qv-badge-dot {
+  width: 7px; height: 7px; background: var(--accent);
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Overlay ── */
+.qv-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  z-index: 600;
+  opacity: 0; pointer-events: none;
+  transition: opacity .28s ease;
+}
+.qv-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ── Panel ── */
+#quickViewPanel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(560px, 92vw);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -20px 0 60px rgba(0,0,0,0.18);
+  z-index: 700;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .32s cubic-bezier(.32,.72,0,1);
+  overflow: hidden;
+}
+#quickViewPanel.open { transform: translateX(0); }
+
+/* ── Panel Header ── */
+.qvp-header {
+  padding: 20px 24px 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.qvp-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.qvp-title-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.qvp-icon {
+  width: 36px; height: 36px;
+  background: var(--primary-xlight);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--primary); font-size: 15px;
+  flex-shrink: 0;
+}
+.qvp-title { font-size: 17px; font-weight: 800; }
+.qvp-subtitle { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.qvp-close {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-2); font-size: 13px;
+  transition: var(--transition); flex-shrink: 0;
+}
+.qvp-close:hover { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+
+/* ── Panel Filter Row ── */
+.qvp-filter-row {
+  display: flex; gap: 8px; align-items: center;
+  padding: 12px 0 14px;
+  flex-wrap: wrap;
+}
+.qvp-filter-label {
+  font-size: 11px; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .05em;
+  white-space: nowrap;
+}
+.qvp-filter-select {
+  padding: 6px 10px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 12px;
+  background: var(--surface); color: var(--text);
+  font-family: var(--font); cursor: pointer;
+  transition: var(--transition);
+}
+.qvp-filter-select:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(75,31,175,0.1);
+}
+
+/* ── Tab Bar ── */
+.qvp-tabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.qvp-tabs::-webkit-scrollbar { display: none; }
+.qvp-tab {
+  padding: 10px 16px;
+  cursor: pointer; font-weight: 600; font-size: 13px;
+  color: var(--text-2); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: var(--transition);
+  white-space: nowrap; flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.qvp-tab:hover { color: var(--text); }
+.qvp-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.qvp-tab-count {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 99px; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; color: var(--text-3);
+  transition: var(--transition);
+  min-width: 18px; text-align: center;
+}
+.qvp-tab.active .qvp-tab-count {
+  background: var(--primary-xlight);
+  border-color: rgba(75,31,175,.25);
+  color: var(--primary);
+}
+
+/* ── Panel Body ── */
+.qvp-body {
+  flex: 1; overflow-y: auto; padding: 0;
+}
+
+/* ── Tab Content ── */
+.qvp-pane {
+  display: none; padding: 18px 24px;
+  animation: qvFadeUp .25s ease;
+}
+.qvp-pane.active { display: block; }
+@keyframes qvFadeUp {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── Section title inside pane ── */
+.qvp-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-3);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.qvp-section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Empty state ── */
+.qvp-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 40px 20px;
+  color: var(--text-3); text-align: center; gap: 10px;
+}
+.qvp-empty i { font-size: 32px; opacity: .4; }
+.qvp-empty-title { font-size: 14px; font-weight: 600; }
+.qvp-empty-sub   { font-size: 12px; }
+
+/* ── Task Card (shared) ── */
+.qvp-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+.qvp-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-xlight);
+  transform: translateX(2px);
+}
+.qvp-card:last-child { margin-bottom: 0; }
+
+/* Left accent bar */
+.qvp-card::before {
+  content: '';
+  position: absolute; left: 0; top: 16%; bottom: 16%;
+  width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--border-strong);
+  transition: var(--transition);
+}
+.qvp-card.rag-green::before  { background: var(--success); }
+.qvp-card.rag-amber::before  { background: var(--warning); }
+.qvp-card.rag-red::before    { background: var(--danger); }
+.qvp-card.rag-issue::before  { background: #f97316; }
+
+.qvp-card-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 10px;
+  margin-bottom: 8px;
+}
+.qvp-card-id {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--primary); flex-shrink: 0;
+}
+.qvp-card-name {
+  font-size: 13px; font-weight: 600; flex: 1;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  line-height: 1.45;
+}
+.qvp-card-badges {
+  display: flex; gap: 5px; align-items: center; flex-shrink: 0;
+}
+.qvp-card-meta {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-3);
+}
+.qvp-card-meta-item {
+  display: flex; align-items: center; gap: 4px;
+}
+.qvp-card-meta-item i { font-size: 10px; }
+
+/* Progress mini bar */
+.qvp-prog {
+  margin-top: 10px; display: flex; align-items: center; gap: 8px;
+}
+.qvp-prog-bar {
+  flex: 1; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden;
+}
+.qvp-prog-fill { height: 100%; border-radius: 99px; background: var(--primary); transition: width .4s ease; }
+.qvp-prog-pct  { font-size: 11px; font-weight: 700; color: var(--text-2); font-family: var(--mono); min-width: 30px; }
+
+/* ── Tab 1: Completed (đã hoàn thành) ── */
+.qvp-done-card .qvp-prog-fill { background: var(--success); }
+.qvp-done-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--success-bg); color: var(--success);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+
+/* ── Tab 2: Next Month Plan ── */
+.qvp-plan-card {
+  border-left: 3px solid var(--accent);
+}
+.qvp-plan-content {
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  white-space: pre-wrap;
+}
+.qvp-plan-empty-content {
+  font-size: 12px; color: var(--text-3); font-style: italic;
+  margin-top: 6px;
+}
+.qvp-deadline-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-light); color: var(--accent);
+  border: 1px solid rgba(255,122,0,.25); border-radius: 4px;
+  font-size: 11px; font-weight: 700; padding: 2px 7px;
+}
+
+/* ── Tab 3: Same-Initiative In Progress ── */
+.qvp-init-group-header {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--primary-xlight);
+  border: 1px solid rgba(75,31,175,.15);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 10px; margin-top: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.qvp-init-group-header:first-child { margin-top: 0; }
+.qvp-init-group-header:hover { background: rgba(75,31,175,.14); }
+.qvp-init-group-name {
+  font-size: 13px; font-weight: 700; color: var(--primary); flex: 1;
+}
+.qvp-init-group-meta {
+  font-size: 11px; color: var(--text-3); display: flex; gap: 8px;
+}
+.qvp-init-group-body { padding-left: 4px; }
+.qvp-init-avg-bar {
+  height: 4px; background: var(--border); border-radius: 99px;
+  overflow: hidden; width: 60px; flex-shrink: 0;
+}
+.qvp-init-avg-fill { height: 100%; background: var(--primary); border-radius: 99px; }
+
+/* ── Tab 4: Issues / Blocked ── */
+.qvp-issue-card { cursor: pointer; }
+.qvp-issue-text {
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  white-space: pre-wrap; word-break: break-word;
+}
+.qvp-issue-flag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px;
+}
+.qvp-issue-flag.blocked  { background: var(--danger-bg);  color: var(--danger); }
+.qvp-issue-flag.bld      { background: var(--warning-bg); color: var(--warning); }
+.qvp-issue-flag.vuong    { background: var(--info-bg);     color: var(--info); }
+
+/* ── Panel Footer ── */
+.qvp-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  background: var(--surface2);
+  font-size: 12px; color: var(--text-3);
+}
+.qvp-footer-refresh {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  color: var(--text-3); transition: var(--transition); font-size: 12px; font-weight: 500;
+}
+.qvp-footer-refresh:hover { color: var(--primary); }
+.qvp-footer-refresh i { font-size: 11px; }
+.qvp-footer-refresh.spinning i { animation: qvSpin .6s linear infinite; }
+@keyframes qvSpin { to { transform: rotate(360deg); } }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  #quickViewPanel { width: 100%; border-left: none; border-top: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; top: auto; height: 88vh; transform: translateY(100%); }
+  #quickViewPanel.open { transform: translateY(0); }
+  .qv-fab { bottom: 40px; right: 16px; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   >>> KẾT THÚC PHẦN MERGE – CSS <<<
+   ════════════════════════════════════════════════════════════ */
 </style>
 </head>
 <body>
