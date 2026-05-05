@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║         SHTD QUICK VIEW PANEL – Standalone Module v1.0          ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  CÁCH MERGE VÀO dashboard.html GỐC:                             ║
+  ║                                                                  ║
+  ║  BƯỚC 1 – CSS: Copy khối /* ===== QUICK VIEW PANEL ===== */     ║
+  ║           vào cuối <style> của file gốc                          ║
+  ║                                                                  ║
+  ║  BƯỚC 2 – NAV BUTTON: Copy div.qv-fab vào ngay trước            ║
+  ║           thẻ đóng </body>                                       ║
+  ║                                                                  ║
+  ║  BƯỚC 3 – HTML PANEL: Copy div#quickViewPanel vào ngay           ║
+  ║           sau div.qv-fab                                         ║
+  ║                                                                  ║
+  ║  BƯỚC 4 – JS: Copy khối // === QUICK VIEW PANEL JS ===           ║
+  ║           vào cuối <script> của file gốc                         ║
+  ║           (hoặc trước thẻ </script> cuối)                        ║
+  ║                                                                  ║
+  ║  BƯỚC 5 – TOPBAR BUTTON (tuỳ chọn): Copy div.qv-topbar-btn      ║
+  ║           vào trong .topbar-right (ngay trước .icon-btn dark)    ║
+  ║                                                                  ║
+  ║  DEPENDENCIES: Đã dùng sẵn Font Awesome 6.4 & DM Sans từ gốc   ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<html lang="vi" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick View Panel – SHTD Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* ── Demo scaffold (KHÔNG cần merge vào file gốc) ── */
+:root {
+  --primary: #4B1FAF; --primary-light: #7E57C2; --primary-xlight: rgba(75,31,175,0.08);
+  --accent: #FF7A00; --accent-light: rgba(255,122,0,0.12);
+  --success: #16A34A; --success-bg: rgba(22,163,74,0.1);
+  --warning: #D97706; --warning-bg: rgba(217,119,6,0.1);
+  --danger: #DC2626; --danger-bg: rgba(220,38,38,0.1);
+  --info: #0284C7; --info-bg: rgba(2,132,199,0.1);
+  --bg: #F0F2F8; --surface: #FFFFFF; --surface2: #F8FAFC;
+  --border: #E2E8F0; --border-strong: #CBD5E1;
+  --text: #0F172A; --text-2: #475569; --text-3: #94A3B8;
+  --radius-sm: 8px; --radius: 12px; --radius-lg: 18px;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06); --shadow: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.14); --transition: all .22s cubic-bezier(.4,0,.2,1);
+  --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+}
+[data-theme="dark"] {
+  --bg: #0D1117; --surface: #161B22; --surface2: #1C2330;
+  --border: #2D3748; --border-strong: #4A5568;
+  --text: #E2E8F0; --text-2: #94A3B8; --text-3: #64748B;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; font-family:var(--font); }
+body { background:var(--bg); color:var(--text); min-height:100vh; padding:24px; }
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;}
+
+/* Demo controls */
+.demo-top {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:20px 24px;
+  margin-bottom:20px; display:flex; align-items:center;
+  justify-content:space-between; flex-wrap:wrap; gap:12px;
+}
+.demo-label { font-size:13px; color:var(--text-2); }
+.demo-label strong { color:var(--text); }
+.demo-btns { display:flex; gap:8px; flex-wrap:wrap; }
+.btn { padding:9px 16px; border-radius:var(--radius-sm); border:none; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:var(--transition); font-size:13px; font-family:var(--font); }
+.btn-primary { background:var(--accent); color:white; }
+.btn-primary:hover { background:#e06a00; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { background:var(--surface2); }
+.btn-secondary { background:var(--primary); color:white; }
+.badge { padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700; display:inline-block; white-space:nowrap; }
+.badge-green { background:var(--success-bg); color:var(--success); }
+.badge-amber { background:var(--warning-bg); color:var(--warning); }
+.badge-red   { background:var(--danger-bg);  color:var(--danger); }
+.badge-gray  { background:var(--surface2);   color:var(--text-2); border:1px solid var(--border); }
+.state-chip { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; display:inline-block; white-space:nowrap; }
+.state-chip.s0{background:#F1F5F9;color:#475569;border:1px solid #E2E8F0;}
+.state-chip.s1{background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;}
+.state-chip.s2{background:#FAF5FF;color:#7C3AED;border:1px solid #DDD6FE;}
+.state-chip.s3{background:#F0FDF4;color:#16A34A;border:1px solid #BBF7D0;}
+.state-chip.s4{background:#FFF7ED;color:#EA580C;border:1px solid #FED7AA;}
+.state-chip.s5{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;}
+
+/* ════════════════════════════════════════════════════════════
+   ===== QUICK VIEW PANEL =====
+   >>> BẮT ĐẦU PHẦN CẦN MERGE VÀO FILE GỐC <<<
+   ════════════════════════════════════════════════════════════ */
+
+/* ── FAB Trigger Button ── */
+.qv-fab {
+  position: fixed;
+  bottom: 48px; /* trên status bar */
+  right: 24px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.qv-fab-btn {
+  width: 52px; height: 52px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 6px 20px rgba(75,31,175,0.4);
+  transition: var(--transition);
+  position: relative;
+}
+.qv-fab-btn:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(75,31,175,0.55); }
+.qv-fab-btn.active { background: var(--accent); }
+.qv-fab-tooltip {
+  background: var(--text);
+  color: white;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transform: translateX(8px);
+  transition: var(--transition);
+}
+.qv-fab:hover .qv-fab-tooltip { opacity: 1; transform: translateX(0); }
+
+/* ── Topbar shortcut button (tuỳ chọn) ── */
+.qv-topbar-btn {
+  height: 36px; padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; color: var(--text-2); font-size: 13px; font-weight: 600;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.qv-topbar-btn:hover { background: var(--primary-xlight); color: var(--primary); border-color: rgba(75,31,175,0.3); }
+.qv-topbar-btn .qv-badge-dot {
+  width: 7px; height: 7px; background: var(--accent);
+  border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── Overlay ── */
+.qv-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  z-index: 600;
+  opacity: 0; pointer-events: none;
+  transition: opacity .28s ease;
+}
+.qv-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ── Panel ── */
+#quickViewPanel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(560px, 92vw);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -20px 0 60px rgba(0,0,0,0.18);
+  z-index: 700;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .32s cubic-bezier(.32,.72,0,1);
+  overflow: hidden;
+}
+#quickViewPanel.open { transform: translateX(0); }
+
+/* ── Panel Header ── */
+.qvp-header {
+  padding: 20px 24px 0;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.qvp-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.qvp-title-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.qvp-icon {
+  width: 36px; height: 36px;
+  background: var(--primary-xlight);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--primary); font-size: 15px;
+  flex-shrink: 0;
+}
+.qvp-title { font-size: 17px; font-weight: 800; }
+.qvp-subtitle { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.qvp-close {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-2); font-size: 13px;
+  transition: var(--transition); flex-shrink: 0;
+}
+.qvp-close:hover { background: var(--danger-bg); border-color: var(--danger); color: var(--danger); }
+
+/* ── Panel Filter Row ── */
+.qvp-filter-row {
+  display: flex; gap: 8px; align-items: center;
+  padding: 12px 0 14px;
+  flex-wrap: wrap;
+}
+.qvp-filter-label {
+  font-size: 11px; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: .05em;
+  white-space: nowrap;
+}
+.qvp-filter-select {
+  padding: 6px 10px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 12px;
+  background: var(--surface); color: var(--text);
+  font-family: var(--font); cursor: pointer;
+  transition: var(--transition);
+}
+.qvp-filter-select:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(75,31,175,0.1);
+}
+
+/* ── Tab Bar ── */
+.qvp-tabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.qvp-tabs::-webkit-scrollbar { display: none; }
+.qvp-tab {
+  padding: 10px 16px;
+  cursor: pointer; font-weight: 600; font-size: 13px;
+  color: var(--text-2); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: var(--transition);
+  white-space: nowrap; flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.qvp-tab:hover { color: var(--text); }
+.qvp-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.qvp-tab-count {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 99px; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; color: var(--text-3);
+  transition: var(--transition);
+  min-width: 18px; text-align: center;
+}
+.qvp-tab.active .qvp-tab-count {
+  background: var(--primary-xlight);
+  border-color: rgba(75,31,175,.25);
+  color: var(--primary);
+}
+
+/* ── Panel Body ── */
+.qvp-body {
+  flex: 1; overflow-y: auto; padding: 0;
+}
+
+/* ── Tab Content ── */
+.qvp-pane {
+  display: none; padding: 18px 24px;
+  animation: qvFadeUp .25s ease;
+}
+.qvp-pane.active { display: block; }
+@keyframes qvFadeUp {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── Section title inside pane ── */
+.qvp-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-3);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+}
+.qvp-section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── Empty state ── */
+.qvp-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 40px 20px;
+  color: var(--text-3); text-align: center; gap: 10px;
+}
+.qvp-empty i { font-size: 32px; opacity: .4; }
+.qvp-empty-title { font-size: 14px; font-weight: 600; }
+.qvp-empty-sub   { font-size: 12px; }
+
+/* ── Task Card (shared) ── */
+.qvp-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+.qvp-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-xlight);
+  transform: translateX(2px);
+}
+.qvp-card:last-child { margin-bottom: 0; }
+
+/* Left accent bar */
+.qvp-card::before {
+  content: '';
+  position: absolute; left: 0; top: 16%; bottom: 16%;
+  width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--border-strong);
+  transition: var(--transition);
+}
+.qvp-card.rag-green::before  { background: var(--success); }
+.qvp-card.rag-amber::before  { background: var(--warning); }
+.qvp-card.rag-red::before    { background: var(--danger); }
+.qvp-card.rag-issue::before  { background: #f97316; }
+
+.qvp-card-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 10px;
+  margin-bottom: 8px;
+}
+.qvp-card-id {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--primary); flex-shrink: 0;
+}
+.qvp-card-name {
+  font-size: 13px; font-weight: 600; flex: 1;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  line-height: 1.45;
+}
+.qvp-card-badges {
+  display: flex; gap: 5px; align-items: center; flex-shrink: 0;
+}
+.qvp-card-meta {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  font-size: 11px; color: var(--text-3);
+}
+.qvp-card-meta-item {
+  display: flex; align-items: center; gap: 4px;
+}
+.qvp-card-meta-item i { font-size: 10px; }
+
+/* Progress mini bar */
+.qvp-prog {
+  margin-top: 10px; display: flex; align-items: center; gap: 8px;
+}
+.qvp-prog-bar {
+  flex: 1; height: 5px; background: var(--border); border-radius: 99px; overflow: hidden;
+}
+.qvp-prog-fill { height: 100%; border-radius: 99px; background: var(--primary); transition: width .4s ease; }
+.qvp-prog-pct  { font-size: 11px; font-weight: 700; color: var(--text-2); font-family: var(--mono); min-width: 30px; }
+
+/* ── Tab 1: Completed (đã hoàn thành) ── */
+.qvp-done-card .qvp-prog-fill { background: var(--success); }
+.qvp-done-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--success-bg); color: var(--success);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+
+/* ── Tab 2: Next Month Plan ── */
+.qvp-plan-card {
+  border-left: 3px solid var(--accent);
+}
+.qvp-plan-content {
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  white-space: pre-wrap;
+}
+.qvp-plan-empty-content {
+  font-size: 12px; color: var(--text-3); font-style: italic;
+  margin-top: 6px;
+}
+.qvp-deadline-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-light); color: var(--accent);
+  border: 1px solid rgba(255,122,0,.25); border-radius: 4px;
+  font-size: 11px; font-weight: 700; padding: 2px 7px;
+}
+
+/* ── Tab 3: Same-Initiative In Progress ── */
+.qvp-init-group-header {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--primary-xlight);
+  border: 1px solid rgba(75,31,175,.15);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 10px; margin-top: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.qvp-init-group-header:first-child { margin-top: 0; }
+.qvp-init-group-header:hover { background: rgba(75,31,175,.14); }
+.qvp-init-group-name {
+  font-size: 13px; font-weight: 700; color: var(--primary); flex: 1;
+}
+.qvp-init-group-meta {
+  font-size: 11px; color: var(--text-3); display: flex; gap: 8px;
+}
+.qvp-init-group-body { padding-left: 4px; }
+.qvp-init-avg-bar {
+  height: 4px; background: var(--border); border-radius: 99px;
+  overflow: hidden; width: 60px; flex-shrink: 0;
+}
+.qvp-init-avg-fill { height: 100%; background: var(--primary); border-radius: 99px; }
+
+/* ── Tab 4: Issues / Blocked ── */
+.qvp-issue-card { cursor: pointer; }
+.qvp-issue-text {
+  font-size: 12px; color: var(--text-2); line-height: 1.6;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  white-space: pre-wrap; word-break: break-word;
+}
+.qvp-issue-flag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700; padding: 2px 7px;
+  border-radius: 4px;
+}
+.qvp-issue-flag.blocked  { background: var(--danger-bg);  color: var(--danger); }
+.qvp-issue-flag.bld      { background: var(--warning-bg); color: var(--warning); }
+.qvp-issue-flag.vuong    { background: var(--info-bg);     color: var(--info); }
+
+/* ── Panel Footer ── */
+.qvp-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  background: var(--surface2);
+  font-size: 12px; color: var(--text-3);
+}
+.qvp-footer-refresh {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  color: var(--text-3); transition: var(--transition); font-size: 12px; font-weight: 500;
+}
+.qvp-footer-refresh:hover { color: var(--primary); }
+.qvp-footer-refresh i { font-size: 11px; }
+.qvp-footer-refresh.spinning i { animation: qvSpin .6s linear infinite; }
+@keyframes qvSpin { to { transform: rotate(360deg); } }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  #quickViewPanel { width: 100%; border-left: none; border-top: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; top: auto; height: 88vh; transform: translateY(100%); }
+  #quickViewPanel.open { transform: translateY(0); }
+  .qv-fab { bottom: 40px; right: 16px; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   >>> KẾT THÚC PHẦN MERGE – CSS <<<
+   ════════════════════════════════════════════════════════════ */
+</style>
+</head>
+<body>
+
+<!-- Demo header (KHÔNG cần merge) -->
+<div class="demo-top">
+  <div class="demo-label">
+    <strong>Quick View Panel – SHTD Dashboard Module v1.0</strong><br>
+    <span>Demo độc lập – Click nút "⚡ Quick View" hoặc FAB button bên phải màn hình để test</span>
+  </div>
+  <div class="demo-btns">
+    <!-- ════════════════════════════════════════════════════════
+         BƯỚC 5 (tuỳ chọn): TOPBAR BUTTON – copy vào .topbar-right
+         ════════════════════════════════════════════════════════ -->
+    <button class="qv-topbar-btn" onclick="openQuickView()" title="Quick View (Q)">
+      <i class="fa-solid fa-bolt" style="color:var(--accent);"></i>
+      Quick View
+      <div class="qv-badge-dot" id="qvDot" style="display:none;"></div>
+    </button>
+
+    <button class="btn btn-outline" onclick="loadDemoData()"><i class="fa-solid fa-database"></i> Load demo data</button>
+    <button class="btn btn-outline" onclick="clearDemoData()"><i class="fa-solid fa-eraser"></i> Xóa data</button>
+    <button class="btn btn-outline" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">
+      <i class="fa-solid fa-circle-half-stroke"></i> Toggle Dark
+    </button>
+  </div>
+</div>
+
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;font-size:13px;color:var(--text-2);line-height:1.8;">
+  <strong style="color:var(--text);font-size:15px;"><i class="fa-solid fa-circle-info" style="color:var(--info);margin-right:8px;"></i>Hướng dẫn merge vào dashboard.html gốc</strong>
+  <ol style="margin-top:12px;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+    <li><strong>CSS</strong>: Copy toàn bộ CSS trong khối <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">/* ===== QUICK VIEW PANEL ===== */</code> vào cuối thẻ <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;style&gt;</code></li>
+    <li><strong>FAB Button</strong>: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">div.qv-fab</code> vào ngay trước <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;/body&gt;</code></li>
+    <li><strong>Panel HTML</strong>: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">div#quickViewPanel + div.qv-overlay</code> vào sau FAB button</li>
+    <li><strong>JavaScript</strong>: Copy toàn bộ khối <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">// === QUICK VIEW PANEL JS ===</code> vào cuối thẻ <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;script&gt;</code></li>
+    <li><strong>(Tuỳ chọn)</strong> Topbar Button: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">button.qv-topbar-btn</code> vào trong <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">.topbar-right</code></li>
+    <li><strong>Keyboard shortcut</strong>: Phím <kbd style="background:var(--surface2);border:1px solid var(--border-strong);border-bottom:3px solid var(--border-strong);border-radius:4px;padding:2px 7px;font-size:11px;font-family:monospace;">Q</kbd> trong setupListeners() đã được thêm vào khối JS – chỉ cần paste là hoạt động</li>
+  </ol>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     BƯỚC 2: FAB BUTTON – copy vào trước </body>
+     ════════════════════════════════════════════════════════════ -->
+<div class="qv-fab">
+  <span class="qv-fab-tooltip">Quick View (Q)</span>
+  <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">
+    <i class="fa-solid fa-bolt"></i>
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     BƯỚC 3: PANEL HTML – copy vào sau FAB button
+     ════════════════════════════════════════════════════════════ -->
+
+<!-- Overlay backdrop -->
+<div class="qv-overlay" id="qvOverlay" onclick="closeQuickView()"></div>
+
+<!-- Panel -->
+<div id="quickViewPanel">
+
+  <!-- Header -->
+  <div class="qvp-header">
+    <div class="qvp-header-top">
+      <div class="qvp-title-row">
+        <div class="qvp-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+          <div class="qvp-title">Quick View</div>
+          <div class="qvp-subtitle" id="qvpSubtitle">Xem nhanh tình trạng công việc</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="qvp-close" onclick="closeQuickView()" title="Đóng (ESC)"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+    </div>
+
+    <!-- Filter: Initiative scope -->
+    <div class="qvp-filter-row">
+      <span class="qvp-filter-label"><i class="fa-solid fa-filter" style="margin-right:3px;"></i>Initiative:</span>
+      <select class="qvp-filter-select" id="qvFilterInit" onchange="renderQuickView()">
+        <option value="">Tất cả</option>
+      </select>
+      <span class="qvp-filter-label" style="margin-left:8px;"><i class="fa-solid fa-calendar-week" style="margin-right:3px;"></i>Tuần:</span>
+      <select class="qvp-filter-select" id="qvFilterTuan" onchange="renderQuickView()">
+        <option value="">Tất cả</option>
+      </select>
+    </div>
+
+    <!-- Tabs -->
+    <div class="qvp-tabs">
+      <div class="qvp-tab active" data-qvtab="done" onclick="switchQvTab('done')">
+        <i class="fa-solid fa-check-double"></i> Hoàn thành
+        <span class="qvp-tab-count" id="qvCntDone">0</span>
+      </div>
+      <div class="qvp-tab" data-qvtab="plan" onclick="switchQvTab('plan')">
+        <i class="fa-solid fa-calendar-days"></i> Kế hoạch tới
+        <span class="qvp-tab-count" id="qvCntPlan">0</span>
+      </div>
+      <div class="qvp-tab" data-qvtab="initiative" onclick="switchQvTab('initiative')">
+        <i class="fa-solid fa-layer-group"></i> Cùng Initiative
+        <span class="qvp-tab-count" id="qvCntInit">0</span>
+      </div>
+      <div class="qvp-tab" data-qvtab="issue" onclick="switchQvTab('issue')">
+        <i class="fa-solid fa-triangle-exclamation"></i> Vướng mắc
+        <span class="qvp-tab-count" id="qvCntIssue">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="qvp-body">
+
+    <!-- ── TAB 1: Key Tasks Done ── -->
+    <div class="qvp-pane active" id="qvPane-done">
+      <div class="qvp-section-title"><i class="fa-solid fa-trophy" style="color:var(--success);"></i> Key Tasks đã hoàn thành</div>
+      <div id="qvDoneList"></div>
+    </div>
+
+    <!-- ── TAB 2: Next Month Plan ── -->
+    <div class="qvp-pane" id="qvPane-plan">
+      <div class="qvp-section-title"><i class="fa-solid fa-rocket" style="color:var(--accent);"></i> Kế hoạch tháng tới</div>
+      <div id="qvPlanList"></div>
+    </div>
+
+    <!-- ── TAB 3: Same Initiative In-Progress ── -->
+    <div class="qvp-pane" id="qvPane-initiative">
+      <div id="qvInitList"></div>
+    </div>
+
+    <!-- ── TAB 4: Issues & Blocked ── -->
+    <div class="qvp-pane" id="qvPane-issue">
+      <div class="qvp-section-title"><i class="fa-solid fa-shield-halved" style="color:var(--danger);"></i> Vướng mắc · Blocked · Cần BLĐ</div>
+      <div id="qvIssueList"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="qvp-footer">
+    <span id="qvpTime" style="font-size:11px;"></span>
+    <div class="qvp-footer-refresh" id="qvRefreshBtn" onclick="refreshQuickView()">
+      <i class="fa-solid fa-rotate" id="qvRefreshIcon"></i>
+      Làm mới dữ liệu
+    </div>
+  </div>
+
+</div>
+<!-- ════════ KẾT THÚC PANEL HTML ════════ -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     BƯỚC 4: JAVASCRIPT – copy vào cuối <script> của file gốc
+     ════════════════════════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════════════════════════
+// === QUICK VIEW PANEL JS – v1.0 ===
+// Paste toàn bộ khối này vào cuối <script> của dashboard.html
+// Không conflict với code gốc – dùng prefix "qv" cho tất cả vars/funcs
+// ════════════════════════════════════════════════════════════════
+
+// ── State ──
+let _qvActiveTab = 'done';
+let _qvIsOpen    = false;
+
+// ── Open / Close ──
+function openQuickView() {
+  _qvIsOpen = true;
+  document.getElementById('quickViewPanel').classList.add('open');
+  document.getElementById('qvOverlay').classList.add('open');
+  document.getElementById('qvFabBtn')?.classList.add('active');
+  _qvPopulateFilters();
+  renderQuickView();
+  _qvUpdateTime();
+}
+
+function closeQuickView() {
+  _qvIsOpen = false;
+  document.getElementById('quickViewPanel').classList.remove('open');
+  document.getElementById('qvOverlay').classList.remove('open');
+  document.getElementById('qvFabBtn')?.classList.remove('active');
+}
+
+function refreshQuickView() {
+  const btn = document.getElementById('qvRefreshBtn');
+  btn.classList.add('spinning');
+  setTimeout(() => {
+    renderQuickView();
+    _qvUpdateTime();
+    btn.classList.remove('spinning');
+  }, 400);
+}
+
+// ── Tab switch ──
+function switchQvTab(tab) {
+  _qvActiveTab = tab;
+  document.querySelectorAll('.qvp-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-qvtab="${tab}"]`)?.classList.add('active');
+  document.querySelectorAll('.qvp-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById(`qvPane-${tab}`)?.classList.add('active');
+}
+
+// ── Populate filter dropdowns ──
+function _qvPopulateFilters() {
+  // Guard: nếu db chưa có thì bỏ qua
+  if (typeof db === 'undefined' || !db.tasks) return;
+
+  const initSel = document.getElementById('qvFilterInit');
+  const tuanSel = document.getElementById('qvFilterTuan');
+  const curInit = initSel.value;
+  const curTuan = tuanSel.value;
+
+  // Initiative list
+  const initMap = new Map();
+  db.tasks.forEach(t => {
+    if (t.initiative) initMap.set(t.initiative, t.initiative);
+  });
+  initSel.innerHTML = '<option value="">Tất cả</option>'
+    + [...initMap.keys()].sort().map(id =>
+        `<option value="${id}">${id}</option>`
+      ).join('');
+  if (curInit) initSel.value = curInit;
+
+  // Tuần BC list
+  const tuanSet = new Set();
+  db.tasks.forEach(t => { if (t.tuanBC?.trim()) tuanSet.add(t.tuanBC.trim()); });
+  const sortedTuan = [...tuanSet].sort((a, b) => {
+    const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
+    return parse(a) - parse(b);
+  });
+  tuanSel.innerHTML = '<option value="">Tất cả tuần</option><option value="__thisweek__">📅 Tuần này</option>'
+    + sortedTuan.map(v => `<option value="${v}">${v}</option>`).join('');
+  if (curTuan) tuanSel.value = curTuan;
+}
+
+// ── Main render ──
+function renderQuickView() {
+  if (!_qvIsOpen) return;
+  if (typeof db === 'undefined' || !db.tasks) {
+    _qvRenderEmpty();
+    return;
+  }
+
+  const filterInit = document.getElementById('qvFilterInit')?.value || '';
+  const filterTuan = document.getElementById('qvFilterTuan')?.value || '';
+  const thisWeek   = typeof currentWeekLabel === 'function' ? currentWeekLabel() : _qvCurrentWeek();
+  const activeWeek = filterTuan === '__thisweek__' ? thisWeek : filterTuan;
+
+  // Base filtered set
+  let tasks = db.tasks.filter(t => {
+    if (filterInit && t.initiative !== filterInit) return false;
+    if (activeWeek && (t.tuanBC||'').trim() !== activeWeek) return false;
+    return true;
+  });
+
+  // Update subtitle
+  const subParts = [];
+  if (filterInit) subParts.push(filterInit);
+  if (activeWeek) subParts.push(activeWeek);
+  document.getElementById('qvpSubtitle').textContent = subParts.length
+    ? subParts.join(' · ') + ` · ${tasks.length} task`
+    : `${db.tasks.length} task · Tất cả`;
+
+  _qvRenderDone(tasks);
+  _qvRenderPlan(tasks);
+  _qvRenderInitiative(tasks, filterInit);
+  _qvRenderIssue(tasks);
+
+  // Badge dot (có issue?)
+  const hasIssue = tasks.some(t => t.state === 'Blocked' || t.canBLD === 'Y' || (t.vuongMac||'').trim());
+  document.getElementById('qvDot').style.display = hasIssue ? '' : 'none';
+}
+
+// ── Helper: empty panel ──
+function _qvRenderEmpty() {
+  const msg = `<div class="qvp-empty">
+    <i class="fa-solid fa-database"></i>
+    <div class="qvp-empty-title">Chưa có dữ liệu</div>
+    <div class="qvp-empty-sub">Kết nối Google Sheets hoặc Import Excel để xem Quick View</div>
+  </div>`;
+  ['Done','Plan','Init','Issue'].forEach(k => {
+    const el = document.getElementById('qvp'+(k==='Init'?'Init':'')+'List'
+      .replace('Init','init')) || document.getElementById('qv'+k+'List')
+      || document.getElementById('qvInitList');
+    // Fallback
+  });
+  document.getElementById('qvDoneList').innerHTML = msg;
+  document.getElementById('qvPlanList').innerHTML = msg;
+  document.getElementById('qvInitList').innerHTML = msg;
+  document.getElementById('qvIssueList').innerHTML = msg;
+}
+
+// ── Shared helpers ──
+const _qvFmtDate = d => {
+  if (!d) return '–';
+  const p = d.split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+};
+const _qvRagCls = s => s === 'Green' ? 'rag-green' : s === 'Amber' ? 'rag-amber' : s === 'Red' ? 'rag-red' : '';
+const _qvRagBadge = s => {
+  const cls = { Green:'badge-green', Amber:'badge-amber', Red:'badge-red' }[s] || 'badge-gray';
+  return `<span class="badge ${cls}">${s||'–'}</span>`;
+};
+const _qvStateChip = s => {
+  const map = { 'Chưa bắt đầu':'s0','Đang thực hiện':'s1','Hoàn thành chuẩn bị':'s2','Hoàn thành':'s3','Tạm dừng':'s4','Blocked':'s5' };
+  return `<span class="state-chip ${map[s]||'s0'}">${s||'–'}</span>`;
+};
+function _qvCurrentWeek() {
+  const now = new Date();
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
+}
+function _qvOpenTask(id) {
+  // Gọi editTask() từ file gốc nếu tồn tại
+  if (typeof editTask === 'function') {
+    closeQuickView();
+    editTask(id);
+  }
+}
+function _qvUpdateTime() {
+  const el = document.getElementById('qvpTime');
+  if (el) el.textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ── TAB 1: Completed tasks ──
+function _qvRenderDone(tasks) {
+  const done = tasks.filter(t =>
+    parseInt(t.progress) >= 100 || t.state === 'Hoàn thành'
+  ).sort((a, b) => (b.endDate||'').localeCompare(a.endDate||''));
+
+  document.getElementById('qvCntDone').textContent = done.length;
+
+  if (!done.length) {
+    document.getElementById('qvDoneList').innerHTML = `<div class="qvp-empty">
+      <i class="fa-solid fa-check-circle"></i>
+      <div class="qvp-empty-title">Chưa có task hoàn thành</div>
+      <div class="qvp-empty-sub">Các task đạt 100% hoặc trạng thái "Hoàn thành" sẽ xuất hiện tại đây</div>
+    </div>`;
+    return;
+  }
+
+  document.getElementById('qvDoneList').innerHTML = done.map(t => `
+    <div class="qvp-card qvp-done-card ${_qvRagCls(t.status)}" onclick="_qvOpenTask('${t.id}')">
+      <div class="qvp-card-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;">
+          <div class="qvp-done-check"><i class="fa-solid fa-check"></i></div>
+          <div style="flex:1;min-width:0;">
+            <div class="qvp-card-id">${t.id}</div>
+            <div class="qvp-card-name">${t.name}</div>
+          </div>
+        </div>
+        <div class="qvp-card-badges">${_qvRagBadge(t.status)}</div>
+      </div>
+      <div class="qvp-card-meta">
+        ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${t.initiative}</span>` : ''}
+        ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
+        ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+        ${t.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar-check"></i>Xong: ${_qvFmtDate(t.endDate)}</span>` : ''}
+        ${t.tuanBC ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${t.tuanBC}</span>` : ''}
+      </div>
+      ${(t.result||'').trim() ? `
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:12px;color:var(--text-2);line-height:1.5;">
+          <i class="fa-solid fa-quote-left" style="opacity:.3;margin-right:4px;font-size:10px;"></i>${t.result}
+        </div>` : ''}
+      <div class="qvp-prog">
+        <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:100%;background:var(--success);"></div></div>
+        <span class="qvp-prog-pct" style="color:var(--success);">100%</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── TAB 2: Next Month Plan ──
+function _qvRenderPlan(tasks) {
+  // Lấy tasks có kế hoạch tháng tới (nextPlan !== '') hoặc deadline trong tháng tới
+  const now   = new Date();
+  const nextM = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const nextMEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+  const plan = tasks.filter(t => {
+    const hasNext = (t.nextPlan||'').trim();
+    const inNextMonth = t.endDate && (() => {
+      const d = new Date(t.endDate);
+      return d >= nextM && d <= nextMEnd;
+    })();
+    const isInProg = parseInt(t.progress) < 100 && t.state !== 'Hoàn thành';
+    return (hasNext || inNextMonth) && isInProg;
+  }).sort((a, b) => (a.endDate||'').localeCompare(b.endDate||''));
+
+  document.getElementById('qvCntPlan').textContent = plan.length;
+
+  if (!plan.length) {
+    document.getElementById('qvPlanList').innerHTML = `<div class="qvp-empty">
+      <i class="fa-solid fa-calendar-days"></i>
+      <div class="qvp-empty-title">Không có kế hoạch tháng tới</div>
+      <div class="qvp-empty-sub">Nhập "Kế hoạch tuần tới" khi chỉnh sửa task để thông tin xuất hiện tại đây</div>
+    </div>`;
+    return;
+  }
+
+  const nextMonthLabel = nextM.toLocaleDateString('vi-VN', {month:'long', year:'numeric'});
+
+  document.getElementById('qvPlanList').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <div style="background:var(--accent-light);border:1px solid rgba(255,122,0,.25);color:var(--accent);padding:5px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;">
+        <i class="fa-solid fa-calendar-days" style="margin-right:5px;"></i>${nextMonthLabel}
+      </div>
+      <span style="font-size:12px;color:var(--text-3);">${plan.length} công việc cần thực hiện</span>
+    </div>
+    ${plan.map(t => {
+      const inNextMonth = t.endDate && (() => {
+        const d = new Date(t.endDate);
+        return d >= nextM && d <= nextMEnd;
+      })();
+      return `
+      <div class="qvp-card qvp-plan-card ${_qvRagCls(t.status)}" onclick="_qvOpenTask('${t.id}')">
+        <div class="qvp-card-top">
+          <div style="flex:1;min-width:0;">
+            <div class="qvp-card-id">${t.id}</div>
+            <div class="qvp-card-name">${t.name}</div>
+          </div>
+          <div class="qvp-card-badges" style="flex-direction:column;align-items:flex-end;gap:4px;">
+            ${_qvStateChip(t.state)}
+            ${inNextMonth ? `<span class="qvp-deadline-tag"><i class="fa-solid fa-flag"></i>Deadline tháng tới</span>` : ''}
+          </div>
+        </div>
+        <div class="qvp-card-meta">
+          ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${t.initiative}</span>` : ''}
+          ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
+          ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+          ${t.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar"></i>Deadline: ${_qvFmtDate(t.endDate)}</span>` : ''}
+        </div>
+        ${(t.nextPlan||'').trim() ? `
+          <div class="qvp-plan-content">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block;margin-bottom:4px;">Kế hoạch tuần tới</span>
+            ${t.nextPlan}
+          </div>` : ''}
+        <div class="qvp-prog">
+          <div class="qvp-prog-bar">
+            <div class="qvp-prog-fill" style="width:${t.progress}%;"></div>
+          </div>
+          <span class="qvp-prog-pct">${t.progress}%</span>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+// ── TAB 3: Same Initiative In-Progress ──
+function _qvRenderInitiative(tasks, filterInit) {
+  const inProg = tasks.filter(t =>
+    parseInt(t.progress) < 100 && t.state !== 'Hoàn thành'
+  );
+
+  document.getElementById('qvCntInit').textContent = inProg.length;
+
+  if (!inProg.length) {
+    document.getElementById('qvInitList').innerHTML = `<div class="qvp-empty">
+      <i class="fa-solid fa-layer-group"></i>
+      <div class="qvp-empty-title">Không có task đang thực hiện</div>
+      <div class="qvp-empty-sub">Các task đang xử lý sẽ được nhóm theo Initiative tại đây</div>
+    </div>`;
+    return;
+  }
+
+  // Group by initiative
+  const groups = {};
+  inProg.forEach(t => {
+    const k = t.initiative || 'BAU';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(t);
+  });
+
+  const sorted = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+
+  // If a specific initiative is filtered, flatten view
+  const singleMode = filterInit && sorted.length <= 1;
+
+  let html = '';
+
+  if (!singleMode) {
+    html += `<div class="qvp-section-title" style="margin-bottom:0;">
+      <i class="fa-solid fa-layer-group" style="color:var(--primary);"></i> Nhóm theo Initiative
+    </div>`;
+  }
+
+  sorted.forEach(([initId, initTasks]) => {
+    const avg = Math.round(initTasks.reduce((s,t)=>s+(parseInt(t.progress)||0),0) / initTasks.length);
+    const redCnt   = initTasks.filter(t=>t.status==='Red').length;
+    const amberCnt = initTasks.filter(t=>t.status==='Amber').length;
+
+    if (!singleMode) {
+      html += `
+      <div class="qvp-init-group-header" onclick="_qvToggleInitGroup('${initId}')">
+        <div class="qvp-init-group-name">
+          <i class="fa-solid fa-folder-open" style="opacity:.5;margin-right:5px;font-size:11px;"></i>${initId}
+        </div>
+        <div class="qvp-init-group-meta">
+          <span>${initTasks.length} task</span>
+          ${redCnt > 0 ? `<span style="color:var(--danger);font-weight:700;">🔴 ${redCnt}</span>` : ''}
+          ${amberCnt > 0 ? `<span style="color:var(--warning);font-weight:700;">🟡 ${amberCnt}</span>` : ''}
+        </div>
+        <div class="qvp-init-avg-bar"><div class="qvp-init-avg-fill" style="width:${avg}%;"></div></div>
+        <span style="font-size:11px;font-weight:700;color:var(--primary);font-family:var(--mono);">${avg}%</span>
+        <i class="fa-solid fa-chevron-down" id="qvInitChev-${initId.replace(/[^a-z0-9]/gi,'_')}" style="font-size:10px;color:var(--text-3);transition:var(--transition);"></i>
+      </div>
+      <div class="qvp-init-group-body" id="qvInitBody-${initId.replace(/[^a-z0-9]/gi,'_')}">`;
+    }
+
+    html += initTasks
+      .sort((a,b) => (a.endDate||'').localeCompare(b.endDate||''))
+      .map(t => {
+        const isOverdueTask = typeof isOverdue === 'function'
+          ? isOverdue(t.endDate, t.progress) : false;
+        return `
+        <div class="qvp-card ${_qvRagCls(t.status)}" onclick="_qvOpenTask('${t.id}')" style="margin-left:${singleMode?0:12}px;">
+          <div class="qvp-card-top">
+            <div style="flex:1;min-width:0;">
+              <div class="qvp-card-id">${t.id}</div>
+              <div class="qvp-card-name">${t.name}</div>
+            </div>
+            <div class="qvp-card-badges" style="flex-direction:column;align-items:flex-end;gap:3px;">
+              ${_qvStateChip(t.state)}
+              ${_qvRagBadge(t.status)}
+            </div>
+          </div>
+          <div class="qvp-card-meta">
+            ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
+            ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+            <span class="qvp-card-meta-item" ${isOverdueTask?'style="color:var(--danger);font-weight:700;"':''}>
+              <i class="fa-solid fa-${isOverdueTask?'triangle-exclamation':'calendar'}"></i>
+              ${isOverdueTask?'⚠️ Quá hạn: ':'Deadline: '}${_qvFmtDate(t.endDate)}
+            </span>
+            ${t.milestone ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:3px;color:var(--primary);font-weight:700;"><i class="fa-solid fa-flag-checkered"></i>${t.milestone}</span>` : ''}
+          </div>
+          <div class="qvp-prog">
+            <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:${t.progress}%;"></div></div>
+            <span class="qvp-prog-pct">${t.progress}%</span>
+          </div>
+        </div>`;
+      }).join('');
+
+    if (!singleMode) {
+      html += `</div>`;
+    }
+  });
+
+  document.getElementById('qvInitList').innerHTML = html;
+}
+
+function _qvToggleInitGroup(initId) {
+  const safeId = initId.replace(/[^a-z0-9]/gi,'_');
+  const body = document.getElementById(`qvInitBody-${safeId}`);
+  const chev = document.getElementById(`qvInitChev-${safeId}`);
+  if (!body) return;
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? '' : 'none';
+  if (chev) chev.style.transform = isHidden ? '' : 'rotate(-90deg)';
+}
+
+// ── TAB 4: Issues / Blocked / BLD ──
+function _qvRenderIssue(tasks) {
+  const issues = tasks.filter(t =>
+    t.state === 'Blocked' ||
+    t.canBLD === 'Y' ||
+    (t.vuongMac||'').trim()
+  ).sort((a,b) => {
+    // Sort: Blocked first, then BLD, then others
+    const score = t => t.state==='Blocked' ? 0 : t.canBLD==='Y' ? 1 : 2;
+    return score(a) - score(b);
+  });
+
+  document.getElementById('qvCntIssue').textContent = issues.length;
+
+  if (!issues.length) {
+    document.getElementById('qvIssueList').innerHTML = `<div class="qvp-empty">
+      <i class="fa-solid fa-party-horn"></i>
+      <div class="qvp-empty-title">Không có vướng mắc nào 🎉</div>
+      <div class="qvp-empty-sub">Tất cả task đang chạy suôn sẻ</div>
+    </div>`;
+    return;
+  }
+
+  document.getElementById('qvIssueList').innerHTML = issues.map(t => {
+    const flags = [];
+    if (t.state === 'Blocked') flags.push(`<span class="qvp-issue-flag blocked"><i class="fa-solid fa-ban"></i> Blocked</span>`);
+    if (t.canBLD === 'Y')      flags.push(`<span class="qvp-issue-flag bld"><i class="fa-solid fa-bell"></i> Cần BLĐ</span>`);
+    if ((t.vuongMac||'').trim() && t.state !== 'Blocked') flags.push(`<span class="qvp-issue-flag vuong"><i class="fa-solid fa-circle-exclamation"></i> Vướng mắc</span>`);
+
+    const hasBoth = (t.vuongMac||'').trim() && t.noiDungBLD;
+    return `
+    <div class="qvp-card qvp-issue-card rag-issue" onclick="_qvOpenTask('${t.id}')">
+      <div class="qvp-card-top">
+        <div style="flex:1;min-width:0;">
+          <div class="qvp-card-id">${t.id}</div>
+          <div class="qvp-card-name">${t.name}</div>
+        </div>
+        <div class="qvp-card-badges" style="flex-direction:column;align-items:flex-end;gap:3px;">
+          ${flags.join('')}
+        </div>
+      </div>
+      <div class="qvp-card-meta">
+        ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${t.initiative}</span>` : ''}
+        ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
+        ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+        ${t.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar"></i>${_qvFmtDate(t.endDate)}</span>` : ''}
+        ${t.tuanBC  ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${t.tuanBC}</span>` : ''}
+      </div>
+      ${(t.vuongMac||'').trim() ? `
+        <div class="qvp-issue-text">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--info);display:block;margin-bottom:4px;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:3px;"></i>Vướng mắc / Rủi ro
+          </span>
+          ${t.vuongMac}
+        </div>` : ''}
+      ${(t.noiDungBLD||'').trim() ? `
+        <div class="qvp-issue-text" style="border-top-color:var(--warning);margin-top:${(t.vuongMac||'').trim()?'8px':'0'};">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warning);display:block;margin-bottom:4px;">
+            <i class="fa-solid fa-bell" style="margin-right:3px;"></i>Nội dung cần BLĐ quyết
+          </span>
+          ${t.noiDungBLD}
+        </div>` : ''}
+      <div class="qvp-prog" style="margin-top:10px;">
+        <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:${t.progress}%;background:${t.state==='Blocked'?'var(--danger)':'var(--warning)'};"></div></div>
+        <span class="qvp-prog-pct">${t.progress}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Keyboard: Q để mở Quick View (thêm vào setupListeners trong file gốc) ──
+// Thêm dòng sau vào trong khối xử lý keydown của setupListeners():
+//   if (e.key === 'q' && !inInput) { openQuickView(); }
+//
+// Hoặc thêm riêng listener này:
+document.addEventListener('keydown', function _qvKeyListener(e) {
+  const tag = document.activeElement?.tagName;
+  const inInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
+  // Phím Q (không Ctrl) – mở/đóng Quick View
+  if (e.key === 'q' && !e.ctrlKey && !e.metaKey && !inInput) {
+    if (_qvIsOpen) closeQuickView(); else openQuickView();
+  }
+  // ESC – đóng Quick View (bổ sung vào handler ESC gốc)
+  if (e.key === 'Escape' && _qvIsOpen) closeQuickView();
+});
+
+// === KẾT THÚC QUICK VIEW PANEL JS ===
+</script>
+
+
+<!-- DEMO SCRIPT (KHÔNG MERGE) -->
+<script>
+// ── Demo data stub (thay thế cho db thật từ file gốc) ──
+const TODAY = new Date().toISOString().split('T')[0];
+const NEXT_MONTH = new Date(new Date().getFullYear(), new Date().getMonth()+1, 15).toISOString().split('T')[0];
+const LAST_MONTH = new Date(new Date().getFullYear(), new Date().getMonth()-1, 20).toISOString().split('T')[0];
+const LAST_WEEK  = new Date(Date.now() - 5*86400000).toISOString().split('T')[0];
+
+// ── Simulate db từ file gốc ──
+const db = { tasks: [], initiatives: [] };
+
+// ── Simulate isOverdue từ file gốc ──
+function isOverdue(endDateString, progress) {
+  if (progress >= 100 || !endDateString) return false;
+  const [y,m,d] = endDateString.split('-');
+  const end = new Date(+y, +m-1, +d);
+  const today = new Date(); today.setHours(0,0,0,0);
+  return end < today;
+}
+
+function currentWeekLabel() {
+  const now = new Date();
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
+}
+
+function editTask(id) {
+  alert(`[Demo] Mở modal chỉnh sửa task: ${id}\n(Trong file gốc sẽ mở task modal thật)`);
+  closeQuickView();
+}
+
+function loadDemoData() {
+  const thisWeek = currentWeekLabel();
+  db.tasks = [
+    // ─── COMPLETED ───
+    { id:'Số001', name:'Số hóa hồ sơ tín dụng KHDN – Phase 1', initiative:'INI-SH01', category:'Số hóa', team:'Số', picRes:'Dunglq1', startDate:'2026-01-10', endDate: LAST_WEEK, progress:100, state:'Hoàn thành', status:'Green', tuanBC: thisWeek, result:'Đã hoàn thành bàn giao 1.200 hồ sơ, upload lên hệ thống eCredit thành công. Sai sót 0.3%.', nextPlan:'', vuongMac:'', canBLD:'N', noiDungBLD:'', milestone:'M2' },
+    { id:'Số002', name:'Tích hợp API chữ ký số (eSign) vào quy trình duyệt hạn mức', initiative:'INI-SH01', category:'Số hóa', team:'Số', picRes:'Quangnn3', startDate:'2026-02-01', endDate: LAST_WEEK, progress:100, state:'Hoàn thành', status:'Green', tuanBC: thisWeek, result:'UAT passed. Triển khai production ngày 18/04.', nextPlan:'', vuongMac:'', canBLD:'N', noiDungBLD:'', milestone:'M3' },
+    { id:'CV1-001', name:'Chuẩn hóa mẫu tờ trình phê duyệt tín dụng (template v4)', initiative:'INI-CV01', category:'Sản phẩm', team:'CV1', picRes:'Tuantt4', startDate:'2026-03-01', endDate: LAST_MONTH, progress:100, state:'Hoàn thành', status:'Amber', tuanBC: thisWeek, result:'Phát hành template v4 cho toàn khối. 85% chi nhánh đã áp dụng.', nextPlan:'', vuongMac:'', canBLD:'N', noiDungBLD:'', milestone:'' },
+
+    // ─── IN PROGRESS ───
+    { id:'Số003', name:'Xây dựng dashboard monitoring tín dụng real-time', initiative:'INI-SH01', category:'Dashboard/BC', team:'Số', picRes:'Dunglq1', startDate:'2026-03-15', endDate: NEXT_MONTH, progress:65, state:'Đang thực hiện', status:'Green', tuanBC: thisWeek, result:'Hoàn thành mockup. Đang kết nối API core banking.', nextPlan:'Kết nối xong API, hoàn thành component biểu đồ. Dự kiến demo nội bộ tuần 3 tháng 5.', vuongMac:'API core banking chưa cung cấp token test environment.', canBLD:'N', noiDungBLD:'', milestone:'M4' },
+    { id:'Số004', name:'Triển khai AI scoring model tín dụng cá nhân kinh doanh', initiative:'INI-AI01', category:'AI/Năng suất', team:'Số', picRes:'Quangnn3', startDate:'2026-02-20', endDate: NEXT_MONTH, progress:40, state:'Đang thực hiện', status:'Amber', tuanBC: thisWeek, result:'Thu thập 50.000 mẫu dữ liệu. Training model lần 1 đạt AUC 0.78.', nextPlan:'Training lần 2 với feature engineering mới. Mục tiêu AUC > 0.82.', vuongMac:'Thiếu dữ liệu lịch sử từ phân khúc SME. Cần xin từ hệ thống CRMVN.', canBLD:'Y', noiDungBLD:'Xin BLĐ chấp thuận truy xuất dữ liệu CRM để nâng chất lượng model AI scoring.', milestone:'M5' },
+    { id:'CV2-012', name:'Rà soát & cập nhật chính sách tín dụng Room – Q2/2026', initiative:'INI-ROOM', category:'Room/GHTD', team:'CV2', picRes:'Tuantt4', startDate:'2026-04-01', endDate: LAST_WEEK, progress:30, state:'Đang thực hiện', status:'Red', tuanBC: thisWeek, result:'Đã review 40% điều khoản.', nextPlan:'Hoàn thành review, gửi pháp chế.', vuongMac:'Chờ ý kiến từ Khối QLRR về điều chỉnh hệ số LGD. Đã nhắc 2 lần.', canBLD:'Y', noiDungBLD:'Cần BLĐ thúc QLRR cung cấp hệ số LGD mới trong tuần này để kịp deadline.', milestone:'M3' },
+    { id:'BL1-005', name:'Đào tạo kỹ năng phân tích BCTC chuyên sâu cho CVTD miền Bắc', initiative:'INI-DAO-TAO', category:'Đào tạo', team:'BL1', picRes:'Dunglq1', startDate:'2026-03-20', endDate: NEXT_MONTH, progress:55, state:'Đang thực hiện', status:'Green', tuanBC: thisWeek, result:'Hoàn thành 3/5 module. 42 CVTD đã hoàn thành phần lý thuyết.', nextPlan:'Tổ chức workshop thực hành phân tích case study thật. Lên lịch ngày 08/05.', vuongMac:'', canBLD:'N', noiDungBLD:'', milestone:'' },
+    { id:'INI-SH01-006', name:'Migrate dữ liệu hồ sơ từ hệ thống cũ sang eCredit Cloud', initiative:'INI-SH01', category:'Số hóa', team:'Số', picRes:'Quangnn3', startDate:'2026-04-10', endDate: NEXT_MONTH, progress:15, state:'Chưa bắt đầu', status:'Amber', tuanBC: thisWeek, result:'', nextPlan:'Kick-off meeting với vendor. Lập kế hoạch migration chi tiết 15 bước.', vuongMac:'Vendor chưa cung cấp mapping document. Đã gửi mail nhắc ngày 22/04.', canBLD:'N', noiDungBLD:'', milestone:'M5' },
+    { id:'AI-007', name:'Chatbot hỗ trợ tra cứu hạn mức tín dụng nội bộ', initiative:'INI-AI01', category:'AI/Năng suất', team:'Số', picRes:'Dunglq1', startDate:'2026-03-01', endDate: LAST_WEEK, progress:20, state:'Blocked', status:'Red', tuanBC: thisWeek, result:'Đã thiết kế conversation flow. Build prototype.', nextPlan:'', vuongMac:'IT từ chối cấp quyền deploy lên server nội bộ. Cần escalate lên CIO.', canBLD:'Y', noiDungBLD:'Xin BLĐ hỗ trợ làm việc với CIO để cấp server test cho dự án Chatbot AI.', milestone:'M3' },
+    { id:'BAU-001', name:'Báo cáo tổng hợp hiệu suất tín dụng tuần/tháng', initiative:'BAU', category:'Dashboard/BC', team:'Số', picRes:'Tuantt4', startDate:'2026-01-01', endDate: TODAY, progress:80, state:'Đang thực hiện', status:'Green', tuanBC: thisWeek, result:'Phát hành đúng hạn 18/18 tuần. Không có feedback sai sót.', nextPlan:'Bổ sung thêm chart phân tích theo ngành nghề tháng 5.', vuongMac:'', canBLD:'N', noiDungBLD:'', milestone:'' },
+  ];
+  db.initiatives = [
+    { id:'INI-SH01', name:'Số hóa hồ sơ & quy trình tín dụng' },
+    { id:'INI-AI01', name:'AI & Tự động hóa' },
+    { id:'INI-CV01', name:'Chuẩn hóa nghiệp vụ tín dụng' },
+    { id:'INI-ROOM', name:'Quản lý Room & GHTD' },
+    { id:'INI-DAO-TAO', name:'Đào tạo & Phát triển năng lực' },
+    { id:'BAU', name:'BAU – Công việc thường xuyên' },
+  ];
+  // Re-open panel with new data
+  openQuickView();
+  // Quick toast
+  const t = document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#16A34A;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;animation:qvFadeUp .3s ease;';
+  t.textContent='✅ Đã load ' + db.tasks.length + ' task demo!';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function clearDemoData() {
+  db.tasks = []; db.initiatives = [];
+  closeQuickView();
+  const t = document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#475569;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;';
+  t.textContent='🗑️ Đã xóa data demo';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// Auto load demo on page load
+window.addEventListener('DOMContentLoaded', loadDemoData);
+</script>
+
+</body>
+</html>
