@@ -3264,5 +3264,98 @@ function closeKbModal() { document.getElementById('kbOverlay').classList.remove(
     <i class="fa-solid fa-bolt"></i>
   </button>
 </div>
+  <!-- Overlay backdrop -->
+<div class="qv-overlay" id="qvOverlay" onclick="closeQuickView()"></div>
+
+<!-- Panel -->
+<div id="quickViewPanel">
+
+  <!-- Header -->
+  <div class="qvp-header">
+    <div class="qvp-header-top">
+      <div class="qvp-title-row">
+        <div class="qvp-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+          <div class="qvp-title">Quick View</div>
+          <div class="qvp-subtitle" id="qvpSubtitle">Xem nhanh tình trạng công việc</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="qvp-close" onclick="closeQuickView()" title="Đóng (ESC)"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+    </div>
+
+    <!-- Filter: Initiative scope -->
+    <div class="qvp-filter-row">
+      <span class="qvp-filter-label"><i class="fa-solid fa-filter" style="margin-right:3px;"></i>Initiative:</span>
+      <select class="qvp-filter-select" id="qvFilterInit" onchange="renderQuickView()">
+        <option value="">Tất cả</option>
+      </select>
+      <span class="qvp-filter-label" style="margin-left:8px;"><i class="fa-solid fa-calendar-week" style="margin-right:3px;"></i>Tuần:</span>
+      <select class="qvp-filter-select" id="qvFilterTuan" onchange="renderQuickView()">
+        <option value="">Tất cả</option>
+      </select>
+    </div>
+
+    <!-- Tabs -->
+    <div class="qvp-tabs">
+      <div class="qvp-tab active" data-qvtab="done" onclick="switchQvTab('done')">
+        <i class="fa-solid fa-check-double"></i> Hoàn thành
+        <span class="qvp-tab-count" id="qvCntDone">0</span>
+      </div>
+      <div class="qvp-tab" data-qvtab="plan" onclick="switchQvTab('plan')">
+        <i class="fa-solid fa-calendar-days"></i> Kế hoạch tới
+        <span class="qvp-tab-count" id="qvCntPlan">0</span>
+      </div>
+      <div class="qvp-tab" data-qvtab="initiative" onclick="switchQvTab('initiative')">
+        <i class="fa-solid fa-layer-group"></i> Cùng Initiative
+        <span class="qvp-tab-count" id="qvCntInit">0</span>
+      </div>
+      <div class="qvp-tab" data-qvtab="issue" onclick="switchQvTab('issue')">
+        <i class="fa-solid fa-triangle-exclamation"></i> Vướng mắc
+        <span class="qvp-tab-count" id="qvCntIssue">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="qvp-body">
+
+    <!-- ── TAB 1: Key Tasks Done ── -->
+    <div class="qvp-pane active" id="qvPane-done">
+      <div class="qvp-section-title"><i class="fa-solid fa-trophy" style="color:var(--success);"></i> Key Tasks đã hoàn thành</div>
+      <div id="qvDoneList"></div>
+    </div>
+
+    <!-- ── TAB 2: Next Month Plan ── -->
+    <div class="qvp-pane" id="qvPane-plan">
+      <div class="qvp-section-title"><i class="fa-solid fa-rocket" style="color:var(--accent);"></i> Kế hoạch tháng tới</div>
+      <div id="qvPlanList"></div>
+    </div>
+
+    <!-- ── TAB 3: Same Initiative In-Progress ── -->
+    <div class="qvp-pane" id="qvPane-initiative">
+      <div id="qvInitList"></div>
+    </div>
+
+    <!-- ── TAB 4: Issues & Blocked ── -->
+    <div class="qvp-pane" id="qvPane-issue">
+      <div class="qvp-section-title"><i class="fa-solid fa-shield-halved" style="color:var(--danger);"></i> Vướng mắc · Blocked · Cần BLĐ</div>
+      <div id="qvIssueList"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="qvp-footer">
+    <span id="qvpTime" style="font-size:11px;"></span>
+    <div class="qvp-footer-refresh" id="qvRefreshBtn" onclick="refreshQuickView()">
+      <i class="fa-solid fa-rotate" id="qvRefreshIcon"></i>
+      Làm mới dữ liệu
+    </div>
+  </div>
+
+</div>
+<!-- ════════ KẾT THÚC PANEL HTML ════════ -->
 </body>
 </html>
