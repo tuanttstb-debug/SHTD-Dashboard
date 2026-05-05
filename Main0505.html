@@ -2266,7 +2266,325 @@ function populateDashFilter() {
 
 function renderDashboard() {
   populateDashFilter();
+// ═══════════════════════════════════════════════════════════
+//  QUICK VIEW PANEL  –  v1.0
+//  Dependency: biến toàn cục `tasks` (mảng object task của app)
+//  API public:
+//    quickView.render()   – render toàn bộ, gọi sau khi tasks thay đổi
+//    quickView.toggle(panel) – mở/đóng panel ('done'|'plan'|'inprog'|'issues')
+// ═══════════════════════════════════════════════════════════
+var quickView = (function () {
 
+  // ── Helpers ──────────────────────────────────────────────
+  function parseDMY(s) {
+    if (!s) return null;
+    var p = s.split('/');
+    return p.length === 3 ? new Date(+p[2], +p[1] - 1, +p[0]) : null;
+  }
+  function today() { var d = new Date(); d.setHours(0,0,0,0); return d; }
+
+  function badge(text, cls) {
+    return '<span class="badge ' + cls + '" style="font-size:11px;">' + text + '</span>';
+  }
+  function progBar(pct, color) {
+    return '<div class="qv-prog-wrap">'
+      + '<div class="qv-prog-bar"><div class="qv-prog-fill" style="width:' + pct + '%;'
+      + (color ? 'background:' + color + ';' : '') + '"></div></div>'
+      + '<span class="qv-prog-pct">' + pct + '%</span></div>';
+  }
+  function rowIcon(label, bg, fg) {
+    return '<div class="qv-row-icon" style="background:' + bg + ';color:' + fg + ';">'
+      + label + '</div>';
+  }
+  function groupBy(arr, key) {
+    return arr.reduce(function (acc, item) {
+      var k = item[key] || '–';
+      if (!acc[k]) acc[k] = [];
+      acc[k].push(item);
+      return acc;
+    }, {});
+  }
+  function avgProg(arr) {
+    return arr.length ? Math.round(arr.reduce(function (s, t) {
+      return s + (t.progress || t.prog || 0);
+    }, 0) / arr.length) : 0;
+  }
+
+  // ── Accessors – tương thích với cấu trúc task của app ────
+  // Điều chỉnh các key dưới đây theo đúng schema của `tasks` toàn cục
+  function getField(t, field) {
+    var map = {
+      id         : ['id'],
+      name       : ['name', 'taskName', 'deliverable'],
+      initiative : ['initiative', 'initiativeId', 'Initiative ID'],
+      pic        : ['picRes', 'picResponsible', 'PIC Responsible'],
+      start      : ['startDate', 'start', 'Start Date'],
+      end        : ['endDate', 'deadline', 'Deadline'],
+      prog       : ['progress', 'prog', '% HT'],
+      state      : ['state', 'status', 'Trạng thái'],
+      bld        : ['needBLD', 'Cần BLĐ (Y/N)', 'bld'],
+      tuanBC     : ['tuanBC', 'weekReport', 'Tuần BC'],
+    };
+    var keys = map[field] || [field];
+    for (var i = 0; i < keys.length; i++) {
+      if (t[keys[i]] !== undefined && t[keys[i]] !== null) return t[keys[i]];
+    }
+    return '';
+  }
+  function isOverdue(t) {
+    var d = parseDMY(getField(t, 'end'));
+    var p = parseInt(getField(t, 'prog')) || 0;
+    return d && d < today() && p < 100;
+  }
+  function isDone(t) {
+    return parseInt(getField(t, 'prog')) >= 100 ||
+      String(getField(t, 'state')).toLowerCase().includes('hoàn thành');
+  }
+
+  // ── Render: Panel 1 – Đã hoàn thành ─────────────────────
+  function renderDone(tasks) {
+    var list = tasks.filter(isDone);
+    if (!list.length) return '<div class="qv-empty">Chưa có task hoàn thành</div>';
+    var grouped = groupBy(list, 'initiative');
+    var html = '';
+    Object.keys(grouped).forEach(function (init) {
+      html += '<div class="qv-group"><div class="qv-group-label">'
+        + init + '<span>' + grouped[init].length + ' task</span></div>';
+      grouped[init].forEach(function (t) {
+        var name = getField(t, 'name'), id = getField(t, 'id'),
+            pic  = getField(t, 'pic'), end = getField(t, 'end'),
+            bld  = String(getField(t, 'bld')).toUpperCase() === 'Y';
+        html += '<div class="qv-row" style="cursor:pointer;" onclick="editTask(\'' + id + '\')">'
+          + rowIcon('✓', '#DCFCE7', '#15803D')
+          + '<div class="qv-row-main">'
+          +   '<div class="qv-row-name" title="' + name + '">' + name + '</div>'
+          +   '<div class="qv-row-meta">' + id + ' · ' + pic + ' · deadline ' + end + '</div>'
+          + '</div>'
+          + (bld ? badge('BLĐ', 'badge-red') : '')
+          + '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  // ── Render: Panel 2 – Kế hoạch tháng tới ────────────────
+  function renderPlan(tasks) {
+    var now  = today();
+    var from = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    var to   = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    // Lấy task chưa hoàn thành có deadline trong tháng tới
+    // HOẶC chưa bắt đầu và start date >= tuần sau
+    var nextWeek = new Date(now); nextWeek.setDate(nextWeek.getDate() + 7);
+    var list = tasks.filter(function (t) {
+      if (isDone(t)) return false;
+      var startD = parseDMY(getField(t, 'start'));
+      var endD   = parseDMY(getField(t, 'end'));
+      var inNextMonth = endD && endD >= from && endD <= to;
+      var upcoming    = startD && startD >= nextWeek;
+      return inNextMonth || upcoming;
+    });
+    if (!list.length) return '<div class="qv-empty">Không có task kế hoạch tháng tới</div>';
+    var grouped = groupBy(list, 'initiative');
+    var html = '';
+    Object.keys(grouped).forEach(function (init) {
+      html += '<div class="qv-group"><div class="qv-group-label">'
+        + init + '<span>' + grouped[init].length + ' task</span></div>';
+      grouped[init].forEach(function (t) {
+        var name = getField(t, 'name'), id = getField(t, 'id'),
+            pic  = getField(t, 'pic'), start = getField(t, 'start'),
+            end  = getField(t, 'end'),
+            prog = parseInt(getField(t, 'prog')) || 0,
+            state = getField(t, 'state');
+        var stCls = state === 'Chưa bắt đầu' ? 'badge-green' : 'badge-amber';
+        html += '<div class="qv-row" style="cursor:pointer;" onclick="editTask(\'' + id + '\')">'
+          + '<div class="qv-row-main">'
+          +   '<div class="qv-row-name" title="' + name + '">' + name + '</div>'
+          +   '<div class="qv-row-meta">' + id + ' · ' + pic + ' · ' + start + ' → ' + end + '</div>'
+          +   progBar(prog)
+          + '</div>'
+          + badge(state || 'Chưa bắt đầu', stCls)
+          + '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  // ── Render: Panel 3 – Đang xử lý theo Initiative ────────
+  function renderInprog(tasks) {
+    var list = tasks.filter(function (t) {
+      var p = parseInt(getField(t, 'prog')) || 0;
+      return !isDone(t) && p > 0 && getField(t, 'state') !== 'Chưa bắt đầu';
+    });
+    if (!list.length) return '<div class="qv-empty">Không có task đang xử lý</div>';
+    var grouped = groupBy(list, 'initiative');
+    var html = '';
+    Object.keys(grouped).forEach(function (init) {
+      var grp = grouped[init], avg = avgProg(grp);
+      html += '<div class="qv-group"><div class="qv-group-label">'
+        + init
+        + '<span>' + grp.length + ' task · TB ' + avg + '%</span>'
+        + '</div>';
+      grp.forEach(function (t) {
+        var name  = getField(t, 'name'), id = getField(t, 'id'),
+            pic   = getField(t, 'pic'), end = getField(t, 'end'),
+            prog  = parseInt(getField(t, 'prog')) || 0,
+            state = getField(t, 'state'),
+            od    = isOverdue(t);
+        var stCls = od ? 'badge-red' : (state === 'Tạm dừng' ? 'badge-amber' : 'badge-blue');
+        html += '<div class="qv-row" style="cursor:pointer;" onclick="editTask(\'' + id + '\')">'
+          + '<div class="qv-row-main">'
+          +   '<div class="qv-row-name" title="' + name + '">' + name + '</div>'
+          +   '<div class="qv-row-meta">' + id + ' · ' + pic + ' · deadline ' + end + '</div>'
+          +   progBar(prog, od ? '#EF4444' : null)
+          + '</div>'
+          + badge(od ? 'Quá hạn' : state, stCls)
+          + '</div>';
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  // ── Render: Panel 4 – Issues ─────────────────────────────
+  function renderIssues(tasks) {
+    var overdue = tasks.filter(function (t) { return isOverdue(t); });
+    var bld     = tasks.filter(function (t) {
+      return String(getField(t, 'bld')).toUpperCase() === 'Y' && !isDone(t);
+    });
+    var blocked = tasks.filter(function (t) {
+      return String(getField(t, 'state')).toLowerCase() === 'blocked';
+    });
+    var html = '';
+    function issueSection(arr, label, color, iconLabel, iconBg, iconFg, badgeText, badgeCls) {
+      if (!arr.length) return '';
+      var h = '<div class="qv-group"><div class="qv-group-label" style="color:' + color + ';">'
+        + label + ' (' + arr.length + ')</div>';
+      arr.forEach(function (t) {
+        var name = getField(t, 'name'), id = getField(t, 'id'),
+            pic  = getField(t, 'pic'), end = getField(t, 'end'),
+            prog = parseInt(getField(t, 'prog')) || 0;
+        h += '<div class="qv-row" style="cursor:pointer;" onclick="editTask(\'' + id + '\')">'
+          + rowIcon(iconLabel, iconBg, iconFg)
+          + '<div class="qv-row-main">'
+          +   '<div class="qv-row-name" title="' + name + '">' + name + '</div>'
+          +   '<div class="qv-row-meta">' + id + ' · ' + pic + (end ? ' · deadline ' + end : '') + '</div>'
+          +   (prog ? progBar(prog, color) : '')
+          + '</div>'
+          + badge(badgeText, badgeCls) + '</div>';
+      });
+      return h + '</div>';
+    }
+    html += issueSection(overdue,'Quá hạn',         '#DC2626','!','#FEE2E2','#DC2626','Quá hạn','badge-red');
+    html += issueSection(bld,   'Cần BLĐ quyết',   '#7C3AED','B','#EDE9FE','#7C3AED','Cần BLĐ','badge-red');
+    html += issueSection(blocked,'Blocked',          '#D97706','X','#FEF3C7','#D97706','Blocked','badge-amber');
+    return html || '<div class="qv-empty">Không có issue nào</div>';
+  }
+
+  // ── Xây dựng trigger bar ──────────────────────────────────
+  function buildTriggerBar(counts) {
+    var configs = [
+      { id: 'done',   label: 'Đã hoàn thành',       dot: '#22C55E', cntCls: 'badge-green'  },
+      { id: 'plan',   label: 'Kế hoạch tháng tới',  dot: '#3B82F6', cntCls: 'badge-blue'   },
+      { id: 'inprog', label: 'Đang xử lý',           dot: '#F59E0B', cntCls: 'badge-amber'  },
+      { id: 'issues', label: 'Issues',               dot: '#EF4444', cntCls: 'badge-red'    },
+    ];
+    return configs.map(function (c) {
+      return '<button class="qv-trigger-btn" id="qvBtn-' + c.id + '" '
+        + 'onclick="quickView.toggle(\'' + c.id + '\')">'
+        + '<span class="qv-dot" style="background:' + c.dot + ';"></span>'
+        + c.label
+        + ' <span class="qv-cnt-badge ' + c.cntCls + '">' + (counts[c.id] || 0) + '</span>'
+        + '</button>';
+    }).join('');
+  }
+
+  function buildPanel(id, title, bodyHtml) {
+    return '<div class="qv-panel-hd">'
+      + '<span class="qv-panel-title">' + title + '</span>'
+      + '<button class="qv-close" onclick="quickView.close(\'' + id + '\')">&times;</button>'
+      + '</div>'
+      + '<div class="qv-panel-body">' + bodyHtml + '</div>';
+  }
+
+  // ── PUBLIC: render() ──────────────────────────────────────
+  function render() {
+    // `tasks` là biến global của app. Nếu tên khác, sửa ở đây.
+    var data = (typeof tasks !== 'undefined' && Array.isArray(tasks)) ? tasks : [];
+
+    var doneList   = data.filter(isDone);
+    var planList   = data.filter(function (t) {
+      if (isDone(t)) return false;
+      var nextWeek = new Date(today()); nextWeek.setDate(nextWeek.getDate() + 7);
+      var s = parseDMY(getField(t, 'start'));
+      var e = parseDMY(getField(t, 'end'));
+      var from = new Date(today().getFullYear(), today().getMonth() + 1, 1);
+      var to   = new Date(today().getFullYear(), today().getMonth() + 2, 0);
+      return (e && e >= from && e <= to) || (s && s >= nextWeek);
+    });
+    var inprogList = data.filter(function (t) {
+      var p = parseInt(getField(t, 'prog')) || 0;
+      return !isDone(t) && p > 0 && getField(t, 'state') !== 'Chưa bắt đầu';
+    });
+    var overdueList = data.filter(isOverdue);
+    var bldList    = data.filter(function (t) {
+      return String(getField(t, 'bld')).toUpperCase() === 'Y' && !isDone(t);
+    });
+    var issueSet = new Set(overdueList.concat(bldList).map(function (t) { return getField(t, 'id'); }));
+
+    var counts = {
+      done: doneList.length, plan: planList.length,
+      inprog: inprogList.length, issues: issueSet.size
+    };
+
+    document.getElementById('qvTriggerBar').innerHTML = buildTriggerBar(counts);
+
+    var panelDefs = [
+      { id:'done',   title:'Key task đã hoàn thành',           html: renderDone(data)   },
+      { id:'plan',   title:'Kế hoạch tháng tới',               html: renderPlan(data)   },
+      { id:'inprog', title:'Đang xử lý – phân theo Initiative', html: renderInprog(data) },
+      { id:'issues', title:'Issues – Quá hạn / BLĐ / Blocked', html: renderIssues(data) },
+    ];
+    panelDefs.forEach(function (p) {
+      var el = document.getElementById('qvPanel-' + p.id);
+      if (el) el.innerHTML = buildPanel(p.id, p.title, p.html);
+    });
+  }
+
+  // ── PUBLIC: toggle(panel) ─────────────────────────────────
+  function toggle(panelId) {
+    var allPanels = document.querySelectorAll('.qv-panel');
+    var allBtns   = document.querySelectorAll('.qv-trigger-btn');
+    var target    = document.getElementById('qvPanel-' + panelId);
+    var isOpen    = target && target.classList.contains('open');
+
+    allPanels.forEach(function (p) { p.classList.remove('open'); });
+    allBtns.forEach(function (b)   { b.classList.remove('active'); });
+
+    if (!isOpen && target) {
+      target.classList.add('open');
+      var btn = document.getElementById('qvBtn-' + panelId);
+      if (btn) btn.classList.add('active');
+    }
+  }
+
+  // ── PUBLIC: close(panel) ──────────────────────────────────
+  function close(panelId) {
+    var el  = document.getElementById('qvPanel-' + panelId);
+    var btn = document.getElementById('qvBtn-' + panelId);
+    if (el)  el.classList.remove('open');
+    if (btn) btn.classList.remove('active');
+  }
+
+  return { render: render, toggle: toggle, close: close };
+})();
+
+// Gọi lần đầu sau khi dữ liệu load xong
+// Thêm dòng này vào cuối hàm khởi tạo dữ liệu của app (sau loadTasks / syncDB callback):
+//   quickView.render();
+// Và gọi lại sau mỗi thao tác cập nhật task:
+//   quickView.render();
   // Lấy danh sách task theo filter tuần dashboard
   const dashTuan = document.getElementById('dashFilterTuan')?.value || '';
   const thisWeek = currentWeekLabel();
