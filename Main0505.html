@@ -151,6 +151,31 @@ a{color:inherit;text-decoration:none;}
 .breadcrumb{font-size:12px;color:var(--text-3);}
 
 .topbar-right{display:flex;align-items:center;gap:10px;}
+   <button class="qv-topbar-btn" onclick="openQuickView()" title="Quick View (Q)">
+      <i class="fa-solid fa-bolt" style="color:var(--accent);"></i>
+      Quick View
+      <div class="qv-badge-dot" id="qvDot" style="display:none;"></div>
+    </button>
+
+    <button class="btn btn-outline" onclick="loadDemoData()"><i class="fa-solid fa-database"></i> Load demo data</button>
+    <button class="btn btn-outline" onclick="clearDemoData()"><i class="fa-solid fa-eraser"></i> Xóa data</button>
+    <button class="btn btn-outline" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">
+      <i class="fa-solid fa-circle-half-stroke"></i> Toggle Dark
+    </button>
+  </div>
+</div>
+
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;font-size:13px;color:var(--text-2);line-height:1.8;">
+  <strong style="color:var(--text);font-size:15px;"><i class="fa-solid fa-circle-info" style="color:var(--info);margin-right:8px;"></i>Hướng dẫn merge vào dashboard.html gốc</strong>
+  <ol style="margin-top:12px;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+    <li><strong>CSS</strong>: Copy toàn bộ CSS trong khối <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">/* ===== QUICK VIEW PANEL ===== */</code> vào cuối thẻ <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;style&gt;</code></li>
+    <li><strong>FAB Button</strong>: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">div.qv-fab</code> vào ngay trước <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;/body&gt;</code></li>
+    <li><strong>Panel HTML</strong>: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">div#quickViewPanel + div.qv-overlay</code> vào sau FAB button</li>
+    <li><strong>JavaScript</strong>: Copy toàn bộ khối <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">// === QUICK VIEW PANEL JS ===</code> vào cuối thẻ <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;script&gt;</code></li>
+    <li><strong>(Tuỳ chọn)</strong> Topbar Button: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">button.qv-topbar-btn</code> vào trong <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">.topbar-right</code></li>
+    <li><strong>Keyboard shortcut</strong>: Phím <kbd style="background:var(--surface2);border:1px solid var(--border-strong);border-bottom:3px solid var(--border-strong);border-radius:4px;padding:2px 7px;font-size:11px;font-family:monospace;">Q</kbd> trong setupListeners() đã được thêm vào khối JS – chỉ cần paste là hoạt động</li>
+  </ol>
+</div>
 .icon-btn{
   width:36px;height:36px;border-radius:var(--radius-sm);
   border:1px solid var(--border);background:var(--surface);
