@@ -2069,7 +2069,7 @@ async function syncAction(action) {
   } finally { hideLoading(); }
 }
 
-async function connectDB()
+async function connectDB() {
 
   if (!GS_WEBAPP_URL) {
     toast('⚠️ Chưa cấu hình GS_WEBAPP_URL trong mã nguồn. Xem file Apps Script đính kèm.', 'error', 8000);
