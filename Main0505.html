@@ -2879,5 +2879,43 @@ function closeDetailModal() { document.getElementById('detailOverlay').classList
 function openKbModal() { document.getElementById('kbOverlay').classList.add('open'); }
 function closeKbModal() { document.getElementById('kbOverlay').classList.remove('open'); }
 </script>
+  /* ── FAB Trigger Button ── */
+.qv-fab {
+  position: fixed;
+  bottom: 48px; /* trên status bar */
+  right: 24px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.qv-fab-btn {
+  width: 52px; height: 52px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 6px 20px rgba(75,31,175,0.4);
+  transition: var(--transition);
+  position: relative;
+}
+.qv-fab-btn:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(75,31,175,0.55); }
+.qv-fab-btn.active { background: var(--accent); }
+.qv-fab-tooltip {
+  background: var(--text);
+  color: white;
+  font-size: 11px; font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transform: translateX(8px);
+  transition: var(--transition);
+}
+.qv-fab:hover .qv-fab-tooltip { opacity: 1; transform: translateX(0); }
 </body>
 </html>
