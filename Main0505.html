@@ -675,13 +675,21 @@ textarea.form-control{resize:vertical;min-height:72px;}
   /* ── FAB Trigger Button ── */
 .qv-fab {
   position: fixed;
-  bottom: 48px; /* trên status bar */
-  right: 24px;
+  /* ── FIX v6.1: dời lên cao để không che pagination ──
+     28px (status bar) + 44px (pagination row) + 8px gap = 80px          */
+  bottom: 80px;
+  right: 28px;
   z-index: 500;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+  /* Wrapper trong suốt với click → chỉ button con nhận click */
+  pointer-events: none;
+}
+/* Bật lại pointer-events cho các con trực tiếp */
+.qv-fab > * {
+  pointer-events: auto;
 }
 .qv-fab-btn {
   width: 52px; height: 52px;
@@ -1045,7 +1053,7 @@ textarea.form-control{resize:vertical;min-height:72px;}
 @media (max-width: 768px) {
   #quickViewPanel { width: 100%; border-left: none; border-top: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; top: auto; height: 88vh; transform: translateY(100%); }
   #quickViewPanel.open { transform: translateY(0); }
-  .qv-fab { bottom: 40px; right: 16px; }
+.qv-fab { bottom: 76px; right: 16px; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2376,10 +2384,156 @@ async function writeToHandle() {
   if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
 }
 
+// ═══════════════════════════════════════════════════════════════
+// syncAction v6.1 – Read-Then-Patch (không ghi đè task người khác)
+// ───────────────────────────────────────────────────────────────
+// Thay vì ghi toàn bộ db.tasks (last-write-wins gây mất dữ liệu),
+// hàm này:
+//   1. Đọc Sheet hiện tại về (source of truth)
+//   2. Áp dụng action() lên db local để lấy danh sách task thay đổi
+//   3. Merge: task mới/sửa → patch vào data vừa đọc; task xóa → loại ra
+//   4. Ghi kết quả merge lên Sheet
+// → Không bao giờ xóa task mà phiên này không chạm tới
+// ═══════════════════════════════════════════════════════════════
 async function syncAction(action) {
   showLoading('Đang đồng bộ Google Sheets…');
   document.getElementById('syncDot').className = 'status-dot syncing';
 
+  // Snapshot local TRƯỚC khi action() để xác định diff
+  const snapshotBefore = db.tasks.map(t => t.id);
+
+  try {
+    // ── 1. Áp dụng action vào db local ──
+    if (typeof action === 'function') action();
+
+    const localTasks = db.tasks; // sau action
+
+    // ── 2. Đọc dữ liệu mới nhất từ Sheet ──
+    //    Nếu đọc thất bại → fallback về full-write (backward compat)
+    let serverTasks = null;
+    if (GS_WEBAPP_URL) {
+      try {
+        showLoading('Đang đọc dữ liệu mới nhất từ Sheet…');
+        const res = await fetch(GS_WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'read' }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.status === 'ok' && json.values) {
+            // Parse server data vào mảng tạm, không ghi đè db
+            const tempDb = { tasks: [], initiatives: [] };
+            const savedDb = db;
+            db = tempDb;
+            _parseArrayIntoDb(json.values);
+            serverTasks = tempDb.tasks;
+            db = savedDb; // khôi phục db
+          }
+        }
+      } catch (readErr) {
+        console.warn('syncAction: không đọc được Sheet, fallback full-write:', readErr.message);
+        // serverTasks = null → sẽ full-write bên dưới
+      }
+    }
+
+    // ── 3. Merge ──
+    //    Nếu đọc được server data → merge thông minh
+    //    Nếu không → full-write (hành vi cũ, an toàn hơn là không ghi gì)
+    if (serverTasks !== null) {
+      // Tạo map server theo id
+      const serverMap = new Map(serverTasks.map(t => [t.id, t]));
+
+      // IDs mà local action đã XÓA (có trong snapshot trước, không còn trong localTasks)
+      const localIds = new Set(localTasks.map(t => t.id));
+      const deletedIds = new Set(snapshotBefore.filter(id => !localIds.has(id)));
+
+      // IDs mà local action đã THÊM hoặc SỬA (có trong localTasks)
+      const localMap = new Map(localTasks.map(t => [t.id, t]));
+
+      // Bắt đầu từ server data → áp diff
+      const merged = [];
+      // a) Giữ lại task server nào KHÔNG bị xóa bởi local action
+      serverMap.forEach((t, id) => {
+        if (deletedIds.has(id)) return; // local đã xóa → bỏ
+        if (localMap.has(id)) {
+          merged.push(localMap.get(id)); // local có sửa → lấy bản local
+        } else {
+          merged.push(t); // server có, local không chạm → giữ nguyên
+        }
+      });
+      // b) Thêm task mới hoàn toàn (local có, server chưa có)
+      localMap.forEach((t, id) => {
+        if (!serverMap.has(id) && !deletedIds.has(id)) {
+          merged.push(t);
+        }
+      });
+
+      // Ghi merged list (không phải db.tasks) lên Sheet
+      showLoading('Đang ghi dữ liệu lên Sheet…');
+      const values = [DB_COLS, ...merged.map(taskToRow)];
+
+      if (merged.length === 0 && serverTasks.length > 0) {
+        const ok = await uiConfirm(
+          '⚠️ Cảnh báo mất dữ liệu',
+          `Thao tác này sẽ xóa toàn bộ ${serverTasks.length} task trên Google Sheets. Bạn có chắc chắn?`,
+          'danger', 'Xóa tất cả'
+        );
+        if (!ok) {
+          // Rollback local về server state
+          db.tasks = serverTasks;
+          persist(); renderAll();
+          toast('Đã hủy thao tác.', 'info');
+          hideLoading();
+          document.getElementById('syncDot').className = 'status-dot connected';
+          return false;
+        }
+      }
+
+      const res = await fetch(GS_WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'write', values }),
+      });
+      if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
+      const json = await res.json();
+      if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
+
+      // Cập nhật db local = merged (đồng bộ với Sheet)
+      db.tasks = merged;
+      // Rebuild initiatives
+      const iMap = new Map();
+      db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
+      db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
+
+    } else {
+      // Fallback: full-write (hành vi cũ)
+      if (db.tasks.length === 0) throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng (0 task).');
+      await writeToHandle();
+    }
+
+    persist(); renderAll();
+    document.getElementById('syncDot').className = 'status-dot connected';
+    return true;
+
+  } catch(e) {
+    // Rollback db về snapshot trước action()
+    // (snapshot trước đó vẫn ở localStorage)
+    try {
+      const cached = localStorage.getItem('shtd_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.tasks) { db.tasks = parsed.tasks; db.initiatives = parsed.initiatives || []; }
+      }
+    } catch(_) {}
+    renderAll();
+    console.error('syncAction error:', e);
+    toast('❌ Lỗi đồng bộ: ' + e.message + ' — Dữ liệu local đã được khôi phục.', 'error', 8000);
+    document.getElementById('syncDot').className = 'status-dot';
+    return false;
+  } finally {
+    hideLoading();
+  }
   // ── FIX B: Snapshot db trước khi thay đổi để rollback nếu write lỗi ──
   // KHÔNG gọi readFromHandle() ở đây — tránh race condition ghi đè dữ liệu
   const snapshot = JSON.parse(JSON.stringify(db));
