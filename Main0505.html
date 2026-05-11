@@ -2661,6 +2661,47 @@ function exportExcel() {
   if (!db.tasks.length) { toast('Không có dữ liệu để xuất.','warning'); return; }
   const wb = XLSX.utils.book_new();
   const aoa = [DB_COLS, ...db.tasks.map(taskToRow)];
+
+  // UPDATED v6.2: định dạng ngày dd-mmm-yy và cột % thêm ký hiệu %
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtExportDate = (str) => {
+    if (!str || typeof str !== 'string') return str;
+    // Hỗ trợ dd/mm/yyyy (đầu ra của taskToRow) và yyyy-mm-dd
+    let d, m, y;
+    const parts1 = str.split('/');
+    if (parts1.length === 3 && parts1[2].length === 4) { // dd/mm/yyyy
+      d = parseInt(parts1[0], 10);
+      m = parseInt(parts1[1], 10) - 1;
+      y = parseInt(parts1[2], 10);
+    } else {
+      const dt = new Date(str);
+      if (!isNaN(dt)) {
+        d = dt.getDate();
+        m = dt.getMonth();
+        y = dt.getFullYear();
+      } else {
+        return str; // không parse được → giữ nguyên
+      }
+    }
+    if (isNaN(d) || isNaN(m) || isNaN(y)) return str;
+    return `${String(d).padStart(2,'0')}-${months[m]}-${String(y).slice(-2)}`;
+  };
+
+  for (let i = 1; i < aoa.length; i++) {
+    const row = aoa[i];
+    // Cột Start Date (index 11) và Deadline (index 12) sang dd-mmm-yy
+    if (row[11] !== undefined) row[11] = fmtExportDate(row[11]);
+    if (row[12] !== undefined) row[12] = fmtExportDate(row[12]);
+    // Cột % HT (index 13) thêm dấu %
+    const progVal = row[13];
+    if (progVal !== undefined && progVal !== '') {
+      // Đảm bảo không phải NaN, giữ nguyên nếu đã có %
+      if (!String(progVal).includes('%')) {
+        row[13] = progVal + '%';
+      }
+    }
+  }
+
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [
     {wch:14},{wch:14},{wch:16},{wch:18},
@@ -2676,9 +2717,8 @@ function exportExcel() {
   ];
   XLSX.utils.book_append_sheet(wb, ws, 'Task_Master');
   XLSX.writeFile(wb, `SHTD_TaskDB_${new Date().toISOString().split('T')[0]}.xlsx`);
-  toast('Đã xuất file Excel!','success');
+  toast('Đã xuất file Excel!', 'success');
 }
-
 // ═══════════════════════════════════════════
 // RENDER ALL
 // ═══════════════════════════════════════════
