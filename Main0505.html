@@ -3340,10 +3340,13 @@ async function handleSubmit(e) {
   e.preventDefault();
   const prog = parseInt(document.getElementById('fProg').value)||0;
   if (prog > 100) { toast('Tiến độ không được vượt quá 100%!','error'); return; }
+
+  // UPDATED v6.2: KHÔNG cho phép ghi đè khi tạo mới – chỉ báo lỗi và yêu cầu sửa trực tiếp
   if (checkDupId(document.getElementById('fId').value)) {
-    const over = await uiConfirm('ID đã tồn tại', `Mã Task "<strong>${document.getElementById('fId').value}</strong>" đã có. Ghi đè lên task cũ?`, 'warn', 'Ghi đè');
-    if (!over) return;
+    toast(`❌ Mã Task "<strong>${document.getElementById('fId').value}</strong>" đã tồn tại. Vui lòng tìm task này trong danh sách và chỉnh sửa trực tiếp.`, 'error', 6000);
+    return;
   }
+
   const task = {
     id: document.getElementById('fId').value.trim(),
     tuanBC: document.getElementById('fTuanBC').value.trim(),
@@ -3380,6 +3383,7 @@ async function handleSubmit(e) {
   });
   if (success) { closeTaskModal(); toast(`Đã lưu task <strong>${task.id}</strong>!`, 'success'); }
 }
+
 
 async function deleteTask() {
   const id = document.getElementById('origId').value;
