@@ -1055,7 +1055,120 @@ textarea.form-control{resize:vertical;min-height:72px;}
   #quickViewPanel.open { transform: translateY(0); }
 .qv-fab { bottom: 76px; right: 16px; }
 }
+/* ════════════════════════════════════════════════════════════
+   INITIATIVE DASHBOARD – bảng quản lý Initiative + Milestone
+   ════════════════════════════════════════════════════════════ */
 
+/* ── Tabs trong Dashboard ── */
+.dash-tabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 18px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.dash-tabs::-webkit-scrollbar { display: none; }
+.dash-tab {
+  padding: 10px 20px;
+  cursor: pointer; font-weight: 600; font-size: 13px;
+  color: var(--text-2); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: var(--transition);
+  white-space: nowrap; flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.dash-tab:hover { color: var(--text); }
+.dash-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.dash-tab-count {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 99px; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; color: var(--text-3);
+  min-width: 18px; text-align: center;
+}
+.dash-tab.active .dash-tab-count {
+  background: var(--primary-xlight); border-color: rgba(75,31,175,.25); color: var(--primary);
+}
+
+/* ── Initiative table ── */
+.init-master-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+.init-master-table thead {
+  position: sticky; top: 0; z-index: 2;
+}
+.init-master-table th {
+  padding: 10px 12px;
+  background: var(--surface2);
+  font-size: 11px; font-weight: 700; color: var(--text-2);
+  text-transform: uppercase; letter-spacing: .05em;
+  border-bottom: 1px solid var(--border);
+  text-align: left; white-space: nowrap;
+}
+.init-master-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.init-master-table tbody tr {
+  cursor: pointer; transition: background .12s;
+}
+.init-master-table tbody tr:hover { background: var(--surface2); }
+.init-master-table tbody tr.row-initiative {
+  background: var(--primary-xlight);
+  font-weight: 600;
+}
+.init-master-table tbody tr.row-initiative:hover {
+  background: rgba(75,31,175,0.12);
+}
+.init-master-table tbody tr.row-milestone {
+  font-size: 12px;
+}
+.init-master-table tbody tr.row-milestone td:first-child {
+  padding-left: 28px; /* indent */
+}
+.init-master-table tbody tr.row-overdue {
+  background: rgba(220,38,38,.03);
+}
+
+/* Milestone connector arrow */
+.ms-arrow {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--primary); font-weight: 700; font-size: 12px;
+}
+.ms-arrow::before {
+  content: '↳';
+  font-size: 14px; opacity: .7;
+}
+
+/* Trạng thái initiative */
+.init-status-active  { background: #DBEAFE; color: #1D4ED8; }
+.init-status-hold    { background: #FFF7ED; color: #C2410C; }
+.init-status-done    { background: #DCFCE7; color: #15803D; }
+.init-status-pending { background: #F1F5F9; color: #64748B; }
+
+.init-status-pill {
+  padding: 3px 9px; border-radius: 99px;
+  font-size: 11px; font-weight: 700;
+  display: inline-block; white-space: nowrap;
+}
+
+/* Milestone trạng thái */
+.ms-status-done   { color: var(--success); font-weight: 700; }
+.ms-status-active  { color: var(--primary); font-weight: 700; }
+.ms-status-pending { color: var(--text-3); }
+.ms-status-overdue { color: var(--danger); font-weight: 700; }
+
+/* ── Initiative Form Modal ── */
+.initiative-modal { max-width: 1000px; }
+.initiative-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 768px) {
+  .initiative-form-grid { grid-template-columns: 1fr; }
+}
 /* ════════════════════════════════════════════════════════════
    >>> KẾT THÚC PHẦN MERGE – CSS <<<
    ════════════════════════════════════════════════════════════ */
@@ -1148,6 +1261,17 @@ textarea.form-control{resize:vertical;min-height:72px;}
 
     <!-- ===== DASHBOARD ===== -->
     <section class="view-section active" id="view-dashboard">
+      <!-- Dashboard Tabs -->
+<div class="dash-tabs">
+  <div class="dash-tab active" data-dashtab="overview" onclick="switchDashTab('overview')">
+    <i class="fa-solid fa-chart-pie"></i> Tổng quan
+  </div>
+  <div class="dash-tab" data-dashtab="initiatives" onclick="switchDashTab('initiatives')">
+    <i class="fa-solid fa-diagram-project"></i> Initiatives
+    <span class="dash-tab-count" id="dashInitCount">0</span>
+  </div>
+</div>
+      <div class="dash-pane active" id="dashPane-overview">
       <!-- Dashboard filter bar -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
         <div style="font-size:13px;font-weight:600;color:var(--text-2);white-space:nowrap;"><i class="fa-solid fa-calendar-week" style="margin-right:5px;color:var(--primary);"></i>Xem theo tuần:</div>
@@ -1157,6 +1281,50 @@ textarea.form-control{resize:vertical;min-height:72px;}
         </select>
         <div style="font-size:12px;color:var(--text-3);" id="dashFilterLabel"></div>
       </div>
+        </div>
+      <div class="dash-pane" id="dashPane-initiatives" style="display:none;">
+  <!-- Initiative toolbar -->
+  <div class="toolbar" style="margin-bottom:12px;">
+    <div class="toolbar-left">
+      <div style="font-size:17px;font-weight:800;">Danh sách Initiative & Milestone</div>
+      <div style="font-size:12px;color:var(--text-3);" id="initSummaryText"></div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn btn-outline btn-sm" onclick="loadSampleInitiative()">
+        <i class="fa-solid fa-flask"></i> Load mẫu SCF-001
+      </button>
+      <button class="btn btn-primary" onclick="openInitiativeModal()">
+        <i class="fa-solid fa-plus"></i> Thêm Initiative
+      </button>
+    </div>
+  </div>
+
+  <!-- Initiative table -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="table-wrap" style="border-radius:0;border:none;">
+      <table class="init-master-table">
+        <thead>
+          <tr>
+            <th style="width:130px;">Initiative ID</th>
+            <th style="min-width:220px;">Tên Initiative / Milestone</th>
+            <th style="width:100px;">Category</th>
+            <th style="width:120px;">Accountable</th>
+            <th style="width:95px;">Start Date</th>
+            <th style="width:110px;">Deadline / Target</th>
+            <th style="width:65px;">% HT</th>
+            <th style="width:130px;">Milestone đang track</th>
+            <th style="width:95px;">Deadline MS</th>
+            <th style="width:90px;">Trạng thái</th>
+            <th style="min-width:180px;">Mục tiêu / KPI</th>
+            <th style="min-width:150px;">Ghi chú</th>
+            <th style="min-width:140px;">Link tài liệu</th>
+          </tr>
+        </thead>
+        <tbody id="initiativeTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
       <div id="overdueBannerWrap"></div>
       <div class="kpi-grid" id="kpiGrid">
         <div class="kpi-card kpi-total" onclick="showDetailModal('all','Tất cả Task')">
@@ -1588,7 +1756,107 @@ textarea.form-control{resize:vertical;min-height:72px;}
     </div>
   </div>
 </div>
+<!-- ===== INITIATIVE MODAL ===== -->
+<div class="overlay" id="initiativeOverlay">
+  <div class="modal initiative-modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="initModalTitle">Thêm Initiative mới</div>
+        <div class="modal-subtitle" id="initModalSubtitle">Điền thông tin Initiative và các Milestone</div>
+      </div>
+      <div class="modal-close" onclick="closeInitiativeModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="modal-body">
+      <form id="initiativeForm" onsubmit="handleInitSubmit(event)" autocomplete="off">
+        <input type="hidden" id="initOrigId">
+        <div class="initiative-form-grid">
+          <div class="form-group">
+            <label class="form-label">Initiative ID <span class="req">*</span></label>
+            <input type="text" id="initId" class="form-control" required placeholder="VD: SCF-001">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tên Initiative <span class="req">*</span></label>
+            <input type="text" id="initName" class="form-control" required placeholder="Tên đầy đủ của initiative…">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category <span class="req">*</span></label>
+            <select id="initCat" class="form-control" required>
+              <option value="">– Chọn –</option>
+              <option>Sản phẩm</option><option>Số hóa</option><option>AI/Năng suất</option>
+              <option>Room/GHTD</option><option>Bán hàng</option><option>Rủi ro/QLDM</option>
+              <option>Đào tạo</option><option>Dashboard/BC</option><option>Hỗn hợp</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Accountable (Teamlead/Squad Lead) <span class="req">*</span></label>
+            <input type="text" id="initAcc" class="form-control" required placeholder="VD: MaiTTT7">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Start Date <span class="req">*</span></label>
+            <input type="date" id="initStart" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deadline / Target <span class="req">*</span></label>
+            <input type="date" id="initEnd" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">% HT (TL nhập tay)</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" id="initProg" class="form-control" min="0" max="100" value="0" style="flex:1;">
+              <div class="prog-bar" style="width:80px;"><div class="prog-fill" id="initProgPreview" style="width:0%;"></div></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Trạng thái <span class="req">*</span></label>
+            <select id="initStatus" class="form-control" required>
+              <option value="Active">Active</option>
+              <option value="Hold">Hold</option>
+              <option value="Done">Done</option>
+              <option value="Pending">Pending</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Mục tiêu / KPI đầu ra</label>
+            <textarea id="initKpi" class="form-control" rows="2" placeholder="VD: Golive sản phẩm, dư nợ mục tiêu 500 tỷ…"></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Ghi chú (Member nhập)</label>
+            <textarea id="initNote" class="form-control" rows="2" placeholder="Ghi chú từ member…"></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Link tài liệu (Member nhập)</label>
+            <input type="url" id="initLink" class="form-control" placeholder="https://…">
+          </div>
 
+          <!-- Milestones section -->
+          <div class="form-section-title">📌 Milestones</div>
+          <div class="form-group full" id="milestonesContainer">
+            <!-- Milestone rows sẽ được JS render -->
+          </div>
+          <div class="form-group full">
+            <button type="button" class="btn btn-outline btn-sm" onclick="addMilestoneRow()">
+              <i class="fa-solid fa-plus"></i> Thêm Milestone
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <div>
+        <button type="button" class="btn btn-danger btn-sm" id="initBtnDelete" style="display:none;" onclick="deleteInitiative()">
+          <i class="fa-solid fa-trash"></i> Xóa Initiative
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="shortcut-hint">ESC = Đóng</span>
+        <button type="button" class="btn btn-outline" onclick="closeInitiativeModal()">Hủy</button>
+        <button type="submit" form="initiativeForm" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Initiative
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- ===== CONFIRM MODAL ===== -->
 <div class="overlay" id="confirmOverlay">
   <div class="confirm-modal">
@@ -3480,6 +3748,371 @@ function closeDetailModal() { document.getElementById('detailOverlay').classList
 // ═══════════════════════════════════════════
 function openKbModal() { document.getElementById('kbOverlay').classList.add('open'); }
 function closeKbModal() { document.getElementById('kbOverlay').classList.remove('open'); }
+// ═══════════════════════════════════════════
+// INITIATIVE DATA MODEL
+// ═══════════════════════════════════════════
+// Mỗi initiative có thể có milestones con
+// db.initiativesData = [{ id, name, category, accountable, startDate, endDate,
+//   progress, status, kpi, note, link, milestones: [{id, name, startDate, endDate, progress, status}] }]
+if (!db.initiativesData) db.initiativesData = [];
+
+let dashTab = 'overview'; // 'overview' hoặc 'initiatives'
+
+function switchDashTab(tab) {
+  dashTab = tab;
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-dashtab="${tab}"]`)?.classList.add('active');
+  document.getElementById('dashPane-overview').style.display = tab === 'overview' ? '' : 'none';
+  document.getElementById('dashPane-initiatives').style.display = tab === 'initiatives' ? '' : 'none';
+  if (tab === 'initiatives') renderInitiativeTable();
+}
+
+// ═══════════════════════════════════════════
+// RENDER INITIATIVE TABLE
+// ═══════════════════════════════════════════
+function renderInitiativeTable() {
+  const tbody = document.getElementById('initiativeTbody');
+  const items = db.initiativesData || [];
+
+  document.getElementById('dashInitCount').textContent = items.length;
+
+  const totalMs = items.reduce((s,i) => s + (i.milestones?.length || 0), 0);
+  document.getElementById('initSummaryText').textContent =
+    `${items.length} initiative · ${totalMs} milestone`;
+
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text-3);">
+      <i class="fa-solid fa-diagram-project" style="font-size:28px;display:block;margin-bottom:10px;"></i>
+      Chưa có Initiative nào. Nhấn "Thêm Initiative" hoặc "Load mẫu SCF-001".
+    </td></tr>`;
+    return;
+  }
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtDateShort = (d) => {
+    if (!d) return '–';
+    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const [y,m,day] = d.split('-');
+      return `${day}-${months[parseInt(m)-1]}-${y.slice(-2)}`;
+    }
+    return fmtDate(d);
+  };
+  const fmtDateFull = (d) => fmtDate(d);
+  const fmtProg = (v) => (v !== undefined && v !== null && v !== '') ? v + '%' : '–';
+  const statusPill = (s) => {
+    const map = { Active:'init-status-active', Hold:'init-status-hold', Done:'init-status-done', Pending:'init-status-pending' };
+    return `<span class="init-status-pill ${map[s]||'init-status-pending'}">${s||'–'}</span>`;
+  };
+  const msStatus = (ms, initEnd) => {
+    if (ms.status === 'Done' || ms.progress >= 100) return 'ms-status-done';
+    // Check overdue
+    if (ms.endDate && new Date(ms.endDate) < new Date() && ms.progress < 100) return 'ms-status-overdue';
+    if (ms.status === 'Active' || ms.progress > 0) return 'ms-status-active';
+    return 'ms-status-pending';
+  };
+  const msStatusLabel = (ms, initEnd) => {
+    const s = ms.status || (ms.progress >= 100 ? 'Done' : ms.progress > 0 ? 'Active' : 'Pending');
+    const overdue = ms.endDate && new Date(ms.endDate) < new Date() && ms.progress < 100;
+    if (overdue) return '⚠ Quá hạn';
+    const labels = { Done:'✅ Xong', Active:'🔵 Đang làm', Pending:'⏳ Chờ' };
+    return labels[s] || s;
+  };
+
+  let html = '';
+  items.forEach(item => {
+    const isOverdueInit = item.endDate && new Date(item.endDate) < new Date() && (item.progress||0) < 100;
+    const rowClass = isOverdueInit ? 'row-initiative row-overdue' : 'row-initiative';
+
+    // Row chính Initiative
+    html += `<tr class="${rowClass}" onclick="editInitiative('${item.id}')">
+      <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${item.id}</span></td>
+      <td style="font-weight:600;">${item.name}</td>
+      <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:4px;font-weight:600;">${item.category||'–'}</span></td>
+      <td>${item.accountable||'–'}</td>
+      <td>${fmtDateShort(item.startDate)}</td>
+      <td>${fmtDateShort(item.endDate)}</td>
+      <td><span class="prog-pct">${fmtProg(item.progress)}</span></td>
+      <td>${item.milestones?.find(m => m.status === 'Active' || m.progress > 0 && m.progress < 100)?.name || '–'}</td>
+      <td>–</td>
+      <td>${statusPill(item.status)}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.kpi||''}">${item.kpi||'–'}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.note||''}">${item.note||'–'}</td>
+      <td>${item.link ? `<a href="${item.link}" target="_blank" onclick="event.stopPropagation()" style="color:var(--info);"><i class="fa-solid fa-arrow-up-right-from-square"></i> Link</a>` : '–'}</td>
+    </tr>`;
+
+    // Milestones con
+    if (item.milestones?.length) {
+      item.milestones.sort((a,b) => (a.startDate||'').localeCompare(b.startDate||'')).forEach(ms => {
+        const msCls = msStatus(ms, item.endDate);
+        html += `<tr class="row-milestone" onclick="editInitiative('${item.id}')">
+          <td></td>
+          <td><span class="ms-arrow">${ms.name}</span></td>
+          <td><span style="font-size:10px;color:var(--text-3);">${item.category||''}</span></td>
+          <td></td>
+          <td>${fmtDateShort(ms.startDate)}</td>
+          <td>${fmtDateShort(ms.endDate)}</td>
+          <td><span class="${msCls}">${fmtProg(ms.progress)}</span></td>
+          <td>–</td>
+          <td>${fmtDateShort(ms.endDate)}</td>
+          <td><span class="${msCls}">${msStatusLabel(ms, item.endDate)}</span></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>`;
+      });
+    }
+  });
+
+  tbody.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════
+// LOAD SAMPLE DATA – SCF-001
+// ═══════════════════════════════════════════
+function loadSampleInitiative() {
+  if (db.initiativesData.some(i => i.id === 'SCF-001')) {
+    toast('⚠️ SCF-001 đã tồn tại trong danh sách.', 'warning');
+    return;
+  }
+  db.initiativesData.push({
+    id: 'SCF-001',
+    name: 'SCF Viettel Group – BTT NCC VTP',
+    category: 'Sản phẩm',
+    accountable: 'MaiTTT7',
+    startDate: '2026-01-15',
+    endDate: '2026-06-30',
+    progress: 88,
+    status: 'Active',
+    kpi: 'Golive sản phẩm BTT NCC Viettel, dư nợ mục tiêu 500 tỷ',
+    note: '',
+    link: '',
+    milestones: [
+      {
+        name: 'Tờ trình MFT + chốt luồng SCF',
+        startDate: '2026-01-15',
+        endDate: '2026-03-31',
+        progress: 100,
+        status: 'Done'
+      },
+      {
+        name: 'Ban hành sản phẩm & chương trình lãi suất',
+        startDate: '2026-04-01',
+        endDate: '2026-04-15',
+        progress: 85,
+        status: 'Active'
+      }
+    ]
+  });
+  persistInitiatives();
+  renderInitiativeTable();
+  document.getElementById('dashInitCount').textContent = db.initiativesData.length;
+  toast('✅ Đã load mẫu SCF-001!', 'success');
+}
+
+function persistInitiatives() {
+  const all = JSON.parse(localStorage.getItem('shtd_v2') || '{}');
+  all.initiativesData = db.initiativesData;
+  localStorage.setItem('shtd_v2', JSON.stringify(all));
+}
+
+// ═══════════════════════════════════════════
+// INITIATIVE MODAL
+// ═══════════════════════════════════════════
+function openInitiativeModal(item = null) {
+  document.getElementById('initiativeForm').reset();
+  document.getElementById('initProgPreview').style.width = '0%';
+  document.getElementById('initBtnDelete').style.display = 'none';
+  document.getElementById('milestonesContainer').innerHTML = '';
+
+  if (item) {
+    document.getElementById('initModalTitle').textContent = 'Chỉnh sửa Initiative';
+    document.getElementById('initModalSubtitle').textContent = `ID: ${item.id}`;
+    document.getElementById('initOrigId').value = item.id;
+    document.getElementById('initId').value = item.id;
+    document.getElementById('initName').value = item.name;
+    document.getElementById('initCat').value = item.category || '';
+    document.getElementById('initAcc').value = item.accountable || '';
+    document.getElementById('initStart').value = item.startDate || '';
+    document.getElementById('initEnd').value = item.endDate || '';
+    document.getElementById('initProg').value = item.progress || 0;
+    document.getElementById('initProgPreview').style.width = (item.progress||0) + '%';
+    document.getElementById('initStatus').value = item.status || 'Active';
+    document.getElementById('initKpi').value = item.kpi || '';
+    document.getElementById('initNote').value = item.note || '';
+    document.getElementById('initLink').value = item.link || '';
+    document.getElementById('initBtnDelete').style.display = 'inline-flex';
+
+    // Load milestones
+    if (item.milestones) {
+      item.milestones.forEach(ms => addMilestoneRow(ms));
+    }
+  } else {
+    document.getElementById('initModalTitle').textContent = 'Thêm Initiative mới';
+    document.getElementById('initModalSubtitle').textContent = 'Điền thông tin Initiative và các Milestone';
+    document.getElementById('initOrigId').value = '';
+    document.getElementById('initStatus').value = 'Active';
+  }
+
+  document.getElementById('initiativeOverlay').classList.add('open');
+}
+
+function closeInitiativeModal() {
+  document.getElementById('initiativeOverlay').classList.remove('open');
+}
+
+function editInitiative(id) {
+  const item = db.initiativesData.find(i => i.id === id);
+  if (item) openInitiativeModal(item);
+}
+
+// Milestone row management
+function addMilestoneRow(data = null) {
+  const container = document.getElementById('milestonesContainer');
+  const idx = container.children.length;
+  const html = `
+    <div class="ms-row" style="display:grid;grid-template-columns:2fr 1fr 1fr 0.8fr 1fr;gap:8px;align-items:end;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Tên Milestone ${idx+1}</label>
+        <input type="text" class="form-control ms-name" placeholder="VD: Tờ trình MFT" value="${data?.name||''}" style="font-size:12px;">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Start</label>
+        <input type="date" class="form-control ms-start" value="${data?.startDate||''}" style="font-size:12px;">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Deadline</label>
+        <input type="date" class="form-control ms-end" value="${data?.endDate||''}" style="font-size:12px;">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">% HT</label>
+        <input type="number" class="form-control ms-prog" min="0" max="100" value="${data?.progress||0}" style="font-size:12px;">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Trạng thái</label>
+        <select class="form-control ms-status" style="font-size:12px;">
+          <option value="Active" ${data?.status==='Active'?'selected':''}>Active</option>
+          <option value="Done" ${data?.status==='Done'?'selected':''}>Done</option>
+          <option value="Hold" ${data?.status==='Hold'?'selected':''}>Hold</option>
+          <option value="Pending" ${data?.status==='Pending'?'selected':''}>Pending</option>
+        </select>
+      </div>
+    </div>`;
+  container.insertAdjacentHTML('beforeend', html);
+}
+
+// Progress preview
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'initProg') {
+    const v = parseInt(e.target.value) || 0;
+    document.getElementById('initProgPreview').style.width = Math.min(v,100) + '%';
+  }
+});
+
+// ═══════════════════════════════════════════
+// HANDLE INITIATIVE FORM SUBMIT
+// ═══════════════════════════════════════════
+async function handleInitSubmit(e) {
+  e.preventDefault();
+  const origId = document.getElementById('initOrigId').value;
+  const id = document.getElementById('initId').value.trim();
+  const prog = parseInt(document.getElementById('initProg').value) || 0;
+
+  if (prog > 100) { toast('Tiến độ không được vượt quá 100%!', 'error'); return; }
+
+  // Check duplicate ID
+  if (!origId && db.initiativesData.some(i => i.id === id)) {
+    toast(`❌ Initiative ID "<strong>${id}</strong>" đã tồn tại. Vui lòng dùng ID khác.`, 'error', 5000);
+    return;
+  }
+
+  // Collect milestones
+  const milestones = [];
+  document.querySelectorAll('#milestonesContainer .ms-row').forEach(row => {
+    const name = row.querySelector('.ms-name')?.value.trim();
+    if (!name) return;
+    milestones.push({
+      name,
+      startDate: row.querySelector('.ms-start')?.value || '',
+      endDate: row.querySelector('.ms-end')?.value || '',
+      progress: parseInt(row.querySelector('.ms-prog')?.value) || 0,
+      status: row.querySelector('.ms-status')?.value || 'Pending'
+    });
+  });
+
+  const item = {
+    id,
+    name: document.getElementById('initName').value.trim(),
+    category: document.getElementById('initCat').value,
+    accountable: document.getElementById('initAcc').value.trim(),
+    startDate: document.getElementById('initStart').value,
+    endDate: document.getElementById('initEnd').value,
+    progress: prog,
+    status: document.getElementById('initStatus').value,
+    kpi: document.getElementById('initKpi').value.trim(),
+    note: document.getElementById('initNote').value.trim(),
+    link: document.getElementById('initLink').value.trim(),
+    milestones
+  };
+
+  // Update or push
+  if (origId) {
+    const idx = db.initiativesData.findIndex(i => i.id === origId);
+    if (idx > -1) db.initiativesData[idx] = item;
+  } else {
+    db.initiativesData.push(item);
+  }
+
+  persistInitiatives();
+  closeInitiativeModal();
+  renderInitiativeTable();
+  document.getElementById('dashInitCount').textContent = db.initiativesData.length;
+  toast(`✅ Đã lưu Initiative <strong>${id}</strong>!`, 'success');
+}
+
+async function deleteInitiative() {
+  const id = document.getElementById('initOrigId').value;
+  if (!id) return;
+  const ok = await uiConfirm('Xóa Initiative', `Bạn có chắc muốn xóa Initiative <strong>${id}</strong> và tất cả Milestone?`, 'danger', 'Xóa');
+  if (!ok) return;
+  db.initiativesData = db.initiativesData.filter(i => i.id !== id);
+  persistInitiatives();
+  closeInitiativeModal();
+  renderInitiativeTable();
+  document.getElementById('dashInitCount').textContent = db.initiativesData.length;
+  toast(`Đã xóa Initiative ${id}.`, 'info');
+}
+
+// ═══════════════════════════════════════════
+// RESTORE INITIATIVES FROM CACHE
+// ═══════════════════════════════════════════
+// Gọi trong window.onload sau khi parse cache
+const _origOnload = window.onload;
+window.onload = async function() {
+  // Parse initiativesData từ cache
+  const cached = localStorage.getItem('shtd_v2');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      if (parsed && parsed.initiativesData) {
+        db.initiativesData = parsed.initiativesData;
+      }
+    } catch(e) {}
+  }
+  // Gọi onload gốc
+  if (_origOnload) await _origOnload();
+  // Render initiative table nếu đang ở tab đó
+  if (dashTab === 'initiatives') renderInitiativeTable();
+  document.getElementById('dashInitCount').textContent = (db.initiativesData||[]).length;
+};
+
+// Cập nhật renderDashboard để không conflict
+const _origRenderDashboard = renderDashboard;
+renderDashboard = function() {
+  _origRenderDashboard();
+  // Update count
+  document.getElementById('dashInitCount').textContent = (db.initiativesData||[]).length;
+  if (dashTab === 'initiatives') renderInitiativeTable();
+};
 </script>
   <script>
 // ════════════════════════════════════════════════════════════════
