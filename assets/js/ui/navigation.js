@@ -49,7 +49,7 @@ function setupListeners() {
 
     if (e.key === 'g' && !inInput) { gKey = 'g'; return; }
     if (gKey === 'g' && !inInput) {
-      const map = { d:'dashboard', t:'tasks', g:'gantt', p:'performance' };
+      const map = { d:'dashboard', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview' };
       if (map[e.key]) navigateTo(map[e.key]);
       gKey = null;
     }
@@ -78,7 +78,7 @@ function navigateTo(view) {
   document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
   const sec = document.getElementById(`view-${view}`);
   if (sec) { sec.style.display = 'contents'; sec.style.animation = 'none'; void sec.offsetWidth; sec.style.animation = ''; }
-  const titles = { dashboard:'Executive Dashboard', tasks:'Quản lý Công việc', gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất' };
+  const titles = { dashboard:'Executive Dashboard', tasks:'Quản lý Công việc', gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất', 'kpi-overview':'KPI Digital Overview', 'action-plan':'Action Plan – Kế hoạch hành động' };
   document.getElementById('pageTitle').textContent = titles[view] || view;
   if (view === 'gantt') renderGantt();
   if (view === 'performance') renderPerfTable();
