@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 (Phase E complete — A4, C, E all done)
+**As of**: 2026-06-04 (Phase E done, Phase F planned — awaiting PO decisions)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -49,6 +49,7 @@
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
 | Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4). Poor mobile UX — skipped (Phase D) |
 | Auto weekly report | ✅ **Phase E** | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc. Toolbar button + week picker modal |
+| KPI Digital views | ⏳ **Phase F** | Plan done — 6 views: KPI Overview, KPI Progress, Action Plan, Owner, Branch, RM. Awaiting PO on 3 questions (see TODO_NEXT) |
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | |
 | Quick View **topbar button** | ✅ **Fixed this session** | Was orphaned in CSS, now in body |

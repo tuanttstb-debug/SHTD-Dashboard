@@ -1,35 +1,43 @@
 # SESSION HANDOVER
-**Date**: 2026-06-04 (end of session — Phase E complete)
-**Session**: A4 fix + Phase C performance + Phase E weekly report
+**Date**: 2026-06-04 (end of session)
+**Session**: A4 + Phase C + Phase E + Phase F planning
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**Context at handover**: 70% (140k/200k) — forced handover
 
 ---
 
 ## What Was Done This Session
 
-### A4 — Gantt Subtitle Dynamic Year ✅ `83ea790`
-- `index.html:329` — `id="ganttSubtitle"`, hardcoded year removed
-- `assets/js/views/gantt.js` — dynamic year at top of `renderGantt()`
+| # | Work | Commit | Status |
+|---|---|---|---|
+| A4 | Gantt subtitle dynamic year | `83ea790` | ✅ Done |
+| Phase C | Single-pass dashboard stats + debounce filter | `7b895a2` | ✅ Done |
+| Phase E | Auto weekly report — 4-sheet Excel | `307d463` | ✅ Done |
+| Phase F | KPI merge plan created | — | ⏳ Awaiting PO decision |
 
-### Phase C — Render Performance ✅ `7b895a2`
-- `dashboard.js`: 7 separate array passes → 1 single `forEach` loop
-- `tasks.js`: `onFilterChange()` debounced 150ms
-- Finding logged: `navigation.js` already has 200ms addEventListener debounce on filters (DEBT-06)
+### Phase E detail
+- `assets/js/report.js` (new) — `exportWeeklyReport(weekLabel)` with 4 helpers
+- `index.html` — toolbar button "Báo cáo tuần" + report modal (week picker)
+- `assets/js/app.js` — `openReportModal()` / `closeReportModal()`
+- Syntax-checked via Node; pushed `307d463` + context `9ee2910`
 
-### Phase E — Auto Weekly Report ✅ `307d463`
-New file `assets/js/report.js` — `exportWeeklyReport(weekLabel)`:
+### Phase F detail (plan only — NOT implemented)
+Analyzed `TPBank_Digital_KPI_Dashboard (1).html` (2498 lines):
+- 6 new views: KPI Overview, KPI Progress, Action Plan, Owner Analysis, Branch Analysis, RM Analysis
+- New data layer: `kpi-data.js` with `KPI_DATA` object (products, branches, RMs, KPI targets)
+- New CSS: `kpi.css` (bullet chart, exec-summary, alert-item, kanban, zone-card, section-header)
+- Action Plan Kanban: reuse `db.tasks` filtered by `highlight=Y` — NOT hardcoded separately
+- UI concept backport: left-border accent cards, delta badges, `.badge.ahead/on-track/behind/critical`
+- Full plan in last conversation turn — 3 open questions pending PO answers
 
-| Sheet | Content | Scope |
-|---|---|---|
-| `1. Tóm tắt` | KPI + RAG + initiative breakdown (single pass) | tasks in selected week |
-| `2. Kết quả tuần` | task details + `result` field | tasks in selected week (`tuanBC` match) |
-| `3. Kế hoạch tuần tới` | tasks with `nextPlan` filled | all in-progress (any week) |
-| `4. Vướng mắc & BLĐ` | Blocked/canBLD/vuongMac, sorted by severity | all in-progress (any week) |
+---
 
-UI: "Báo cáo tuần" button in toolbar → modal with week picker (pre-selects current week) → one-click Excel export.
+## 3 Open Questions — MUST answer before Phase F starts
 
-Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
+1. **kpi-data.js numbers**: Use actual team numbers now, OR placeholder data first?
+2. **Action Plan scope**: Reuse `db.tasks` (highlight=Y filter) OR fully separate hardcoded list?
+3. **View priority**: All 6 views in order, OR specific views first (e.g. KPI Overview + Action Plan)?
 
 ---
 
@@ -37,24 +45,26 @@ Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
 
 | File | Change |
 |---|---|
-| `index.html` | A4 id, toolbar button, report modal, script tag |
-| `assets/js/views/gantt.js` | Dynamic year in `renderGantt()` |
-| `assets/js/views/dashboard.js` | Single-pass stats |
-| `assets/js/views/tasks.js` | Debounced `onFilterChange()` |
+| `index.html` | A4 subtitle id, report button, report modal, report.js script tag |
+| `assets/js/views/gantt.js` | Dynamic year at top of `renderGantt()` |
+| `assets/js/views/dashboard.js` | 7 loops → 1 single-pass forEach |
+| `assets/js/views/tasks.js` | `onFilterChange()` debounced 150ms |
 | `assets/js/report.js` | **NEW** — 4-sheet weekly report generator |
 | `assets/js/app.js` | `openReportModal()` / `closeReportModal()` |
+| `AI_CONTEXT/*.md` | Multiple context updates |
 
 ---
 
-## Commits This Session
+## Commits This Session (chronological)
 
 | Hash | Message |
 |---|---|
 | `83ea790` | fix(A4): dynamic Gantt subtitle year |
-| `93b335a` | docs: context update |
+| `93b335a` | docs: context update (A4) |
 | `7b895a2` | perf(C): single-pass dashboard + debounce filter |
-| `78acb0a` | docs: context update |
-| `307d463` | feat(E): auto weekly report — 4-sheet Excel export |
+| `78acb0a` | docs: context update (C) |
+| `307d463` | feat(E): auto weekly report — 4-sheet Excel |
+| `9ee2910` | docs: context update (E) |
 
 ---
 
@@ -63,38 +73,8 @@ Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
 | Risk | Severity | Detail |
 |---|---|---|
 | `let` vs `var` globals | 🟡 LOW | Use bare `db`, not `window.db` |
+| Inline + addEventListener double-handlers | ⚪ NONE | Share `debounceTimer`, 200ms nav.js wins, no double render |
 | `fmtExportDate` duplication | ⚪ NONE | `app.js:exportExcel` vs `helpers.js:fmtDateExport` — cosmetic |
-| Inline + addEventListener double-handlers | ⚪ NONE | Share debounceTimer, no double render (DEBT-06) |
-
-## What Was NOT Touched
-
-- `syncAction()` — intact in `assets/js/api.js`
-- `DB_COLS` — unchanged
-- `localStorage['shtd_v2']` — schema unchanged
-- All existing views — untouched
-- GAS backend (`backend/Code.gs`) — still not in repo
-
----
-
-## Blockers
-
-| Blocker | Impact | Owner |
-|---|---|---|
-| GAS backend not in repo | Cannot audit/version backend | **PO** — export from Apps Script Editor |
-
----
-
-## Handover Checklist for Next Session
-
-- [x] ~~A4~~: Fixed
-- [x] ~~A5~~: Resolved
-- [x] ~~Phase C~~: Single-pass dashboard + debounce
-- [x] ~~Phase D~~: Skipped by PO decision
-- [x] ~~Phase E~~: Weekly report done (`307d463`)
-- [ ] **A2** (BLOCKED on PO): Get Code.gs → `backend/Code.gs`
-- [ ] DEBT-05: Consolidate `fmtExportDate` / `fmtDateExport`
-- [ ] DEBT-06: Remove redundant inline `onchange/oninput` (navigation.js handles it)
-- [ ] Phase D: Mobile UX — if PO revisits
 
 ---
 
@@ -102,15 +82,8 @@ Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
 
 | Concern | File |
 |---|---|
-| Google Sheets config | `assets/js/constants.js` |
-| Date export format | `assets/js/helpers.js` → `fmtDateExport()` |
-| Sheet read/write/sync | `assets/js/api.js` |
-| Task CRUD modal | `assets/js/crud.js` |
-| Dashboard render | `assets/js/views/dashboard.js` |
-| Task table + filters | `assets/js/views/tasks.js` |
-| Gantt render | `assets/js/views/gantt.js` |
-| Quick View panel | `assets/js/views/quickview.js` |
-| **Weekly report generator** | `assets/js/report.js` |
-| App init + modal wiring | `assets/js/app.js` |
-| Filter debounce + nav | `assets/js/ui/navigation.js` |
-| Design tokens | `assets/css/tokens.css` |
+| Weekly report generator | `assets/js/report.js` |
+| Dashboard single-pass stats | `assets/js/views/dashboard.js` |
+| Filter debounce | `assets/js/views/tasks.js` + `assets/js/ui/navigation.js` |
+| App modal wiring | `assets/js/app.js` |
+| All other locations | See PROJECT_STATE.md |
