@@ -65,8 +65,11 @@ function clearFilters() {
 
 function onFilterChange() {
   currentPage = 1;
-  renderTaskTable();
-  renderFilterChips();
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    renderTaskTable();
+    renderFilterChips();
+  }, 150);
 }
 
 function sortBy(key) {

@@ -35,11 +35,38 @@ function renderDashboard() {
     ? `Đang xem: ${activeWeek} · ${tasks.length} task`
     : `Tổng cộng: ${db.tasks.length} task`;
 
+  // Single pass — compute all stats together instead of 7 separate loops
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let done = 0, overdue = 0, totalProg = 0;
+  const rag = { Green:0, Amber:0, Red:0 };
+  const initSummary = {};
+  const teamSt = {};
+  const blocked = [];
+
+  tasks.forEach(t => {
+    const prog = parseInt(t.progress) || 0;
+    const isDone = prog >= 100 || t.state === 'Hoàn thành';
+    if (isDone) done++;
+    if (!isDone && t.endDate) {
+      const endD = parseVNDate(t.endDate);
+      if (endD && !isNaN(endD) && endD < today) overdue++;
+    }
+    totalProg += prog;
+    if (rag[t.status] !== undefined) rag[t.status]++;
+    const ik = t.initiative || 'BAU';
+    if (!initSummary[ik]) initSummary[ik] = { total:0, done:0, totProg:0, rags:{Green:0,Amber:0,Red:0} };
+    initSummary[ik].total++;
+    if (isDone) initSummary[ik].done++;
+    initSummary[ik].totProg += prog;
+    if (initSummary[ik].rags[t.status] !== undefined) initSummary[ik].rags[t.status]++;
+    const tk = t.team || 'N/A';
+    teamSt[tk] = (teamSt[tk] || 0) + 1;
+    if (t.state === 'Blocked' || t.canBLD === 'Y') blocked.push(t);
+  });
+
   const total = tasks.length;
-  const done = tasks.filter(t => parseInt(t.progress) >= 100 || t.state === 'Hoàn thành').length;
   const inProg = total - done;
-  const overdue = tasks.filter(t => isOverdue(t.endDate, t.progress)).length;
-  const avgProg = total ? Math.round(tasks.reduce((s,t) => s + (parseInt(t.progress)||0), 0) / total) : 0;
+  const avgProg = total ? Math.round(totalProg / total) : 0;
 
   document.getElementById('kpiTotal').textContent = total;
   document.getElementById('kpiDone').textContent = done;
@@ -66,8 +93,6 @@ function renderDashboard() {
     </div>`;
   } else { bw.innerHTML = ''; }
 
-  const rag = { Green:0, Amber:0, Red:0 };
-  tasks.forEach(t => { if (rag[t.status] !== undefined) rag[t.status]++; });
   const ctx = document.getElementById('ragChart').getContext('2d');
   if (chartInst) chartInst.destroy();
   const empty = total === 0;
@@ -99,15 +124,6 @@ function renderDashboard() {
       </div>`).join('');
   } else leg.innerHTML = '';
 
-  const initSummary = {};
-  tasks.forEach(t => {
-    const k = t.initiative || 'BAU';
-    if (!initSummary[k]) initSummary[k] = { total:0, done:0, totProg:0, rags:{Green:0,Amber:0,Red:0} };
-    initSummary[k].total++;
-    if (parseInt(t.progress) >= 100 || t.state === 'Hoàn thành') initSummary[k].done++;
-    initSummary[k].totProg += parseInt(t.progress)||0;
-    if (initSummary[k].rags[t.status] !== undefined) initSummary[k].rags[t.status]++;
-  });
   const initBody = document.getElementById('initTableBody');
   if (Object.keys(initSummary).length === 0) {
     initBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-3);">Chưa có dữ liệu. Upload file Excel hoặc kết nối DB.</td></tr>`;
@@ -124,8 +140,6 @@ function renderDashboard() {
     }).join('');
   }
 
-  const teamSt = {};
-  tasks.forEach(t => { const k = t.team||'N/A'; if(!teamSt[k]) teamSt[k]=0; teamSt[k]++; });
   const maxT = Math.max(...Object.values(teamSt), 1);
   document.getElementById('teamStatList').innerHTML = Object.entries(teamSt).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
     `<div class="stat-row">
@@ -134,7 +148,6 @@ function renderDashboard() {
       <span class="stat-count">${v}</span>
     </div>`).join('') || '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">Chưa có dữ liệu</div>';
 
-  const blocked = tasks.filter(t => t.state === 'Blocked' || t.canBLD === 'Y');
   document.getElementById('blockedList').innerHTML = blocked.length === 0
     ? '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">Không có task nào bị block hoặc cần BLĐ 🎉</div>'
     : blocked.slice(0,8).map(t => `<div class="stat-row" style="cursor:pointer;" onclick="editTask('${t.id}')">
