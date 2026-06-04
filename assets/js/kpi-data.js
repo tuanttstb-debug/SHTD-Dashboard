@@ -1,8 +1,8 @@
 'use strict';
-/* ===== KPI DATA LAYER — Phase F =====
+/* ===== KPI DATA LAYER =====
    Cập nhật số liệu: QuangNN3 / DungLQ1
-   Nguồn: EB050, XD_E2E.xlsx, reportEGP.xlsx, Lọc_15_04.csv
-   Kỳ báo cáo: T1–T6/2026 (tính đến 03/06/2026)
+   Nguồn: EB050, XD_E2E.xlsx, reportEGP.xlsx, Lọc_15_04.csv,
+          File_cấu_trúc_chung.xlsx (dữ liệu đến 03/06/2026)
    ======================================= */
 
 const KPI_DATA = {
@@ -12,7 +12,7 @@ const KPI_DATA = {
   monthsFull: ['Tháng 1/2026','Tháng 2/2026','Tháng 3/2026',
                'Tháng 4/2026','Tháng 5/2026','T6 (03/06)'],
 
-  /* --- Sản phẩm --- */
+  /* --- Sản phẩm (monthly breakdown) --- */
   products: {
     BL_Auto: {
       id:'BL_Auto', name:'Bảo lãnh Tự động', owner:'QuangNN3', group:'BL',
@@ -128,6 +128,64 @@ const KPI_DATA = {
       totalGD:61, uniqueCIF:9, branches:7,
     },
   },
+
+  /* --- PTKD breakdown per channel (File_cấu_trúc_chung – 03/06/2026) --- */
+  quangPTKD: [
+    {ptkd:'HueVT1',     biz:693, bpm:1660, total:2353, rate:29.5},
+    {ptkd:'HoangNK3',   biz:923, bpm:863,  total:1786, rate:51.7},
+    {ptkd:'AnhDT24',    biz:831, bpm:600,  total:1431, rate:58.1},
+    {ptkd:'KhanhBN2',   biz:436, bpm:981,  total:1417, rate:30.8},
+    {ptkd:'LyNN1',      biz:482, bpm:718,  total:1200, rate:40.2},
+    {ptkd:'LinhNV12',   biz:333, bpm:837,  total:1170, rate:28.5},
+    {ptkd:'HuongLT19',  biz:340, bpm:730,  total:1070, rate:31.8},
+    {ptkd:'DuyenNLM',   biz:408, bpm:577,  total:985,  rate:41.4},
+    {ptkd:'AnhLTP1',    biz:276, bpm:682,  total:958,  rate:28.8},
+    {ptkd:'CuongNV34',  biz:298, bpm:580,  total:878,  rate:34.0},
+    {ptkd:'QuynhVN6',   biz:144, bpm:476,  total:620,  rate:23.2},
+    {ptkd:'SonNT23',    biz:191, bpm:386,  total:577,  rate:33.1},
+    {ptkd:'HuongPTT22', biz:87,  bpm:302,  total:389,  rate:22.4},
+    {ptkd:'QuynhNNY',   biz:13,  bpm:26,   total:39,   rate:33.3},
+  ],
+
+  dungPTKD: [
+    {ptkd:'HueVT1',     biz:6,  bpm:1099, total:1105, rate:0.5},
+    {ptkd:'AnhLTP1',    biz:10, bpm:940,  total:950,  rate:1.1},
+    {ptkd:'CuongNV34',  biz:23, bpm:901,  total:924,  rate:2.5},
+    {ptkd:'SonNT23',    biz:18, bpm:778,  total:796,  rate:2.3},
+    {ptkd:'HoangNK3',   biz:22, bpm:749,  total:771,  rate:2.9},
+    {ptkd:'HuongLT19',  biz:51, bpm:703,  total:754,  rate:6.8},
+    {ptkd:'QuynhVN6',   biz:16, bpm:716,  total:732,  rate:2.2},
+    {ptkd:'LinhNV12',   biz:22, bpm:703,  total:725,  rate:3.0},
+    {ptkd:'KhanhBN2',   biz:9,  bpm:697,  total:706,  rate:1.3},
+    {ptkd:'LyNN1',      biz:19, bpm:679,  total:698,  rate:2.7},
+    {ptkd:'AnhDT24',    biz:32, bpm:589,  total:621,  rate:5.2},
+    {ptkd:'DuyenNLM',   biz:27, bpm:524,  total:551,  rate:4.9},
+    {ptkd:'HuongPTT22', biz:23, bpm:363,  total:386,  rate:6.0},
+    {ptkd:'QuynhNNY',   biz:1,  bpm:56,   total:57,   rate:1.8},
+  ],
+
+  sheet2PTKD: [
+    {ptkd:'DiepNTN',  count:384, ht:352}, {ptkd:'HoaDTV',   count:342, ht:318},
+    {ptkd:'DuyenHMT', count:243, ht:231}, {ptkd:'VanNH9',   count:240, ht:226},
+    {ptkd:'ThuyLT14', count:227, ht:215}, {ptkd:'TuBTN',    count:212, ht:198},
+    {ptkd:'HungDM',   count:183, ht:172}, {ptkd:'ThoaNTK',  count:161, ht:154},
+    {ptkd:'ThanhBL',  count:147, ht:141}, {ptkd:'ThuMTH',   count:145, ht:138},
+    {ptkd:'HaVTH',    count:142, ht:135}, {ptkd:'AnNC',     count:141, ht:141},
+    {ptkd:'HanhNT3',  count:141, ht:133}, {ptkd:'DucVQ1',   count:139, ht:132},
+    {ptkd:'HienTTT',  count:139, ht:130},
+  ],
+
+  /* --- Aggregate totals (03/06/2026) --- */
+  agg: {
+    totalGD:    24662,
+    bizTotal:    5744,
+    bpmTotal:   18918,
+    quangTotal: 14883, quangBiz: 5465, quangBpm: 9418,
+    dungTotal:   9779, dungBiz:   279, dungBpm:  9500,
+    kpi21Target:20000, kpi21Actual: 5465, kpi21Forecast: 13116,
+    kpi22Target:  40.0, kpi22Actual:  36.7,
+    gnHT1: 6502, gnHT2: 3275, gnPending: 1,
+  },
 };
 
 /* --- Helpers --- */
@@ -148,4 +206,31 @@ function kpiStatusClass(actual, target) {
   if (pct >= 80)  return 'on-track';
   if (pct >= 60)  return 'behind';
   return 'critical';
+}
+
+/* Format number VN locale */
+function fmtKN(n) { return Number(n).toLocaleString('vi-VN'); }
+
+/* KPI chip badge (Bảo lãnh – KPI 40%) */
+function kpiChip(rate, threshold) {
+  threshold = threshold || 40;
+  if (rate >= threshold) return '<span class="kpi-chip kpi-chip-green">Đạt KPI</span>';
+  if (rate >= 30)        return '<span class="kpi-chip kpi-chip-gold">Cần tăng</span>';
+  return '<span class="kpi-chip kpi-chip-red">Dưới KPI</span>';
+}
+
+/* KPI chip badge (Giải ngân – tham khảo 10%) */
+function dungChip(rate) {
+  if (rate >= 10) return '<span class="kpi-chip kpi-chip-green">Tốt</span>';
+  if (rate >= 3)  return '<span class="kpi-chip kpi-chip-gold">Thấp</span>';
+  return '<span class="kpi-chip kpi-chip-red">Rất thấp</span>';
+}
+
+/* Alert class for PTKD cards */
+function kpiAlertClass(rate, threshold) {
+  threshold = threshold || 40;
+  return rate >= threshold ? 'alert-ok' : rate >= 30 ? 'alert-warning' : 'alert-critical';
+}
+function dungAlertClass(rate) {
+  return rate >= 10 ? 'alert-ok' : rate >= 3 ? 'alert-warning' : 'alert-critical';
 }
