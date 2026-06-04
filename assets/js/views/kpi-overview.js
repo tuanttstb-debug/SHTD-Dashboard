@@ -5,13 +5,27 @@ function renderKpiOverview() {
   const root = document.getElementById('kpiOverviewRoot');
   if (!root) return;
 
-  const { agg, quangPTKD, dungPTKD } = KPI_DATA;
+  const { agg, quangPTKD, dungPTKD } = getKpiData();
+  const sortedByRate = [...quangPTKD].sort((a, b) => b.rate - a.rate);
+  const topPTKD      = sortedByRate.slice(0, 2);
+  const worstPTKD    = [...sortedByRate].reverse().slice(0, 2);
+  const monthsLeft   = 12 - ((KPI_DATA.kpis[0] && KPI_DATA.kpis[0].ytdMonth) || 5);
+  const needPerMonth = monthsLeft > 0 ? Math.round((agg.kpi21Target - agg.kpi21Actual) / monthsLeft) : 0;
+  const bizGapFor22  = Math.max(0, Math.round(agg.quangTotal * agg.kpi22Target / 100 - agg.quangBiz));
 
   root.innerHTML = `
-    <div class="toolbar"><div class="toolbar-left">
-      <div style="font-size:17px;font-weight:800;">KPI Digital Overview</div>
-      <div style="font-size:12px;color:var(--text-3);">Kỳ: T1–T6/2026 &nbsp;·&nbsp; Dữ liệu thực tế đến 03/06/2026</div>
-    </div></div>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div style="font-size:17px;font-weight:800;">KPI Digital Overview</div>
+        <div style="font-size:12px;color:var(--text-3);">${KPI_LIVE_TS ? 'File raw · ' + _kpiFmtTs(KPI_LIVE_TS) : 'Kỳ: T1–T6/2026 · Dữ liệu cứng 03/06/2026'}</div>
+      </div>
+      <div class="toolbar-right">
+        <input type="file" id="ovRawInput" accept=".xlsx,.xls" style="display:none;" onchange="kpiLoadRawFile(event)">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ovRawInput').click()"><i class="fa-solid fa-file-arrow-up"></i> Load File Raw</button>
+        <button class="btn btn-outline btn-sm" id="ovSyncBtn" style="${KPI_LIVE_TS ? '' : 'display:none;'}" onclick="kpiSyncToSheet()"><i class="fa-solid fa-cloud-arrow-up"></i> Sync GG Sheet</button>
+        <button class="btn btn-outline btn-sm" onclick="kpiLoadFromSheet()"><i class="fa-solid fa-cloud-arrow-down"></i> Từ GG Sheet</button>
+      </div>
+    </div>
 
     <!-- 6 KPI cards -->
     <div class="kpi-ov-grid" style="margin-top:20px;">
@@ -44,9 +58,9 @@ function renderKpiOverview() {
     <div class="kpi-insight-panel">
       <div class="kpi-insight-title"><i class="fa-solid fa-bolt" style="margin-right:6px;"></i>Executive Insight – Số liệu thực tế từ File_cấu_trúc_chung.xlsx</div>
       <div class="kpi-insight-grid">
-        <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--gold);">⚠</span><span><strong>KPI 2.1 – SLGD BL Biz:</strong> Thực tế ${fmtKN(agg.kpi21Actual)} GD (${(agg.kpi21Actual/agg.kpi21Target*100).toFixed(1)}% target ${fmtKN(agg.kpi21Target)}). Forecast cuối năm ~${fmtKN(agg.kpi21Forecast)} GD – không đạt KPI. Cần tăng ~1,756 GD/tháng trong H2/2026.</span></div>
-        <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--danger);">▼</span><span><strong>KPI 2.2 – Digital Rate BL:</strong> ${agg.kpi22Actual}% vs KPI ${agg.kpi22Target}% (GAP -${(agg.kpi22Target-agg.kpi22Actual).toFixed(1)}pp). QuangNN3 cần chuyển thêm ~489 GD từ BPM sang BIZ để đạt ${agg.kpi22Target}%.</span></div>
-        <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--success);">▲</span><span><strong>PTKD tốt nhất (QuangNN3):</strong> ${quangPTKD[2].ptkd} dẫn đầu digital rate ${quangPTKD[2].rate}%, ${quangPTKD[1].ptkd} ${quangPTKD[1].rate}%. Các PTKD yếu: ${quangPTKD[10].ptkd} ${quangPTKD[10].rate}%, ${quangPTKD[12].ptkd} ${quangPTKD[12].rate}%.</span></div>
+        <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--gold);">⚠</span><span><strong>KPI 2.1 – SLGD BL Biz:</strong> Thực tế ${fmtKN(agg.kpi21Actual)} GD (${(agg.kpi21Actual/agg.kpi21Target*100).toFixed(1)}% target ${fmtKN(agg.kpi21Target)}). Forecast cuối năm ~${fmtKN(agg.kpi21Forecast)} GD – không đạt KPI. Cần tăng ~${fmtKN(needPerMonth)} GD/tháng trong ${monthsLeft} tháng còn lại.</span></div>
+        <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--danger);">▼</span><span><strong>KPI 2.2 – Digital Rate BL:</strong> ${agg.kpi22Actual}% vs KPI ${agg.kpi22Target}% (GAP -${(agg.kpi22Target-agg.kpi22Actual).toFixed(1)}pp). QuangNN3 cần chuyển thêm ~${fmtKN(bizGapFor22)} GD từ BPM sang BIZ để đạt ${agg.kpi22Target}%.</span></div>
+        <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--success);">▲</span><span><strong>PTKD tốt nhất (QuangNN3):</strong> ${topPTKD[0]?.ptkd} dẫn đầu digital rate ${topPTKD[0]?.rate}%, ${topPTKD[1]?.ptkd} ${topPTKD[1]?.rate}%. Các PTKD yếu: ${worstPTKD[0]?.ptkd} ${worstPTKD[0]?.rate}%, ${worstPTKD[1]?.ptkd} ${worstPTKD[1]?.rate}%.</span></div>
         <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--cyan);">ℹ</span><span><strong>DungLQ1 (GN):</strong> ${fmtKN(agg.dungTotal)} GD – BIZ chỉ ${(agg.dungBiz/agg.dungTotal*100).toFixed(1)}% (${fmtKN(agg.dungBiz)}/${fmtKN(agg.dungTotal)}). ${fmtKN(agg.dungBpm)} GD vẫn qua BPM (quầy). Cần push chuyển đổi BPM→BIZ.</span></div>
         <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--purple);">★</span><span><strong>Kênh BPM vs BIZ:</strong> BPM chiếm ${(agg.bpmTotal/agg.totalGD*100).toFixed(1)}% tổng GD (${fmtKN(agg.bpmTotal)}/${fmtKN(agg.totalGD)}). DungLQ1 BPM=${(agg.dungBpm/agg.dungTotal*100).toFixed(1)}%, QuangNN3 BPM=${(agg.quangBpm/agg.quangTotal*100).toFixed(1)}% – cần đẩy digital hóa.</span></div>
         <div class="kpi-insight-item"><span class="kpi-insight-bullet" style="color:var(--gold);">◆</span><span><strong>Sheet2 GN Hoàn thành:</strong> ${fmtKN(agg.gnHT1+agg.gnHT2)}/${fmtKN(agg.dungTotal)} GD hoàn thành (${((agg.gnHT1+agg.gnHT2)/agg.dungTotal*100).toFixed(2)}%). "HT Chuyển tiền" ${(agg.gnHT1/(agg.gnHT1+agg.gnHT2)*100).toFixed(1)}% vs "HT" thông thường ${(agg.gnHT2/(agg.gnHT1+agg.gnHT2)*100).toFixed(1)}%.</span></div>
@@ -87,11 +101,11 @@ function renderKpiOverview() {
     <div class="kpi-alert-grid">
       <div class="kpi-alert-item alert-critical">
         <div class="kpi-alert-dot alert-critical"></div>
-        <div class="kpi-alert-msg"><strong>KPI 2.1 chỉ đạt ${(agg.kpi21Actual/agg.kpi21Target*100).toFixed(1)}% target</strong> – ${fmtKN(agg.kpi21Actual)}/${fmtKN(agg.kpi21Target)} GD BL Biz. Forecast cuối năm ~${fmtKN(agg.kpi21Forecast)} GD. Cần tăng tốc 1,756 GD/tháng trong 6 tháng còn lại.<div class="kpi-alert-meta">⚡ Critical | KPI 2.1 | 03/06/2026</div></div>
+        <div class="kpi-alert-msg"><strong>KPI 2.1 chỉ đạt ${(agg.kpi21Actual/agg.kpi21Target*100).toFixed(1)}% target</strong> – ${fmtKN(agg.kpi21Actual)}/${fmtKN(agg.kpi21Target)} GD BL Biz. Forecast cuối năm ~${fmtKN(agg.kpi21Forecast)} GD. Cần tăng tốc ${fmtKN(needPerMonth)} GD/tháng trong ${monthsLeft} tháng còn lại.<div class="kpi-alert-meta">⚡ Critical | KPI 2.1 | 03/06/2026</div></div>
       </div>
       <div class="kpi-alert-item alert-warning">
         <div class="kpi-alert-dot alert-warning"></div>
-        <div class="kpi-alert-msg"><strong>KPI 2.2 thấp hơn target ${(agg.kpi22Target-agg.kpi22Actual).toFixed(1)}pp</strong> – Digital Rate ${agg.kpi22Actual}% vs KPI ${agg.kpi22Target}%. QuangNN3 cần push thêm ~489 GD BIZ. PTKD yếu: ${quangPTKD[10].ptkd} (${quangPTKD[10].rate}%), ${quangPTKD[12].ptkd} (${quangPTKD[12].rate}%).<div class="kpi-alert-meta">⚠️ Warning | KPI 2.2 | 03/06/2026</div></div>
+        <div class="kpi-alert-msg"><strong>KPI 2.2 thấp hơn target ${(agg.kpi22Target-agg.kpi22Actual).toFixed(1)}pp</strong> – Digital Rate ${agg.kpi22Actual}% vs KPI ${agg.kpi22Target}%. QuangNN3 cần push thêm ~${fmtKN(bizGapFor22)} GD BIZ. PTKD yếu: ${worstPTKD[0]?.ptkd} (${worstPTKD[0]?.rate}%), ${worstPTKD[1]?.ptkd} (${worstPTKD[1]?.rate}%).<div class="kpi-alert-meta">⚠️ Warning | KPI 2.2 | 03/06/2026</div></div>
       </div>
       <div class="kpi-alert-item alert-critical">
         <div class="kpi-alert-dot alert-critical"></div>
@@ -193,4 +207,70 @@ function _sLabel(s) {
 function _tile(label, value, style) {
   return `<div><div style="font-size:10px;color:var(--text-3);margin-bottom:3px;">${label}</div>
     <div style="font-size:15px;font-weight:700;${style}">${value}</div></div>`;
+}
+
+/* ── KPI Raw Data Load Handlers ── */
+
+function _kpiFmtTs(d) {
+  if (!d) return '';
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+    ' ' + d.toLocaleDateString('vi-VN');
+}
+
+function _kpiReRender() {
+  Object.values(_ovCharts).forEach(c => { try { c.destroy(); } catch(_) {} });
+  Object.values(_progCharts).forEach(c => { try { c.destroy(); } catch(_) {} });
+  Object.values(_oaCharts).forEach(c => { try { c.destroy(); } catch(_) {} });
+  const ov = document.getElementById('kpiOverviewRoot');
+  if (ov && ov.innerHTML) { ov.innerHTML = ''; renderKpiOverview(); }
+  const pr = document.getElementById('kpiProgressRoot');
+  if (pr && pr.innerHTML) { pr.innerHTML = ''; renderKpiProgress(); }
+  const oa = document.getElementById('ownerAnalysisRoot');
+  if (oa && oa.innerHTML) { oa.innerHTML = ''; renderOwnerAnalysis(); }
+}
+
+async function kpiLoadRawFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  showLoading('Đang đọc ' + file.name + '…');
+  try {
+    const parsed = await kpiParseXlsx(file);
+    setKpiLive(parsed);
+    _kpiReRender();
+    toast('✅ Đã load ' + fmtKN(parsed.agg.totalGD) + ' GD từ ' + file.name, 'success', 5000);
+  } catch (err) {
+    toast('❌ Lỗi đọc file: ' + err.message, 'error', 6000);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function kpiSyncToSheet() {
+  const live = KPI_LIVE;
+  if (!live) { toast('Chưa có dữ liệu để sync.', 'warning'); return; }
+  showLoading('Đang sync KPI data lên GG Sheet…');
+  try {
+    await kpiWriteToSheet(live);
+    toast('☁ Đã sync KPI data lên tab "KPI_Summary".', 'success', 5000);
+  } catch (err) {
+    toast('❌ Sync thất bại (không block): ' + err.message, 'error', 6000);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function kpiLoadFromSheet() {
+  showLoading('Đang load KPI data từ GG Sheet…');
+  try {
+    const parsed = await kpiReadFromSheet();
+    if (!parsed.quangPTKD.length) throw new Error('Sheet chưa có dữ liệu KPI. Hãy Sync trước.');
+    setKpiLive(parsed);
+    _kpiReRender();
+    toast('✅ Đã load ' + (parsed.quangPTKD.length + parsed.dungPTKD.length) + ' PTKD từ GG Sheet.', 'success', 5000);
+  } catch (err) {
+    toast('❌ Load từ Sheet thất bại (không block): ' + err.message, 'error', 6000);
+  } finally {
+    hideLoading();
+  }
 }

@@ -48,6 +48,18 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    if (action === 'kpi-write') {
+      if (!body.values || !Array.isArray(body.values)) {
+        throw new Error('kpi-write: thiếu values.');
+      }
+      kpiSheetWrite(body.values);
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'kpi-read') {
+      return _jsonResponse({ status: 'ok', values: kpiSheetRead() });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

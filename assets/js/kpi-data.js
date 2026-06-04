@@ -234,3 +234,14 @@ function kpiAlertClass(rate, threshold) {
 function dungAlertClass(rate) {
   return rate >= 10 ? 'alert-ok' : rate >= 3 ? 'alert-warning' : 'alert-critical';
 }
+
+/* ── Live data override (loaded from File raw.xlsx or GG Sheet) ── */
+let KPI_LIVE    = null;
+let KPI_LIVE_TS = null;
+
+function getKpiData() { return KPI_LIVE || KPI_DATA; }
+
+function setKpiLive(parsed) {
+  KPI_LIVE    = { ...KPI_DATA, ...parsed };
+  KPI_LIVE_TS = new Date();
+}
