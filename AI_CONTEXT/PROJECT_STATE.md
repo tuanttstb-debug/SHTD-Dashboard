@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 (Phase C complete — A4 + render performance done)
+**As of**: 2026-06-04 (Phase E complete — A4, C, E all done)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -47,7 +47,8 @@
 | Bulk actions (RAG, state, delete) | ✅ | |
 | Task CRUD modal | ✅ | |
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
-| Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4). Poor mobile UX — in backlog |
+| Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4). Poor mobile UX — skipped (Phase D) |
+| Auto weekly report | ✅ **Phase E** | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc. Toolbar button + week picker modal |
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | |
 | Quick View **topbar button** | ✅ **Fixed this session** | Was orphaned in CSS, now in body |
