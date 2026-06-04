@@ -6,7 +6,7 @@ function renderOwnerAnalysis() {
   const root = document.getElementById('ownerAnalysisRoot');
   if (!root) return;
 
-  const { agg, quangPTKD, dungPTKD, sheet2PTKD } = KPI_DATA;
+  const { agg, quangPTKD, dungPTKD, sheet2PTKD } = getKpiData();
 
   root.innerHTML = `
     <div class="toolbar"><div class="toolbar-left">

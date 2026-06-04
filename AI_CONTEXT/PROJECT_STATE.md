@@ -1,6 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-04 (Phase F complete — all KPI Digital views live)
+**As of**: 2026-06-04 (Phase A2 + KPI merge complete)
 **Version in index.html**: v6.2 (patches applied)
+**HEAD**: `f7e8ddd`
 
 ---
 
@@ -9,11 +10,12 @@
 | File | Lines | Status |
 |---|---|---|
 | `index.html` | ~790 | ✅ HTML-only shell — all CSS/JS external |
-| `GAS.GS` | 535 | ✅ Archived — all patches merged into index.html |
-| `assets/css/` | 10 files | ✅ Phase B1 + F0 complete |
-| `assets/js/` | 24 modules | ✅ Phase B2 + E + F complete |
-| `backend/` | — | ✅ Folder exists — waiting for Code.gs |
-| `/backend/Code.gs` | — | ❌ Does not exist yet — GAS backend not in repo |
+| `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
+| `backend/Code.gs` | 64 | ✅ **NEW A2** — deployable GAS doPost() router |
+| `backend/Config.gs` | 6 | ✅ **NEW A2** — SPREADSHEET_ID, SHEET_NAME |
+| `backend/SheetService.gs` | 48 | ✅ **NEW A2** — sheetRead() / sheetWrite() |
+| `assets/css/` | 10 files | ✅ Phase B1 + F0 + KPI merge complete |
+| `assets/js/` | 24 modules | ✅ Phase B2 + E + F + KPI merge complete |
 
 ---
 
@@ -33,10 +35,10 @@
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
 | Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4) |
 | Auto weekly report | ✅ | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc |
-| **KPI Overview** | ✅ **Phase F** | Bullet charts for 2 KPIs, BL/GN/IDNES summary tiles, monthly trend chart |
+| **KPI Overview** | ✅ **KPI merge** | 6 header cards, exec insight panel, 4 charts (channel/KPI/PTKD), 4 auto alerts |
 | **Action Plan Kanban** | ✅ **Phase F** | 4 columns; reads db.tasks where highlight=Y |
-| **KPI Progress** | ✅ **Phase F** | Product YTD table + monthly digital rate line chart |
-| **Owner Analysis** | ✅ **Phase F** | QuangNN3 (BL) / DungLQ1 (GN) panels + monthly bar chart |
+| **KPI Progress** | ✅ **KPI merge** | KPI 2.1/2.2 meter cards + PTKD table QuangNN3 + digital rate chart + DungLQ1 table |
+| **Owner Analysis** | ✅ **KPI merge** | 3 tabs: QuangNN3 / DungLQ1 / Rankings; PTKD card grid; adoption alerts |
 | **Branch Analysis** | ✅ **Phase F** | 25 branches; zone filter (Bắc/Nam/Trung); rate vs KPI color coding |
 | **RM Analysis** | ✅ **Phase F** | 14 RMs sorted by digital rate; top-3 highlighted; KPI threshold 15% |
 | Performance view (3 tabs) | ✅ | |
@@ -76,7 +78,11 @@ assets/
         views/branch-analysis.js              ← Phase F
         views/rm-analysis.js                  ← Phase F
         app.js
-backend/ (empty — waiting for Code.gs from PO)
+backend/
+  Code.gs           ← A2 (new — needs Apps Script deploy)
+  Config.gs         ← A2
+  SheetService.gs   ← A2
+  GAS.GS            ← archived patch v6.2
 ```
 
 ---
@@ -88,7 +94,7 @@ backend/ (empty — waiting for Code.gs from PO)
 | `GS_WEBAPP_URL` | `https://script.google.com/macros/s/AKfycbz.../exec` |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | `GS_RANGE` | `Task_Master!A1:W` |
-| Backend source | **NOT in repo** — on Apps Script Editor only |
+| Backend source | ✅ In repo (`backend/Code.gs` etc.) — **not yet deployed to Apps Script** |
 | Sheet columns | 23 — `DB_COLS` constant unchanged |
 | localStorage key | `shtd_v2` — schema unchanged |
 
@@ -101,7 +107,7 @@ backend/ (empty — waiting for Code.gs from PO)
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile | 🟢 Phase D |
-| DEBT-01 | GAS backend not in repo | 🟡 A2 — blocked on PO |
+| DEBT-01 | GAS backend not DEPLOYED (in repo ✅, needs Apps Script deploy + URL update) | 🟡 Action on PO |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case |
 | DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | ⚪ Cosmetic |
 | DEBT-06 | Inline `onchange` + `addEventListener` double handlers on filter elements | ⚪ No double render — cleanup later |

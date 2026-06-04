@@ -5,7 +5,7 @@ function renderKpiProgress() {
   const root = document.getElementById('kpiProgressRoot');
   if (!root) return;
 
-  const { agg, quangPTKD, dungPTKD } = KPI_DATA;
+  const { agg, quangPTKD, dungPTKD } = getKpiData();
   const pct21 = (agg.kpi21Actual / agg.kpi21Target * 100).toFixed(1);
   const pct22 = (agg.kpi22Actual / agg.kpi22Target * 100).toFixed(1);
 
