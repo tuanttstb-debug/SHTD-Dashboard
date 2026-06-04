@@ -29,7 +29,7 @@
 | v6.2 bonus | `checkDupId()` ADD vs EDIT messages | ✅ **Merged this session** | 2181 |
 | Extra bonus | dd-mmm-yy parse in `_parseArrayIntoDb` | ✅ **Added this session** | 2341 |
 
-**GAS.GS is now fully superseded.** All its patches are in Main.html.
+**GAS.GS is now fully superseded.** All its patches are in `assets/js/` modules.
 
 ---
 
@@ -107,15 +107,17 @@ Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile (280px label column) | 🟢 Phase D |
-| DEBT-01 | GAS backend not in repo | 🟡 A2 |
-| DEBT-02 | Stale comment line 2702 ("dd/mm/yyyy" is now "dd-mmm-yy") | ⚪ Cosmetic |
+| DEBT-01 | GAS backend not in repo | 🟡 A2 — blocked on PO |
+| ~~DEBT-02~~ | ~~Stale comment ("dd/mm/yyyy")~~ | ✅ Resolved — comment never existed in extracted parsers.js |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case — only matters if user re-imports an exported file |
+| DEBT-04 | Gantt subtitle hardcoded "2025–2026" at `index.html:329` | ⚪ A4 — 5 min fix, interrupted |
+| DEBT-05 | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | ⚪ Cosmetic — consolidate in Phase C cleanup |
 
 ---
 
 ## Deployment
 
 - **Platform**: GitHub Pages (static)
-- **Serve method**: Single HTML file (until Phase B complete)
+- **Serve method**: `index.html` + `assets/` folder (Phase B complete)
 - **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
 - **No build step** — direct file edit → commit → deploy

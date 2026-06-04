@@ -8,20 +8,12 @@
 
 ---
 
-## TD-001: Monolithic Single-File Architecture
-**Rating**: 🔴 CRITICAL
+## ~~TD-001: Monolithic Single-File Architecture~~ ✅ RESOLVED 2026-06-04
 
-**Issue**: 4076 lines in a single HTML file. CSS (~1050 lines), HTML (~600 lines), and JS (~2430 lines) are co-located.
-
-**Impact**:
-- Any edit risks breaking unrelated functionality
-- No module system, no treeshaking
-- Version control diffs are extremely noisy
-- Cannot run automated tests
-- No code splitting or lazy loading
-- Cannot reuse components across multiple pages
-
-**Priority**: HIGH — must split before v7.0
+**Resolution**: Phase B complete. `index.html` reduced from 4076 → 736 lines (HTML-only shell).
+- 9 CSS files in `assets/css/`
+- 17 JS modules in `assets/js/`
+- Verified: 25/25 Playwright tests — 0 failures
 
 ---
 
@@ -146,12 +138,14 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
-## TD-012: No Tests
-**Rating**: 🟢 MEDIUM
+## TD-012: No Automated Test Suite
+**Rating**: 🟢 MEDIUM → ⚪ LOW (partially addressed)
 
-**Issue**: Zero automated tests — no unit tests, no integration tests, no E2E tests.
+**Issue**: No committed test suite — no unit tests, no integration tests.
 
-**Impact**: Every change requires manual regression testing across all 5 views.
+**Partial resolution 2026-06-04**: Ad-hoc Playwright script (`pw_verify/full_test.js`) covers 25 checks across all views. Not committed to repo, not part of CI. Still manual trigger.
+
+**Remaining gap**: No CI integration, no unit tests for pure functions (parsers, helpers).
 
 ---
 
@@ -177,11 +171,11 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-03
+**Last updated**: 2026-06-04
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
-| TD-001 | 🔴 | Monolith | Large | Open — Phase B planned |
+| ~~TD-001~~ | ~~🔴~~ | ~~Monolith~~ | Large | ✅ **Resolved 2026-06-04** — Phase B complete |
 | TD-002 | 🔴 | GAS backend not in repo | Small | Open — A2 pending |
 | TD-003 | ~~🔴~~ | Conflicting function versions | Small | ✅ **Resolved 2026-06-03** |
 | TD-004 | 🟡 | Global state | Medium | Open — Phase D |
@@ -196,4 +190,6 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
-| TD-016 | ⚪ | Stale comment line 2702 | Tiny | Open — fix in A5 |
+| ~~TD-016~~ | ~~⚪~~ | ~~Stale comment line 2702~~ | Tiny | ✅ **Resolved 2026-06-04** — never existed in extracted parsers.js |
+| TD-017 | ⚪ | Gantt subtitle hardcoded "2025–2026" at `index.html:329` | Tiny | Open — A4 fix pending |
+| TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js` vs `helpers.js:fmtDateExport` | Tiny | Open — consolidate in Phase C |

@@ -1,6 +1,6 @@
 # SESSION HANDOVER
-**Date**: 2026-06-04
-**Session**: Phase B0 + B1 + B2 (Full Refactor)
+**Date**: 2026-06-04 (end of session — interrupted during A4)
+**Session**: Phase B0 + B1 + B2 (Full Refactor) + post-B2 findings
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 
@@ -41,6 +41,24 @@ All inline `<script>` (~2372 lines) extracted to `assets/js/`:
 All features verified: dashboard, task list, gantt, performance, quick view,
 dark mode, modals, keyboard shortcuts, dupId messages, fmtDateExport, detail modal.
 
+### 7. Post-B2 Findings (session interrupted here)
+
+**A5 — RESOLVED (no action needed)**
+The stale comment `// Hỗ trợ dd/mm/yyyy (đầu ra của taskToRow)` no longer exists.
+`parsers.js` was written fresh during B2 — the comment was never copied. TD-016 is closed.
+
+**A4 — LOCATED, NOT YET FIXED (interrupted)**
+Hardcoded year found at `index.html:329`:
+```html
+<div class="card-subtitle">Hiển thị tiến độ theo thời gian trong năm 2025–2026</div>
+```
+Fix approach: add `id="ganttSubtitle"` to the element, then in `renderGantt()` set:
+```js
+const el = document.getElementById('ganttSubtitle');
+if (el) el.textContent = `Hiển thị tiến độ theo thời gian — ${new Date().getFullYear()}`;
+```
+Files to touch: `index.html` (add id) + `assets/js/views/gantt.js` (add 2 lines at top of function).
+
 ---
 
 ## Files Changed
@@ -65,6 +83,14 @@ dark mode, modals, keyboard shortcuts, dupId messages, fmtDateExport, detail mod
 
 ---
 
+## Regression Risks
+
+| Risk | Severity | Detail |
+|---|---|---|
+| `let` vs `var` globals | 🟡 LOW | All top-level JS vars are `let` (not `var`), so `window.db` is `undefined`. Any code using `window.db` will silently get `undefined`. Use bare `db` instead. Confirmed in test script fix. |
+| `syncAction()` dead code | ⚪ NONE | Lines 1552–1593 in original were unreachable (after `return`). Excluded during B2 extraction. No behavior change. |
+| `fmtExportDate` duplication | ⚪ NONE | `app.js:exportExcel` has its own local `fmtExportDate` alongside the module-level `fmtDateExport` in `helpers.js`. Both produce `dd-mmm-yy`. Cosmetic duplication only — consolidate in Phase C cleanup. |
+
 ## What Was NOT Touched
 
 - `syncAction()` — intact in `assets/js/api.js`
@@ -72,6 +98,7 @@ dark mode, modals, keyboard shortcuts, dupId messages, fmtDateExport, detail mod
 - `localStorage['shtd_v2']` — schema unchanged
 - All render functions — behavior identical, just in separate files
 - GAS backend (`backend/Code.gs`) — still does not exist in repo
+- `index.html:329` Gantt subtitle — hardcoded year still present (A4 not done)
 
 ---
 
@@ -80,15 +107,16 @@ dark mode, modals, keyboard shortcuts, dupId messages, fmtDateExport, detail mod
 | Blocker | Impact | Owner |
 |---|---|---|
 | GAS backend not in repo | Cannot audit/version backend | **PO** — export from Apps Script Editor |
+| A4 fix incomplete | Gantt shows wrong year "2025–2026" | Next session — 5 min fix |
 
 ---
 
 ## Handover Checklist for Next Session
 
-- [ ] A2: Get Code.gs from PO → save to `backend/Code.gs`
-- [ ] A4: Fix Gantt hardcoded "2025–2026" year range (5 min, in `assets/js/views/gantt.js`)
-- [ ] A5: Fix stale comment in `assets/js/parsers.js` ("dd/mm/yyyy" → "dd-mmm-yy")
-- [ ] Phase C: Render performance for 200–500 tasks (virtual scroll or chunked render)
+- [ ] **A4** ← START HERE: add `id="ganttSubtitle"` to `index.html:329`, update `renderGantt()` in `assets/js/views/gantt.js` with dynamic year (5 min)
+- [ ] **A2** (BLOCKED on PO): Get Code.gs from Apps Script Editor → save to `backend/Code.gs`
+- [x] ~~A5~~: Resolved — stale comment never existed in extracted files
+- [ ] Phase C: Render performance for 200–500 tasks
 - [ ] Phase D: Mobile UX improvements (filter bar, toolbar, Gantt)
 - [ ] Phase E: Auto weekly report generation (PO requested feature)
 
