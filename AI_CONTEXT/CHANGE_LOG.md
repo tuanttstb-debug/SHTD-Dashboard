@@ -2,6 +2,88 @@
 
 ---
 
+## [KPI Merge] 2026-06-04 — KPI Views Updated từ TPBank_KPI_Dashboard_final.html
+
+**Changed by**: AI Implementation Session (Claude Sonnet 4.6)
+
+### Mục tiêu
+Merge format trình bày từ `TPBank_KPI_Dashboard_final.html` vào 3 view KPI của SHTD Dashboard.
+Chỉ thay đổi: **KPI Overview**, **KPI Progress**, **Owner Analysis**. Không động vào các view khác.
+
+### Files thay đổi
+
+**`assets/js/kpi-data.js`** — Thêm dữ liệu PTKD-level từ TPBank file:
+- `quangPTKD[14]` — BIZ/BPM/rate từng PTKD của QuangNN3 (Bảo lãnh)
+- `dungPTKD[14]`  — BIZ/BPM/rate từng PTKD của DungLQ1 (Giải ngân)
+- `sheet2PTKD[15]` — GN Sheet2 Hoàn thành
+- `agg` object — aggregate totals (totalGD, kpi21/22 actual/target/forecast, v.v.)
+- Helpers: `fmtKN()`, `kpiChip()`, `dungChip()`, `kpiAlertClass()`, `dungAlertClass()`
+
+**`assets/css/kpi.css`** — Thêm CSS classes mới (adapted SHTD variables):
+- `.kpi-ov-grid`, `.kpi-ov-card`, `.koi-*` — KPI Overview header cards
+- `.kpi-meter`, `.kpi-meter-*`, `.kpi-meter-fill.*` — KPI progress meter bar
+- `.kpi-compare-grid`, `.kpi-compare-card` — Side-by-side comparison cards
+- `.channel-split`, `.channel-pill` — Channel breakdown pills
+- `.ptkd-grid`, `.ptkd-card`, `.ptkd-*` — PTKD cards with alert colors
+- `.owner-block`, `.owner-block-header.quang/.dung`, `.owner-stat-*` — Owner blocks
+- `.owner-tabs-kpi`, `.owner-tab-kpi` — Tab navigation
+- `.rank-tabs`, `.rank-tab` — Ranking subtabs
+- `.kpi-chip-*` — Color-coded badge chips
+- `.kpi-table`, `.td-*` — KPI data table
+- `.kpi-alert-grid`, `.kpi-alert-item`, `.kpi-alert-*` — Alert grid items
+- `.kpi-insight-panel`, `.kpi-insight-*` — Executive insight panel
+
+**`assets/js/views/kpi-overview.js`** — Rewritten (TPBank Overview page format):
+- 6 KPI header cards (total GD, KPI 2.1, KPI 2.2, QuangNN3, DungLQ1, GN HT)
+- Executive insights panel với 6 bullet điểm
+- 4 charts: Channel/Owner bar, KPI progress, Top PTKD Quang, Top PTKD Dung
+- 4 auto-generated KPI alert items
+
+**`assets/js/views/kpi-progress.js`** — Rewritten (TPBank KPI 2.1/2.2 page format):
+- 2 KPI comparison cards side-by-side với KPI meter bar
+- PTKD analysis table QuangNN3 (BIZ, BPM, rate, gap vs 40%, % đóng góp KPI 2.1)
+- Digital rate bar chart với KPI 40% target line
+- DungLQ1 channel table
+
+**`assets/js/views/owner-analysis.js`** — Rewritten (TPBank Owner pages format):
+- 3-tab navigation: QuangNN3 | DungLQ1 | Bảng xếp hạng
+- Owner block header với stats (tổng GD, BIZ, BPM, rate, số PTKD)
+- PTKD grid cards với color-coded alert borders + progress bar
+- 2 charts per owner: digital rate + stacked BIZ/BPM
+- Auto-generated adoption alert grid (critical/warning/ok)
+- Ranking tab với 3 subtabs (QuangNN3 / DungLQ1 / Sheet2)
+
+### Không thay đổi
+Dashboard, Tasks, Gantt, Performance, Action Plan, Branch Analysis, RM Analysis
+
+---
+
+## [Phase A2] 2026-06-04 — GAS Backend Source Added
+
+**Changed by**: AI Implementation Session (Claude Sonnet 4.6)
+
+### Actions
+- **Created** `backend/Code.gs` — `doPost()` router, `doGet()` health check
+- **Created** `backend/SheetService.gs` — `sheetRead()` / `sheetWrite()` operations
+- **Created** `backend/Config.gs` — `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE`
+
+### API Contract (preserved exactly from index.html)
+- `POST { action: 'read' }` → `{ status: 'ok', values: [[header], [row...]] }`
+- `POST { action: 'write', values: [...] }` → `{ status: 'ok' }`
+- `Content-Type: text/plain` (tránh CORS preflight)
+- Lỗi → `{ status: 'error', error: '<message>' }`
+
+### Deploy Steps
+1. Extensions → Apps Script → tạo 3 file từ `backend/`
+2. Deploy → New deployment → Web App (Execute as: Me, Access: Anyone)
+3. Copy Web App URL → dán vào `GS_WEBAPP_URL` trong `assets/js/constants.js`
+
+### Note
+`backend/GAS.GS` giữ nguyên là archive của patch v6.2 (client-side, đã merge).
+Ba file mới là GAS backend thực sự chạy trên script.google.com.
+
+---
+
 ## [Phase B1+B2] 2026-06-04 — Multi-File Refactor Complete
 
 **Changed by**: AI Implementation Session (Claude Sonnet 4.6)

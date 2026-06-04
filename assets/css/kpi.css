@@ -1,6 +1,6 @@
-/* ===== KPI CSS — Phase F ===== */
+/* ===== KPI CSS ===== */
 
-/* ----- Section header: title + flex-1 divider ----- */
+/* ----- Section header ----- */
 .section-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
 .section-header-title{font-size:13px;font-weight:700;color:var(--text-2);white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;}
 .section-header-line{flex:1;height:1px;background:var(--border);}
@@ -51,7 +51,7 @@
 .bullet-value{font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);width:48px;text-align:right;flex-shrink:0;}
 .bullet-pct{font-size:11px;color:var(--text-3);width:36px;text-align:right;flex-shrink:0;}
 
-/* ----- Alert item ----- */
+/* ----- Alert item (existing) ----- */
 .alert-list{display:flex;flex-direction:column;gap:8px;}
 .alert-item{
   display:flex;align-items:flex-start;gap:12px;
@@ -103,3 +103,158 @@
 .zone-card-value{font-size:28px;font-weight:800;line-height:1;color:var(--text);}
 .zone-card-sub{font-size:11px;color:var(--text-3);margin-top:4px;}
 .zone-card-badge{margin-top:8px;display:flex;justify-content:center;}
+
+/* ===================================================
+   NEW — TPBank format styles
+   =================================================== */
+
+/* ----- KPI overview header grid (6 cards) ----- */
+.kpi-ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+@media(max-width:1100px){.kpi-ov-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:680px) {.kpi-ov-grid{grid-template-columns:1fr;}}
+
+.kpi-ov-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;
+  position:relative;overflow:hidden;transition:var(--transition);
+  cursor:default;
+}
+.kpi-ov-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.kpi-ov-card .koi-bar{position:absolute;top:0;left:0;width:4px;height:100%;}
+.koi-label{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.koi-value{font-size:28px;font-weight:800;line-height:1;margin-bottom:5px;}
+.koi-delta{font-size:11px;margin-bottom:3px;}
+.koi-delta.pos{color:var(--success);}
+.koi-delta.neg{color:var(--danger);}
+.koi-delta.neu{color:var(--text-3);}
+.koi-sub{font-size:10px;color:var(--text-3);}
+.koi-icon{position:absolute;top:14px;right:16px;font-size:20px;opacity:.35;}
+
+/* ----- KPI meter ----- */
+.kpi-meter{background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px;}
+.kpi-meter-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.kpi-meter-actual{font-size:28px;font-weight:800;line-height:1;}
+.kpi-meter-target{font-size:12px;color:var(--text-3);}
+.kpi-meter-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+.kpi-meter-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+.kpi-meter-fill.fill-gold{background:var(--gold);}
+.kpi-meter-fill.fill-red{background:var(--danger);}
+.kpi-meter-fill.fill-green{background:var(--success);}
+.kpi-meter-fill.fill-blue{background:var(--primary);}
+.kpi-meter-pct{font-size:11px;color:var(--text-2);}
+
+/* ----- KPI compare grid (2 cards side by side) ----- */
+.kpi-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:768px){.kpi-compare-grid{grid-template-columns:1fr;}}
+.kpi-compare-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.kpi-compare-title{font-size:14px;font-weight:700;margin-bottom:14px;}
+
+/* ----- Channel split pills ----- */
+.channel-split{display:flex;gap:8px;margin-top:10px;}
+.channel-pill{flex:1;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;text-align:center;}
+.channel-pill-val{font-size:18px;font-weight:800;line-height:1;}
+.channel-pill-label{font-size:10px;color:var(--text-3);text-transform:uppercase;margin-top:3px;}
+
+/* ----- PTKD grid / cards ----- */
+.ptkd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:14px 16px;}
+.ptkd-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px 14px;
+  cursor:pointer;transition:var(--transition);
+}
+.ptkd-card:hover{transform:translateY(-2px);border-color:var(--border-strong);box-shadow:var(--shadow);}
+.ptkd-card.alert-critical{border-left:3px solid var(--danger);}
+.ptkd-card.alert-warning{border-left:3px solid var(--gold);}
+.ptkd-card.alert-ok{border-left:3px solid var(--success);}
+.ptkd-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.ptkd-total{font-size:22px;font-weight:800;line-height:1;}
+.ptkd-detail{font-size:11px;color:var(--text-2);margin-top:3px;}
+.ptkd-rate-bar{margin-top:8px;}
+.ptkd-rate-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.ptkd-rate-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.ptkd-rate-val{font-size:11px;font-weight:600;margin-top:3px;}
+
+/* ----- Owner block ----- */
+.owner-block{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:20px;}
+.owner-block-header{padding:16px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.owner-block-header.quang{background:linear-gradient(90deg,var(--primary-xlight),transparent);}
+.owner-block-header.dung{background:linear-gradient(90deg,var(--cyan-bg),transparent);}
+.owner-block-kpi-bar{padding:8px 18px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text-2);}
+.owner-block-title{font-size:16px;font-weight:800;}
+.owner-block-meta{margin-left:auto;display:flex;gap:20px;flex-wrap:wrap;}
+.owner-stat{text-align:center;}
+.owner-stat-val{font-size:18px;font-weight:800;line-height:1;}
+.owner-stat-label{font-size:10px;color:var(--text-3);text-transform:uppercase;margin-top:2px;}
+
+/* ----- Owner tabs (KPI views) ----- */
+.owner-tabs-kpi{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;}
+.owner-tab-kpi{
+  padding:10px 22px;cursor:pointer;font-size:13px;font-weight:600;
+  color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-2px;
+  transition:var(--transition);white-space:nowrap;
+}
+.owner-tab-kpi:hover{color:var(--text);}
+.owner-tab-kpi.active{color:var(--primary);border-bottom-color:var(--primary);}
+
+/* ----- PTKD ranking subtabs ----- */
+.rank-tabs{display:flex;gap:8px;margin-bottom:14px;}
+.rank-tab{padding:5px 14px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--text-2);transition:var(--transition);}
+.rank-tab:hover{border-color:var(--border-strong);}
+.rank-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+/* ----- KPI chip badges ----- */
+.kpi-chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
+.kpi-chip-green{background:var(--success-bg);color:var(--success);}
+.kpi-chip-red{background:var(--danger-bg);color:var(--danger);}
+.kpi-chip-gold{background:var(--gold-bg);color:var(--gold);}
+.kpi-chip-blue{background:var(--primary-xlight);color:var(--primary);}
+
+/* ----- KPI data table ----- */
+.kpi-table{width:100%;border-collapse:collapse;font-size:12px;}
+.kpi-table th{
+  background:var(--surface2);padding:9px 12px;text-align:left;
+  font-size:11px;font-weight:700;color:var(--text-2);
+  letter-spacing:.04em;text-transform:uppercase;
+  border-bottom:1px solid var(--border-strong);white-space:nowrap;
+}
+.kpi-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:middle;}
+.kpi-table tr:hover td{background:var(--surface2);}
+.kpi-table .td-bold{color:var(--text);font-weight:600;}
+.kpi-table .td-right{text-align:right;}
+.kpi-table .td-center{text-align:center;}
+.kpi-table .td-mono{font-family:var(--mono);font-size:11px;}
+
+/* ----- KPI alert grid ----- */
+.kpi-alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+@media(max-width:768px){.kpi-alert-grid{grid-template-columns:1fr;}}
+.kpi-alert-item{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--text-3);border-radius:var(--radius-sm);padding:12px 14px;
+}
+.kpi-alert-item.alert-critical{border-left-color:var(--danger);background:var(--danger-bg);}
+.kpi-alert-item.alert-warning{border-left-color:var(--gold);background:var(--gold-bg);}
+.kpi-alert-item.alert-ok{border-left-color:var(--success);background:var(--success-bg);}
+.kpi-alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.kpi-alert-dot.alert-critical{background:var(--danger);}
+.kpi-alert-dot.alert-warning{background:var(--gold);}
+.kpi-alert-dot.alert-ok{background:var(--success);}
+.kpi-alert-msg{font-size:12px;color:var(--text-2);line-height:1.6;}
+.kpi-alert-msg strong{color:var(--text);}
+.kpi-alert-meta{font-size:10px;color:var(--text-3);margin-top:4px;}
+
+/* ----- Exec insight panel (KPI) ----- */
+.kpi-insight-panel{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;margin-bottom:20px;
+}
+.kpi-insight-title{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:12px;}
+.kpi-insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:768px){.kpi-insight-grid{grid-template-columns:1fr;}}
+.kpi-insight-item{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text-2);line-height:1.6;}
+.kpi-insight-item strong{color:var(--text);}
+.kpi-insight-bullet{font-size:14px;flex-shrink:0;margin-top:1px;}
+
+/* ----- Chart grid (2-col) ----- */
+.kpi-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+@media(max-width:900px){.kpi-chart-grid{grid-template-columns:1fr;}}
