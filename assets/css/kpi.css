@@ -1,0 +1,105 @@
+/* ===== KPI CSS — Phase F ===== */
+
+/* ----- Section header: title + flex-1 divider ----- */
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.section-header-title{font-size:13px;font-weight:700;color:var(--text-2);white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;}
+.section-header-line{flex:1;height:1px;background:var(--border);}
+
+/* ----- Left-border accent cards ----- */
+.kpi-accent-card{
+  background:var(--surface);border-radius:var(--radius);
+  border:1px solid var(--border);border-left:4px solid var(--primary);
+  padding:18px 20px;box-shadow:var(--shadow-sm);transition:var(--transition);
+}
+.kpi-accent-card:hover{box-shadow:var(--shadow);}
+.kpi-accent-card.accent-purple{border-left-color:var(--purple);}
+.kpi-accent-card.accent-cyan{border-left-color:var(--cyan);}
+.kpi-accent-card.accent-gold{border-left-color:var(--gold);}
+.kpi-accent-card.accent-success{border-left-color:var(--success);}
+.kpi-accent-card.accent-danger{border-left-color:var(--danger);}
+
+/* ----- Exec summary ----- */
+.exec-summary{
+  background:var(--surface);border-radius:var(--radius-lg);
+  border:1px solid var(--border);padding:22px 24px;box-shadow:var(--shadow-sm);
+}
+.exec-summary-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.exec-summary-icon{
+  width:36px;height:36px;border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+}
+.exec-summary-title{font-size:16px;font-weight:800;}
+.exec-summary-subtitle{font-size:12px;color:var(--text-2);}
+
+/* ----- Bullet chart ----- */
+.bullet-chart{display:flex;flex-direction:column;gap:12px;}
+.bullet-row{display:flex;align-items:center;gap:10px;}
+.bullet-label{
+  font-size:12px;font-weight:600;color:var(--text-2);
+  width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.bullet-track{flex:1;height:16px;background:var(--border);border-radius:4px;position:relative;}
+.bullet-fill{height:100%;border-radius:4px;transition:width .5s ease;max-width:100%;}
+.bullet-fill.fill-ahead{background:var(--success);}
+.bullet-fill.fill-on-track{background:var(--info);}
+.bullet-fill.fill-behind{background:var(--gold);}
+.bullet-fill.fill-critical{background:var(--danger);}
+.bullet-target{
+  position:absolute;top:-4px;height:24px;width:2px;
+  background:var(--text);border-radius:1px;z-index:2;
+}
+.bullet-value{font-size:12px;font-weight:700;color:var(--text);font-family:var(--mono);width:48px;text-align:right;flex-shrink:0;}
+.bullet-pct{font-size:11px;color:var(--text-3);width:36px;text-align:right;flex-shrink:0;}
+
+/* ----- Alert item ----- */
+.alert-list{display:flex;flex-direction:column;gap:8px;}
+.alert-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);border-left:3px solid var(--text-3);
+  background:var(--surface);
+}
+.alert-item.alert-critical{border-left-color:var(--danger);background:var(--danger-bg);}
+.alert-item.alert-behind{border-left-color:var(--gold);background:var(--gold-bg);}
+.alert-item.alert-info{border-left-color:var(--info);background:var(--info-bg);}
+.alert-item-icon{font-size:14px;margin-top:1px;flex-shrink:0;}
+.alert-item-body{flex:1;min-width:0;}
+.alert-item-title{font-size:13px;font-weight:700;}
+.alert-item-sub{font-size:12px;color:var(--text-2);margin-top:2px;}
+
+/* ----- Kanban board (Action Plan) ----- */
+.kanban-board{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;align-items:flex-start;}
+.kanban-col{
+  flex:0 0 260px;background:var(--surface2);
+  border-radius:var(--radius);border:1px solid var(--border);padding:14px;
+}
+.kanban-col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.kanban-col-title{font-size:13px;font-weight:700;}
+.kanban-col-count{
+  font-size:11px;font-weight:700;padding:2px 7px;
+  border-radius:99px;background:var(--border);color:var(--text-2);
+}
+.kanban-cards{display:flex;flex-direction:column;gap:8px;}
+.kanban-card{
+  background:var(--surface);border-radius:var(--radius-sm);
+  border:1px solid var(--border);padding:12px 14px;
+  box-shadow:var(--shadow-sm);transition:var(--transition);
+}
+.kanban-card:hover{box-shadow:var(--shadow);border-color:var(--border-strong);}
+.kanban-card-title{font-size:13px;font-weight:600;margin-bottom:6px;line-height:1.4;}
+.kanban-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.kanban-card-owner{font-size:11px;color:var(--text-3);}
+.kanban-empty{font-size:12px;color:var(--text-3);text-align:center;padding:16px 0;}
+
+/* ----- Zone card (Branch/Region) ----- */
+.zone-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.zone-card{
+  background:var(--surface);border-radius:var(--radius);
+  border:1px solid var(--border);padding:16px;
+  box-shadow:var(--shadow-sm);text-align:center;transition:var(--transition);
+}
+.zone-card:hover{box-shadow:var(--shadow);}
+.zone-card-name{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--text-2);}
+.zone-card-value{font-size:28px;font-weight:800;line-height:1;color:var(--text);}
+.zone-card-sub{font-size:11px;color:var(--text-3);margin-top:4px;}
+.zone-card-badge{margin-top:8px;display:flex;justify-content:center;}
