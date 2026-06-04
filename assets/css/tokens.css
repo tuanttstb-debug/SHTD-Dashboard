@@ -1,0 +1,53 @@
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --primary: #4B1FAF;
+  --primary-light: #7E57C2;
+  --primary-xlight: rgba(75,31,175,0.08);
+  --accent: #FF7A00;
+  --accent-light: rgba(255,122,0,0.12);
+  --success: #16A34A;
+  --success-bg: rgba(22,163,74,0.1);
+  --warning: #D97706;
+  --warning-bg: rgba(217,119,6,0.1);
+  --danger: #DC2626;
+  --danger-bg: rgba(220,38,38,0.1);
+  --info: #0284C7;
+  --info-bg: rgba(2,132,199,0.1);
+
+  --bg: #F0F2F8;
+  --surface: #FFFFFF;
+  --surface2: #F8FAFC;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --text: #0F172A;
+  --text-2: #475569;
+  --text-3: #94A3B8;
+
+  --sidebar-bg: linear-gradient(175deg,#3B0D9B 0%,#220A6B 100%);
+  --sidebar-text: rgba(255,255,255,0.75);
+  --sidebar-active: rgba(255,255,255,0.12);
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.14);
+  --transition: all .22s cubic-bezier(.4,0,.2,1);
+
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+[data-theme="dark"] {
+  --bg: #0D1117;
+  --surface: #161B22;
+  --surface2: #1C2330;
+  --border: #2D3748;
+  --border-strong: #4A5568;
+  --text: #E2E8F0;
+  --text-2: #94A3B8;
+  --text-3: #64748B;
+  --shadow: 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.5);
+  --sidebar-bg: linear-gradient(175deg,#1E0D5C 0%,#0D0729 100%);
+}

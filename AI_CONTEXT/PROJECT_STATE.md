@@ -1,6 +1,6 @@
 # PROJECT STATE
-**As of**: 2026-06-03 end-of-session  
-**Version in Main.html**: v6.2 (patches applied)
+**As of**: 2026-06-04 end-of-session  
+**Version in index.html**: v6.2 (patches applied)
 
 ---
 
@@ -8,8 +8,11 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `Main.html` | 4109 | ✅ v6.2 patches applied, orphaned HTML removed |
-| `GAS.GS` | 535 | ⚠️ Historical patch file — all patches now in Main.html. Safe to archive. |
+| `index.html` | ~4090 | ✅ v6.2 patches applied, orphaned HTML removed (renamed from Main.html) |
+| `GAS.GS` | 535 | ✅ Archived — all patches merged into index.html |
+| `assets/css/` | — | ✅ Folder created (Phase B0) — empty, ready for B1 |
+| `assets/js/` | — | ✅ Folder created (Phase B0) — empty, ready for B2 |
+| `backend/` | — | ✅ Folder created (Phase B0) — empty, waiting for Code.gs |
 | `/backend/Code.gs` | — | ❌ Does not exist yet — GAS backend not in repo |
 
 ---
@@ -66,13 +69,13 @@
 ```
 CURRENT (monolith)                    TARGET (Phase B)
 ──────────────────                    ────────────────
-Main.html (4109 lines)                index.html (~200 lines)
-  ├── <style> ~1050 lines      →      assets/css/ (9 files)
+index.html (~4090 lines)              index.html (~200 lines)
+  ├── <style> ~1025 lines      →      assets/css/ (9 files)  ← B1 IN PROGRESS
   ├── <body>  ~600 lines              assets/js/  (18 modules)
-  └── <script> ~2460 lines           backend/Code.gs
+  └── <script> ~2465 lines           backend/Code.gs
 ```
 
-Phase B not started. No structural changes made.
+Phase B0 complete (folder structure, rename). B1 CSS extraction starting.
 
 ---
 

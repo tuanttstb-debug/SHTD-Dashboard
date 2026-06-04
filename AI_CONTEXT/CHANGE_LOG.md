@@ -2,6 +2,32 @@
 
 ---
 
+## [Phase B0] 2026-06-04 — Repo Initialized + Phase B0 Structure
+
+**Changed by**: AI Implementation Session (Claude Sonnet 4.6)
+
+### Actions
+- **Initialized git repo** — `git init` + remote added (GitHub)
+- **Renamed** `Main.html` → `index.html` (GitHub Pages compatibility)
+- **Created** folder structure: `assets/css/`, `assets/js/ui/`, `assets/js/views/`, `backend/`
+- **Re-applied** A1+A3 patches (lost during `git reset --hard origin/main` on first pull)
+- **Committed** AI_CONTEXT docs, GAS.GS archive, and B0 structure to GitHub
+
+### Root Cause Note
+A1+A3 patches from 2026-06-03 were never committed. When pulling fresh repo they were overwritten. Now committed at `387ce50`.
+
+### Commits
+- `b892079` — docs: add AI context files, archive GAS.GS, scaffold Phase B0 structure
+- `387ce50` — fix: re-apply v6.2 patches (A1 + A3)
+
+### Verified (Playwright)
+- `fmtDateExport('2026-04-22')` → `"22-Apr-26"` ✅
+- QV topbar button visible and opens panel ✅
+- No console errors ✅
+- 4 KPI cards rendered ✅
+
+---
+
 ## [v6.2-merged] 2026-06-03 — Phase A1 + A3 Applied to Main.html
 
 **Changed by**: AI Implementation Session

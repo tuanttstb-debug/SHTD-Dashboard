@@ -4,20 +4,14 @@
 
 ---
 
-## Do First (Before Any Code)
-
-### VERIFY — Test the changes from this session
-Must confirm before committing to GitHub or starting Phase B.
+## Completed This Session (2026-06-04)
 
 ```
-□ Open Main.html in browser
-□ Quick View topbar button visible (⚡ Quick View) → click → panel opens
-□ Badge dot (#qvDot) appears on topbar button when tasks have issues
-□ Export Excel → Start Date column shows "22-Apr-26" format
-□ Export Excel → % HT column shows "75%" (not 75)
-□ Add Task → type existing ID → error shows "Không thể thêm mới với mã này!"
-□ Edit Task → change ID to another existing ID → error shows "đã được dùng bởi task khác!"
-□ Sync with Google Sheets → confirm data round-trip (write then read back)
+✅ git init + remote added to GitHub
+✅ Main.html renamed → index.html
+✅ assets/css/, assets/js/ui/, assets/js/views/, backend/ created
+✅ A1+A3 patches re-applied and verified (Playwright)
+✅ Committed to GitHub (2 commits: b892079, 387ce50)
 ```
 
 ---
