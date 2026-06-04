@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 (A4 complete — all Phase A fixes done)
+**As of**: 2026-06-04 (Phase C complete — A4 + render performance done)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -103,7 +103,7 @@ Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 
 | ID | Issue | Priority |
 |---|---|---|
-| PERF-01 | Render slowness with 200–500 tasks | 🟡 Phase C |
+| ~~PERF-01~~ | ~~Render slowness with 200–500 tasks~~ | ✅ Resolved — single-pass dashboard + debounce filter (`7b895a2`) |
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile (280px label column) | 🟢 Phase D |
@@ -111,7 +111,8 @@ Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 | ~~DEBT-02~~ | ~~Stale comment ("dd/mm/yyyy")~~ | ✅ Resolved — comment never existed in extracted parsers.js |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case — only matters if user re-imports an exported file |
 | ~~DEBT-04~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | ✅ Resolved — dynamic year via `renderGantt()` (`83ea790`) |
-| DEBT-05 | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | ⚪ Cosmetic — consolidate in Phase C cleanup |
+| DEBT-05 | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | ⚪ Cosmetic — consolidate later |
+| DEBT-06 | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements | ⚪ Share `debounceTimer`, no double render — cleanup when convenient |
 
 ---
 
