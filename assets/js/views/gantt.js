@@ -1,4 +1,6 @@
 function renderGantt() {
+  const el = document.getElementById('ganttSubtitle');
+  if (el) el.textContent = `Hiển thị tiến độ theo thời gian — ${new Date().getFullYear()}`;
   const wrap = document.getElementById('ganttWrap');
   const filterT = document.getElementById('ganttFilterTeam')?.value||'';
   const filterI = document.getElementById('ganttFilterInit')?.value||'';
