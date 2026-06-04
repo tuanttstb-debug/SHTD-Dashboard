@@ -78,10 +78,24 @@ function navigateTo(view) {
   document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
   const sec = document.getElementById(`view-${view}`);
   if (sec) { sec.style.display = 'contents'; sec.style.animation = 'none'; void sec.offsetWidth; sec.style.animation = ''; }
-  const titles = { dashboard:'Executive Dashboard', tasks:'Quản lý Công việc', gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất', 'kpi-overview':'KPI Digital Overview', 'action-plan':'Action Plan – Kế hoạch hành động' };
+  const titles = {
+    dashboard:'Executive Dashboard', tasks:'Quản lý Công việc',
+    gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất',
+    'kpi-overview':'KPI Digital Overview', 'action-plan':'Action Plan – Kế hoạch hành động',
+    'kpi-progress':'KPI Progress – Tiến độ từng sản phẩm',
+    'owner-analysis':'Owner Analysis – Theo chủ sở hữu',
+    'branch-analysis':'Branch Analysis – Theo chi nhánh',
+    'rm-analysis':'RM Analysis – Theo Relationship Manager',
+  };
   document.getElementById('pageTitle').textContent = titles[view] || view;
-  if (view === 'gantt') renderGantt();
-  if (view === 'performance') renderPerfTable();
+  if (view === 'gantt')           renderGantt();
+  if (view === 'performance')     renderPerfTable();
+  if (view === 'kpi-overview')    renderKpiOverview();
+  if (view === 'action-plan')     renderActionPlan();
+  if (view === 'kpi-progress')    renderKpiProgress();
+  if (view === 'owner-analysis')  renderOwnerAnalysis();
+  if (view === 'branch-analysis') renderBranchAnalysis();
+  if (view === 'rm-analysis')     renderRmAnalysis();
   closeSidebar();
 }
 
