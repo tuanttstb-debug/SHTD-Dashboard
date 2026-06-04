@@ -1,10 +1,10 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-04 (updated end-of-session)
-**Context**: Phase B complete. index.html = 736 lines. A4 interrupted — start here.
+**Prepared**: 2026-06-04 (updated — A4 complete)
+**Context**: Phase B complete + all Phase A fixes done. Next: Phase C or A2 (blocked on PO).
 
 ---
 
-## Completed This Session (2026-06-04)
+## Completed (2026-06-04)
 
 ```
 ✅ git init + remote added to GitHub
@@ -16,7 +16,7 @@
 ✅ Full test: 25/25 PASS, 0 FAIL, 0 JS errors
 ✅ All committed and pushed to GitHub (commits: b892079, 387ce50, 37423f6, da205dc, 39e9e28)
 ✅ A5: Resolved — stale comment never existed in extracted parsers.js
-⚠️  A4: Located (index.html:329) but NOT fixed — session interrupted
+✅ A4: Fixed — Gantt subtitle now dynamic (commit 83ea790, pushed)
 ```
 
 ---
@@ -28,39 +28,19 @@
 
 **Next session then does**:
 ```
-mkdir backend/
 # Paste GAS code into:
 backend/Code.gs
 ```
-No code changes to Main.html needed.
-
-### A4 — Fix Gantt hardcoded year `[⚠️ INTERRUPTED — do first next session]`
-**Exact location**: `index.html:329` — card-subtitle inside Gantt card-header
-```html
-<!-- Current (wrong): -->
-<div class="card-subtitle">Hiển thị tiến độ theo thời gian trong năm 2025–2026</div>
-
-<!-- Fix step 1 — add id: -->
-<div class="card-subtitle" id="ganttSubtitle">Hiển thị tiến độ theo thời gian</div>
-```
-**Fix step 2** — top of `renderGantt()` in `assets/js/views/gantt.js`:
-```js
-const el = document.getElementById('ganttSubtitle');
-if (el) el.textContent = `Hiển thị tiến độ theo thời gian — ${new Date().getFullYear()}`;
-```
-
-### ~~A5~~ — RESOLVED ✅
-Stale comment `// Hỗ trợ dd/mm/yyyy` no longer exists — `parsers.js` was written fresh during B2.
+No code changes to index.html or JS modules needed.
 
 ---
 
 ## Phase B — ✅ COMPLETE
 B0 + B1 + B2 done. index.html = 736 lines. 9 CSS files + 17 JS modules extracted.
-See CHANGE_LOG.md `[Phase B1+B2]` entry for full details.
 
 ---
 
-## Backlog (Phase C–E, do after B)
+## Backlog (Phase C–E)
 
 | Item | Phase | Priority |
 |---|---|---|
@@ -77,5 +57,5 @@ See CHANGE_LOG.md `[Phase B1+B2]` entry for full details.
 1. **Always read `PROJECT_STATE.md` first** — confirms what is live
 2. **Always read `WORKING_RULE.md`** — confirms what not to touch
 3. **Do not touch `syncAction()`, `DB_COLS`, `localStorage['shtd_v2']`** without explicit instruction
-4. **One logical change per commit** — don't bundle A4 + Phase C in one commit
+4. **One logical change per commit** — don't bundle Phase C + D in one commit
 5. **JS globals are `let`, not `var`** — use bare `db`, not `window.db`

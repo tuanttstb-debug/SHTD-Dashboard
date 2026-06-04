@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 end-of-session (Phase B complete)
+**As of**: 2026-06-04 (A4 complete — all Phase A fixes done)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -47,7 +47,7 @@
 | Bulk actions (RAG, state, delete) | ✅ | |
 | Task CRUD modal | ✅ | |
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
-| Gantt / Timeline | ✅ | Poor mobile UX — in backlog |
+| Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4). Poor mobile UX — in backlog |
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | |
 | Quick View **topbar button** | ✅ **Fixed this session** | Was orphaned in CSS, now in body |
@@ -110,7 +110,7 @@ Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 | DEBT-01 | GAS backend not in repo | 🟡 A2 — blocked on PO |
 | ~~DEBT-02~~ | ~~Stale comment ("dd/mm/yyyy")~~ | ✅ Resolved — comment never existed in extracted parsers.js |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case — only matters if user re-imports an exported file |
-| DEBT-04 | Gantt subtitle hardcoded "2025–2026" at `index.html:329` | ⚪ A4 — 5 min fix, interrupted |
+| ~~DEBT-04~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | ✅ Resolved — dynamic year via `renderGantt()` (`83ea790`) |
 | DEBT-05 | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | ⚪ Cosmetic — consolidate in Phase C cleanup |
 
 ---
