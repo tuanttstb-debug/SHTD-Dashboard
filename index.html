@@ -151,31 +151,6 @@ a{color:inherit;text-decoration:none;}
 .breadcrumb{font-size:12px;color:var(--text-3);}
 
 .topbar-right{display:flex;align-items:center;gap:10px;}
-   <button class="qv-topbar-btn" onclick="openQuickView()" title="Quick View (Q)">
-      <i class="fa-solid fa-bolt" style="color:var(--accent);"></i>
-      Quick View
-      <div class="qv-badge-dot" id="qvDot" style="display:none;"></div>
-    </button>
-
-    <button class="btn btn-outline" onclick="loadDemoData()"><i class="fa-solid fa-database"></i> Load demo data</button>
-    <button class="btn btn-outline" onclick="clearDemoData()"><i class="fa-solid fa-eraser"></i> Xóa data</button>
-    <button class="btn btn-outline" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">
-      <i class="fa-solid fa-circle-half-stroke"></i> Toggle Dark
-    </button>
-  </div>
-</div>
-
-<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;font-size:13px;color:var(--text-2);line-height:1.8;">
-  <strong style="color:var(--text);font-size:15px;"><i class="fa-solid fa-circle-info" style="color:var(--info);margin-right:8px;"></i>Hướng dẫn merge vào dashboard.html gốc</strong>
-  <ol style="margin-top:12px;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
-    <li><strong>CSS</strong>: Copy toàn bộ CSS trong khối <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">/* ===== QUICK VIEW PANEL ===== */</code> vào cuối thẻ <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;style&gt;</code></li>
-    <li><strong>FAB Button</strong>: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">div.qv-fab</code> vào ngay trước <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;/body&gt;</code></li>
-    <li><strong>Panel HTML</strong>: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">div#quickViewPanel + div.qv-overlay</code> vào sau FAB button</li>
-    <li><strong>JavaScript</strong>: Copy toàn bộ khối <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">// === QUICK VIEW PANEL JS ===</code> vào cuối thẻ <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">&lt;script&gt;</code></li>
-    <li><strong>(Tuỳ chọn)</strong> Topbar Button: Copy <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">button.qv-topbar-btn</code> vào trong <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;">.topbar-right</code></li>
-    <li><strong>Keyboard shortcut</strong>: Phím <kbd style="background:var(--surface2);border:1px solid var(--border-strong);border-bottom:3px solid var(--border-strong);border-radius:4px;padding:2px 7px;font-size:11px;font-family:monospace;">Q</kbd> trong setupListeners() đã được thêm vào khối JS – chỉ cần paste là hoạt động</li>
-  </ol>
-</div>
 .icon-btn{
   width:36px;height:36px;border-radius:var(--radius-sm);
   border:1px solid var(--border);background:var(--surface);
@@ -1133,6 +1108,11 @@ textarea.form-control{resize:vertical;min-height:72px;}
       <div class="status-dot" id="syncDot"></div>
       <div class="icon-btn" onclick="openKbModal()" title="Phím tắt (?)"><i class="fa-solid fa-keyboard"></i></div>
       <div class="icon-btn" id="darkModeBtn" onclick="toggleDark()" title="Đổi giao diện (Ctrl+D)"><i class="fa-solid fa-moon"></i></div>
+      <button class="qv-topbar-btn" onclick="openQuickView()" title="Quick View (Q)">
+        <i class="fa-solid fa-bolt" style="color:var(--accent);"></i>
+        Quick View
+        <div class="qv-badge-dot" id="qvDot" style="display:none;"></div>
+      </button>
       <div class="user-pill">
         <div class="avatar">AD</div>
         <div>
@@ -2198,12 +2178,24 @@ function autoGenId() {
 }
 
 function checkDupId(id) {
-  const orig = document.getElementById('origId').value;
-  const exists = id && db.tasks.some(t => t.id.trim().toLowerCase() === id.trim().toLowerCase() && t.id !== orig);
+  const orig   = document.getElementById('origId').value;
+  const isAdd  = !orig;
+  const exists = id && db.tasks.some(t =>
+    t.id.trim().toLowerCase() === id.trim().toLowerCase() &&
+    (isAdd || t.id !== orig)
+  );
   const err = document.getElementById('errId');
   const inp = document.getElementById('fId');
-  if (exists) { err.classList.add('visible'); inp.classList.add('error'); }
-  else { err.classList.remove('visible'); inp.classList.remove('error'); }
+  if (exists) {
+    err.classList.add('visible');
+    inp.classList.add('error');
+    err.innerHTML = isAdd
+      ? '<i class="fa-solid fa-ban"></i> ID đã tồn tại – Không thể thêm mới với mã này!'
+      : '<i class="fa-solid fa-triangle-exclamation"></i> ID đã được dùng bởi task khác!';
+  } else {
+    err.classList.remove('visible');
+    inp.classList.remove('error');
+  }
   return exists;
 }
 
@@ -2234,29 +2226,58 @@ const DB_COLS = [
   'Cross-team? (Y/N)','Highlight báo cáo lên dashboard? (Y/N)'
 ];
 
+const _MMM = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtDateExport(d) {
+  if (!d) return '';
+  d = String(d).trim();
+  let day, month0based, year4;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    const parts = d.split('-');
+    year4       = parseInt(parts[0], 10);
+    month0based = parseInt(parts[1], 10) - 1;
+    day         = parseInt(parts[2], 10);
+  } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)) {
+    const parts = d.split('/');
+    day         = parseInt(parts[0], 10);
+    month0based = parseInt(parts[1], 10) - 1;
+    year4       = parseInt(parts[2], 10);
+  } else {
+    return d;
+  }
+  if (month0based < 0 || month0based > 11) return d;
+  const dd  = String(day).padStart(2, '0');
+  const mmm = _MMM[month0based];
+  const yy  = String(year4).slice(-2);
+  return `${dd}-${mmm}-${yy}`;
+}
+
 // Chuyển task object → array 23 phần tử theo đúng thứ tự DB_COLS
 function taskToRow(t) {
-  const fmtD = d => {
-    if (!d) return '';
-    if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
-      const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`;
-    }
-    return String(d);
-  };
   return [
-    t.id||'', t.tuanBC||'', t.initiative||'', t.category||'',
-    t.team||'', t.teamPhoiHop||'',
-    t.type||'Task',
-    t.name||'',
-    t.picAcc||'',
-    t.picRes||'',
-    t.picSupport||'',
-    fmtD(t.startDate), fmtD(t.endDate),
-    t.progress||0,
-    t.state||'Chưa bắt đầu', t.milestone||'',
-    t.result||'', t.nextPlan||'', t.vuongMac||'',
-    t.canBLD||'N', t.noiDungBLD||'',
-    t.crossTeam||'N', t.highlight||'N'
+    /* 0  ID                */ t.id            || '',
+    /* 1  Tuần BC           */ t.tuanBC         || '',
+    /* 2  Initiative ID     */ t.initiative     || '',
+    /* 3  Category          */ t.category       || '',
+    /* 4  Team chính        */ t.team           || '',
+    /* 5  Team phối hợp     */ t.teamPhoiHop    || '',
+    /* 6  Loại              */ t.type           || 'Task',
+    /* 7  Task/Deliverable  */ t.name           || '',
+    /* 8  PIC Accountable   */ t.picAcc         || '',
+    /* 9  PIC Responsible   */ t.picRes         || '',
+    /* 10 PIC Support       */ t.picSupport     || '',
+    /* 11 Start Date        */ fmtDateExport(t.startDate),
+    /* 12 Deadline          */ fmtDateExport(t.endDate),
+    /* 13 % HT              */ (t.progress != null ? t.progress + '%' : '0%'),
+    /* 14 Trạng thái        */ t.state          || 'Chưa bắt đầu',
+    /* 15 Milestone         */ t.milestone      || '',
+    /* 16 Kết quả tuần qua  */ t.result         || '',
+    /* 17 Kế hoạch tuần tới */ t.nextPlan       || '',
+    /* 18 Vướng mắc         */ t.vuongMac       || '',
+    /* 19 Cần BLĐ           */ t.canBLD         || 'N',
+    /* 20 Nội dung BLĐ      */ t.noiDungBLD     || '',
+    /* 21 Cross-team        */ t.crossTeam      || 'N',
+    /* 22 Highlight         */ t.highlight      || 'N',
   ];
 }
 
@@ -2312,9 +2333,20 @@ function _parseArrayIntoDb(values) {
   const cHl    = ci(['highlight','b\u00e1o c\u00e1o']);
 
   // Apps Script getDisplayValues() luôn trả về string — kể cả ngày "22/04/2026"
+  const _mmmIdx = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
   const parseDate = v => {
     if (!v) return '';
     v = v.toString().trim();
+    // dd-mmm-yy: "22-Apr-26" (round-trip từ fmtDateExport)
+    const dmy = v.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2})$/);
+    if (dmy) {
+      const mi = _mmmIdx[dmy[2].toLowerCase()];
+      if (mi !== undefined) {
+        const yy = parseInt(dmy[3], 10);
+        const year4 = yy + (yy < 50 ? 2000 : 1900);
+        return `${year4}-${String(mi+1).padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+      }
+    }
     const p = v.split(/[\/\-]/);
     if (p.length === 3) {
       if (p[0].length <= 2 && p[2].length === 4)
