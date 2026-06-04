@@ -88,16 +88,9 @@
 
 ---
 
-## TD-007: Manual Patch Process (GAS.GS)
-**Rating**: 🟡 HIGH
+## ~~TD-007: Manual Patch Process (GAS.GS)~~ ✅ RESOLVED 2026-06-04
 
-**Issue**: The versioning system relies on manually merging patches from `GAS.GS` into `Main.html` by searching for function names and replacing code blocks.
-
-**Impact**:
-- Highly error-prone process
-- No automated merge, no CI
-- Partial merges can leave the app in a broken state
-- GAS.GS v6.2 merge guide still pending for some functions
+**Resolution**: `GAS.GS` fully superseded — all v6.1/v6.2 patches merged into modular JS files (`parsers.js`, `crud.js`, `api.js`). File archived in repo history. No future patch process needed.
 
 ---
 
@@ -143,9 +136,11 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 **Issue**: No committed test suite — no unit tests, no integration tests.
 
-**Partial resolution 2026-06-04**: Ad-hoc Playwright script (`pw_verify/full_test.js`) covers 25 checks across all views. Not committed to repo, not part of CI. Still manual trigger.
+**Partial resolution 2026-06-04 (Phase B)**: Ad-hoc Playwright script (`pw_verify/full_test.js`) — 25 checks, all views. Not committed, not CI.
 
-**Remaining gap**: No CI integration, no unit tests for pure functions (parsers, helpers).
+**Partial resolution 2026-06-04 (Phase F)**: `verify_kpi.mjs` — Playwright headless test for all 6 KPI Digital views, run after implementation. Also not committed.
+
+**Remaining gap**: No CI integration, no unit tests for pure functions (parsers, helpers, kpi-data helpers).
 
 ---
 
@@ -170,6 +165,30 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-020: KPI Data Hardcoded — No Refresh Mechanism
+**Rating**: ⚪ LOW
+**Added**: 2026-06-04 (Phase F)
+
+**Issue**: `assets/js/kpi-data.js` has hardcoded monthly arrays (`biz[]`, `bpm[]`, `cust[]`). Adding a new month requires manually editing the JS file and committing.
+
+**Impact**: Risk of stale KPI numbers without a clear update signal. Each monthly update needs a deploy.
+
+**Mitigation**: File is well-structured and commented. Acceptable short-term. Long-term: consider a separate JSON file or a GAS read path for KPI data.
+
+---
+
+## TD-021: Shared Helpers Defined in View Files
+**Rating**: ⚪ LOW
+**Added**: 2026-06-04 (Phase F)
+
+**Issue**: `_sLabel()` and `_kpProgColor()` are utility functions defined in `kpi-overview.js` and `kpi-progress.js` respectively, but used by all 6 KPI view files. They work because of global scope and load order, but are not in a shared helper file.
+
+**Impact**: If `kpi-overview.js` is removed or load order changes, dependent views break silently.
+
+**Fix**: Move both to `helpers.js` or a new `assets/js/kpi-helpers.js`.
+
+---
+
 ## Debt Summary
 **Last updated**: 2026-06-04
 
@@ -181,7 +200,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-004 | 🟡 | Global state | Medium | Open — Phase D |
 | TD-005 | 🟡 | Inline styles | Medium | Open — Phase B |
 | TD-006 | 🟡 | Hardcoded dropdowns | Medium | Accepted — PO confirmed stable |
-| TD-007 | 🟡 | Manual patch process | Medium | ✅ **Resolved** — GAS.GS superseded |
+| ~~TD-007~~ | ~~🟡~~ | ~~Manual patch process~~ | Medium | ✅ **Resolved 2026-06-04** — GAS.GS fully superseded |
 | TD-008 | 🟡 | No error boundary | Small | Open |
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
@@ -194,3 +213,5 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | ~~TD-017~~ | ~~⚪~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | Tiny | ✅ **Resolved 2026-06-04** — dynamic year `83ea790` |
 | TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | Tiny | Open — defer to Phase F cleanup |
 | TD-019 | ⚪ | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements — share `debounceTimer`, no bug but redundant | Tiny | Open — cleanup when convenient |
+| TD-020 | ⚪ | KPI data hardcoded in `kpi-data.js` — monthly update requires file edit + deploy | Tiny | Open — acceptable short-term |
+| TD-021 | ⚪ | `_sLabel()` / `_kpProgColor()` defined in view files, used globally — load-order dependency | Tiny | Open — move to `helpers.js` |
