@@ -1,78 +1,42 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-04 (end-of-session handover)
-**Context**: E done. Phase F plan approved in principle — 3 PO decisions needed before coding starts.
+**Prepared**: 2026-06-04 (Phase F complete — all KPI Digital views live)
+**Context**: A–F all done. Remaining work: Phase D (mobile), A2 (GAS backend), tech debt.
 
 ---
 
-## ⚠️ START HERE — 3 Questions for PO (Phase F blocker)
+## Phase F — COMPLETE ✅
 
-Before implementing any Phase F code, get answers to:
-
-| # | Question | Options | Recommendation |
-|---|---|---|---|
-| 1 | **kpi-data.js số liệu** | A) Dùng số thực tế ngay | B) Placeholder trước, update sau | B — placeholder, unblock dev |
-| 2 | **Action Plan scope** | A) Reuse `db.tasks` (highlight=Y) | B) Hardcode riêng trong kpi-data.js | A — tái dụng, ít trùng lặp |
-| 3 | **View priority** | A) Full 6 views theo thứ tự | B) KPI Overview + Action Plan trước | B — ship value faster |
+All 6 KPI Digital views are implemented and verified:
+- KPI Overview, Action Plan, KPI Progress, Owner Analysis, Branch Analysis, RM Analysis
+- All views pass Playwright headless test — 0 JS errors
 
 ---
 
-## Phase F — KPI Digital Integration (PLANNED, not started)
+## What's Left
 
-### Sub-phases (proposed order if PO picks option B for Q3)
+### A2 — GAS Backend (BLOCKED on PO)
+User must export `Code.gs` from Apps Script Editor → `backend/Code.gs`.
+No code changes needed — just the file drop.
 
-| Sub | View | New files | Priority |
-|---|---|---|---|
-| F0 | CSS/Token extension | `tokens.css`, `components.css`, `kpi.css` | First (unblocks all others) |
-| F1 | Data layer | `kpi-data.js` | First (unblocks all views) |
-| F2 | Nav + HTML shell | `index.html` | First |
-| F3 | KPI Overview | `views/kpi-overview.js` | High |
-| F4 | Action Plan Kanban | `views/action-plan.js` | High |
-| F5 | KPI Progress + Bullet charts | `views/kpi-progress.js` | Medium |
-| F6 | Owner Analysis | `views/owner-analysis.js` | Medium |
-| F7 | Branch Analysis | `views/branch-analysis.js` | Low |
-| F8 | RM Analysis | `views/rm-analysis.js` | Low |
+### Phase D — Mobile UX (Low priority, deferred)
+| ID | Issue | Fix |
+|---|---|---|
+| MOB-01 | Filter bar cramped on mobile | Collapsible filter drawer |
+| MOB-02 | Toolbar button overflow on mobile | Overflow menu or icon-only mode |
+| MOB-03 | Gantt unusable (280px label column) | Simplified mobile Gantt or hide |
 
-### Files to create (Phase F total)
-```
-assets/js/kpi-data.js          ← KPI_DATA object (products, branches, RMs, targets)
-assets/js/views/kpi-overview.js
-assets/js/views/kpi-progress.js
-assets/js/views/action-plan.js
-assets/js/views/owner-analysis.js
-assets/js/views/branch-analysis.js
-assets/js/views/rm-analysis.js
-assets/css/kpi.css             ← bullet chart, exec-summary, alert-item, kanban, zone-card
-```
+### Tech Debt (all low priority)
+| ID | Debt | Action |
+|---|---|---|
+| DEBT-03 | `extractWorkbook` parseDate ignores "dd-mmm-yy" on re-import | Add format to `_parseArrayIntoDb` |
+| DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | Consolidate to `helpers.js`, remove from `app.js` |
+| DEBT-06 | Inline `onchange` + `addEventListener` both fire on filter elements | Remove inline handlers, use only `addEventListener` |
 
-### Files to edit (Phase F)
-```
-assets/css/tokens.css          ← add --purple, --cyan, --gold, --gold2
-assets/css/components.css      ← extend .badge (ahead/on-track/behind/critical)
-index.html                     ← nav section + 6 view divs + script/link tags
-assets/js/app.js               ← lazy init hooks for new views
-assets/js/ui/navigation.js     ← wire 6 new nav items
-```
-
-### UI concept rules (apply to ALL views)
-- Left-border color accent on KPI-type cards
-- Delta indicators (▲/▼ + color) on metric values
-- Section headers: `title + flex-1 divider line`
-- Status badges: `.badge.ahead/.on-track/.behind/.critical` (new, alongside existing RAG)
-- Font: keep **DM Sans** — do NOT switch to Barlow
-- Card hover: `box-shadow: var(--shadow)` consistent across all cards
-
----
-
-## Blocked
-
-### A2 — GAS Backend
-User must export Code.gs from Apps Script Editor → `backend/Code.gs`.
-No code changes needed — just the file.
-
----
-
-## Tech Debt (see TECH_DEBT.md)
-- DEBT-03, DEBT-05, DEBT-06 — all low priority, safe to defer past Phase F
+### KPI Data — Update When Ready
+When PO has new monthly data (T6 confirmed, T7+):
+- Edit `assets/js/kpi-data.js` — update `products[x].biz[5]`, `bpm[5]`, `cust[5]`, `summary.*`
+- Add months T7+ by extending `months[]`, `monthsFull[]`, and all monthly arrays
+- No structural changes needed
 
 ---
 
@@ -82,3 +46,4 @@ No code changes needed — just the file.
 3. One logical change per commit
 4. JS globals: use bare `db`, not `window.db`
 5. Syntax-check JS with `node -e "new Function(...)"` before committing
+6. KPI helper functions `_sLabel` / `_kpProgColor` are global — defined in kpi-overview.js / kpi-progress.js (loaded first)

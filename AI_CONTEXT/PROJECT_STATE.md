@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 (Phase E done, Phase F planned — awaiting PO decisions)
+**As of**: 2026-06-04 (Phase F complete — all KPI Digital views live)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -8,28 +8,12 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | 736 | ✅ HTML-only shell — all CSS/JS external |
+| `index.html` | ~790 | ✅ HTML-only shell — all CSS/JS external |
 | `GAS.GS` | 535 | ✅ Archived — all patches merged into index.html |
-| `assets/css/` | 9 files | ✅ Phase B1 complete — fully extracted |
-| `assets/js/` | 17 modules | ✅ Phase B2 complete — fully extracted |
+| `assets/css/` | 10 files | ✅ Phase B1 + F0 complete |
+| `assets/js/` | 24 modules | ✅ Phase B2 + E + F complete |
 | `backend/` | — | ✅ Folder exists — waiting for Code.gs |
 | `/backend/Code.gs` | — | ❌ Does not exist yet — GAS backend not in repo |
-
----
-
-## Patch Merge Status (GAS.GS → Main.html)
-
-| Patch | Function | Status | Line in Main.html |
-|---|---|---|---|
-| v6.1 FIX 1 | `syncAction()` | ✅ Merged (before this session) | 2431 |
-| v6.1 FIX 2 | FAB CSS `bottom:80px` | ✅ Merged (before this session) | ~676 |
-| v6.2 FIX 3 | `handleSubmit()` + `_showDuplicateIdBlocker()` | ✅ Merged (before this session) | 3372 |
-| v6.2 FIX 4 | `fmtDateExport()` + date format in `taskToRow()` | ✅ **Merged this session** | 2235 / 2274 |
-| v6.2 FIX 5 | Progress "75%" in `taskToRow()` | ✅ **Merged this session** | 2276 |
-| v6.2 bonus | `checkDupId()` ADD vs EDIT messages | ✅ **Merged this session** | 2181 |
-| Extra bonus | dd-mmm-yy parse in `_parseArrayIntoDb` | ✅ **Added this session** | 2341 |
-
-**GAS.GS is now fully superseded.** All its patches are in `assets/js/` modules.
 
 ---
 
@@ -47,21 +31,23 @@
 | Bulk actions (RAG, state, delete) | ✅ | |
 | Task CRUD modal | ✅ | |
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
-| Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4). Poor mobile UX — skipped (Phase D) |
-| Auto weekly report | ✅ **Phase E** | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc. Toolbar button + week picker modal |
-| KPI Digital views | ⏳ **Phase F** | Plan done — 6 views: KPI Overview, KPI Progress, Action Plan, Owner, Branch, RM. Awaiting PO on 3 questions (see TODO_NEXT) |
+| Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4) |
+| Auto weekly report | ✅ | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc |
+| **KPI Overview** | ✅ **Phase F** | Bullet charts for 2 KPIs, BL/GN/IDNES summary tiles, monthly trend chart |
+| **Action Plan Kanban** | ✅ **Phase F** | 4 columns; reads db.tasks where highlight=Y |
+| **KPI Progress** | ✅ **Phase F** | Product YTD table + monthly digital rate line chart |
+| **Owner Analysis** | ✅ **Phase F** | QuangNN3 (BL) / DungLQ1 (GN) panels + monthly bar chart |
+| **Branch Analysis** | ✅ **Phase F** | 25 branches; zone filter (Bắc/Nam/Trung); rate vs KPI color coding |
+| **RM Analysis** | ✅ **Phase F** | 14 RMs sorted by digital rate; top-3 highlighted; KPI threshold 15% |
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | |
-| Quick View **topbar button** | ✅ **Fixed this session** | Was orphaned in CSS, now in body |
-| `#qvDot` badge | ✅ **Fixed this session** | Now in correct DOM position |
 | Google Sheets sync (read + write) | ✅ | Read-Then-Patch v6.1 |
 | Excel import | ✅ | Flexible column mapping |
-| Excel export — date format | ✅ **Fixed this session** | Now "22-Apr-26" |
-| Excel export — progress format | ✅ **Fixed this session** | Now "75%" string |
+| Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
 | Mobile sidebar | ✅ | Slide-in overlay |
-| Mobile layout (general) | ⚠️ | Known issues in backlog |
-| Keyboard shortcuts | ✅ | Ctrl+N, Ctrl+D, Ctrl+B, G+x, Q |
+| Mobile layout (general) | ⚠️ | Known issues in backlog (Phase D — deferred) |
+| Keyboard shortcuts | ✅ | Ctrl+N, Ctrl+D, Ctrl+B, G+x, Q, G+K (KPI Overview) |
 | localStorage cache | ✅ | Key: `shtd_v2` — unchanged |
 
 ---
@@ -69,22 +55,29 @@
 ## Architecture State
 
 ```
-ACHIEVED (Phase B complete)
-────────────────────────────
-index.html (736 lines — HTML only)
+ACHIEVED (Phase B + E + F complete)
+────────────────────────────────────
+index.html (~790 lines — HTML only)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
-        forms.css, table.css, gantt.css, quickview.css, responsive.css
+        forms.css, table.css, gantt.css, quickview.css,
+        responsive.css, kpi.css              ← Phase F
   js/   constants.js, helpers.js, storage.js, parsers.js, api.js
         ui/toast.js, ui/modal.js, ui/theme.js, ui/navigation.js
         crud.js, bulk.js
         views/dashboard.js, views/tasks.js, views/gantt.js,
-        views/performance.js, views/quickview.js
+              views/performance.js, views/quickview.js
+        report.js                             ← Phase E
+        kpi-data.js                           ← Phase F
+        views/kpi-overview.js                 ← Phase F
+        views/action-plan.js                  ← Phase F
+        views/kpi-progress.js                 ← Phase F
+        views/owner-analysis.js               ← Phase F
+        views/branch-analysis.js              ← Phase F
+        views/rm-analysis.js                  ← Phase F
         app.js
 backend/ (empty — waiting for Code.gs from PO)
 ```
-
-Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 
 ---
 
@@ -105,22 +98,19 @@ Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 
 | ID | Issue | Priority |
 |---|---|---|
-| ~~PERF-01~~ | ~~Render slowness with 200–500 tasks~~ | ✅ Resolved — single-pass dashboard + debounce filter (`7b895a2`) |
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
-| MOB-03 | Gantt unusable on mobile (280px label column) | 🟢 Phase D |
+| MOB-03 | Gantt unusable on mobile | 🟢 Phase D |
 | DEBT-01 | GAS backend not in repo | 🟡 A2 — blocked on PO |
-| ~~DEBT-02~~ | ~~Stale comment ("dd/mm/yyyy")~~ | ✅ Resolved — comment never existed in extracted parsers.js |
-| DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case — only matters if user re-imports an exported file |
-| ~~DEBT-04~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | ✅ Resolved — dynamic year via `renderGantt()` (`83ea790`) |
-| DEBT-05 | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | ⚪ Cosmetic — consolidate later |
-| DEBT-06 | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements | ⚪ Share `debounceTimer`, no double render — cleanup when convenient |
+| DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case |
+| DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | ⚪ Cosmetic |
+| DEBT-06 | Inline `onchange` + `addEventListener` double handlers on filter elements | ⚪ No double render — cleanup later |
 
 ---
 
 ## Deployment
 
 - **Platform**: GitHub Pages (static)
-- **Serve method**: `index.html` + `assets/` folder (Phase B complete)
+- **Serve method**: `index.html` + `assets/` folder
 - **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
-- **No build step** — direct file edit → commit → deploy
+- **No build step** — direct file edit → commit → push → deploy
