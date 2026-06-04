@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-03  
-**Context**: Phase A1 + A3 complete. Phase B ready to start.
+**Prepared**: 2026-06-04
+**Context**: Phase B fully complete. Refactor done — index.html is 736 lines, all CSS/JS external.
 
 ---
 
@@ -9,9 +9,12 @@
 ```
 ✅ git init + remote added to GitHub
 ✅ Main.html renamed → index.html
-✅ assets/css/, assets/js/ui/, assets/js/views/, backend/ created
 ✅ A1+A3 patches re-applied and verified (Playwright)
-✅ Committed to GitHub (2 commits: b892079, 387ce50)
+✅ Phase B0: folder structure created
+✅ Phase B1: CSS extracted into 9 files (assets/css/)
+✅ Phase B2: JS extracted into 17 modules (assets/js/)
+✅ Full test: 25/25 PASS, 0 FAIL, 0 JS errors
+✅ All committed and pushed to GitHub (commits: b892079, 387ce50, 37423f6, da205dc)
 ```
 
 ---

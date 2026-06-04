@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 end-of-session  
+**As of**: 2026-06-04 end-of-session (Phase B complete)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -8,11 +8,11 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~4090 | ✅ v6.2 patches applied, orphaned HTML removed (renamed from Main.html) |
+| `index.html` | 736 | ✅ HTML-only shell — all CSS/JS external |
 | `GAS.GS` | 535 | ✅ Archived — all patches merged into index.html |
-| `assets/css/` | — | ✅ Folder created (Phase B0) — empty, ready for B1 |
-| `assets/js/` | — | ✅ Folder created (Phase B0) — empty, ready for B2 |
-| `backend/` | — | ✅ Folder created (Phase B0) — empty, waiting for Code.gs |
+| `assets/css/` | 9 files | ✅ Phase B1 complete — fully extracted |
+| `assets/js/` | 17 modules | ✅ Phase B2 complete — fully extracted |
+| `backend/` | — | ✅ Folder exists — waiting for Code.gs |
 | `/backend/Code.gs` | — | ❌ Does not exist yet — GAS backend not in repo |
 
 ---
@@ -67,15 +67,22 @@
 ## Architecture State
 
 ```
-CURRENT (monolith)                    TARGET (Phase B)
-──────────────────                    ────────────────
-index.html (~4090 lines)              index.html (~200 lines)
-  ├── <style> ~1025 lines      →      assets/css/ (9 files)  ← B1 IN PROGRESS
-  ├── <body>  ~600 lines              assets/js/  (18 modules)
-  └── <script> ~2465 lines           backend/Code.gs
+ACHIEVED (Phase B complete)
+────────────────────────────
+index.html (736 lines — HTML only)
+assets/
+  css/  tokens.css, base.css, layout.css, components.css,
+        forms.css, table.css, gantt.css, quickview.css, responsive.css
+  js/   constants.js, helpers.js, storage.js, parsers.js, api.js
+        ui/toast.js, ui/modal.js, ui/theme.js, ui/navigation.js
+        crud.js, bulk.js
+        views/dashboard.js, views/tasks.js, views/gantt.js,
+        views/performance.js, views/quickview.js
+        app.js
+backend/ (empty — waiting for Code.gs from PO)
 ```
 
-Phase B0 complete (folder structure, rename). B1 CSS extraction starting.
+Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 
 ---
 

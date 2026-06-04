@@ -1,82 +1,77 @@
 # SESSION HANDOVER
-**Date**: 2026-06-03  
-**Session**: Discovery + Phase A1 + A3  
-**Model**: Claude Sonnet 4.6  
+**Date**: 2026-06-04
+**Session**: Phase B0 + B1 + B2 (Full Refactor)
+**Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 
 ---
 
 ## What Was Done This Session
 
-### 1. Full Project Discovery (Phase 0–4)
-Read and analysed all 3 source files + 5 pre-existing AI_CONTEXT docs.
+### 1. Repo Initialization
+- `git init`, remote added, `git reset --hard origin/main` (overwrote local untracked files)
+- **Root cause found**: A1+A3 patches from previous session were never committed — lost on reset
+- Re-applied all A1+A3 patches from SESSION_HANDOVER spec
 
-**Critical finding**: Pre-existing AI_CONTEXT docs (`SYSTEM_ARCHITECTURE.md`, `DESIGN_SYSTEM.md`, etc.) describe a **different project** (TPBank BIZ). They are design references, not documentation of this codebase. All new docs carry the `_CURRENT` suffix or new names to avoid confusion.
+### 2. Phase A1+A3 Re-Applied
+- Removed orphaned HTML from `<style>` block (debug buttons, merge guide div)
+- Moved `button.qv-topbar-btn` + `#qvDot` to correct `.topbar-right` in `<body>`
+- Added `_MMM`, `fmtDateExport()`, replaced `taskToRow()` — dates now `dd-mmm-yy`
+- Replaced `checkDupId()` — ADD vs EDIT distinct error messages
+- Added `dd-mmm-yy` branch in `_parseArrayIntoDb` parseDate
 
-**Critical finding**: `GAS.GS` is not a GAS backend — it is a JS patch file with manual merge instructions. The actual Apps Script backend lives on `script.google.com` and is **not in this repo**.
+### 3. Phase B0 — Structure
+- `Main.html` renamed → `index.html` (GitHub Pages compatibility)
+- Created: `assets/css/`, `assets/js/ui/`, `assets/js/views/`, `backend/`
 
-**Critical finding (confirmed by code diff)**: GAS.GS FIX 4 (date format) and FIX 5 (progress %) were **not yet merged** into Main.html when this session started.
+### 4. Phase B1 — CSS Extraction (9 files)
+All inline `<style>` (~1025 lines) extracted to `assets/css/`:
+`tokens.css`, `base.css`, `layout.css`, `components.css`, `forms.css`,
+`table.css`, `gantt.css`, `quickview.css`, `responsive.css`
 
-### 2. PO Interview — 12 Questions Answered
-Key decisions captured (full log → OPEN_QUESTION.md):
+### 5. Phase B2 — JS Extraction (17 modules)
+All inline `<script>` (~2372 lines) extracted to `assets/js/`:
+`constants.js`, `helpers.js`, `storage.js`, `parsers.js`, `api.js`,
+`ui/toast.js`, `ui/modal.js`, `ui/theme.js`, `ui/navigation.js`,
+`crud.js`, `bulk.js`,
+`views/dashboard.js`, `views/tasks.js`, `views/gantt.js`,
+`views/performance.js`, `views/quickview.js`, `app.js`
 
-| Decision | Answer |
-|---|---|
-| Deployment | **GitHub Pages** (static) |
-| GAS backend | On Apps Script Editor — needs export |
-| Priority | Bug fix → Refactor → Feature |
-| Users | 5–20 people, desktop + mobile |
-| Export date format | **dd-mmm-yy** confirmed |
-| Broken features | Performance + Mobile + Sync |
-| Data volume | **200–500 tasks** |
-| Debug buttons | **Delete** |
-| Quick View | **Used frequently** — keep + improve |
-| Refactor style | **Multi-file** (index.html + assets/) |
-| Next feature | **Auto weekly report** |
-
-### 3. Code Changes Applied
-
-#### Phase A1 — Fix Orphaned HTML in `<style>` Block
-**Root cause**: During Quick View Panel merge, HTML was accidentally pasted inside the `<style>` block (lines 154–178 of the original). The browser silently ignored it — users never saw those elements.
-
-**Changes**:
-- Removed `loadDemoData()`, `clearDemoData()` buttons (orphaned, functions may not exist)
-- Removed merge guide `<div>` (developer artifact, never rendered)
-- **Moved** `<button class="qv-topbar-btn">` + `#qvDot` to actual `.topbar-right` in `<body>` (line 1108) — Quick View button now renders for the first time
-
-#### Phase A3 — Apply GAS.GS v6.2 Patches
-- **Added** `const _MMM` (line 2230) — month abbreviation array
-- **Added** `function fmtDateExport(d)` (line 2235) — converts YYYY-MM-DD → "22-Apr-26"
-- **Replaced** `taskToRow()` — dates now "dd-mmm-yy", progress now "75%" string
-- **Replaced** `checkDupId()` — v6.2: distinguishes ADD vs EDIT, shows different messages with icon
-- **Bonus** — added `_mmmIdx` + dd-mmm-yy branch in `_parseArrayIntoDb.parseDate` for safe round-trip
+### 6. Full Playwright Test — 25/25 PASS
+All features verified: dashboard, task list, gantt, performance, quick view,
+dark mode, modals, keyboard shortcuts, dupId messages, fmtDateExport, detail modal.
 
 ---
 
 ## Files Changed
 
-| File | Change | Lines Before → After |
-|---|---|---|
-| `Main.html` | A1 + A3 edits | 4076 → 4109 |
-| `AI_CONTEXT/TODO.md` | Marked A1+A3 complete | updated |
-| `AI_CONTEXT/CHANGE_LOG.md` | Added v6.2-merged entry | updated |
-| `AI_CONTEXT/OPEN_QUESTION.md` | Marked 15 questions resolved | updated |
-
-**Files created this session** (documentation only, no code):
-`PROJECT_OVERVIEW.md`, `BUSINESS_FLOW.md`, `SYSTEM_ARCHITECTURE_CURRENT.md`, `SOURCE_CODE_INVENTORY.md`, `UI_AUDIT.md`, `TECH_DEBT.md`, `REFACTORING_PLAN.md`, `IMPACT_ANALYSIS.md`, `ASSUMPTION_LOG.md`, `WORKING_RULE.md`, `GITHUB_WORKFLOW.md`, `SESSION_HANDOVER.md`, `PROJECT_STATE.md`, `TODO_NEXT.md`
+| File | Change |
+|---|---|
+| `index.html` | 4090 → 736 lines (HTML shell only) |
+| `assets/css/` | 9 new CSS files |
+| `assets/js/` | 17 new JS modules |
+| `AI_CONTEXT/*.md` | Updated: CHANGE_LOG, PROJECT_STATE, TODO_NEXT, SESSION_HANDOVER |
 
 ---
 
-## Decisions Made
+## Commits This Session
 
-| # | Decision | Rationale |
-|---|---|---|
-| D1 | Keep Quick View Panel, add topbar button | PO confirmed frequent use |
-| D2 | Delete `loadDemoData`/`clearDemoData` | PO confirmed not needed |
-| D3 | Apply dd-mmm-yy format immediately | User-visible export bug, confirmed by PO |
-| D4 | Add round-trip parse for dd-mmm-yy | Prevent silent data corruption on read-back |
-| D5 | Multi-file refactor (Phase B) | GitHub Pages deployment supports it; PO chose this path |
-| D6 | Hardcoded team names OK for now | PO: stable, changes ~1-2x/year |
+| Hash | Message |
+|---|---|
+| `b892079` | docs: add AI context files, archive GAS.GS, scaffold Phase B0 structure |
+| `387ce50` | fix: re-apply v6.2 patches (A1 + A3) |
+| `37423f6` | refactor: Phase B1 — extract CSS into 9 separate files |
+| `da205dc` | refactor: Phase B2 — extract JS into 17 separate modules |
+
+---
+
+## What Was NOT Touched
+
+- `syncAction()` — intact in `assets/js/api.js`
+- `DB_COLS` constant — unchanged in `assets/js/constants.js`
+- `localStorage['shtd_v2']` — schema unchanged
+- All render functions — behavior identical, just in separate files
+- GAS backend (`backend/Code.gs`) — still does not exist in repo
 
 ---
 
@@ -84,47 +79,31 @@ Key decisions captured (full log → OPEN_QUESTION.md):
 
 | Blocker | Impact | Owner |
 |---|---|---|
-| GAS backend source not in repo | Cannot audit/version backend; deploy process undocumented | **PO** — export from Apps Script Editor |
-| Phase B not started | CSS/JS still monolith | Unblocked — waiting for next session |
-| A2 pending | `/backend/Code.gs` not yet created | Needs PO to export `.gs` file |
-
----
-
-## Regression Risks
-
-| Risk | Severity | Detail |
-|---|---|---|
-| `taskToRow()` writes "75%" string | 🟡 LOW | GAS `doPost write` receives array with "75%" — GAS backend must handle string parse. Likely fine since `parseInt("75%") = 75`. Verify in Sheet after next sync. |
-| `taskToRow()` writes "22-Apr-26" | 🟡 LOW | Google Sheets auto-detects as date. If locale prevents detection, dates become text strings in Sheet. Monitor after first sync. |
-| `_parseArrayIntoDb` parseDate changed | 🟡 LOW | New branch for dd-mmm-yy added, existing ISO + VN branches restructured. Logic equivalent but test with: ISO "2026-04-22" ✓, VN "22/04/2026" ✓, dd-mmm-yy "22-Apr-26" ✓ |
-| `checkDupId` sets `innerHTML` | ⚪ NONE | `errId` div starts with static content, now dynamic. Only changes when `exists=true`. No XSS risk (no user input injected). |
-| QV topbar button now visible | ⚪ NONE | `qvDot` JS at line 3633 now finds the element → badge dot logic activates. No risk. |
-| Stale comment at line 2702 | ⚪ NONE | Comment says "dd/mm/yyyy (đầu ra của taskToRow)" — now stale since output is "dd-mmm-yy". Cosmetic only. |
-
----
-
-## What Was NOT Touched
-
-These functions are untouched and unchanged:
-- `syncAction()` — line 2431 (multi-user Read-Then-Patch logic intact)
-- `handleSubmit()` — line 3372 (duplicate ID blocker intact)
-- `_showDuplicateIdBlocker()` — intact
-- `readFromHandle()` — line 2291 (GAS read protocol intact)
-- `writeToHandle()` — line 2399 (full-write fallback intact)
-- `extractWorkbook()` — Excel import untouched
-- All render functions — `renderDashboard`, `renderTaskTable`, `renderGantt`, `renderPerfTable`
-- Quick View JS — `renderQuickView`, all `_qv*` functions
-- `localStorage` format — `shtd_v2` key and schema unchanged
-- `DB_COLS` constant — unchanged (column order preserved)
-- `GS_WEBAPP_URL` / `GS_SHEET_ID` — unchanged
+| GAS backend not in repo | Cannot audit/version backend | **PO** — export from Apps Script Editor |
 
 ---
 
 ## Handover Checklist for Next Session
 
-- [ ] Commit current Main.html to GitHub (`fix: apply v6.2 patches + fix orphaned HTML`)
-- [ ] Test Quick View topbar button renders and opens panel
-- [ ] Test Export Excel — verify dates show "22-Apr-26" and progress shows "75%"
-- [ ] Test Add Task → duplicate ID shows correct message ("Không thể thêm mới" vs "đã được dùng bởi task khác")
-- [ ] Do A2: get GAS backend `.gs` file from user → create `/backend/Code.gs`
-- [ ] Start Phase B: `assets/` folder structure + CSS extraction
+- [ ] A2: Get Code.gs from PO → save to `backend/Code.gs`
+- [ ] A4: Fix Gantt hardcoded "2025–2026" year range (5 min, in `assets/js/views/gantt.js`)
+- [ ] A5: Fix stale comment in `assets/js/parsers.js` ("dd/mm/yyyy" → "dd-mmm-yy")
+- [ ] Phase C: Render performance for 200–500 tasks (virtual scroll or chunked render)
+- [ ] Phase D: Mobile UX improvements (filter bar, toolbar, Gantt)
+- [ ] Phase E: Auto weekly report generation (PO requested feature)
+
+---
+
+## Key File Locations (post-refactor)
+
+| Concern | File |
+|---|---|
+| Google Sheets URL / config | `assets/js/constants.js` |
+| Date export format | `assets/js/helpers.js` → `fmtDateExport()` |
+| Sheet read/write/sync | `assets/js/api.js` |
+| Task CRUD modal | `assets/js/crud.js` |
+| Dashboard render | `assets/js/views/dashboard.js` |
+| Task table + filters | `assets/js/views/tasks.js` |
+| Quick View panel | `assets/js/views/quickview.js` |
+| App init + window.onload | `assets/js/app.js` |
+| Design tokens (colors) | `assets/css/tokens.css` |

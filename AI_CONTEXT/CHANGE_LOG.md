@@ -2,6 +2,50 @@
 
 ---
 
+## [Phase B1+B2] 2026-06-04 — Multi-File Refactor Complete
+
+**Changed by**: AI Implementation Session (Claude Sonnet 4.6)
+
+### B1 — CSS Extracted (9 files)
+- `assets/css/tokens.css` — design tokens & dark mode vars
+- `assets/css/base.css` — reset, body, scrollbar, keyframes
+- `assets/css/layout.css` — sidebar, topbar, main, statusbar
+- `assets/css/components.css` — buttons, cards, modal, toast, badges
+- `assets/css/forms.css` — form controls, validation
+- `assets/css/table.css` — table, filter bar, chips, pagination
+- `assets/css/gantt.css` — Gantt chart styles
+- `assets/css/quickview.css` — Quick View panel & FAB
+- `assets/css/responsive.css` — media queries (768px, 480px)
+
+### B2 — JS Extracted (17 modules)
+- `assets/js/constants.js`, `helpers.js`, `storage.js`, `parsers.js`, `api.js`
+- `assets/js/ui/toast.js`, `modal.js`, `theme.js`, `navigation.js`
+- `assets/js/crud.js`, `bulk.js`
+- `assets/js/views/dashboard.js`, `tasks.js`, `gantt.js`, `performance.js`, `quickview.js`
+- `assets/js/app.js`
+
+### Result
+- `index.html`: 4090 → 736 lines (HTML-only shell)
+- Commits: `37423f6` (B1), `da205dc` (B2)
+
+### Verified (Playwright — 25/25 PASS, 0 FAIL)
+- Page load, KPIs, dashboard, initiative table ✅
+- Dark mode toggle ✅
+- Task list, filter chips, pagination ✅
+- Add Task modal + auto ID ✅
+- checkDupId ADD msg ("Không thể thêm mới") ✅
+- checkDupId EDIT msg ("đã được dùng bởi task khác") ✅
+- Gantt view, Performance view + tab switch ✅
+- Quick View panel open/close, tab switch, Escape, Q key ✅
+- Ctrl+N, ? keyboard shortcuts ✅
+- Detail modal from KPI card click ✅
+- fmtDateExport('2026-04-22') → "22-Apr-26" ✅
+- All core JS functions accessible ✅
+- 121 tasks in db ✅
+- Zero JS errors ✅
+
+---
+
 ## [Phase B0] 2026-06-04 — Repo Initialized + Phase B0 Structure
 
 **Changed by**: AI Implementation Session (Claude Sonnet 4.6)
