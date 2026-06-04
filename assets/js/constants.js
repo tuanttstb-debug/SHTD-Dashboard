@@ -13,7 +13,7 @@ let gKeyBuffer = '';
 let debounceTimer = null;
 
 // ── Google Apps Script config ──
-const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwFdF6d1hsuOzhFIHcnSVCFarmSbFYXygiupRrumPYttrM7Q5tOPkLd-eSemTovQQr1/exec';
+const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyRXjZidSyrOFXRdTr6piaWIzGYk0-bt-VuHHuhTt4blN4brYGcZcV2xnRFZiZZrTMG/exec';
 const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
 const GS_RANGE      = 'Task_Master!A1:W';
 
