@@ -17,18 +17,15 @@
 
 ---
 
-## TD-002: No Real Google Apps Script Backend in Repo
-**Rating**: 🔴 CRITICAL
+## ~~TD-002: No Real Google Apps Script Backend in Repo~~ ✅ RESOLVED 2026-06-04
 
-**Issue**: The actual GAS backend (deployed at `script.google.com/macros/s/...`) is not version-controlled. Its source code is not in this repo.
+**Resolution (A2)**: `backend/Code.gs`, `backend/Config.gs`, `backend/SheetService.gs` added — commit `c18cccb`.
+- `doPost()` router handles `read` / `write` actions
+- `sheetRead()` / `sheetWrite()` in SheetService.gs
+- API contract matches frontend exactly (text/plain POST, JSON response)
 
-**Impact**:
-- Cannot audit the backend logic
-- Cannot test the read/write operations locally
-- Backend changes are invisible to git history
-- Deploy process is manual and undocumented
-
-**Priority**: CRITICAL — add GAS source to repo immediately
+**Remaining action (on PO)**: Deploy these files to Google Apps Script → update `GS_WEBAPP_URL` in `constants.js`.
+Old manually-deployed backend still active until PO deploys new version.
 
 ---
 
@@ -189,13 +186,33 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-022: quangPTKD Accessed by Hardcoded Index
+**Rating**: ⚪ LOW
+**Added**: 2026-06-04 (KPI merge)
+
+**Issue**: `kpi-overview.js` references `quangPTKD[1]`, `[2]`, `[10]`, `[12]` by position to extract PTKD names for insight bullets. If array order in `kpi-data.js` ever changes, wrong names will silently appear.
+
+**Fix**: Replace with `.find(x => x.ptkd === 'AnhDT24')` etc. or compute top/bottom dynamically.
+
+---
+
+## TD-023: KPI Tab State Not Restored on Re-render
+**Rating**: ⚪ LOW
+**Added**: 2026-06-04 (KPI merge)
+
+**Issue**: `_oaActiveTab` in `owner-analysis.js` persists across `navigateTo` calls. On re-render, HTML always shows QuangNN3 tab as active, but `_oaActiveTab` may still be 'dung' or 'rank'. No crash, minor visual inconsistency before first user click.
+
+**Fix**: Reset `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()`.
+
+---
+
 ## Debt Summary
 **Last updated**: 2026-06-04
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
 | ~~TD-001~~ | ~~🔴~~ | ~~Monolith~~ | Large | ✅ **Resolved 2026-06-04** — Phase B complete |
-| TD-002 | 🔴 | GAS backend not in repo | Small | Open — A2 pending |
+| ~~TD-002~~ | ~~🔴~~ | ~~GAS backend not in repo~~ | Small | ✅ **Resolved 2026-06-04** — `backend/` added, deploy pending PO |
 | TD-003 | ~~🔴~~ | Conflicting function versions | Small | ✅ **Resolved 2026-06-03** |
 | TD-004 | 🟡 | Global state | Medium | Open — Phase D |
 | TD-005 | 🟡 | Inline styles | Medium | Open — Phase B |
@@ -215,3 +232,5 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-019 | ⚪ | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements — share `debounceTimer`, no bug but redundant | Tiny | Open — cleanup when convenient |
 | TD-020 | ⚪ | KPI data hardcoded in `kpi-data.js` — monthly update requires file edit + deploy | Tiny | Open — acceptable short-term |
 | TD-021 | ⚪ | `_sLabel()` / `_kpProgColor()` defined in view files, used globally — load-order dependency | Tiny | Open — move to `helpers.js` |
+| TD-022 | ⚪ | `quangPTKD[1/2/10/12]` hardcoded index in `kpi-overview.js` | Tiny | Open — use `.find()` |
+| TD-023 | ⚪ | `_oaActiveTab` not reset on re-render — visual inconsistency only | Tiny | Open — add reset line |
