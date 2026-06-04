@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-04 end-of-session  
+**As of**: 2026-06-04 (Phase E complete — A4, C, E all done)
 **Version in index.html**: v6.2 (patches applied)
 
 ---
@@ -8,11 +8,11 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~4090 | ✅ v6.2 patches applied, orphaned HTML removed (renamed from Main.html) |
+| `index.html` | 736 | ✅ HTML-only shell — all CSS/JS external |
 | `GAS.GS` | 535 | ✅ Archived — all patches merged into index.html |
-| `assets/css/` | — | ✅ Folder created (Phase B0) — empty, ready for B1 |
-| `assets/js/` | — | ✅ Folder created (Phase B0) — empty, ready for B2 |
-| `backend/` | — | ✅ Folder created (Phase B0) — empty, waiting for Code.gs |
+| `assets/css/` | 9 files | ✅ Phase B1 complete — fully extracted |
+| `assets/js/` | 17 modules | ✅ Phase B2 complete — fully extracted |
+| `backend/` | — | ✅ Folder exists — waiting for Code.gs |
 | `/backend/Code.gs` | — | ❌ Does not exist yet — GAS backend not in repo |
 
 ---
@@ -29,7 +29,7 @@
 | v6.2 bonus | `checkDupId()` ADD vs EDIT messages | ✅ **Merged this session** | 2181 |
 | Extra bonus | dd-mmm-yy parse in `_parseArrayIntoDb` | ✅ **Added this session** | 2341 |
 
-**GAS.GS is now fully superseded.** All its patches are in Main.html.
+**GAS.GS is now fully superseded.** All its patches are in `assets/js/` modules.
 
 ---
 
@@ -47,7 +47,8 @@
 | Bulk actions (RAG, state, delete) | ✅ | |
 | Task CRUD modal | ✅ | |
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
-| Gantt / Timeline | ✅ | Poor mobile UX — in backlog |
+| Gantt / Timeline | ✅ | Subtitle dynamic year fixed (A4). Poor mobile UX — skipped (Phase D) |
+| Auto weekly report | ✅ **Phase E** | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc. Toolbar button + week picker modal |
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | |
 | Quick View **topbar button** | ✅ **Fixed this session** | Was orphaned in CSS, now in body |
@@ -67,15 +68,22 @@
 ## Architecture State
 
 ```
-CURRENT (monolith)                    TARGET (Phase B)
-──────────────────                    ────────────────
-index.html (~4090 lines)              index.html (~200 lines)
-  ├── <style> ~1025 lines      →      assets/css/ (9 files)  ← B1 IN PROGRESS
-  ├── <body>  ~600 lines              assets/js/  (18 modules)
-  └── <script> ~2465 lines           backend/Code.gs
+ACHIEVED (Phase B complete)
+────────────────────────────
+index.html (736 lines — HTML only)
+assets/
+  css/  tokens.css, base.css, layout.css, components.css,
+        forms.css, table.css, gantt.css, quickview.css, responsive.css
+  js/   constants.js, helpers.js, storage.js, parsers.js, api.js
+        ui/toast.js, ui/modal.js, ui/theme.js, ui/navigation.js
+        crud.js, bulk.js
+        views/dashboard.js, views/tasks.js, views/gantt.js,
+        views/performance.js, views/quickview.js
+        app.js
+backend/ (empty — waiting for Code.gs from PO)
 ```
 
-Phase B0 complete (folder structure, rename). B1 CSS extraction starting.
+Phase B fully complete. Verified 25/25 Playwright tests — 0 failures.
 
 ---
 
@@ -96,19 +104,22 @@ Phase B0 complete (folder structure, rename). B1 CSS extraction starting.
 
 | ID | Issue | Priority |
 |---|---|---|
-| PERF-01 | Render slowness with 200–500 tasks | 🟡 Phase C |
+| ~~PERF-01~~ | ~~Render slowness with 200–500 tasks~~ | ✅ Resolved — single-pass dashboard + debounce filter (`7b895a2`) |
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile (280px label column) | 🟢 Phase D |
-| DEBT-01 | GAS backend not in repo | 🟡 A2 |
-| DEBT-02 | Stale comment line 2702 ("dd/mm/yyyy" is now "dd-mmm-yy") | ⚪ Cosmetic |
+| DEBT-01 | GAS backend not in repo | 🟡 A2 — blocked on PO |
+| ~~DEBT-02~~ | ~~Stale comment ("dd/mm/yyyy")~~ | ✅ Resolved — comment never existed in extracted parsers.js |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case — only matters if user re-imports an exported file |
+| ~~DEBT-04~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | ✅ Resolved — dynamic year via `renderGantt()` (`83ea790`) |
+| DEBT-05 | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | ⚪ Cosmetic — consolidate later |
+| DEBT-06 | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements | ⚪ Share `debounceTimer`, no double render — cleanup when convenient |
 
 ---
 
 ## Deployment
 
 - **Platform**: GitHub Pages (static)
-- **Serve method**: Single HTML file (until Phase B complete)
+- **Serve method**: `index.html` + `assets/` folder (Phase B complete)
 - **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
 - **No build step** — direct file edit → commit → deploy
