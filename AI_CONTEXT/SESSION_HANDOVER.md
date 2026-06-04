@@ -1,35 +1,30 @@
 # SESSION HANDOVER
-**Date**: 2026-06-04 (end of session — Phase E complete)
-**Session**: A4 fix + Phase C performance + Phase E weekly report
+**Date**: 2026-06-04 (end of session)
+**Session**: Phase F complete (F0→F8) + push + context update
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**Context at handover**: forced handover after Phase F full implementation
 
 ---
 
 ## What Was Done This Session
 
-### A4 — Gantt Subtitle Dynamic Year ✅ `83ea790`
-- `index.html:329` — `id="ganttSubtitle"`, hardcoded year removed
-- `assets/js/views/gantt.js` — dynamic year at top of `renderGantt()`
+| # | Work | Commit | Status |
+|---|---|---|---|
+| F0 | KPI CSS foundation (tokens, badge variants, kpi.css) | `6407b40` | ✅ Done |
+| F1 | KPI data layer — kpi-data.js with real T1–T6/2026 data | `5030fc3` | ✅ Done |
+| F2 | Nav items, view shells, script/link tags wired | `db7062c` | ✅ Done |
+| F3 | KPI Overview view — bullet charts, summary tiles, trend chart | `dac5808` | ✅ Done |
+| F4 | Action Plan Kanban — from db.tasks (highlight=Y) | `dac5808` | ✅ Done |
+| F5 | KPI Progress — product YTD table + monthly line chart | `dac5808` | ✅ Done |
+| F6 | Owner Analysis — per-owner panels + bar chart | `dac5808` | ✅ Done |
+| F7 | Branch Analysis — zone-filtered table with rate vs KPI | `dac5808` | ✅ Done |
+| F8 | RM Analysis — RM table sorted by digital rate | `dac5808` | ✅ Done |
 
-### Phase C — Render Performance ✅ `7b895a2`
-- `dashboard.js`: 7 separate array passes → 1 single `forEach` loop
-- `tasks.js`: `onFilterChange()` debounced 150ms
-- Finding logged: `navigation.js` already has 200ms addEventListener debounce on filters (DEBT-06)
-
-### Phase E — Auto Weekly Report ✅ `307d463`
-New file `assets/js/report.js` — `exportWeeklyReport(weekLabel)`:
-
-| Sheet | Content | Scope |
-|---|---|---|
-| `1. Tóm tắt` | KPI + RAG + initiative breakdown (single pass) | tasks in selected week |
-| `2. Kết quả tuần` | task details + `result` field | tasks in selected week (`tuanBC` match) |
-| `3. Kế hoạch tuần tới` | tasks with `nextPlan` filled | all in-progress (any week) |
-| `4. Vướng mắc & BLĐ` | Blocked/canBLD/vuongMac, sorted by severity | all in-progress (any week) |
-
-UI: "Báo cáo tuần" button in toolbar → modal with week picker (pre-selects current week) → one-click Excel export.
-
-Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
+### Phase F PO decisions (confirmed this session)
+1. **kpi-data.js**: Real T1–T6/2026 data (from reference HTML — already extracted)
+2. **Action Plan**: Reuse `db.tasks` (highlight=Y) — NOT hardcoded
+3. **View priority**: All 6 views implemented in one session
 
 ---
 
@@ -37,24 +32,44 @@ Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
 
 | File | Change |
 |---|---|
-| `index.html` | A4 id, toolbar button, report modal, script tag |
-| `assets/js/views/gantt.js` | Dynamic year in `renderGantt()` |
-| `assets/js/views/dashboard.js` | Single-pass stats |
-| `assets/js/views/tasks.js` | Debounced `onFilterChange()` |
-| `assets/js/report.js` | **NEW** — 4-sheet weekly report generator |
-| `assets/js/app.js` | `openReportModal()` / `closeReportModal()` |
+| `assets/css/tokens.css` | +4 color pairs: --purple, --cyan, --gold, --gold2 |
+| `assets/css/components.css` | +4 badge variants: .ahead / .on-track / .behind / .critical |
+| `assets/css/kpi.css` | **NEW** — section-header, kpi-accent-card, exec-summary, bullet-chart, alert-item, kanban, zone-card |
+| `assets/js/kpi-data.js` | **NEW** — KPI_DATA object + 5 helper functions |
+| `assets/js/views/kpi-overview.js` | **NEW** — KPI Overview view (Chart.js trend line) |
+| `assets/js/views/action-plan.js` | **NEW** — Action Plan Kanban (from db.tasks highlight=Y) |
+| `assets/js/views/kpi-progress.js` | **NEW** — KPI Progress table + monthly chart |
+| `assets/js/views/owner-analysis.js` | **NEW** — Owner panels (QuangNN3/DungLQ1) + bar chart |
+| `assets/js/views/branch-analysis.js` | **NEW** — Branch table with zone filter |
+| `assets/js/views/rm-analysis.js` | **NEW** — RM table sorted by digital rate |
+| `assets/js/ui/navigation.js` | +6 lazy-init calls + titles for KPI views; G+K shortcut |
+| `index.html` | kpi.css link; 6 nav items (KPI Digital section); 6 view shells; 7 script tags |
 
 ---
 
-## Commits This Session
+## Commits This Session (chronological)
 
 | Hash | Message |
 |---|---|
-| `83ea790` | fix(A4): dynamic Gantt subtitle year |
-| `93b335a` | docs: context update |
-| `7b895a2` | perf(C): single-pass dashboard + debounce filter |
-| `78acb0a` | docs: context update |
-| `307d463` | feat(E): auto weekly report — 4-sheet Excel export |
+| `6407b40` | feat(F0): KPI CSS foundation |
+| `5030fc3` | feat(F1): KPI data layer |
+| `db7062c` | feat(F2): KPI nav items, view shells, kpi-data.js wired |
+| `dac5808` | feat(F3-F8): all 6 KPI Digital views implemented |
+
+All pushed to `master` on GitHub.
+
+---
+
+## Verification Results
+
+Playwright headless test — all passed, no JS errors:
+- Dashboard, Tasks, Gantt, Performance: ✅ unchanged
+- KPI Overview (bullet charts + trend chart): ✅
+- Action Plan (empty state — no highlight=Y tasks yet): ✅
+- KPI Progress (product table + monthly chart): ✅
+- Owner Analysis (panels + bar chart): ✅
+- Branch Analysis (zone filter: Miền Bắc → 16 branches): ✅
+- RM Analysis (table sorted by digital rate): ✅
 
 ---
 
@@ -62,39 +77,10 @@ Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `let` vs `var` globals | 🟡 LOW | Use bare `db`, not `window.db` |
-| `fmtExportDate` duplication | ⚪ NONE | `app.js:exportExcel` vs `helpers.js:fmtDateExport` — cosmetic |
-| Inline + addEventListener double-handlers | ⚪ NONE | Share debounceTimer, no double render (DEBT-06) |
-
-## What Was NOT Touched
-
-- `syncAction()` — intact in `assets/js/api.js`
-- `DB_COLS` — unchanged
-- `localStorage['shtd_v2']` — schema unchanged
-- All existing views — untouched
-- GAS backend (`backend/Code.gs`) — still not in repo
-
----
-
-## Blockers
-
-| Blocker | Impact | Owner |
-|---|---|---|
-| GAS backend not in repo | Cannot audit/version backend | **PO** — export from Apps Script Editor |
-
----
-
-## Handover Checklist for Next Session
-
-- [x] ~~A4~~: Fixed
-- [x] ~~A5~~: Resolved
-- [x] ~~Phase C~~: Single-pass dashboard + debounce
-- [x] ~~Phase D~~: Skipped by PO decision
-- [x] ~~Phase E~~: Weekly report done (`307d463`)
-- [ ] **A2** (BLOCKED on PO): Get Code.gs → `backend/Code.gs`
-- [ ] DEBT-05: Consolidate `fmtExportDate` / `fmtDateExport`
-- [ ] DEBT-06: Remove redundant inline `onchange/oninput` (navigation.js handles it)
-- [ ] Phase D: Mobile UX — if PO revisits
+| `_sLabel` / `_kpProgColor` global helpers | ⚪ NONE | Defined in kpi-overview.js / kpi-progress.js (loaded first), used by later views |
+| Chart.js instance leak | ⚪ NONE | `_kpiOvChart`, `_kpiProdChart`, `_ownerChart` destroyed before re-render |
+| Action Plan empty state | ⚪ NONE | Intentional — shows guide message when no tasks have highlight=Y |
+| node_modules in workdir | ⚪ NONE | Added by playwright install; .gitignore should exclude; not committed |
 
 ---
 
@@ -102,15 +88,13 @@ Filename: `SHTD_BaoCaoTuan_<week>_<date>.xlsx`
 
 | Concern | File |
 |---|---|
-| Google Sheets config | `assets/js/constants.js` |
-| Date export format | `assets/js/helpers.js` → `fmtDateExport()` |
-| Sheet read/write/sync | `assets/js/api.js` |
-| Task CRUD modal | `assets/js/crud.js` |
-| Dashboard render | `assets/js/views/dashboard.js` |
-| Task table + filters | `assets/js/views/tasks.js` |
-| Gantt render | `assets/js/views/gantt.js` |
-| Quick View panel | `assets/js/views/quickview.js` |
-| **Weekly report generator** | `assets/js/report.js` |
-| App init + modal wiring | `assets/js/app.js` |
-| Filter debounce + nav | `assets/js/ui/navigation.js` |
-| Design tokens | `assets/css/tokens.css` |
+| KPI CSS components | `assets/css/kpi.css` |
+| KPI color tokens | `assets/css/tokens.css` (--purple/--cyan/--gold/--gold2) |
+| KPI data + helpers | `assets/js/kpi-data.js` |
+| KPI Overview view | `assets/js/views/kpi-overview.js` |
+| Action Plan kanban | `assets/js/views/action-plan.js` |
+| KPI Progress chart | `assets/js/views/kpi-progress.js` |
+| Owner Analysis | `assets/js/views/owner-analysis.js` |
+| Branch Analysis | `assets/js/views/branch-analysis.js` |
+| RM Analysis | `assets/js/views/rm-analysis.js` |
+| Nav wiring | `assets/js/ui/navigation.js` |

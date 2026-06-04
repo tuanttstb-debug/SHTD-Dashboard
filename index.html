@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="assets/css/gantt.css">
 <link rel="stylesheet" href="assets/css/quickview.css">
 <link rel="stylesheet" href="assets/css/responsive.css">
+<link rel="stylesheet" href="assets/css/kpi.css">
 
 </head>
 <body>
@@ -66,6 +67,31 @@
         <i class="fa-solid fa-chart-line nav-icon"></i>
         <span class="nav-label">Performance</span>
         <span class="nav-badge danger" id="navBadgeOverdue" style="display:none;">0</span>
+      </div>
+      <div class="nav-section-label">KPI Digital</div>
+      <div class="nav-item" data-view="kpi-overview">
+        <i class="fa-solid fa-gauge-high nav-icon"></i>
+        <span class="nav-label">KPI Overview</span>
+      </div>
+      <div class="nav-item" data-view="action-plan">
+        <i class="fa-solid fa-table-columns nav-icon"></i>
+        <span class="nav-label">Action Plan</span>
+      </div>
+      <div class="nav-item" data-view="kpi-progress">
+        <i class="fa-solid fa-chart-bar nav-icon"></i>
+        <span class="nav-label">KPI Progress</span>
+      </div>
+      <div class="nav-item" data-view="owner-analysis">
+        <i class="fa-solid fa-user-tie nav-icon"></i>
+        <span class="nav-label">Owner Analysis</span>
+      </div>
+      <div class="nav-item" data-view="branch-analysis">
+        <i class="fa-solid fa-building-columns nav-icon"></i>
+        <span class="nav-label">Branch Analysis</span>
+      </div>
+      <div class="nav-item" data-view="rm-analysis">
+        <i class="fa-solid fa-people-arrows nav-icon"></i>
+        <span class="nav-label">RM Analysis</span>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -370,6 +396,36 @@
       </div>
     </section>
 
+    <!-- ===== KPI OVERVIEW ===== -->
+    <section class="view-section" id="view-kpi-overview" style="display:none;">
+      <div id="kpiOverviewRoot"></div>
+    </section>
+
+    <!-- ===== ACTION PLAN ===== -->
+    <section class="view-section" id="view-action-plan" style="display:none;">
+      <div id="actionPlanRoot"></div>
+    </section>
+
+    <!-- ===== KPI PROGRESS ===== -->
+    <section class="view-section" id="view-kpi-progress" style="display:none;">
+      <div id="kpiProgressRoot"></div>
+    </section>
+
+    <!-- ===== OWNER ANALYSIS ===== -->
+    <section class="view-section" id="view-owner-analysis" style="display:none;">
+      <div id="ownerAnalysisRoot"></div>
+    </section>
+
+    <!-- ===== BRANCH ANALYSIS ===== -->
+    <section class="view-section" id="view-branch-analysis" style="display:none;">
+      <div id="branchAnalysisRoot"></div>
+    </section>
+
+    <!-- ===== RM ANALYSIS ===== -->
+    <section class="view-section" id="view-rm-analysis" style="display:none;">
+      <div id="rmAnalysisRoot"></div>
+    </section>
+
   </div>
 
   <!-- STATUS BAR -->
@@ -655,6 +711,13 @@
 <script src="assets/js/views/performance.js"></script>
 <script src="assets/js/views/quickview.js"></script>
 <script src="assets/js/report.js"></script>
+<script src="assets/js/kpi-data.js"></script>
+<script src="assets/js/views/kpi-overview.js"></script>
+<script src="assets/js/views/action-plan.js"></script>
+<script src="assets/js/views/kpi-progress.js"></script>
+<script src="assets/js/views/owner-analysis.js"></script>
+<script src="assets/js/views/branch-analysis.js"></script>
+<script src="assets/js/views/rm-analysis.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>

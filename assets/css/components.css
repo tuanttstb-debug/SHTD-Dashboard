@@ -100,6 +100,10 @@
 .badge-amber{background:var(--warning-bg);color:var(--warning);}
 .badge-red{background:var(--danger-bg);color:var(--danger);}
 .badge-gray{background:var(--surface2);color:var(--text-2);border:1px solid var(--border);}
+.badge.ahead{background:var(--success-bg);color:var(--success);}
+.badge.on-track{background:var(--info-bg);color:var(--info);}
+.badge.behind{background:var(--gold-bg);color:var(--gold);}
+.badge.critical{background:var(--danger-bg);color:var(--danger);}
 
 .state-chip{
   padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;

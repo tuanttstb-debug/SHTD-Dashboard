@@ -1,58 +1,49 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-04 (updated — Phase E complete)
-**Context**: All planned phases done (A4, C, E). Remaining: A2 (blocked on PO), tech debt, optional Phase D.
+**Prepared**: 2026-06-04 (Phase F complete — all KPI Digital views live)
+**Context**: A–F all done. Remaining work: Phase D (mobile), A2 (GAS backend), tech debt.
 
 ---
 
-## Completed (2026-06-04)
+## Phase F — COMPLETE ✅
 
-```
-✅ A1+A3: patches re-applied and verified
-✅ Phase B: full CSS+JS extraction (9 CSS + 17 JS modules)
-✅ A4: Gantt subtitle dynamic year (83ea790)
-✅ A5: Resolved — stale comment never existed
-✅ Phase C: single-pass dashboard + debounced filter (7b895a2)
-✅ Phase D: Skipped by PO decision
-✅ Phase E: Auto weekly report — 4-sheet Excel (307d463)
-```
+All 6 KPI Digital views are implemented and verified:
+- KPI Overview, Action Plan, KPI Progress, Owner Analysis, Branch Analysis, RM Analysis
+- All views pass Playwright headless test — 0 JS errors
 
 ---
 
-## Blocked
+## What's Left
 
-### A2 — GAS Backend in Repo `[BLOCKED on user action]`
-**User must do**: Open [script.google.com](https://script.google.com) → Open Apps Script project → copy all `.gs` files
+### A2 — GAS Backend (BLOCKED on PO)
+User must export `Code.gs` from Apps Script Editor → `backend/Code.gs`.
+No code changes needed — just the file drop.
 
-**Next session then does**:
-```
-# Paste into: backend/Code.gs
-```
-
----
-
-## Tech Debt (low priority)
-
-| ID | Item | Effort |
+### Phase D — Mobile UX (Low priority, deferred)
+| ID | Issue | Fix |
 |---|---|---|
-| DEBT-05 | Consolidate `fmtExportDate` (app.js) + `fmtDateExport` (helpers.js) | ~5 min |
-| DEBT-06 | Remove redundant inline `onchange/oninput` from index.html — navigation.js addEventListener already handles with debounce | ~15 min |
+| MOB-01 | Filter bar cramped on mobile | Collapsible filter drawer |
+| MOB-02 | Toolbar button overflow on mobile | Overflow menu or icon-only mode |
+| MOB-03 | Gantt unusable (280px label column) | Simplified mobile Gantt or hide |
 
----
-
-## Optional / Future
-
-| Item | Phase | Note |
+### Tech Debt (all low priority)
+| ID | Debt | Action |
 |---|---|---|
-| Mobile UX (filter bar, toolbar, Gantt) | D | Skipped — revisit if PO requests |
-| Weekly report: HTML clipboard format | E2 | If PO wants to paste into email/Word |
-| Weekly report: auto-open on schedule | E3 | Not possible in static app — would need GAS trigger |
+| DEBT-03 | `extractWorkbook` parseDate ignores "dd-mmm-yy" on re-import | Add format to `_parseArrayIntoDb` |
+| DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | Consolidate to `helpers.js`, remove from `app.js` |
+| DEBT-06 | Inline `onchange` + `addEventListener` both fire on filter elements | Remove inline handlers, use only `addEventListener` |
+
+### KPI Data — Update When Ready
+When PO has new monthly data (T6 confirmed, T7+):
+- Edit `assets/js/kpi-data.js` — update `products[x].biz[5]`, `bpm[5]`, `cust[5]`, `summary.*`
+- Add months T7+ by extending `months[]`, `monthsFull[]`, and all monthly arrays
+- No structural changes needed
 
 ---
 
-## Rules for Next Session
-
-1. **Always read `PROJECT_STATE.md` first**
-2. **Always read `WORKING_RULE.md`** — confirms what not to touch
-3. **Do not touch `syncAction()`, `DB_COLS`, `localStorage['shtd_v2']`** without explicit instruction
-4. **One logical change per commit**
-5. **JS globals are `let`, not `var`** — use bare `db`, not `window.db`
+## Session Rules (unchanged)
+1. Read `PROJECT_STATE.md` first
+2. Read `WORKING_RULE.md` — do not touch `syncAction()`, `DB_COLS`, `localStorage['shtd_v2']`
+3. One logical change per commit
+4. JS globals: use bare `db`, not `window.db`
+5. Syntax-check JS with `node -e "new Function(...)"` before committing
+6. KPI helper functions `_sLabel` / `_kpProgColor` are global — defined in kpi-overview.js / kpi-progress.js (loaded first)

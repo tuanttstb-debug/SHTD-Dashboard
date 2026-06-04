@@ -191,5 +191,6 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
 | ~~TD-016~~ | ~~⚪~~ | ~~Stale comment line 2702~~ | Tiny | ✅ **Resolved 2026-06-04** — never existed in extracted parsers.js |
-| TD-017 | ⚪ | Gantt subtitle hardcoded "2025–2026" at `index.html:329` | Tiny | Open — A4 fix pending |
-| TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js` vs `helpers.js:fmtDateExport` | Tiny | Open — consolidate in Phase C |
+| ~~TD-017~~ | ~~⚪~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | Tiny | ✅ **Resolved 2026-06-04** — dynamic year `83ea790` |
+| TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | Tiny | Open — defer to Phase F cleanup |
+| TD-019 | ⚪ | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements — share `debounceTimer`, no bug but redundant | Tiny | Open — cleanup when convenient |
