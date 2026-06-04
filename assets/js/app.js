@@ -285,3 +285,20 @@ function closeDetailModal() { document.getElementById('detailOverlay').classList
 
 function openKbModal() { document.getElementById('kbOverlay').classList.add('open'); }
 function closeKbModal() { document.getElementById('kbOverlay').classList.remove('open'); }
+
+function openReportModal() {
+  if (!db.tasks.length) { toast('Chưa có dữ liệu. Kết nối Sheets hoặc Import Excel trước.', 'warning'); return; }
+  const sel = document.getElementById('reportWeekSelect');
+  const tuanSet = new Set();
+  db.tasks.forEach(t => { if (t.tuanBC?.trim()) tuanSet.add(t.tuanBC.trim()); });
+  const sorted = [...tuanSet].sort((a, b) => {
+    const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
+    return parse(a) - parse(b);
+  });
+  const thisWeek = currentWeekLabel();
+  sel.innerHTML = '<option value="">-- Chọn tuần --</option>'
+    + sorted.map(v => `<option value="${v}"${v === thisWeek ? ' selected' : ''}>${v}</option>`).join('');
+  document.getElementById('reportOverlay').classList.add('open');
+}
+
+function closeReportModal() { document.getElementById('reportOverlay').classList.remove('open'); }

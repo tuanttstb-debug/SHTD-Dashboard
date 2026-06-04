@@ -220,6 +220,7 @@
             <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImport(event)">
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
             <button class="btn btn-outline btn-sm" onclick="exportExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
+            <button class="btn btn-outline btn-sm" onclick="openReportModal()" title="Xuất báo cáo tuần Excel"><i class="fa-solid fa-file-lines"></i> Báo cáo tuần</button>
             <button class="btn btn-primary" onclick="openTaskModal()" title="Ctrl+N"><i class="fa-solid fa-plus"></i> Thêm Task</button>
           </div>
         </div>
@@ -591,6 +592,27 @@
   </div>
 </div>
 
+<!-- ===== REPORT MODAL ===== -->
+<div class="overlay" id="reportOverlay">
+  <div class="confirm-modal" style="max-width:420px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-size:17px;font-weight:800;"><i class="fa-solid fa-file-lines" style="margin-right:8px;color:var(--primary);"></i>Báo cáo tuần</div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:3px;">Xuất Excel 4 sheet: Tóm tắt · Kết quả · Kế hoạch · Vướng mắc</div>
+      </div>
+      <div class="modal-close" onclick="closeReportModal()" style="position:static;"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Chọn tuần báo cáo</label>
+      <select id="reportWeekSelect" class="form-control" style="width:100%;"></select>
+    </div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" onclick="closeReportModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="exportWeeklyReport(document.getElementById('reportWeekSelect').value)"><i class="fa-solid fa-file-arrow-down"></i> Xuất Excel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== KEYBOARD SHORTCUT MODAL ===== -->
 <div class="overlay" id="kbOverlay">
   <div class="confirm-modal" style="max-width:520px;">
@@ -632,6 +654,7 @@
 <script src="assets/js/views/gantt.js"></script>
 <script src="assets/js/views/performance.js"></script>
 <script src="assets/js/views/quickview.js"></script>
+<script src="assets/js/report.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
