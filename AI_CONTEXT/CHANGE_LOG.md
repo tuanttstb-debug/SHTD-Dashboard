@@ -2,6 +2,113 @@
 
 ---
 
+## [Session 6] 2026-06-05 — Initiative DB Type Column + Milestone Fix + Verify v2
+
+**Commits**: `e9f43e4`, `b88b448`
+
+### Mục tiêu
+Giải quyết bài toán DB GAS: Initiative và Milestone cùng 1 flat table, cần tách rõ bằng `Type` column. Fix bug milestone status sai (tất cả dot đều hiện "active"). Thêm short label M1 thay vì GNOL-001-M1. Verify 37/37 PASS.
+
+### Bugs đã fix
+
+| Bug | Root cause | Fix |
+|---|---|---|
+| Tất cả milestone dot/chip hiện "active" (sai màu) | Col8 `Milestone Đang track` được map → `milestoneTracking` cho MỌI row; milestone `status` default 'Active' vì col10 trống | Parser detect `isMsRow = _isMilestone(id)`: nếu là milestone row thì col8 → `status`, `milestoneTracking = ''` |
+| `_initRealRoots()` trả về rỗng với dữ liệu cũ | Strict `type === 'initiative'` fail với data localStorage không có Type field | Fallback: nếu không có item nào có type → dùng guard cũ `!parentId` |
+| `verify_initiative.mjs` crash step 3 sau khi GAS deploy | `readInitiatives()` chạy background, ghi đè test data SCF-001 bằng data thật GNOL | `verify_initiative_v2.mjs` dùng `page.route()` block GAS |
+
+### Files thay đổi
+
+**`assets/js/initiatives.js`** (`e9f43e4`):
+- `INI_COLS`: 14 → 15 cols, thêm `'Type'` (col O)
+- 3 helpers mới: `_isMilestone(id)`, `_msShortLabel(id)`, `_msParentId(id)`
+- `_parseInitiativeArray()`: detect `isMsRow`, route col8 → `status` cho milestone rows, derive `type`/`parentId` từ ID pattern nếu col thiếu (backward compat)
+- `initiativeToRow()`: thêm `type` field (15th element)
+
+**`assets/js/views/initiative-tracker.js`** (`e9f43e4` + `b88b448`):
+- `_initRealRoots()`: dùng `type === 'initiative'` + fallback cho data cũ không có type
+- `_initBuildCard()`: milestone filter dùng `type === 'milestone'` + fallback
+- `_initBuildMilestoneList()`: hiện short label `M1` qua `_msShortLabel()`; `_initMsDotClass()` map Vietnamese status → CSS class
+- `_initSave()`: stamp `type` field; xóa MS-only fields (`milestoneTracking`, `milestoneDeadline`, `kpiTarget`) khi save milestone
+- Category dropdown: thêm `Số hóa`, `Đào tạo` (thiếu trong data thực)
+- `_initOpenModal()` parent dropdown + `_initCategoryOptions()`: backward compat fallback
+
+**`backend/InitiativeService.gs`** (`e9f43e4`):
+- Header array: 14 → 15 cols, thêm `'Type'`
+- Thêm schema comment A→O
+
+**`assets/js/constants.js`** (`b88b448`):
+- `GS_WEBAPP_URL`: update sang endpoint GAS deployment mới
+
+**`verify_initiative_v2.mjs`** (`b88b448`) — **NEW FILE**:
+- Inject GNOL/BLOL GAS-format data (14-col, không có Type col → test backward compat parsing)
+- Verify: type derivation, parentId derivation, Vietnamese status mapping, short labels, status dots
+- Test: add milestone → delete → add initiative → delete → duplicate guard → category filter
+- Block GAS via `page.route('**/script.google.com/**')` để isolate test
+- **37/37 PASS**
+
+### Schema Initiative_Master sau fix
+```
+A=ID, B=Tên, C=Category, D=Accountable, E=Start, F=Deadline/Target
+G=%HT, H=Milestone Đang track (initiative: tracked-MS name; milestone: blank)
+I=Deadline Milestone (initiative only), J=Trạng thái
+K=KPI, L=Ghi chú, M=Link tài liệu, N=Parent ID, O=Type
+```
+
+### Backward Compat
+- Data cũ không có `Type` col → parser derive từ ID pattern `/-M\d+$/`
+- Data localStorage không có `type` field → UI filter fallback `!parentId`
+
+---
+
+## [Session 4] 2026-06-04 — KPI Dynamic Data Pipeline + GAS URL Update
+
+**Commits**: `20d6a66`, `55ebc33`, `8a811ef`
+
+### Mục tiêu
+Build dynamic KPI data pipeline: người dùng có thể load `File raw.xlsx` trực tiếp trong browser → KPI views tự cập nhật mà không cần sửa code. Đồng thời sửa data lỗi trong dungPTKD và cập nhật GAS_WEBAPP_URL.
+
+### Files thay đổi
+
+**`assets/js/kpi-data.js`** (`20d6a66` + `55ebc33`) — 2 changes:
+- `20d6a66`: Fix dungPTKD — 18 rows thay data cũ (~3% rate) bằng data Sheet1 mới (~25% rate); update agg totals (totalGD 24662→27244, bizTotal 5744→8326, dungTotal 9779→12361, dungBiz 279→2861)
+- `55ebc33`: Thêm `KPI_LIVE`, `KPI_LIVE_TS`, `getKpiData()`, `setKpiLive()` — live data overlay pattern
+
+**`assets/js/kpi-parser.js`** (`55ebc33`) — **NEW FILE** (164 lines):
+- `kpiParseXlsx(file)` — FileReader + SheetJS parse File raw.xlsx
+- `_kpiBuildSummary(rows)` — compute quangPTKD[], dungPTKD[], agg{} từ raw rows
+- Column map: Kênh / PTKD / Owner (exact header names)
+- `kpiWriteToSheet(data)` / `kpiReadFromSheet()` — GG Sheet sync via GS_WEBAPP_URL, non-blocking
+
+**`assets/js/views/kpi-overview.js`** (`55ebc33`) — +100 lines:
+- 3 toolbar buttons: [Load File Raw] / [Sync GG Sheet] / [Từ GG Sheet]
+- Fix TD-022: replace `quangPTKD[1]`, `[2]`, `[10]`, `[12]` với dynamic `.find()` + sorted insight bullets
+- `needPerMonth` / `bizGapFor22` computed dynamically
+
+**`assets/js/views/kpi-progress.js`** (`55ebc33`) — minor:
+- `KPI_DATA` → `getKpiData()` (1 line change)
+
+**`assets/js/views/owner-analysis.js`** (`55ebc33`) — minor:
+- `KPI_DATA` → `getKpiData()` (1 line change)
+
+**`backend/Code.gs`** (`55ebc33`) — +12 lines:
+- Add `kpi-write` and `kpi-read` action routes to doPost() router
+
+**`backend/KpiSheetService.gs`** (`55ebc33`) — **NEW FILE** (51 lines):
+- `kpiSheetWrite(data)` — write serialized KPI data to `KPI_Summary` tab
+- `kpiSheetRead()` — read from `KPI_Summary` tab → return JSON
+
+**`index.html`** (`55ebc33`) — +1 line:
+- Load `kpi-parser.js` before `kpi-overview.js`
+
+**`assets/js/constants.js`** (`8a811ef`) — GAS URL:
+- `GS_WEBAPP_URL` updated to new deployed endpoint
+
+### Không thay đổi
+Dashboard, Tasks, Gantt, Performance, Action Plan, Branch Analysis, RM Analysis, Quick View
+
+---
+
 ## [KPI Merge] 2026-06-04 — KPI Views Updated từ TPBank_KPI_Dashboard_final.html
 
 **Changed by**: AI Implementation Session (Claude Sonnet 4.6)

@@ -1,4 +1,8 @@
-// ── SHTD Dashboard – Initiative_Master sheet operations ──
+// ── SHTD Dashboard – Initiative_Master sheet operations (15 cols A→O) ──
+// Col semantics: A=ID, B=Tên, C=Category, D=Accountable, E=Start, F=Deadline/Target
+//   G=%HT, H=Milestone Đang track (initiative: tracked-MS name; milestone: blank)
+//   I=Deadline Milestone (initiative only), J=Trạng thái, K=KPI, L=Ghi chú
+//   M=Link tài liệu, N=Parent ID, O=Type ("initiative"|"milestone")
 
 var INI_SHEET_NAME = 'Initiative_Master';
 
@@ -16,7 +20,7 @@ function initiativeRead() {
     var header = ['ID','Tên Initiative / Milestone','Category','Accountable',
                   'Start Date','Deadline / Target','% HT','Milestone Đang track',
                   'Deadline Milestone','Trạng thái','Mục tiêu / KPI đầu ra',
-                  'Ghi chú','Link tài liệu','Parent ID'];
+                  'Ghi chú','Link tài liệu','Parent ID','Type'];
     sheet.getRange(1, 1, 1, header.length).setValues([header]);
     SpreadsheetApp.flush();
     return [header];

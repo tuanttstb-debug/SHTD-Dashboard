@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-05 (Session 5 — Initiative Tracker complete + verified)
+**As of**: 2026-06-05 (Session 6 — DB Type col + milestone fix + verify 37/37)
 **Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `f99e723`
-**Remote HEAD**: `f99e723` (in sync)
+**Local HEAD**: `f919f5c`
+**Remote HEAD**: `f919f5c` (in sync)
 
 ---
 
@@ -44,15 +44,15 @@
 | **KPI Progress** | ✅ | KPI 2.1/2.2 meter cards + PTKD table QuangNN3 + digital rate chart + DungLQ1 table |
 | **Owner Analysis** | ✅ | 3 tabs: QuangNN3 / DungLQ1 / Rankings; PTKD card grid; adoption alerts |
 | **KPI Dynamic Pipeline** | ✅ | Load `File raw.xlsx` → parse → update KPI views live; sync to/from GG Sheet `KPI_Summary` tab |
-| **Initiative Tracker** | ✅ **NEW** | Accordion cards, CRUD modal (14 fields), cascade delete, filter by category/status, milestone sub-list, linked task table; GAS sync to `Initiative_Master` tab |
-| **Milestone→Task link** | ✅ **NEW** | Task form `#fMs` auto-populates from Initiative_Master milestones for selected initiative; fallback to M1-M8 |
+| **Initiative Tracker** | ✅ | Accordion cards, CRUD modal, cascade delete, filter; milestone short labels (M1…); Vietnamese status dots; GAS sync 15-col schema; Type col separates initiative/milestone; backward compat |
+| **Milestone→Task link** | ✅ | Task form `#fMs` auto-populates from Initiative_Master milestones; fallback to M1-M8 |
 | **Action Plan Kanban** | ✅ | 4 columns; reads db.tasks where highlight=Y |
 | **Branch Analysis** | ✅ | 25 branches; zone filter; rate vs KPI color coding |
 | **RM Analysis** | ✅ | 14 RMs sorted by digital rate; top-3 highlighted; KPI threshold 15% |
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | |
 | Google Sheets sync — Tasks | ✅ | Read-Then-Patch v6.1 |
-| Google Sheets sync — KPI | ✅ | `kpi-write` / `kpi-read` via `KpiSheetService.gs` (not yet deployed) |
+| Google Sheets sync — KPI | ✅ | `kpi-write` / `kpi-read` via `KpiSheetService.gs` (**not yet deployed to Apps Script**) |
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
@@ -93,7 +93,9 @@ backend/
   Config.gs
   SheetService.gs
   KpiSheetService.gs ← NEW (Session 4) — needs Apps Script deploy
+  InitiativeService.gs ← NEW (Session 5) — 15 cols, DEPLOYED
   GAS.GS             ← archived patch v6.2
+verify_initiative_v2.mjs ← NEW (Session 6) — 37/37 PASS Playwright suite
 ```
 
 ---
@@ -102,7 +104,8 @@ backend/
 
 | Config | Value |
 |---|---|
-| `GS_WEBAPP_URL` | Updated to new endpoint (commit `8a811ef` — pull to get locally) |
+| `GS_WEBAPP_URL` | Updated — new GAS deployment (commit `b88b448`); Initiative + KPI routes active |
+| Initiative backend | ✅ Deployed (15 cols, InitiativeService.gs) — Sync button should work |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | `GS_RANGE` | `Task_Master!A1:W` |
 | `KPI_RANGE` | `KPI_Summary` tab (new — for KPI pipeline sync) |
@@ -121,7 +124,7 @@ backend/
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile | 🟢 Phase D |
 | DEBT-K1 | `KpiSheetService.gs` not deployed — GG Sheet sync for KPI data non-functional | 🟡 Action on PO |
-| DEBT-I1 | `InitiativeService.gs` not deployed — GAS sync buttons in Initiative Tracker won't work | 🟡 Action on PO |
+| DEBT-I1 | `InitiativeService.gs` deployed (15 cols) — cần test Sync button end-to-end | 🟡 Test |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case |
 | DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | ⚪ Cosmetic |
 | DEBT-06 | Inline `onchange` + `addEventListener` double handlers on filter elements | ⚪ No double render — cleanup later |

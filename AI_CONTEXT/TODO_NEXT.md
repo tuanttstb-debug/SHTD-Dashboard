@@ -1,37 +1,32 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-05 (Session 5 — Initiative Tracker complete + verified)
-**Context**: Initiative Tracker 30/30 Playwright pass. KPI views not browser-tested yet. Phase A cleanup pending.
+**Prepared**: 2026-06-05 (Session 6 — DB fix + verify 37/37)
+**Context**: Initiative Tracker fully fixed. GAS deployed (InitiativeService.gs 15 cols). Verify v2 37/37 PASS. KPI views not browser-tested. Phase A cleanup pending.
 
 ---
 
 ## ⚠️ MUST DO FIRST
 
-### 1. PO Deploy — GAS Updates (Action on PO)
-Two new GAS files in `backend/` not yet deployed to Apps Script:
+### 1. Xác nhận GAS Initiative Sync hoạt động end-to-end
+GAS đã deploy (URL mới trong constants.js). Cần test thực tế:
+1. Mở `index.html` → Initiative Tracker
+2. Bấm **Sync GG Sheet** → data load từ `Initiative_Master` tab
+3. Kiểm tra: milestone hiện short label (M1, M2…), status dot đúng màu
+4. Thêm 1 milestone → bấm Sync → kiểm tra ghi lên Sheet
+5. Nếu lỗi "Không tìm thấy InitiativeService" → re-deploy Apps Script với file 15-col mới
 
-**`backend/InitiativeService.gs`** (new):
-1. Open Apps Script project → Add file `InitiativeService.gs`
-2. Paste content → re-deploy as Web App (Update existing deployment)
-3. Test: Initiative Tracker → "Sync GG Sheet" → should write to `Initiative_Master` tab
-
-**`backend/KpiSheetService.gs`** (from Session 4, still not deployed):
-1. Add file `KpiSheetService.gs` to Apps Script → re-deploy
-2. Test: KPI Overview → "Sync GG Sheet"
-
-### 2. Browser Verify — KPI Views (not tested since Session 3+4)
-Open `index.html` → navigate to:
+### 2. Browser Verify — KPI Views (chưa test từ Session 3+4)
+Mở `index.html` → navigate:
 - [ ] **KPI Overview** — renders, Load File Raw button works, 0 JS errors
 - [ ] **KPI Progress** — renders correctly
 - [ ] **Owner Analysis** — 3 tabs, no errors
-- [ ] **Initiative Tracker** — confirm looks correct in real browser (Playwright verified logic, not visuals)
 - [ ] Console: 0 JS errors
 
 ---
 
 ## Phase A — Remaining Quick Wins
 
-### A4 — Remove visible merge instructions (~10 min)
-- Grep `index.html` for `<!-- MERGE -->` comments or instruction text
+### A4 — Remove merge instruction residue (~10 min)
+- Grep `index.html` for `<!-- MERGE -->` comments
 - Grep `assets/js/` for leftover merge `console.log` residue
 
 ### A5 — Remove debug buttons (~30 min)
@@ -40,14 +35,24 @@ Open `index.html` → navigate to:
 
 ---
 
-## Initiative Tracker — Potential Enhancements (future)
+## GAS Deploy Checklist
+
+| File | Status | Action |
+|---|---|---|
+| `backend/InitiativeService.gs` | ✅ Deployed (15 cols) | Test Sync button |
+| `backend/KpiSheetService.gs` | 🔴 NOT deployed | Paste → re-deploy → test KPI Sync |
+
+---
+
+## Initiative Tracker — Future Enhancements (deferred)
 
 | Enhancement | Notes |
 |---|---|
 | Initiative ID rename: cascade update children's `parentId` | Current: rename ID + children still point to old parentId |
-| Import initiatives from Excel | Add `initiative_master` sheet detection in `extractWorkbook()` with full 14-col schema |
+| Import initiatives from Excel | Add `initiative_master` sheet detection in `extractWorkbook()` |
 | Keyboard shortcut G+I → Initiative Tracker | Add to navigation.js gKey map |
-| Deadline countdown badge on cards | Show "X ngày còn lại" / "Quá hạn X ngày" |
+| Deadline countdown badge on cards | "X ngày còn lại" / "Quá hạn X ngày" |
+| Milestone status dropdown: dùng Vietnamese options | Current modal dùng Active/Done/Paused; real data dùng Xong/Đang làm/Chưa bắt đầu |
 
 ---
 
@@ -71,6 +76,7 @@ Open `index.html` → navigate to:
 | TD-018 | `fmtExportDate` duplicated | Remove from app.js:exportExcel, use helpers.js version |
 | TD-021 | `_sLabel`/`_kpProgColor` defined in view files, used globally | Move to `helpers.js` |
 | TD-023 | `_oaActiveTab` not reset on re-render | Add `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()` |
+| TD-026 | Milestone modal `#initFStatus` dùng English (Active/Done); GAS data dùng Vietnamese (Xong/Đang làm) | Swap options khi parentId được chọn |
 
 ---
 
@@ -81,6 +87,7 @@ Open `index.html` → navigate to:
 4. JS globals: use bare `db`, not `window.db`
 5. KPI globals: `fmtKN`, `kpiChip`, `dungChip`, `kpiAlertClass`, `dungAlertClass` in `kpi-data.js`
 6. KPI live data: always use `getKpiData()` not `KPI_DATA` directly in KPI views
-7. Initiative views: always use `_initRealRoots()` for root initiative list (excludes BAU + stubs)
+7. Initiative views: always use `_initRealRoots()` for root initiative list
 8. `syncInitiativeAdd/Edit/Delete()` in `initiatives.js` are the only safe Initiative CRUD entry points
 9. Chart instances: destroyed on re-render via `try { c.destroy() }`
+10. Verify scripts: use `page.route('**/script.google.com/**', r => r.abort())` để isolate khỏi GAS background load

@@ -1,11 +1,11 @@
 # SESSION HANDOVER
-**Date**: 2026-06-05 (session 5 — Initiative Management feature + verify + fix)
-**Session**: Full Initiative Tracker built (I-A→I-E), local Playwright verify, 3 bugs fixed, pushed
+**Date**: 2026-06-05 (session 6 — Initiative DB fix + verify 37/37)
+**Session**: Type col, milestone status fix, backward compat, verify suite v2
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard (branch: master)
-**Local HEAD**: `f99e723`
-**Remote HEAD**: `f99e723` (in sync)
-**Previous session HEAD**: `8c8dee7`
+**Local HEAD**: `f919f5c`
+**Remote HEAD**: `f919f5c` (in sync)
+**Previous session HEAD**: `f99e723`
 
 ---
 
@@ -13,13 +13,16 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| I-A | GAS: `InitiativeService.gs` + `initiative-read/write` routes in `Code.gs` | `35f4b62` | ✅ Done |
-| I-B | Data layer: `initiatives.js` — INI_COLS[14], parser, `readInitiatives/writeInitiatives`, CRUD sync | `9c4673d` | ✅ Done |
-| I-C | CSS: `initiative.css` — card, stat bar, progress, milestone step, task table, modal grid | `8b87d49` | ✅ Done |
-| I-D | View: `initiative-tracker.js` — accordion cards, CRUD modal, cascade delete, filter, nav item | `68a2aa5` | ✅ Done |
-| I-E | Task form: `_populateMilestoneSelect()` — fMs dropdown from Initiative_Master by initiative | `06d423c` | ✅ Done |
-| fix | 3 bugs: validation order, BAU stub filter, parsers.js hasRichData guard | `4ba8ec6` | ✅ Done |
-| verify | Playwright 30/30 PASS — `verify_initiative.mjs` | — | ✅ Done |
+| DB-1 | Add `Type` col to INI_COLS (15 cols A→O); 3 ID helpers | `e9f43e4` | ✅ |
+| DB-2 | Fix milestone status mapping: col8 → `status` for milestone rows (not `milestoneTracking`) | `e9f43e4` | ✅ |
+| DB-3 | `_initSave()`: stamp `type` field; clear MS-only fields for milestone rows | `e9f43e4` | ✅ |
+| DB-4 | Category dropdown: add Số hóa, Đào tạo | `e9f43e4` | ✅ |
+| DB-5 | Milestone display: short label M1 not GNOL-001-M1; `_initMsDotClass()` for Vietnamese status | `e9f43e4` | ✅ |
+| BC-1 | Backward compat: all type-based filters fall back to old logic when `type` missing | `b88b448` | ✅ |
+| BC-2 | Root cause identified: old `verify_initiative.mjs` failed because deployed GAS overwrote test data | `b88b448` | ✅ |
+| V2 | `verify_initiative_v2.mjs` — 37/37 PASS with GAS-format data injection | `b88b448` | ✅ |
+| GAS | `GS_WEBAPP_URL` updated to new deployment URL | `b88b448` | ✅ |
+| CTX | ai_context docs updated (CHANGE_LOG, SESSION_HANDOVER, PROJECT_STATE, TODO_NEXT) | `f919f5c` | ✅ |
 
 ---
 
@@ -27,63 +30,45 @@
 
 | File | Change |
 |---|---|
-| `backend/InitiativeService.gs` | **NEW** — `initiativeRead()` / `initiativeWrite()` for `Initiative_Master` tab (auto-creates if missing, 14 cols) |
-| `backend/Code.gs` | +14 lines: `initiative-read` and `initiative-write` routes |
-| `assets/js/initiatives.js` | **NEW** — INI_COLS[14], `initiativeToRow()`, `_parseInitiativeArray()`, `readInitiatives()`, `writeInitiatives()`, `syncInitiativeAdd/Edit/Delete()` |
-| `assets/js/parsers.js` | Guard `_parseArrayIntoDb()` + `extractWorkbook()` to not override rich initiative data; `.some()` for hasRichData |
-| `assets/js/app.js` | Call `readInitiatives()` non-blocking after `autoConnectDB()` |
-| `assets/css/initiative.css` | **NEW** — `.init-card`, `.init-stat-*`, `.init-prog-*`, `.init-status-chip`, `.init-toggle-*`, `.init-milestone-*`, `.init-task-table`, `.init-modal-grid`, `.init-empty` |
-| `assets/js/views/initiative-tracker.js` | **NEW** — `renderInitiativeTracker()`, `_initRealRoots()`, accordion cards, CRUD modal 14 fields, cascade delete, filter, toggle panels |
-| `assets/js/ui/navigation.js` | Add `initiative-tracker` title + render call; `_populateMilestoneSelect('')` on fInit change |
-| `assets/js/crud.js` | Add `_populateMilestoneSelect()` — dynamic by initiative, fallback to M1-M8 |
-| `index.html` | Nav item, view section, CSS link, 2 script tags; `#fMs` options stripped (dynamic) |
-
-**NOT changed**: Dashboard, KPI views, Gantt, Performance, Action Plan, Branch Analysis, RM Analysis, Quick View
+| `assets/js/initiatives.js` | INI_COLS 15 cols; 3 helpers `_isMilestone/_msShortLabel/_msParentId`; parser fixes |
+| `assets/js/views/initiative-tracker.js` | `_initRealRoots` (backward compat); milestone filter; short label; `_initMsDotClass`; `_initSave` type; category opts; backward compat fallbacks across all type filters |
+| `backend/InitiativeService.gs` | Header updated to 15 cols + schema comment |
+| `assets/js/constants.js` | `GS_WEBAPP_URL` updated to new GAS deployment endpoint |
+| `verify_initiative_v2.mjs` | **NEW** — 37/37 PASS; GAS-format data; blocks GAS via page.route(); tests parse, labels, dots, add, delete, filter, duplicate |
+| `AI_CONTEXT/*.md` | Session 6 delta: CHANGE_LOG, SESSION_HANDOVER, PROJECT_STATE, TODO_NEXT, TECH_DEBT |
 
 ---
 
-## Commits This Session
-
-| Hash | Message |
-|---|---|
-| `35f4b62` | feat(I-A): GAS backend – initiative-read/write routes + InitiativeService.gs |
-| `9c4673d` | feat(I-B): initiative data layer – INI_COLS, parser, sync functions |
-| `8b87d49` | feat(I-C): initiative CSS – card, milestone, progress, task-list styles |
-| `68a2aa5` | feat(I-D): initiative tracker view – accordion cards, CRUD modal, GAS sync |
-| `06d423c` | feat(I-E): task form – milestone select from Initiative_Master |
-| `4ba8ec6` | fix(initiative): 3 bugs found in local verify session |
-| `f99e723` | Merge remote main (GAS URL update) |
+## Root Cause: Old Verify Failure
+`verify_initiative.mjs` was designed when GAS wasn't deployed. After deployment, `readInitiatives()` fires in background and overwrites test data (SCF-001) with real GAS data. New script uses `page.route('**/script.google.com/**', route => route.abort())` to isolate test environment.
 
 ---
 
-## Bugs Fixed This Session (from verify)
+## Schema After Fix
 
-| Bug | Root Cause | Fix |
-|---|---|---|
-| Duplicate ID check didn't fire when name was empty | `_initSave()` checked name before duplicate — `!name` returned early first | Moved duplicate check before name check |
-| BAU appeared as initiative card after deleting user-added initiatives | BAU auto-discovered from tasks gets into `db.initiatives` without `status` field; `parentId` is undefined → falsy → not filtered as child | Added `_initRealRoots()` that filters `id !== 'BAU'` and `status !== undefined`; applied to all card list/stat renders |
-| `parsers.js` guard could be bypassed if BAU was first item in cached array | `db.initiatives[0].status` checked index 0 — if BAU was first, guard returned false and reset initiatives | Changed to `.some(x => x.status !== undefined)` |
+```
+A: ID
+B: Tên Initiative / Milestone
+C: Category
+D: Accountable
+E: Start Date
+F: Deadline / Target
+G: % HT
+H: Milestone Đang track    ← [initiative] tracked-MS name; [milestone] blank (cleared on save)
+I: Deadline Milestone       ← [initiative] deadline of tracked MS; [milestone] blank
+J: Trạng thái               ← [initiative] Active/Done/Paused; [milestone] Xong/Đang làm/Chưa bắt đầu
+K: Mục tiêu / KPI đầu ra   ← [initiative] only
+L: Ghi chú
+M: Link tài liệu
+N: Parent ID                ← auto-derived from ID pattern if missing
+O: Type                     ← "initiative" | "milestone"; auto-derived if missing
+```
 
----
-
-## Decisions Made
-
-| Decision | Reason |
-|---|---|
-| `INI_COLS` 14 columns — added `Parent ID` col vs positional detection | Explicit parent FK is more reliable than detecting hierarchy by row position |
-| `_initRealRoots()` helper filters BAU + auto-discovered stubs | BAU is a task classification, not a real initiative; stubs have no `status` field |
-| Cascade delete: milestones deleted when parent initiative deleted | Orphan milestones (parentId points to non-existent initiative) would never show in any view — clean up on parent delete |
-| fMs dropdown falls back to M1-M8 when no milestones in Initiative_Master | Backward compat — existing tasks using M1-M8 naming still work even without Initiative_Master data |
-
----
-
-## Blockers
-
-| Blocker | Impact | Action needed |
-|---|---|---|
-| `InitiativeService.gs` not yet deployed to Apps Script | GAS sync buttons (`Sync GG Sheet`) in Initiative Tracker won't work | PO: add `backend/InitiativeService.gs` to Apps Script → re-deploy → test sync button |
-| `KpiSheetService.gs` not yet deployed | KPI GG Sheet sync non-functional | PO: same — paste + re-deploy |
-| KPI views not browser-tested (sessions 3+4) | May have minor JS errors from KPI pipeline changes | Next session: open index.html → navigate KPI views → check console |
+## Backward Compat
+- Old data WITHOUT `Type` col: parser derives type from ID pattern `/-M\d+$/`
+- Old data WITHOUT `Parent ID` col: parser derives from ID for milestones
+- Old localStorage (no `type` field): all UI filters fall back to `!parentId` / `!!parentId` logic
+- Milestone names with `↳ ` prefix: display strips them; new saves no longer add prefix
 
 ---
 
@@ -91,31 +76,27 @@
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `_populateMilestoneSelect()` called globally — requires `fMs` element to exist | ⚪ LOW | Called on `fInit` change. If modal is closed when event fires, `getElementById('fMs')` returns null and the function does an early return. No crash. |
-| `writeInitiatives()` fires non-blocking after every CRUD op | ⚪ LOW | If GAS URL fails (offline), writes are silently lost for that session. Data stays in `db.initiatives` + localStorage. GAS sync happens on next explicit sync. |
-| Other views | ⚪ NONE | Zero changes to Dashboard/Tasks/KPI/etc. |
+| Milestone modal status dropdown vs. real data | ⚪ LOW | Modal uses English values (Active/Done/Paused/Blocked); GAS data uses Vietnamese (Xong/Đang làm/Chưa bắt đầu). `_initMsDotClass` handles both, but newly created milestones via modal will store English status while GAS-synced milestones store Vietnamese. No crash, just inconsistent stored values — see TD-026. |
+| `_initRealRoots()` fallback path | ⚪ LOW | If ALL items in db have `type` set but one initiative has `type = undefined` (e.g., BAU stub), it still gets filtered by the new check `all.some(i => i.type)` → `true` → strict path → BAU excluded. Correct behavior. |
+| `parsers.js` hasRichData guard | ⚪ LOW | Guard `.some(x => x.status !== undefined)` — milestone rows now always have `status` set. BAU stubs (no status) still correctly excluded. Guard still works. |
+| Other views | ⚪ NONE | Zero changes to Dashboard, Tasks, KPI, Gantt, Performance, Action Plan, Branch/RM Analysis. |
 
 ---
 
-## Key File Locations (updated)
+## Blockers
 
-| Concern | File |
+| Blocker | Status |
 |---|---|
-| Initiative data + CRUD sync | `assets/js/initiatives.js` ← NEW |
-| Initiative Tracker view | `assets/js/views/initiative-tracker.js` ← NEW |
-| Initiative CSS | `assets/css/initiative.css` ← NEW |
-| GAS initiative backend | `backend/InitiativeService.gs` ← NEW |
-| GAS task backend | `backend/Code.gs`, `Config.gs`, `SheetService.gs` |
-| GAS KPI backend | `backend/KpiSheetService.gs` |
-| KPI data + live overlay | `assets/js/kpi-data.js` |
-| KPI xlsx parser | `assets/js/kpi-parser.js` |
-| GS_WEBAPP_URL config | `assets/js/constants.js` |
+| `InitiativeService.gs` GAS deploy — 15 cols | ✅ User deployed (new URL in constants.js) |
+| `KpiSheetService.gs` GAS deploy | 🔴 Still pending (PO action) |
+| KPI views not browser-tested | 🟡 Next session |
 
 ---
 
 ## Next Session — Must Do First
 
-1. **PO Deploy GAS**: Add `backend/InitiativeService.gs` + `backend/KpiSheetService.gs` to Apps Script → re-deploy → test sync buttons
-2. **Browser verify KPI views**: Open `index.html` → KPI Overview → KPI Progress → Owner Analysis → 0 JS errors
-3. **A4**: Remove merge instruction residue in HTML/JS (~10 min)
-4. **A5**: Remove `loadDemoData`/`clearDemoData` debug buttons (~30 min)
+1. **PO**: Confirm `InitiativeService.gs` works end-to-end — open Initiative Tracker → Sync GG Sheet → data loads from Initiative_Master tab ← test with REAL GAS data (not mock)
+2. **A4**: Remove `<!-- MERGE -->` residue in HTML/JS (~10 min)
+3. **A5**: Remove `loadDemoData`/`clearDemoData` debug buttons (~30 min)
+4. **Browser verify KPI views**: KPI Overview → KPI Progress → Owner Analysis → 0 errors
+5. **Deploy KpiSheetService.gs**: add to Apps Script → re-deploy → test KPI Sync

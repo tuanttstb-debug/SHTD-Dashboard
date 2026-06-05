@@ -137,7 +137,9 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 **Partial resolution 2026-06-04 (Phase F)**: `verify_kpi.mjs` — Playwright headless test for all 6 KPI Digital views, run after implementation. Also not committed.
 
-**Remaining gap**: No CI integration, no unit tests for pure functions (parsers, helpers, kpi-data helpers).
+**Partial resolution 2026-06-05 (Session 6)**: `verify_initiative_v2.mjs` — **committed** — 37/37 PASS. Tests GAS-format data parsing (backward compat, type derivation, Vietnamese status), UI labels, add/delete CRUD, filter, duplicate guard. Uses `page.route()` to block GAS during test.
+
+**Remaining gap**: No CI integration, no unit tests for pure functions (parsers, helpers, kpi-data helpers). `verify_initiative_v2.mjs` is the only committed suite.
 
 ---
 
@@ -225,8 +227,20 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-026: Milestone Modal Status Dropdown Uses English; GAS Data Uses Vietnamese
+**Rating**: ⚪ LOW
+**Added**: 2026-06-05 (Session 6 — DB fix)
+
+**Issue**: The CRUD modal `#initFStatus` has English options: `Active / Done / Paused / Blocked`. However, real GAS data (Initiative_Master sheet, col J `Trạng thái`) uses Vietnamese values: `Xong / Đang làm / Chưa bắt đầu`. `_initMsDotClass()` handles both, but newly created milestones via modal store English status while GAS-synced milestones store Vietnamese.
+
+**Impact**: No crash. `_initMsDotClass()` maps both to correct CSS class. Visual inconsistency when manually creating milestones vs loading from GAS. Filter and search would need to handle both value sets if implemented.
+
+**Fix**: Change `#initFStatus` options for milestone rows to: `Chưa bắt đầu / Đang làm / Xong / Blocked`. Add `onchange` on `#initFParent` to swap option sets (initiative: Active/Done/Paused/Blocked; milestone: Chưa bắt đầu/Đang làm/Xong).
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-05 (Session 5)
+**Last updated**: 2026-06-05 (Session 6)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -241,7 +255,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢 | No tests | Large | Open |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — `verify_initiative_v2.mjs` committed (37/37); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
@@ -255,3 +269,4 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-023 | ⚪ | `_oaActiveTab` not reset on re-render — visual inconsistency only | Tiny | Open — add reset line |
 | TD-024 | ⚪ | Initiative ID rename doesn't cascade `parentId` in child milestones | Tiny | Open — fix in `_initSave()` |
 | TD-025 | ⚪ | `writeInitiatives()` full-replace, no patch — last-write-wins | Tiny | Open — acceptable until multi-user initiative editing needed |
+| TD-026 | ⚪ | Milestone modal status dropdown English vs. GAS Vietnamese — inconsistent stored values | Tiny | Open — swap `#initFStatus` options based on parentId selection |
