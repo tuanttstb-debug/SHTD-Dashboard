@@ -67,7 +67,7 @@ function openTaskModal(task = null) {
     document.getElementById('fName').value = task.name;
     const fi = document.getElementById('fInit');
     fi.value = task.initiative || 'BAU';
-    document.getElementById('fMs').value = task.milestone || '';
+    _populateMilestoneSelect(task.milestone || '');
     document.getElementById('fTeam').value = task.team || 'Số';
     document.getElementById('fTeamPh').value = task.teamPhoiHop || '';
     document.getElementById('fPicAcc').value = task.picAcc || 'Tuantt4';
@@ -102,9 +102,30 @@ function openTaskModal(task = null) {
     const _td=new Date();document.getElementById('fStart').value=`${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
     populatePicDropdown('');
     autoGenId();
+    _populateMilestoneSelect('');
   }
   document.getElementById('taskOverlay').classList.add('open');
   setTimeout(() => document.getElementById('fName').focus(), 120);
+}
+
+function _populateMilestoneSelect(currentValue) {
+  const sel = document.getElementById('fMs');
+  if (!sel) return;
+  const initId = (document.getElementById('fInit') || {}).value || '';
+  const milestones = (db.initiatives || []).filter(i => i.parentId === initId);
+
+  if (milestones.length === 0) {
+    // Fallback: generic M1–M8 options when no milestones defined in Initiative_Master
+    sel.innerHTML = '<option value="">– Không –</option>'
+      + ['M1','M2','M3','M4','M5','M6','M7','M8'].map(m => `<option value="${m}">${m}</option>`).join('');
+  } else {
+    sel.innerHTML = '<option value="">– Không –</option>'
+      + milestones.map(m => {
+          const label = m.name.replace(/^↳\s*/, '');
+          return `<option value="${m.id}">${m.id} – ${label}</option>`;
+        }).join('');
+  }
+  if (currentValue) sel.value = currentValue;
 }
 
 function populatePicDropdown(selected) {

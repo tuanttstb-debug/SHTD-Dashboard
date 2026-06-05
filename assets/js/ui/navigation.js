@@ -31,7 +31,10 @@ function setupListeners() {
 
   document.getElementById('fId').addEventListener('input', e => checkDupId(e.target.value));
 
-  document.getElementById('fInit').addEventListener('change', () => { if (!document.getElementById('origId').value) autoGenId(); });
+  document.getElementById('fInit').addEventListener('change', () => {
+    if (!document.getElementById('origId').value) autoGenId();
+    _populateMilestoneSelect('');
+  });
   document.getElementById('fTeam').addEventListener('change', () => { if (!document.getElementById('origId').value) autoGenId(); });
 
   let gKey = null;
