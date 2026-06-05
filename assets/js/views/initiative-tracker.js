@@ -17,7 +17,7 @@ function renderInitiativeTracker() {
       <div class="toolbar-left">
         <div style="font-size:17px;font-weight:800;">Theo dõi Initiative</div>
         <div style="font-size:12px;color:var(--text-3);">
-          ${roots.length} initiative · ${(db.initiatives||[]).length - roots.length} milestone
+          ${roots.length} initiative · ${(db.initiatives||[]).filter(i=>i.type==='milestone').length} milestone
         </div>
       </div>
       <div class="toolbar-right">
@@ -51,9 +51,9 @@ function renderInitiativeTracker() {
   if (selSts) selSts.value = _initFilterStatus;
 }
 
-/* ── helper: chỉ lấy initiatives "thật" (có status field, không phải auto-discovered stub) ── */
+/* ── helper: chỉ lấy initiative gốc (type === 'initiative') ── */
 function _initRealRoots() {
-  return (db.initiatives || []).filter(i => !i.parentId && i.id !== 'BAU' && i.status !== undefined);
+  return (db.initiatives || []).filter(i => i.type === 'initiative');
 }
 
 /* ── stat bar ── */
@@ -114,7 +114,7 @@ function _initBuildCardList() {
 
 /* ── single initiative card ── */
 function _initBuildCard(ini) {
-  const milestones = (db.initiatives || []).filter(i => i.parentId === ini.id && i.status !== undefined);
+  const milestones = (db.initiatives || []).filter(i => i.type === 'milestone' && i.parentId === ini.id);
   const linkedTasks = (db.tasks || []).filter(t => t.initiative === ini.id);
   const statusKey = (ini.status || 'active').toLowerCase();
   const fillClass = statusKey === 'done' ? 'done' : statusKey === 'blocked' ? 'blocked' : statusKey === 'paused' ? 'paused' : '';
@@ -167,17 +167,17 @@ function _initBuildMilestoneList(parentId, milestones) {
     return `<div style="font-size:12px;color:var(--text-3);padding:8px 0;">Chưa có milestone. <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button></div>`;
   }
   const rows = milestones.map(ms => {
-    const dotClass = (ms.status || 'active').toLowerCase();
+    const dotClass = _initMsDotClass(ms.status);
     return `<div class="init-milestone-row">
       <div class="init-step-dot ${dotClass}"></div>
-      <span class="init-ms-id">${_esc(ms.id)}</span>
+      <span class="init-ms-id">${_esc(_msShortLabel(ms.id))}</span>
       <span class="init-ms-name">${_esc(ms.name.replace(/^↳\s*/,''))}</span>
       <div class="init-prog-wrap">
         <div class="init-prog-bar" style="width:60px;"><div class="init-prog-fill ${dotClass === 'done' ? 'done' : dotClass === 'blocked' ? 'blocked' : ''}" style="width:${ms.pct||0}%;"></div></div>
         <span class="init-prog-pct">${ms.pct||0}%</span>
       </div>
       ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ms.deadline)}</span>` : ''}
-      <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Active')}</span>
+      <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
       <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa"><i class="fa-solid fa-pen"></i></button>
     </div>`;
   }).join('');
@@ -237,7 +237,7 @@ function _initSetFilter(type, val) {
 
 /* ── categories helper ── */
 function _initCategoryOptions() {
-  const cats = [...new Set((db.initiatives||[]).filter(i=>!i.parentId).map(i=>i.category).filter(Boolean))];
+  const cats = [...new Set((db.initiatives||[]).filter(i=>i.type==='initiative').map(i=>i.category).filter(Boolean))];
   return cats.map(c => `<option value="${_esc(c)}">${_esc(c)}</option>`).join('');
 }
 
@@ -272,7 +272,9 @@ function _initModalTemplate() {
             <label class="form-label">Category</label>
             <select class="form-control" id="initFCat">
               <option value="">– Chọn –</option>
+              <option>Số hóa</option>
               <option>Sản phẩm</option>
+              <option>Đào tạo</option>
               <option>Kỹ thuật</option>
               <option>Vận hành</option>
               <option>Chiến lược</option>
@@ -340,7 +342,7 @@ function _initOpenModal(id) {
   // Populate parent dropdown (root initiatives only)
   const selParent = document.getElementById('initFParent');
   selParent.innerHTML = '<option value="">(Đây là Initiative gốc)</option>'
-    + (db.initiatives||[]).filter(i => !i.parentId && (id === null || i.id !== id))
+    + (db.initiatives||[]).filter(i => i.type === 'initiative' && (id === null || i.id !== id))
         .map(i => `<option value="${_esc(i.id)}">${_esc(i.id)} – ${_esc(i.name)}</option>`).join('');
 
   if (id === null) {
@@ -414,19 +416,20 @@ function _initSave() {
 
   const ini = {
     id:                newId,
-    name:              parentId ? (name.startsWith('↳') ? name : '↳ ' + name) : name,
+    name,
     category:          document.getElementById('initFCat').value,
     accountable:       document.getElementById('initFAcc').value.trim(),
     startDate:         document.getElementById('initFStart').value.trim(),
     deadline:          document.getElementById('initFDeadline').value.trim(),
     pct:               Math.min(100, Math.max(0, pctRaw)),
-    milestoneTracking: document.getElementById('initFMsTrack').value.trim(),
-    milestoneDeadline: document.getElementById('initFMsDl').value.trim(),
-    status:            document.getElementById('initFStatus').value || 'Active',
-    kpiTarget:         document.getElementById('initFKpi').value.trim(),
+    milestoneTracking: parentId ? '' : document.getElementById('initFMsTrack').value.trim(),
+    milestoneDeadline: parentId ? '' : document.getElementById('initFMsDl').value.trim(),
+    status:            document.getElementById('initFStatus').value || (parentId ? 'Chưa bắt đầu' : 'Active'),
+    kpiTarget:         parentId ? '' : document.getElementById('initFKpi').value.trim(),
     notes:             document.getElementById('initFNotes').value.trim(),
     docLink:           document.getElementById('initFDoc').value.trim(),
     parentId,
+    type:              parentId ? 'milestone' : 'initiative',
   };
 
   _initCloseModal();
@@ -468,6 +471,14 @@ async function _initDelete(id) {
 }
 
 /* ── utilities ── */
+function _initMsDotClass(status) {
+  const s = (status || '').toLowerCase().trim();
+  if (s === 'xong' || s === 'done') return 'done';
+  if (s === 'blocked') return 'blocked';
+  if (s === 'chưa bắt đầu' || s === 'pending' || s === 'waiting') return 'paused';
+  return 'active';
+}
+
 function _esc(s) {
   return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }

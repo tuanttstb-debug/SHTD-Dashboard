@@ -1,6 +1,6 @@
 'use strict';
 
-/* ── Initiative_Master – 14 cột (A→N) ── */
+/* ── Initiative_Master – 15 cột (A→O) ── */
 const INI_COLS = [
   'ID',
   'Tên Initiative / Milestone',
@@ -16,9 +16,15 @@ const INI_COLS = [
   'Ghi chú',
   'Link tài liệu',
   'Parent ID',
+  'Type',
 ];
 
-/* ── Serializer: initiative object → 14-phần tử array ── */
+/* ── Milestone ID helpers ── */
+const _isMilestone  = id => /-M\d+$/.test(id || '');
+const _msShortLabel = id => { const m = (id||'').match(/-M(\d+)$/); return m ? 'M' + m[1] : (id||''); };
+const _msParentId   = id => (id||'').replace(/-M\d+$/, '');
+
+/* ── Serializer: initiative object → 15-phần tử array ── */
 function initiativeToRow(ini) {
   return [
     ini.id              || '',
@@ -35,6 +41,7 @@ function initiativeToRow(ini) {
     ini.notes           || '',
     ini.docLink         || '',
     ini.parentId        || '',
+    ini.type || (_isMilestone(ini.id) ? 'milestone' : 'initiative'),
   ];
 }
 
@@ -59,6 +66,7 @@ function _parseInitiativeArray(values) {
   const cNote = ci('ghichú');
   const cDoc  = ci('linktài');
   const cPar  = ci('parentid');
+  const cType = ci('type');
 
   const g = (r, c) => c !== -1 ? (r[c] || '').toString().trim() : '';
 
@@ -67,27 +75,45 @@ function _parseInitiativeArray(values) {
     const r = values[i];
     const id = g(r, cId);
     if (!id) continue;
+
     let pct = 0;
     const pRaw = g(r, cPct);
     if (pRaw) {
       const cv = parseFloat(pRaw.replace('%', ''));
       pct = (!pRaw.includes('%') && cv <= 1) ? Math.round(cv * 100) : (Math.round(cv) || 0);
     }
+
+    const isMsRow    = _isMilestone(id);
+    const rawMsTrack = g(r, cMsT);
+    const rawStatus  = g(r, cSts);
+
+    // Milestone rows: "Milestone Đang track" col stores milestone status ("Xong"/"Đang làm"/"Chưa bắt đầu")
+    // Initiative rows: "Milestone Đang track" col stores the name of the currently tracked milestone
+    const status             = isMsRow ? (rawStatus || rawMsTrack || 'Chưa bắt đầu') : (rawStatus || 'Active');
+    const milestoneTracking  = isMsRow ? '' : rawMsTrack;
+    const milestoneDeadline  = isMsRow ? '' : g(r, cMsDl);
+
+    // Type: explicit col → derive from ID pattern
+    const type     = g(r, cType) || (isMsRow ? 'milestone' : 'initiative');
+    // parentId: explicit col → derive from ID pattern for milestones
+    const parentId = g(r, cPar) || (isMsRow ? _msParentId(id) : null) || null;
+
     db.initiatives.push({
       id,
-      name:               g(r, cName),
-      category:           g(r, cCat),
-      accountable:        g(r, cAcc),
-      startDate:          g(r, cSt),
-      deadline:           g(r, cDl),
+      name:              g(r, cName),
+      category:          g(r, cCat),
+      accountable:       g(r, cAcc),
+      startDate:         g(r, cSt),
+      deadline:          g(r, cDl),
       pct,
-      milestoneTracking:  g(r, cMsT),
-      milestoneDeadline:  g(r, cMsDl),
-      status:             g(r, cSts) || 'Active',
-      kpiTarget:          g(r, cKpi),
-      notes:              g(r, cNote),
-      docLink:            g(r, cDoc),
-      parentId:           g(r, cPar) || null,
+      milestoneTracking,
+      milestoneDeadline,
+      status,
+      kpiTarget:         g(r, cKpi),
+      notes:             g(r, cNote),
+      docLink:           g(r, cDoc),
+      parentId,
+      type,
     });
   }
 }
