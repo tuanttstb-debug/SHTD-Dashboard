@@ -9,7 +9,7 @@ function renderInitiativeTracker() {
   const root = document.getElementById('initiativeTrackerRoot');
   if (!root) return;
 
-  const roots = (db.initiatives || []).filter(i => !i.parentId);
+  const roots = _initRealRoots();
 
   root.innerHTML = `
     ${_initStatBar(roots)}
@@ -51,6 +51,11 @@ function renderInitiativeTracker() {
   if (selSts) selSts.value = _initFilterStatus;
 }
 
+/* ── helper: chỉ lấy initiatives "thật" (có status field, không phải auto-discovered stub) ── */
+function _initRealRoots() {
+  return (db.initiatives || []).filter(i => !i.parentId && i.id !== 'BAU' && i.status !== undefined);
+}
+
 /* ── stat bar ── */
 function _initStatBar(roots) {
   const total   = roots.length;
@@ -90,8 +95,7 @@ function _initStatBar(roots) {
 
 /* ── card list ── */
 function _initBuildCardList() {
-  const roots = (db.initiatives || []).filter(i => {
-    if (i.parentId) return false;
+  const roots = _initRealRoots().filter(i => {
     if (_initFilterCat    && i.category !== _initFilterCat)    return false;
     if (_initFilterStatus && i.status   !== _initFilterStatus) return false;
     return true;
@@ -110,7 +114,7 @@ function _initBuildCardList() {
 
 /* ── single initiative card ── */
 function _initBuildCard(ini) {
-  const milestones = (db.initiatives || []).filter(i => i.parentId === ini.id);
+  const milestones = (db.initiatives || []).filter(i => i.parentId === ini.id && i.status !== undefined);
   const linkedTasks = (db.tasks || []).filter(t => t.initiative === ini.id);
   const statusKey = (ini.status || 'active').toLowerCase();
   const fillClass = statusKey === 'done' ? 'done' : statusKey === 'blocked' ? 'blocked' : statusKey === 'paused' ? 'paused' : '';
@@ -394,15 +398,16 @@ function _initSave() {
   const errEl  = document.getElementById('initErrId');
 
   if (!newId) { errEl.textContent = 'ID không được để trống.'; return; }
-  if (!name)  { toast('Tên Initiative không được để trống.', 'warning'); return; }
 
-  // Duplicate check
+  // Duplicate check trước name để UX rõ ràng hơn
   if (!origId || origId !== newId) {
     if ((db.initiatives||[]).some(x => x.id === newId)) {
       errEl.textContent = 'ID đã tồn tại.'; return;
     }
   }
   errEl.textContent = '';
+
+  if (!name) { toast('Tên Initiative không được để trống.', 'warning'); return; }
 
   const parentId = document.getElementById('initFParent').value || null;
   const pctRaw   = parseInt(document.getElementById('initFPct').value) || 0;

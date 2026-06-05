@@ -292,7 +292,8 @@ function _parseArrayIntoDb(values) {
     });
   }
   // Chỉ auto-discover initiatives từ task data khi chưa load từ Initiative_Master
-  const hasRichData = db.initiatives && db.initiatives.length > 0 && db.initiatives[0].status !== undefined;
+  // Dùng .some() thay vì [0] để tránh BAU stub ở đầu mảng qua mặt guard
+  const hasRichData = db.initiatives && db.initiatives.some(x => x.status !== undefined);
   if (!hasRichData) {
     const iMap = new Map();
     db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
