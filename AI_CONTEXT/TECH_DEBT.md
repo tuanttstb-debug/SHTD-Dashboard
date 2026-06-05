@@ -162,15 +162,14 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
-## TD-020: KPI Data Hardcoded — No Refresh Mechanism
-**Rating**: ⚪ LOW
-**Added**: 2026-06-04 (Phase F)
+## ~~TD-020: KPI Data Hardcoded — No Refresh Mechanism~~ ✅ PARTIALLY RESOLVED 2026-06-04
 
-**Issue**: `assets/js/kpi-data.js` has hardcoded monthly arrays (`biz[]`, `bpm[]`, `cust[]`). Adding a new month requires manually editing the JS file and committing.
+**Resolution (Session 4)**: `kpi-parser.js` + `KpiSheetService.gs` added — users can now:
+- Load `File raw.xlsx` directly via "Load File Raw" button (KPI Overview toolbar)
+- Sync parsed data to/from GG Sheet `KPI_Summary` tab via "Sync GG Sheet" / "Từ GG Sheet" buttons
+- `getKpiData()` returns live parsed data when loaded; falls back to static `KPI_DATA` otherwise
 
-**Impact**: Risk of stale KPI numbers without a clear update signal. Each monthly update needs a deploy.
-
-**Mitigation**: File is well-structured and commented. Acceptable short-term. Long-term: consider a separate JSON file or a GAS read path for KPI data.
+**Remaining gap**: Monthly product-level arrays (`products[x].biz[]` etc.) in `kpi-data.js` are still hardcoded. PTKD-level data (quangPTKD/dungPTKD/agg) is now dynamic via parser. Acceptable long-term if File raw.xlsx is kept up to date.
 
 ---
 
@@ -186,13 +185,9 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
-## TD-022: quangPTKD Accessed by Hardcoded Index
-**Rating**: ⚪ LOW
-**Added**: 2026-06-04 (KPI merge)
+## ~~TD-022: quangPTKD Accessed by Hardcoded Index~~ ✅ RESOLVED 2026-06-04
 
-**Issue**: `kpi-overview.js` references `quangPTKD[1]`, `[2]`, `[10]`, `[12]` by position to extract PTKD names for insight bullets. If array order in `kpi-data.js` ever changes, wrong names will silently appear.
-
-**Fix**: Replace with `.find(x => x.ptkd === 'AnhDT24')` etc. or compute top/bottom dynamically.
+**Resolution (Session 4, commit `55ebc33`)**: `kpi-overview.js` now uses dynamic `.find()` / `needPerMonth` / `bizGapFor22` calculations instead of hardcoded array positions. Insight bullets computed dynamically from sorted data.
 
 ---
 
@@ -206,13 +201,37 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-024: Initiative ID Rename Does Not Cascade to Children
+**Rating**: ⚪ LOW
+**Added**: 2026-06-05 (Session 5 — Initiative Tracker)
+
+**Issue**: In `_initSave()`, when a user edits an initiative and changes its ID (origId ≠ newId), the code removes the old entry and adds the new one — but child milestones with `parentId === origId` are NOT updated to `parentId === newId`. Those milestones become orphans (parentId points to non-existent initiative) and disappear from the Milestone accordion.
+
+**Impact**: Only affects the edge case of renaming an Initiative ID after milestones have been added. Milestones are not deleted — they remain in `db.initiatives` and `Initiative_Master` with a stale `parentId`.
+
+**Fix**: In `_initSave()` before removing the old entry, update all `db.initiatives` entries where `parentId === origId` to `parentId = newId`.
+
+---
+
+## TD-025: `writeInitiatives()` Is Full-Replace (No Patch)
+**Rating**: ⚪ LOW
+**Added**: 2026-06-05 (Session 5 — Initiative Tracker)
+
+**Issue**: `writeInitiatives()` in `initiatives.js` writes the entire `db.initiatives` array to `Initiative_Master` on every CRUD operation (same pattern as `writeToHandle()` for tasks — TD-013). With multiple users open simultaneously, last-write-wins applies to initiative data.
+
+**Impact**: Low risk in current usage — initiatives are managed by one PO, not multi-user. Acceptable short-term.
+
+**Fix**: Implement a Read-Then-Patch pattern for initiative writes (mirror `syncAction()` for tasks). Deferred until multi-user initiative editing becomes a requirement.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-04
+**Last updated**: 2026-06-05 (Session 5)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
 | ~~TD-001~~ | ~~🔴~~ | ~~Monolith~~ | Large | ✅ **Resolved 2026-06-04** — Phase B complete |
-| ~~TD-002~~ | ~~🔴~~ | ~~GAS backend not in repo~~ | Small | ✅ **Resolved 2026-06-04** — `backend/` added, deploy pending PO |
+| ~~TD-002~~ | ~~🔴~~ | ~~GAS backend not in repo~~ | Small | ✅ **Resolved 2026-06-04** — `backend/` added + URL updated |
 | TD-003 | ~~🔴~~ | Conflicting function versions | Small | ✅ **Resolved 2026-06-03** |
 | TD-004 | 🟡 | Global state | Medium | Open — Phase D |
 | TD-005 | 🟡 | Inline styles | Medium | Open — Phase B |
@@ -227,10 +246,12 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
 | ~~TD-016~~ | ~~⚪~~ | ~~Stale comment line 2702~~ | Tiny | ✅ **Resolved 2026-06-04** — never existed in extracted parsers.js |
-| ~~TD-017~~ | ~~⚪~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | Tiny | ✅ **Resolved 2026-06-04** — dynamic year `83ea790` |
+| ~~TD-017~~ | ~~⚪~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | Tiny | ✅ **Resolved 2026-06-04** — dynamic year |
 | TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | Tiny | Open — defer to Phase F cleanup |
-| TD-019 | ⚪ | Inline `onchange/oninput` in `index.html` + `navigation.js` addEventListener both fire on same filter elements — share `debounceTimer`, no bug but redundant | Tiny | Open — cleanup when convenient |
-| TD-020 | ⚪ | KPI data hardcoded in `kpi-data.js` — monthly update requires file edit + deploy | Tiny | Open — acceptable short-term |
-| TD-021 | ⚪ | `_sLabel()` / `_kpProgColor()` defined in view files, used globally — load-order dependency | Tiny | Open — move to `helpers.js` |
-| TD-022 | ⚪ | `quangPTKD[1/2/10/12]` hardcoded index in `kpi-overview.js` | Tiny | Open — use `.find()` |
+| TD-019 | ⚪ | Inline `onchange/oninput` double handlers | Tiny | Open — cleanup when convenient |
+| ~~TD-020~~ | ~~⚪~~ | ~~KPI data hardcoded — no refresh~~ | Tiny | ✅ **Partially resolved 2026-06-04** — kpi-parser.js + GG Sheet sync for PTKD/agg; product monthly arrays still static |
+| TD-021 | ⚪ | `_sLabel()` / `_kpProgColor()` defined in view files, used globally | Tiny | Open — move to `helpers.js` |
+| ~~TD-022~~ | ~~⚪~~ | ~~`quangPTKD[1/2/10/12]` hardcoded index~~ | Tiny | ✅ **Resolved 2026-06-04** — `55ebc33` uses dynamic `.find()` |
 | TD-023 | ⚪ | `_oaActiveTab` not reset on re-render — visual inconsistency only | Tiny | Open — add reset line |
+| TD-024 | ⚪ | Initiative ID rename doesn't cascade `parentId` in child milestones | Tiny | Open — fix in `_initSave()` |
+| TD-025 | ⚪ | `writeInitiatives()` full-replace, no patch — last-write-wins | Tiny | Open — acceptable until multi-user initiative editing needed |
