@@ -1,10 +1,11 @@
 # SESSION HANDOVER
-**Date**: 2026-06-04 (session 3 — A2 + KPI merge)
-**Session**: Phase A2 complete + KPI views merged from TPBank format
+**Date**: 2026-06-05 (session 5 — Initiative Management feature + verify + fix)
+**Session**: Full Initiative Tracker built (I-A→I-E), local Playwright verify, 3 bugs fixed, pushed
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard (branch: master)
-**HEAD**: `f7e8ddd`
-**Previous session HEAD**: `d27645c` (Phase F complete)
+**Local HEAD**: `f99e723`
+**Remote HEAD**: `f99e723` (in sync)
+**Previous session HEAD**: `8c8dee7`
 
 ---
 
@@ -12,9 +13,13 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| A2 | Add deployable GAS backend source to `/backend/` | `c18cccb` | ✅ Done |
-| — | Move `GAS.GS` patch archive from repo root → `backend/` | `c18cccb` | ✅ Done |
-| KPI | Merge TPBank_KPI_Dashboard_final.html format into 3 KPI views | `f7e8ddd` | ✅ Done |
+| I-A | GAS: `InitiativeService.gs` + `initiative-read/write` routes in `Code.gs` | `35f4b62` | ✅ Done |
+| I-B | Data layer: `initiatives.js` — INI_COLS[14], parser, `readInitiatives/writeInitiatives`, CRUD sync | `9c4673d` | ✅ Done |
+| I-C | CSS: `initiative.css` — card, stat bar, progress, milestone step, task table, modal grid | `8b87d49` | ✅ Done |
+| I-D | View: `initiative-tracker.js` — accordion cards, CRUD modal, cascade delete, filter, nav item | `68a2aa5` | ✅ Done |
+| I-E | Task form: `_populateMilestoneSelect()` — fMs dropdown from Initiative_Master by initiative | `06d423c` | ✅ Done |
+| fix | 3 bugs: validation order, BAU stub filter, parsers.js hasRichData guard | `4ba8ec6` | ✅ Done |
+| verify | Playwright 30/30 PASS — `verify_initiative.mjs` | — | ✅ Done |
 
 ---
 
@@ -22,18 +27,18 @@
 
 | File | Change |
 |---|---|
-| `backend/Code.gs` | **NEW** — `doPost()` router + `doGet()` health check |
-| `backend/Config.gs` | **NEW** — `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` constants |
-| `backend/SheetService.gs` | **NEW** — `sheetRead()` / `sheetWrite()` operations |
-| `GAS.GS` (root) | **DELETED** — moved to `backend/GAS.GS` (git rename) |
-| `assets/js/kpi-data.js` | Added `quangPTKD[14]`, `dungPTKD[14]`, `sheet2PTKD[15]`, `agg` object; new helpers `fmtKN`, `kpiChip`, `dungChip`, `kpiAlertClass`, `dungAlertClass` |
-| `assets/css/kpi.css` | Added ~120 lines: `.kpi-ov-grid`, `.kpi-ov-card`, `.kpi-meter`, `.kpi-compare-grid`, `.channel-split`, `.ptkd-grid`, `.ptkd-card`, `.owner-block`, `.owner-tabs-kpi`, `.kpi-chip`, `.kpi-table`, `.kpi-alert-grid`, `.kpi-insight-panel` |
-| `assets/js/views/kpi-overview.js` | Full rewrite — 6 KPI header cards, exec insights panel, 4 charts, 4 auto alerts |
-| `assets/js/views/kpi-progress.js` | Full rewrite — KPI 2.1/2.2 meter cards, PTKD table QuangNN3, digital rate chart, DungLQ1 table |
-| `assets/js/views/owner-analysis.js` | Full rewrite — 3-tab layout (QuangNN3 / DungLQ1 / Rankings), owner blocks, PTKD card grid, charts, adoption alerts |
-| `AI_CONTEXT/CHANGE_LOG.md` | Session entries added (A2 + KPI merge) |
+| `backend/InitiativeService.gs` | **NEW** — `initiativeRead()` / `initiativeWrite()` for `Initiative_Master` tab (auto-creates if missing, 14 cols) |
+| `backend/Code.gs` | +14 lines: `initiative-read` and `initiative-write` routes |
+| `assets/js/initiatives.js` | **NEW** — INI_COLS[14], `initiativeToRow()`, `_parseInitiativeArray()`, `readInitiatives()`, `writeInitiatives()`, `syncInitiativeAdd/Edit/Delete()` |
+| `assets/js/parsers.js` | Guard `_parseArrayIntoDb()` + `extractWorkbook()` to not override rich initiative data; `.some()` for hasRichData |
+| `assets/js/app.js` | Call `readInitiatives()` non-blocking after `autoConnectDB()` |
+| `assets/css/initiative.css` | **NEW** — `.init-card`, `.init-stat-*`, `.init-prog-*`, `.init-status-chip`, `.init-toggle-*`, `.init-milestone-*`, `.init-task-table`, `.init-modal-grid`, `.init-empty` |
+| `assets/js/views/initiative-tracker.js` | **NEW** — `renderInitiativeTracker()`, `_initRealRoots()`, accordion cards, CRUD modal 14 fields, cascade delete, filter, toggle panels |
+| `assets/js/ui/navigation.js` | Add `initiative-tracker` title + render call; `_populateMilestoneSelect('')` on fInit change |
+| `assets/js/crud.js` | Add `_populateMilestoneSelect()` — dynamic by initiative, fallback to M1-M8 |
+| `index.html` | Nav item, view section, CSS link, 2 script tags; `#fMs` options stripped (dynamic) |
 
-**NOT changed**: Dashboard, Tasks, Gantt, Performance, Action Plan, Branch Analysis, RM Analysis — all intact.
+**NOT changed**: Dashboard, KPI views, Gantt, Performance, Action Plan, Branch Analysis, RM Analysis, Quick View
 
 ---
 
@@ -41,10 +46,23 @@
 
 | Hash | Message |
 |---|---|
-| `c18cccb` | feat(A2): add deployable GAS backend — Code.gs, SheetService.gs, Config.gs |
-| `f7e8ddd` | feat(kpi-merge): update KPI Overview, Progress, Owner Analysis from TPBank format |
+| `35f4b62` | feat(I-A): GAS backend – initiative-read/write routes + InitiativeService.gs |
+| `9c4673d` | feat(I-B): initiative data layer – INI_COLS, parser, sync functions |
+| `8b87d49` | feat(I-C): initiative CSS – card, milestone, progress, task-list styles |
+| `68a2aa5` | feat(I-D): initiative tracker view – accordion cards, CRUD modal, GAS sync |
+| `06d423c` | feat(I-E): task form – milestone select from Initiative_Master |
+| `4ba8ec6` | fix(initiative): 3 bugs found in local verify session |
+| `f99e723` | Merge remote main (GAS URL update) |
 
-Both pushed to `master`.
+---
+
+## Bugs Fixed This Session (from verify)
+
+| Bug | Root Cause | Fix |
+|---|---|---|
+| Duplicate ID check didn't fire when name was empty | `_initSave()` checked name before duplicate — `!name` returned early first | Moved duplicate check before name check |
+| BAU appeared as initiative card after deleting user-added initiatives | BAU auto-discovered from tasks gets into `db.initiatives` without `status` field; `parentId` is undefined → falsy → not filtered as child | Added `_initRealRoots()` that filters `id !== 'BAU'` and `status !== undefined`; applied to all card list/stat renders |
+| `parsers.js` guard could be bypassed if BAU was first item in cached array | `db.initiatives[0].status` checked index 0 — if BAU was first, guard returned false and reset initiatives | Changed to `.some(x => x.status !== undefined)` |
 
 ---
 
@@ -52,12 +70,10 @@ Both pushed to `master`.
 
 | Decision | Reason |
 |---|---|
-| GAS.GS moved to `backend/` not deleted | Historical patch reference, keep with new backend files |
-| TPBank PTKD data added as new `KPI_DATA.quangPTKD/dungPTKD` arrays | Needed for PTKD-level detail in KPI Progress + Owner Analysis views |
-| `KPI_DATA.agg` object added alongside existing `summary` | `summary` has product-level monthly data; `agg` has simple totals for overview cards |
-| TPBank HTML files (`TPBank_KPI_Dashboard_final.html` etc.) NOT committed | Raw reference files, not part of deliverable. Keep in working dir for reference. |
-| `node_modules/`, `package.json`, `File raw.xlsx` NOT committed | Not part of app source |
-| Two separate commits (A2 + KPI merge) | Separate logical changes, easier to revert independently |
+| `INI_COLS` 14 columns — added `Parent ID` col vs positional detection | Explicit parent FK is more reliable than detecting hierarchy by row position |
+| `_initRealRoots()` helper filters BAU + auto-discovered stubs | BAU is a task classification, not a real initiative; stubs have no `status` field |
+| Cascade delete: milestones deleted when parent initiative deleted | Orphan milestones (parentId points to non-existent initiative) would never show in any view — clean up on parent delete |
+| fMs dropdown falls back to M1-M8 when no milestones in Initiative_Master | Backward compat — existing tasks using M1-M8 naming still work even without Initiative_Master data |
 
 ---
 
@@ -65,8 +81,9 @@ Both pushed to `master`.
 
 | Blocker | Impact | Action needed |
 |---|---|---|
-| GAS backend not yet deployed to Apps Script | `GS_WEBAPP_URL` still points to old manually-deployed version | PO: deploy `backend/Code.gs + Config.gs + SheetService.gs` as new Web App → update `GS_WEBAPP_URL` in `assets/js/constants.js` |
-| KPI views NOT tested in browser this session | No Playwright run after KPI merge | **Next session: open index.html, navigate to all 3 KPI views, confirm 0 JS errors** |
+| `InitiativeService.gs` not yet deployed to Apps Script | GAS sync buttons (`Sync GG Sheet`) in Initiative Tracker won't work | PO: add `backend/InitiativeService.gs` to Apps Script → re-deploy → test sync button |
+| `KpiSheetService.gs` not yet deployed | KPI GG Sheet sync non-functional | PO: same — paste + re-deploy |
+| KPI views not browser-tested (sessions 3+4) | May have minor JS errors from KPI pipeline changes | Next session: open index.html → navigate KPI views → check console |
 
 ---
 
@@ -74,12 +91,9 @@ Both pushed to `master`.
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `quangPTKD` accessed by hardcoded index in `kpi-overview.js` | 🟡 MEDIUM | Lines reference `quangPTKD[1]`, `[2]`, `[10]`, `[12]` by position for insight bullets. If PTKD array order changes in `kpi-data.js`, wrong names will appear. No runtime error, just wrong data. |
-| `_oaActiveTab` not reset on re-render | ⚪ LOW | If user was on DungLQ1 tab, navigates away, then back — `_oaActiveTab` still says 'dung' but HTML renders QuangNN3 as visual active. No crash, visual-only inconsistency on first click. |
-| `_sLabel()` / `_tile()` still in `kpi-overview.js` but unused by new code | ⚪ LOW | Kept for safety. If other code depends on them, still works. Can be cleaned up. |
-| Chart.js instances in `_ovCharts`, `_progCharts`, `_oaCharts` | ⚪ NONE | `try { c.destroy() }` before every re-render. Safe. |
-| DungLQ1 pane lazy render | ⚪ NONE | `data-rendered` flag on `oaGridDung`. Full re-render (navigateTo → innerHTML cleared) resets this correctly. |
-| Other views (Dashboard/Tasks/Gantt/etc.) | ⚪ NONE | Zero changes to those files this session. |
+| `_populateMilestoneSelect()` called globally — requires `fMs` element to exist | ⚪ LOW | Called on `fInit` change. If modal is closed when event fires, `getElementById('fMs')` returns null and the function does an early return. No crash. |
+| `writeInitiatives()` fires non-blocking after every CRUD op | ⚪ LOW | If GAS URL fails (offline), writes are silently lost for that session. Data stays in `db.initiatives` + localStorage. GAS sync happens on next explicit sync. |
+| Other views | ⚪ NONE | Zero changes to Dashboard/Tasks/KPI/etc. |
 
 ---
 
@@ -87,20 +101,21 @@ Both pushed to `master`.
 
 | Concern | File |
 |---|---|
-| GAS deploy source | `backend/Code.gs`, `backend/Config.gs`, `backend/SheetService.gs` |
-| GAS patch archive | `backend/GAS.GS` |
-| KPI data + PTKD arrays + helpers | `assets/js/kpi-data.js` |
-| KPI CSS | `assets/css/kpi.css` |
-| KPI Overview view | `assets/js/views/kpi-overview.js` |
-| KPI Progress view | `assets/js/views/kpi-progress.js` |
-| Owner Analysis view | `assets/js/views/owner-analysis.js` |
+| Initiative data + CRUD sync | `assets/js/initiatives.js` ← NEW |
+| Initiative Tracker view | `assets/js/views/initiative-tracker.js` ← NEW |
+| Initiative CSS | `assets/css/initiative.css` ← NEW |
+| GAS initiative backend | `backend/InitiativeService.gs` ← NEW |
+| GAS task backend | `backend/Code.gs`, `Config.gs`, `SheetService.gs` |
+| GAS KPI backend | `backend/KpiSheetService.gs` |
+| KPI data + live overlay | `assets/js/kpi-data.js` |
+| KPI xlsx parser | `assets/js/kpi-parser.js` |
 | GS_WEBAPP_URL config | `assets/js/constants.js` |
 
 ---
 
 ## Next Session — Must Do First
 
-1. **Browser test**: Open `index.html` → click KPI Overview, KPI Progress, Owner Analysis → confirm renders + 0 JS errors
-2. **GAS deploy**: PO to deploy 3 new GAS files → update `GS_WEBAPP_URL` in `constants.js`
-3. **A4**: Remove visible merge instructions from rendered HTML (tiny, 5 min)
-4. **A5**: Replace `loadDemoData`/`clearDemoData` debug buttons with dev-only guards
+1. **PO Deploy GAS**: Add `backend/InitiativeService.gs` + `backend/KpiSheetService.gs` to Apps Script → re-deploy → test sync buttons
+2. **Browser verify KPI views**: Open `index.html` → KPI Overview → KPI Progress → Owner Analysis → 0 JS errors
+3. **A4**: Remove merge instruction residue in HTML/JS (~10 min)
+4. **A5**: Remove `loadDemoData`/`clearDemoData` debug buttons (~30 min)

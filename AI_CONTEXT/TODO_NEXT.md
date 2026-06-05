@@ -1,55 +1,53 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-04 (A2 + KPI merge complete)
-**Context**: Phase A2 done, KPI views merged. Verify in browser first, then remaining Phase A items.
+**Prepared**: 2026-06-05 (Session 5 — Initiative Tracker complete + verified)
+**Context**: Initiative Tracker 30/30 Playwright pass. KPI views not browser-tested yet. Phase A cleanup pending.
 
 ---
 
-## ⚠️ MUST DO FIRST (before any new work)
+## ⚠️ MUST DO FIRST
 
-### Browser Verify — KPI Views (not tested this session)
-No Playwright run was done after the KPI merge. Open `index.html` in browser and navigate to:
-- [ ] **KPI Overview** — 6 cards, exec panel, 4 charts, 4 alerts render correctly
-- [ ] **KPI Progress** — KPI 2.1/2.2 meter cards, PTKD table, rate chart, DungLQ1 table
-- [ ] **Owner Analysis** — 3 tabs, PTKD grid cards, charts, adoption alerts
-- [ ] Check browser console — 0 JS errors
+### 1. PO Deploy — GAS Updates (Action on PO)
+Two new GAS files in `backend/` not yet deployed to Apps Script:
+
+**`backend/InitiativeService.gs`** (new):
+1. Open Apps Script project → Add file `InitiativeService.gs`
+2. Paste content → re-deploy as Web App (Update existing deployment)
+3. Test: Initiative Tracker → "Sync GG Sheet" → should write to `Initiative_Master` tab
+
+**`backend/KpiSheetService.gs`** (from Session 4, still not deployed):
+1. Add file `KpiSheetService.gs` to Apps Script → re-deploy
+2. Test: KPI Overview → "Sync GG Sheet"
+
+### 2. Browser Verify — KPI Views (not tested since Session 3+4)
+Open `index.html` → navigate to:
+- [ ] **KPI Overview** — renders, Load File Raw button works, 0 JS errors
+- [ ] **KPI Progress** — renders correctly
+- [ ] **Owner Analysis** — 3 tabs, no errors
+- [ ] **Initiative Tracker** — confirm looks correct in real browser (Playwright verified logic, not visuals)
+- [ ] Console: 0 JS errors
 
 ---
 
 ## Phase A — Remaining Quick Wins
 
-### A4 — Remove visible merge instructions (Tiny, ~10 min)
-Visible merge guide text may still appear in rendered HTML (residue from old patches).
-- Check `index.html` for any `<!-- MERGE ... -->` comments or leftover instructions visible to users
-- Check `assets/js/` for any `console.log` merge instructions left in comments
+### A4 — Remove visible merge instructions (~10 min)
+- Grep `index.html` for `<!-- MERGE -->` comments or instruction text
+- Grep `assets/js/` for leftover merge `console.log` residue
 
-### A5 — Replace debug buttons with dev-only guards (Small, ~30 min)
-`loadDemoData()` and `clearDemoData()` buttons may still be in the UI.
-- Search `index.html` + `assets/js/` for these function calls
-- Wrap with `if (location.hostname === 'localhost')` guard OR remove entirely (PO confirmed: remove)
+### A5 — Remove debug buttons (~30 min)
+- Search `index.html` + `assets/js/` for `loadDemoData` / `clearDemoData`
+- PO confirmed: **remove entirely**
 
 ---
 
-## GAS Backend — Action on PO
+## Initiative Tracker — Potential Enhancements (future)
 
-Phase A2 added `backend/Code.gs`, `Config.gs`, `SheetService.gs` to repo.
-PO needs to:
-1. Open [script.google.com](https://script.google.com) → New project
-2. Create 3 files, paste content from `backend/`
-3. Deploy → Web App (Execute as: Me, Access: Anyone)
-4. Copy `/exec` URL → update `GS_WEBAPP_URL` in `assets/js/constants.js`
-5. Test connection: click "Kết nối GG Sheets" button in dashboard
-
----
-
-## KPI Data — Update When Ready (T6 confirmed, T7+)
-When PO has new monthly data:
-- Edit `assets/js/kpi-data.js`
-- Update `products[x].biz[5]`, `.bpm[5]`, `.cust[5]` (index 5 = T6)
-- Update `agg` object totals
-- Add months T7+: extend `months[]`, `monthsFull[]`, and all monthly arrays
-- No structural changes needed
-
-**Important**: `quangPTKD` / `dungPTKD` arrays are total-only (not monthly). Regenerate from source data when updated.
+| Enhancement | Notes |
+|---|---|
+| Initiative ID rename: cascade update children's `parentId` | Current: rename ID + children still point to old parentId |
+| Import initiatives from Excel | Add `initiative_master` sheet detection in `extractWorkbook()` with full 14-col schema |
+| Keyboard shortcut G+I → Initiative Tracker | Add to navigation.js gKey map |
+| Deadline countdown badge on cards | Show "X ngày còn lại" / "Quá hạn X ngày" |
 
 ---
 
@@ -59,7 +57,7 @@ When PO has new monthly data:
 |---|---|---|
 | MOB-01 | Filter bar cramped on mobile | Collapsible filter drawer |
 | MOB-02 | Toolbar button overflow on mobile | Overflow menu or icon-only mode |
-| MOB-03 | Gantt unusable (280px label column) | Simplified mobile Gantt or hide |
+| MOB-03 | Gantt unusable on mobile | Simplified mobile Gantt or hide |
 
 ---
 
@@ -72,7 +70,7 @@ When PO has new monthly data:
 | TD-009 | Duplicate parseDate in extractWorkbook vs _parseArrayIntoDb | Consolidate to parsers.js |
 | TD-018 | `fmtExportDate` duplicated | Remove from app.js:exportExcel, use helpers.js version |
 | TD-021 | `_sLabel`/`_kpProgColor` defined in view files, used globally | Move to `helpers.js` |
-| TD-022 | `quangPTKD[1]`, `[2]`, `[10]`, `[12]` accessed by hardcoded index in `kpi-overview.js` | Use `.find()` by ptkd name |
+| TD-023 | `_oaActiveTab` not reset on re-render | Add `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()` |
 
 ---
 
@@ -81,6 +79,8 @@ When PO has new monthly data:
 2. Read `WORKING_RULE.md` — do not touch `syncAction()`, `DB_COLS`, `localStorage['shtd_v2']`
 3. One logical change per commit
 4. JS globals: use bare `db`, not `window.db`
-5. New KPI globals: `fmtKN`, `kpiChip`, `dungChip`, `kpiAlertClass`, `dungAlertClass` defined in `kpi-data.js`
-6. Chart instances: `_ovCharts`, `_progCharts`, `_oaCharts` (const objects) — destroyed on re-render via `try { c.destroy() }`
-7. `_oaSwitch()` and `_oaRankSwitch()` are globals defined in `owner-analysis.js` — used via onclick in generated HTML
+5. KPI globals: `fmtKN`, `kpiChip`, `dungChip`, `kpiAlertClass`, `dungAlertClass` in `kpi-data.js`
+6. KPI live data: always use `getKpiData()` not `KPI_DATA` directly in KPI views
+7. Initiative views: always use `_initRealRoots()` for root initiative list (excludes BAU + stubs)
+8. `syncInitiativeAdd/Edit/Delete()` in `initiatives.js` are the only safe Initiative CRUD entry points
+9. Chart instances: destroyed on re-render via `try { c.destroy() }`
