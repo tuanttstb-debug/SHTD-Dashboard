@@ -76,7 +76,7 @@ Mở `index.html` → navigate:
 | TD-018 | `fmtExportDate` duplicated | Remove from app.js:exportExcel, use helpers.js version |
 | TD-021 | `_sLabel`/`_kpProgColor` defined in view files, used globally | Move to `helpers.js` |
 | TD-023 | `_oaActiveTab` not reset on re-render | Add `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()` |
-| TD-024 | Milestone modal status dropdown còn tiếng Anh | Đổi sang Xong/Đang làm/Chưa bắt đầu + map CSS class |
+| TD-026 | Milestone modal `#initFStatus` dùng English (Active/Done); GAS data dùng Vietnamese (Xong/Đang làm) | Swap options khi parentId được chọn |
 
 ---
 

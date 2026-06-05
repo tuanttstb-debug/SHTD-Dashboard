@@ -3,8 +3,8 @@
 **Session**: Type col, milestone status fix, backward compat, verify suite v2
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard (branch: master)
-**Local HEAD**: `b88b448`
-**Remote HEAD**: `b88b448` (in sync)
+**Local HEAD**: `f919f5c`
+**Remote HEAD**: `f919f5c` (in sync)
 **Previous session HEAD**: `f99e723`
 
 ---
@@ -22,6 +22,7 @@
 | BC-2 | Root cause identified: old `verify_initiative.mjs` failed because deployed GAS overwrote test data | `b88b448` | ✅ |
 | V2 | `verify_initiative_v2.mjs` — 37/37 PASS with GAS-format data injection | `b88b448` | ✅ |
 | GAS | `GS_WEBAPP_URL` updated to new deployment URL | `b88b448` | ✅ |
+| CTX | ai_context docs updated (CHANGE_LOG, SESSION_HANDOVER, PROJECT_STATE, TODO_NEXT) | `f919f5c` | ✅ |
 
 ---
 
@@ -34,6 +35,7 @@
 | `backend/InitiativeService.gs` | Header updated to 15 cols + schema comment |
 | `assets/js/constants.js` | `GS_WEBAPP_URL` updated to new GAS deployment endpoint |
 | `verify_initiative_v2.mjs` | **NEW** — 37/37 PASS; GAS-format data; blocks GAS via page.route(); tests parse, labels, dots, add, delete, filter, duplicate |
+| `AI_CONTEXT/*.md` | Session 6 delta: CHANGE_LOG, SESSION_HANDOVER, PROJECT_STATE, TODO_NEXT, TECH_DEBT |
 
 ---
 
@@ -67,6 +69,17 @@ O: Type                     ← "initiative" | "milestone"; auto-derived if miss
 - Old data WITHOUT `Parent ID` col: parser derives from ID for milestones
 - Old localStorage (no `type` field): all UI filters fall back to `!parentId` / `!!parentId` logic
 - Milestone names with `↳ ` prefix: display strips them; new saves no longer add prefix
+
+---
+
+## Regression Risks
+
+| Risk | Severity | Detail |
+|---|---|---|
+| Milestone modal status dropdown vs. real data | ⚪ LOW | Modal uses English values (Active/Done/Paused/Blocked); GAS data uses Vietnamese (Xong/Đang làm/Chưa bắt đầu). `_initMsDotClass` handles both, but newly created milestones via modal will store English status while GAS-synced milestones store Vietnamese. No crash, just inconsistent stored values — see TD-026. |
+| `_initRealRoots()` fallback path | ⚪ LOW | If ALL items in db have `type` set but one initiative has `type = undefined` (e.g., BAU stub), it still gets filtered by the new check `all.some(i => i.type)` → `true` → strict path → BAU excluded. Correct behavior. |
+| `parsers.js` hasRichData guard | ⚪ LOW | Guard `.some(x => x.status !== undefined)` — milestone rows now always have `status` set. BAU stubs (no status) still correctly excluded. Guard still works. |
+| Other views | ⚪ NONE | Zero changes to Dashboard, Tasks, KPI, Gantt, Performance, Action Plan, Branch/RM Analysis. |
 
 ---
 

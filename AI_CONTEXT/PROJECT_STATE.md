@@ -1,8 +1,8 @@
 # PROJECT STATE
 **As of**: 2026-06-05 (Session 6 — DB Type col + milestone fix + verify 37/37)
 **Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `b88b448`
-**Remote HEAD**: `b88b448` (in sync)
+**Local HEAD**: `f919f5c`
+**Remote HEAD**: `f919f5c` (in sync)
 
 ---
 
@@ -93,7 +93,9 @@ backend/
   Config.gs
   SheetService.gs
   KpiSheetService.gs ← NEW (Session 4) — needs Apps Script deploy
+  InitiativeService.gs ← NEW (Session 5) — 15 cols, DEPLOYED
   GAS.GS             ← archived patch v6.2
+verify_initiative_v2.mjs ← NEW (Session 6) — 37/37 PASS Playwright suite
 ```
 
 ---
@@ -102,7 +104,8 @@ backend/
 
 | Config | Value |
 |---|---|
-| `GS_WEBAPP_URL` | Updated again — new GAS deployment (commit `b88b448`) |
+| `GS_WEBAPP_URL` | Updated — new GAS deployment (commit `b88b448`); Initiative + KPI routes active |
+| Initiative backend | ✅ Deployed (15 cols, InitiativeService.gs) — Sync button should work |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | `GS_RANGE` | `Task_Master!A1:W` |
 | `KPI_RANGE` | `KPI_Summary` tab (new — for KPI pipeline sync) |
