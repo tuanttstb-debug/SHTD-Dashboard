@@ -60,6 +60,18 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', values: kpiSheetRead() });
     }
 
+    if (action === 'initiative-read') {
+      return _jsonResponse({ status: 'ok', values: initiativeRead() });
+    }
+
+    if (action === 'initiative-write') {
+      if (!body.values || !Array.isArray(body.values) || body.values.length < 1) {
+        throw new Error('initiative-write: thiếu values.');
+      }
+      initiativeWrite(body.values);
+      return _jsonResponse({ status: 'ok' });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {
