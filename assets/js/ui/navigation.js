@@ -86,16 +86,18 @@ function navigateTo(view) {
     'owner-analysis':'Owner Analysis – Theo chủ sở hữu',
     'branch-analysis':'Branch Analysis – Theo chi nhánh',
     'rm-analysis':'RM Analysis – Theo Relationship Manager',
+    'initiative-tracker':'Theo dõi Initiative',
   };
   document.getElementById('pageTitle').textContent = titles[view] || view;
-  if (view === 'gantt')           renderGantt();
-  if (view === 'performance')     renderPerfTable();
-  if (view === 'kpi-overview')    renderKpiOverview();
-  if (view === 'action-plan')     renderActionPlan();
-  if (view === 'kpi-progress')    renderKpiProgress();
-  if (view === 'owner-analysis')  renderOwnerAnalysis();
-  if (view === 'branch-analysis') renderBranchAnalysis();
-  if (view === 'rm-analysis')     renderRmAnalysis();
+  if (view === 'gantt')                renderGantt();
+  if (view === 'performance')          renderPerfTable();
+  if (view === 'kpi-overview')         renderKpiOverview();
+  if (view === 'action-plan')          renderActionPlan();
+  if (view === 'kpi-progress')         renderKpiProgress();
+  if (view === 'owner-analysis')       renderOwnerAnalysis();
+  if (view === 'branch-analysis')      renderBranchAnalysis();
+  if (view === 'rm-analysis')          renderRmAnalysis();
+  if (view === 'initiative-tracker')   renderInitiativeTracker();
   closeSidebar();
 }
 

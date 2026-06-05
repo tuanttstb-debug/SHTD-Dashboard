@@ -54,6 +54,10 @@
         <span class="nav-label">Dashboard</span>
       </div>
       <div class="nav-section-label">Quản lý</div>
+      <div class="nav-item" data-view="initiative-tracker">
+        <i class="fa-solid fa-diagram-project nav-icon"></i>
+        <span class="nav-label">Theo dõi Initiative</span>
+      </div>
       <div class="nav-item" data-view="tasks">
         <i class="fa-solid fa-list-check nav-icon"></i>
         <span class="nav-label">Quản lý Task</span>
@@ -427,6 +431,11 @@
       <div id="rmAnalysisRoot"></div>
     </section>
 
+    <!-- ===== INITIATIVE TRACKER ===== -->
+    <section class="view-section" id="view-initiative-tracker" style="display:none;">
+      <div id="initiativeTrackerRoot"></div>
+    </section>
+
   </div>
 
   <!-- STATUS BAR -->
@@ -720,6 +729,8 @@
 <script src="assets/js/views/owner-analysis.js"></script>
 <script src="assets/js/views/branch-analysis.js"></script>
 <script src="assets/js/views/rm-analysis.js"></script>
+<script src="assets/js/initiatives.js"></script>
+<script src="assets/js/views/initiative-tracker.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
