@@ -7,6 +7,7 @@ window.onload = async () => {
 
   if (GS_WEBAPP_URL) {
     await autoConnectDB();
+    readInitiatives(); // non-blocking — load Initiative_Master sau khi tasks đã load
   }
 };
 

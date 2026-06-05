@@ -168,7 +168,9 @@ function extractWorkbook(wb) {
     if (!id) id = genId(initId, team, tasks);
 
     const initName = initMap[initId] || initId;
-    if (initId && initId !== 'BAU' && !initList.some(x => x.id === initId)) {
+    // Chỉ thêm vào initList nếu chưa có trong db.initiatives (rich data from Initiative_Master)
+    const hasRichInit = db.initiatives && db.initiatives.some(x => x.id === initId && x.status !== undefined);
+    if (initId && initId !== 'BAU' && !initList.some(x => x.id === initId) && !hasRichInit) {
       initList.push({ id: initId, name: initName });
     }
 
@@ -289,7 +291,11 @@ function _parseArrayIntoDb(values) {
       crossTeam: parseYN(g(r,cCross)), highlight: parseYN(g(r,cHl)),
     });
   }
-  const iMap = new Map();
-  db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
-  db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
+  // Chỉ auto-discover initiatives từ task data khi chưa load từ Initiative_Master
+  const hasRichData = db.initiatives && db.initiatives.length > 0 && db.initiatives[0].status !== undefined;
+  if (!hasRichData) {
+    const iMap = new Map();
+    db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
+    db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
+  }
 }
