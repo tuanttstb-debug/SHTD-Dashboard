@@ -51,9 +51,13 @@ function renderInitiativeTracker() {
   if (selSts) selSts.value = _initFilterStatus;
 }
 
-/* ── helper: chỉ lấy initiative gốc (type === 'initiative') ── */
+/* ── helper: chỉ lấy initiative gốc; hỗ trợ cả data cũ không có type field ── */
 function _initRealRoots() {
-  return (db.initiatives || []).filter(i => i.type === 'initiative');
+  const all = db.initiatives || [];
+  if (all.some(i => i.type)) {
+    return all.filter(i => i.type === 'initiative');
+  }
+  return all.filter(i => !i.parentId && i.id !== 'BAU' && i.status !== undefined);
 }
 
 /* ── stat bar ── */
@@ -114,7 +118,9 @@ function _initBuildCardList() {
 
 /* ── single initiative card ── */
 function _initBuildCard(ini) {
-  const milestones = (db.initiatives || []).filter(i => i.type === 'milestone' && i.parentId === ini.id);
+  const milestones = (db.initiatives || []).filter(i =>
+    (i.type ? i.type === 'milestone' : (!!i.parentId && i.status !== undefined)) && i.parentId === ini.id
+  );
   const linkedTasks = (db.tasks || []).filter(t => t.initiative === ini.id);
   const statusKey = (ini.status || 'active').toLowerCase();
   const fillClass = statusKey === 'done' ? 'done' : statusKey === 'blocked' ? 'blocked' : statusKey === 'paused' ? 'paused' : '';
@@ -237,7 +243,7 @@ function _initSetFilter(type, val) {
 
 /* ── categories helper ── */
 function _initCategoryOptions() {
-  const cats = [...new Set((db.initiatives||[]).filter(i=>i.type==='initiative').map(i=>i.category).filter(Boolean))];
+  const cats = [...new Set((db.initiatives||[]).filter(i=>i.type?i.type==='initiative':!i.parentId).map(i=>i.category).filter(Boolean))];
   return cats.map(c => `<option value="${_esc(c)}">${_esc(c)}</option>`).join('');
 }
 
@@ -342,7 +348,7 @@ function _initOpenModal(id) {
   // Populate parent dropdown (root initiatives only)
   const selParent = document.getElementById('initFParent');
   selParent.innerHTML = '<option value="">(Đây là Initiative gốc)</option>'
-    + (db.initiatives||[]).filter(i => i.type === 'initiative' && (id === null || i.id !== id))
+    + (db.initiatives||[]).filter(i => (i.type ? i.type === 'initiative' : !i.parentId) && (id === null || i.id !== id))
         .map(i => `<option value="${_esc(i.id)}">${_esc(i.id)} – ${_esc(i.name)}</option>`).join('');
 
   if (id === null) {
