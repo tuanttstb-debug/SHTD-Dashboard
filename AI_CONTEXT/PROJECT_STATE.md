@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-05 (Session 6 — DB Type col + milestone fix + verify 37/37)
+**As of**: 2026-06-06 (Session 7 — Mobile fix + KPI view verify)
 **Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `f919f5c`
-**Remote HEAD**: `f919f5c` (in sync)
+**Local HEAD**: `788e396`
+**Remote HEAD**: `788e396` (in sync)
 
 ---
 
@@ -15,12 +15,12 @@
 | `backend/Code.gs` | 76 | ✅ `doPost()` router — task + KPI routes |
 | `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
 | `backend/SheetService.gs` | 48 | ✅ `sheetRead()` / `sheetWrite()` for Task_Master |
-| `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend |
-| `backend/InitiativeService.gs` | 60 | ✅ **NEW** — `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
+| `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — **not yet deployed to Apps Script** |
+| `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
 | `assets/css/` | 11 files | ✅ + `initiative.css` |
 | `assets/js/` | 27 modules | ✅ + `initiatives.js`, `views/initiative-tracker.js` |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
-| `assets/js/initiatives.js` | ~120 | ✅ **NEW** — INI_COLS, parser, CRUD sync functions |
+| `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
 ---
 
@@ -40,9 +40,9 @@
 | Duplicate ID protection (local + server) | ✅ | v6.2 — ADD vs EDIT distinction |
 | Gantt / Timeline | ✅ | Dynamic year subtitle |
 | Auto weekly report | ✅ | 4-sheet Excel: Tóm tắt, Kết quả, Kế hoạch, Vướng mắc |
-| **KPI Overview** | ✅ | 6 header cards, exec insight panel, 4 charts, 4 auto alerts; Load File Raw / Sync GG Sheet / Từ GG Sheet buttons |
-| **KPI Progress** | ✅ | KPI 2.1/2.2 meter cards + PTKD table QuangNN3 + digital rate chart + DungLQ1 table |
-| **Owner Analysis** | ✅ | 3 tabs: QuangNN3 / DungLQ1 / Rankings; PTKD card grid; adoption alerts |
+| **KPI Overview** | ✅ | Browser verified session 7 — 0 JS errors |
+| **KPI Progress** | ✅ | Browser verified session 7 — 0 JS errors |
+| **Owner Analysis** | ✅ | Browser verified session 7 — 3 tabs, 0 JS errors |
 | **KPI Dynamic Pipeline** | ✅ | Load `File raw.xlsx` → parse → update KPI views live; sync to/from GG Sheet `KPI_Summary` tab |
 | **Initiative Tracker** | ✅ | Accordion cards, CRUD modal, cascade delete, filter; milestone short labels (M1…); Vietnamese status dots; GAS sync 15-col schema; Type col separates initiative/milestone; backward compat |
 | **Milestone→Task link** | ✅ | Task form `#fMs` auto-populates from Initiative_Master milestones; fallback to M1-M8 |
@@ -50,14 +50,14 @@
 | **Branch Analysis** | ✅ | 25 branches; zone filter; rate vs KPI color coding |
 | **RM Analysis** | ✅ | 14 RMs sorted by digital rate; top-3 highlighted; KPI threshold 15% |
 | Performance view (3 tabs) | ✅ | |
-| Quick View Panel (Q / FAB) | ✅ | |
+| Quick View Panel (Q / FAB) | ✅ | FAB ⚡ bottom-right; topbar btn hidden on mobile |
 | Google Sheets sync — Tasks | ✅ | Read-Then-Patch v6.1 |
 | Google Sheets sync — KPI | ✅ | `kpi-write` / `kpi-read` via `KpiSheetService.gs` (**not yet deployed to Apps Script**) |
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
-| Mobile sidebar | ✅ | Slide-in overlay |
-| Mobile layout (general) | ⚠️ | Known issues in backlog (Phase D — deferred) |
+| Mobile sidebar | ✅ | Slide-in overlay; hamburger always visible (fixed session 7) |
+| Mobile layout (general) | ⚠️ | Topbar hamburger fixed. Filter bar/toolbar/Gantt still in backlog (Phase D) |
 | Keyboard shortcuts | ✅ | Ctrl+N, Ctrl+D, Ctrl+B, G+x, Q, G+K (KPI Overview) |
 | localStorage cache | ✅ | Key: `shtd_v2` — unchanged |
 
@@ -72,7 +72,7 @@ index.html (~791 lines — HTML only)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
         forms.css, table.css, gantt.css, quickview.css,
-        responsive.css, kpi.css
+        responsive.css, kpi.css, initiative.css
   js/   constants.js, helpers.js, storage.js, parsers.js, api.js
         ui/toast.js, ui/modal.js, ui/theme.js, ui/navigation.js
         crud.js, bulk.js
@@ -80,22 +80,26 @@ assets/
               views/performance.js, views/quickview.js
         report.js
         kpi-data.js
-        kpi-parser.js                         ← NEW (Session 4)
+        kpi-parser.js
         views/kpi-overview.js
         views/action-plan.js
         views/kpi-progress.js
         views/owner-analysis.js
         views/branch-analysis.js
         views/rm-analysis.js
+        views/initiative-tracker.js
+        initiatives.js
         app.js
 backend/
-  Code.gs            ← task + KPI routes (updated Session 4)
+  Code.gs            ← task + KPI routes
   Config.gs
   SheetService.gs
-  KpiSheetService.gs ← NEW (Session 4) — needs Apps Script deploy
-  InitiativeService.gs ← NEW (Session 5) — 15 cols, DEPLOYED
+  KpiSheetService.gs ← needs Apps Script deploy
+  InitiativeService.gs ← DEPLOYED (15 cols)
   GAS.GS             ← archived patch v6.2
-verify_initiative_v2.mjs ← NEW (Session 6) — 37/37 PASS Playwright suite
+verify_initiative_v2.mjs ← 37/37 PASS Playwright suite
+verify_kpi_views.mjs     ← NEW session 7 — 3/3 PASS
+verify_mobile.mjs        ← NEW session 7 — 4/4 PASS (mobile topbar)
 ```
 
 ---
@@ -128,6 +132,7 @@ verify_initiative_v2.mjs ← NEW (Session 6) — 37/37 PASS Playwright suite
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case |
 | DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | ⚪ Cosmetic |
 | DEBT-06 | Inline `onchange` + `addEventListener` double handlers on filter elements | ⚪ No double render — cleanup later |
+| TD-026 | Milestone modal `#initFStatus` dùng English; GAS data dùng Vietnamese | 🟡 Next priority |
 
 ---
 
