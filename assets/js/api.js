@@ -28,13 +28,7 @@ function taskToRow(t) {
 
 async function readFromHandle() {
   if (!GS_WEBAPP_URL) throw new Error('Chưa cấu hình GS_WEBAPP_URL.');
-  const res = await fetch(GS_WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'read' }),
-  });
-  if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
-  const json = await res.json();
+  const json = await gasPost({ action: 'read' });
   if (json.status !== 'ok') throw new Error('Lỗi đọc: ' + (json.error || 'unknown'));
   _parseArrayIntoDb(json.values);
   persist();
@@ -49,13 +43,7 @@ async function writeToHandle() {
     throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng lên Sheet (0 task). Thao tác đã bị hủy để bảo vệ dữ liệu.');
   }
   const values = [DB_COLS, ...db.tasks.map(taskToRow)];
-  const res = await fetch(GS_WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'write', values }),
-  });
-  if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
-  const json = await res.json();
+  const json = await gasPost({ action: 'write', values });
   if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
 }
 
@@ -74,21 +62,14 @@ async function syncAction(action) {
     if (GS_WEBAPP_URL) {
       try {
         showLoading('Đang đọc dữ liệu mới nhất từ Sheet…');
-        const res = await fetch(GS_WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'read' }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.status === 'ok' && json.values) {
-            const tempDb = { tasks: [], initiatives: [] };
-            const savedDb = db;
-            db = tempDb;
-            _parseArrayIntoDb(json.values);
-            serverTasks = tempDb.tasks;
-            db = savedDb;
-          }
+        const json = await gasPost({ action: 'read' });
+        if (json.status === 'ok' && json.values) {
+          const tempDb = { tasks: [], initiatives: [] };
+          const savedDb = db;
+          db = tempDb;
+          _parseArrayIntoDb(json.values);
+          serverTasks = tempDb.tasks;
+          db = savedDb;
         }
       } catch (readErr) {
         console.warn('syncAction: không đọc được Sheet, fallback full-write:', readErr.message);
@@ -135,19 +116,10 @@ async function syncAction(action) {
         }
       }
 
-      const res = await fetch(GS_WEBAPP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'write', values }),
-      });
-      if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
-      const json = await res.json();
+      const json = await gasPost({ action: 'write', values });
       if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
 
       db.tasks = merged;
-      const iMap = new Map();
-      db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
-      db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
 
     } else {
       if (db.tasks.length === 0) throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng (0 task).');

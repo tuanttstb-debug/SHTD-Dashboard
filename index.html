@@ -19,9 +19,36 @@
 <link rel="stylesheet" href="assets/css/responsive.css">
 <link rel="stylesheet" href="assets/css/kpi.css">
 <link rel="stylesheet" href="assets/css/initiative.css">
+<link rel="stylesheet" href="assets/css/auth.css">
 
 </head>
 <body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="loginOverlay" style="display:none;">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="brand-logo" style="font-size:22px;padding:6px 10px;">SHTD</div>
+      <div class="login-brand-text">
+        Web Nội Bộ
+        <div style="font-weight:400;opacity:.7;">Số Hóa Tín Dụng · Khối KHDN</div>
+      </div>
+    </div>
+    <div class="login-title">Đăng nhập</div>
+    <div class="login-error" id="loginError"></div>
+    <div class="form-group">
+      <label class="form-label">Tên đăng nhập</label>
+      <input type="text" id="loginUsername" class="form-control" placeholder="VD: TuanTT4" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mật khẩu</label>
+      <input type="password" id="loginPassword" class="form-control" placeholder="Mật khẩu" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary login-btn" id="loginBtn" onclick="handleLogin()">
+      <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+    </button>
+  </div>
+</div>
 
 <!-- LOADING OVERLAY -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -113,7 +140,7 @@
   <header class="topbar">
     <div class="topbar-left">
       <div class="icon-btn" id="hamburger" title="Menu (mở sidebar)" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
-      <div>
+      <div class="topbar-title-group">
         <div class="page-title" id="pageTitle">Executive Dashboard</div>
         <div class="breadcrumb" id="pageBreadcrumb">Tổng quan · Cập nhật <span id="lastUpdated">–</span></div>
       </div>
@@ -705,6 +732,7 @@
 <script src="assets/js/helpers.js"></script>
 <script src="assets/js/storage.js"></script>
 <script src="assets/js/parsers.js"></script>
+<script src="assets/js/auth.js"></script>
 <script src="assets/js/api.js"></script>
 <script src="assets/js/ui/toast.js"></script>
 <script src="assets/js/ui/modal.js"></script>

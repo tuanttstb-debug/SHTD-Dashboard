@@ -107,28 +107,14 @@ function kpiWriteToSheet(payload) {
     rows.push([k, payload.agg[k]]);
   });
 
-  return fetch(GS_WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'kpi-write', values: rows }),
-  }).then(function(res) {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  }).then(function(json) {
+  return gasPost({ action: 'kpi-write', values: rows }).then(function(json) {
     if (json.status !== 'ok') throw new Error(json.error || 'kpi-write failed');
   });
 }
 
 /* ── GG Sheet: đọc từ tab "KPI_Summary" ── */
 function kpiReadFromSheet() {
-  return fetch(GS_WEBAPP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'kpi-read' }),
-  }).then(function(res) {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  }).then(function(json) {
+  return gasPost({ action: 'kpi-read' }).then(function(json) {
     if (json.status !== 'ok') throw new Error(json.error || 'kpi-read failed');
     return _kpiParseSheetPayload(json.values);
   });

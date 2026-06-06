@@ -21,7 +21,19 @@
     box-shadow:8px 0 32px rgba(0,0,0,0.35);
   }
   .sidebar-toggle{display:none;}
-  #hamburger{display:flex !important;}
+
+  /* ── Topbar: fix hamburger always visible ──
+     Root cause: topbar-right was too wide (qv-topbar-btn + user-pill + icons),
+     causing topbar-left to shrink and hamburger to disappear on narrow screens. */
+  #hamburger{display:flex !important;flex-shrink:0;min-width:36px;}
+  .topbar-left{min-width:0;}
+  .topbar-title-group{min-width:0;overflow:hidden;}
+  .page-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+  .breadcrumb{display:none;}
+  .topbar-right{flex-shrink:0;gap:6px;}
+  /* Quick View topbar btn hidden on mobile — FAB (⚡ bottom-right) replaces it */
+  .qv-topbar-btn{display:none !important;}
+
   .form-grid{grid-template-columns:1fr;}
   .kpi-grid{grid-template-columns:1fr 1fr;}
   .toolbar-right{width:100%;flex-wrap:wrap;}
@@ -43,5 +55,5 @@
   .kpi-grid{grid-template-columns:1fr;}
   .toolbar-right .btn{font-size:12px;padding:7px 10px;}
   .topbar{height:56px;}
-  .page-title{font-size:15px;}
+  .page-title{font-size:15px;max-width:130px;}
 }

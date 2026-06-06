@@ -1,0 +1,118 @@
+/* ── Login screen ── */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 36px 36px;
+  box-shadow: 0 8px 48px rgba(0,0,0,.12);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.login-brand-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+.login-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.login-error {
+  display: none;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.login-box .form-group {
+  margin-bottom: 14px;
+}
+
+.login-btn {
+  width: 100%;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+/* ── User-pill dropdown ── */
+.user-pill {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.user-pill-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  z-index: 500;
+  overflow: hidden;
+}
+
+.user-pill-dropdown.open { display: block; }
+
+.user-dd-info {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-dd-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.user-dd-role {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.user-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.user-dd-item:hover { background: var(--hover); }
+
+.user-dd-item.danger { color: var(--danger); }
