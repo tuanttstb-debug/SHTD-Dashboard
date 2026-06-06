@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-06 (Session 7 — Mobile fix + KPI view verify)
+**As of**: 2026-06-06 (Session 7 — final, all blockers cleared)
 **Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `788e396`
-**Remote HEAD**: `788e396` (in sync)
+**Local HEAD**: `768c722`
+**Remote HEAD**: `768c722` (in sync)
 
 ---
 
