@@ -1,0 +1,349 @@
+================================================================
+       SHTD DASHBOARD — WEB NỘI BỘ KHỐI KHDN (v6.2)
+       Hệ thống Quản lý Công việc & KPI Số hóa Tín dụng
+================================================================
+
+Tổng quan
+---------
+SHTD Dashboard là ứng dụng web nội bộ dùng để theo dõi tiến độ
+công việc, KPI Digital, Initiative (sáng kiến), và phân tích hiệu
+suất theo chi nhánh/chủ sở hữu trong Khối KHDN – TPBank.
+
+Dữ liệu được lưu trữ trên Google Sheets và đồng bộ hai chiều
+thông qua Google Apps Script. Không cần cài đặt — mở trình duyệt
+là sử dụng được.
+
+
+================================================================
+  1. DASHBOARD TỔNG QUAN (Executive Dashboard)
+================================================================
+
+Trang chủ cung cấp cái nhìn tổng thể về tình trạng công việc
+trong tổ/phòng:
+
+  • Thẻ KPI tóm tắt: Tổng số task, Hoàn thành, Đang thực hiện,
+    Vướng mắc/Blocked — nhấn vào thẻ để xem chi tiết.
+
+  • Biểu đồ RAG (Red/Amber/Green): Phân loại task theo mức độ
+    rủi ro, hiển thị dạng donut chart. Nhấn vào từng phần để
+    lọc danh sách tương ứng.
+
+  • Bảng tóm tắt Initiative: Liệt kê các sáng kiến đang theo dõi
+    kèm trạng thái milestone.
+
+  • Team stats & Blocked list: Thống kê theo thành viên và danh
+    sách task đang bị vướng mắc cần xử lý.
+
+  • Lọc theo tuần báo cáo: Xem task thuộc tuần hiện tại hoặc
+    tất cả task trong kỳ.
+
+
+================================================================
+  2. QUẢN LÝ CÔNG VIỆC (Task Manager)
+================================================================
+
+Màn hình quản lý task đầy đủ tính năng:
+
+  Xem & Lọc
+  ----------
+  • Danh sách task với 7 bộ lọc: ID, Initiative, Team, Người
+    phụ trách (PIC), Trạng thái, RAG, Tuần BC.
+  • Lọc realtime (debounce 200ms) — gõ là ra kết quả ngay.
+  • Filter chips hiển thị bộ lọc đang áp dụng, xóa từng cái
+    hoặc xóa tất cả.
+  • Sắp xếp đa cột (multi-sort): nhấn tiêu đề cột để sắp xếp,
+    giữ Shift để sort nhiều cột cùng lúc.
+  • Phân trang 20 task/trang.
+
+  Thêm / Sửa / Xóa Task
+  ----------------------
+  • Nhấn "+ Thêm Task" (hoặc Ctrl+N) để mở form tạo task mới.
+  • Nhấn vào tên task để sửa.
+  • Bảo vệ trùng ID: kiểm tra cả local và server trước khi lưu.
+  • Nhân bản task (Clone) để tạo nhanh task tương tự.
+
+  Bulk Actions (Thao tác hàng loạt)
+  ----------------------------------
+  • Chọn nhiều task bằng checkbox.
+  • Cập nhật RAG hàng loạt (Green / Amber / Red).
+  • Đánh dấu Hoàn thành hàng loạt.
+  • Xóa hàng loạt.
+
+
+================================================================
+  3. THEO DÕI INITIATIVE (Initiative Tracker)
+================================================================
+
+Quản lý các sáng kiến (Initiative) và cột mốc (Milestone):
+
+  • Hiển thị dạng accordion card — mỗi Initiative có thể mở rộng
+    để xem các Milestone con bên dưới.
+
+  • Màu trạng thái Milestone:
+      - Xong         → xanh lá
+      - Đang làm     → xanh dương
+      - Chưa bắt đầu → xám
+      - (Paused/Blocked → vàng/đỏ)
+
+  • Label ngắn: Milestone hiển thị M1, M2… thay vì mã đầy đủ.
+
+  • CRUD đầy đủ: Thêm, sửa, xóa Initiative và Milestone qua modal.
+    Xóa Initiative sẽ tự động xóa luôn các Milestone con (cascade).
+
+  • Lọc theo trạng thái và tìm kiếm theo tên.
+
+  • Đồng bộ Google Sheets: Bấm "Sync GG Sheet" để đọc/ghi dữ liệu
+    từ tab Initiative_Master (schema 15 cột, A→O).
+
+  • Liên kết với Task: Khi tạo task, trường Milestone tự động lấy
+    danh sách từ Initiative_Master.
+
+
+================================================================
+  4. KPI DIGITAL OVERVIEW
+================================================================
+
+Trang tổng hợp KPI Digital toàn khối — dữ liệu từ file xlsx hoặc
+đồng bộ từ Google Sheets (tab KPI_Summary):
+
+  6 Thẻ KPI header
+  -----------------
+  • Tổng Giao dịch (BIZ + BPM)
+  • KPI 2.1 – Số lượng GD Bảo lãnh Biz Online (vs target 20.000 GD)
+  • KPI 2.2 – Tỷ lệ Bảo lãnh Digital (vs KPI 40%)
+  • QuangNN3 – Bảo lãnh (14 PTKD phụ trách)
+  • DungLQ1 – Giải ngân (14 PTKD theo dõi)
+  • GN Hoàn thành (Sheet2)
+
+  Executive Insight Panel
+  ------------------------
+  • 6 nhận xét tự động được tính toán từ số liệu thực tế:
+    phân tích GAP, forecast cuối năm, top/worst PTKD,
+    tình trạng chuyển đổi BPM→BIZ.
+
+  4 Biểu đồ phân tích
+  --------------------
+  • Phân bổ GD theo Kênh & Owner (bar chart)
+  • Tiến độ KPI 2.1 & 2.2 (line chart actual vs target)
+  • Top PTKD Digital Rate (bar chart)
+  • Phân tích BIZ vs BPM theo PTKD (stacked bar)
+
+  4 Alert tự động
+  ----------------
+  Cảnh báo màu (đỏ/vàng/xanh) khi KPI vượt/đạt/chưa đạt ngưỡng.
+
+  Nạp dữ liệu
+  ------------
+  • "Load File Raw" → chọn file xlsx → parse và cập nhật tất cả
+    KPI views ngay lập tức (không cần reload trang).
+  • "Sync GG Sheet" → đẩy dữ liệu đã parse lên Google Sheets.
+  • "Từ GG Sheet" → kéo dữ liệu KPI từ Google Sheets về.
+
+
+================================================================
+  5. KPI PROGRESS — TIẾN ĐỘ TỪNG SẢN PHẨM
+================================================================
+
+  • KPI 2.1 – BL Biz Online: Meter card hiển thị actual/target,
+    progress bar, GAP, forecast cuối năm, phân tích kênh
+    BIZ (Digital) / BPM (Quầy) / Tổng BL.
+
+  • KPI 2.2 – Digital Rate BL: Tỷ lệ %, khoảng cách vs KPI 40%,
+    gợi ý số GD cần chuyển từ BPM sang BIZ để đạt KPI.
+
+  • Bảng PTKD vs KPI 2.1/2.2 (QuangNN3): Chi tiết từng PTKD —
+    GD BIZ (Digital), GD BPM (Quầy), Tổng GD, Digital Rate,
+    vs KPI 2.2, Đóng góp KPI 2.1, badge Adoption (Đạt KPI /
+    Dưới KPI / Cần tăng).
+
+
+================================================================
+  6. OWNER ANALYSIS — THEO CHỦ SỞ HỮU
+================================================================
+
+Phân tích chi tiết theo từng chủ sở hữu sản phẩm, 3 tab:
+
+  Tab 1: QuangNN3 – Bảo lãnh (KPI 2.1/2.2)
+  ------------------------------------------
+  • Header block: tổng BL, BIZ, BPM, Digital Rate, số PTKD.
+  • Grid thẻ PTKD: mỗi PTKD có tổng GD, BIZ|BPM, digital rate
+    và thanh progress. Màu đỏ/vàng/xanh theo ngưỡng KPI.
+  • 2 biểu đồ: Digital Rate từng PTKD (bar) và GD BIZ vs BPM (stacked).
+
+  Tab 2: DungLQ1 – Giải ngân (Theo dõi)
+  ---------------------------------------
+  • Tương tự tab 1 nhưng theo danh mục GN của DungLQ1.
+  • Không có KPI cứng — theo dõi tỷ lệ BIZ Rate.
+
+  Tab 3: Bảng xếp hạng PTKD
+  ---------------------------
+  • Xếp hạng tất cả PTKD theo Digital Rate.
+  • Sub-tab: QuangNN3 / DungLQ1 / Tổng hợp.
+  • Cảnh báo adoption: highlight PTKD dưới ngưỡng KPI.
+
+
+================================================================
+  7. ACTION PLAN KANBAN
+================================================================
+
+  • Bảng Kanban 4 cột: Chưa bắt đầu / Đang thực hiện /
+    Hoàn thành / Blocked.
+  • Tự động lấy task có đánh dấu "Highlight = Y" từ danh sách
+    task hiện tại — không cần nhập lại.
+  • Mỗi thẻ hiển thị tên task, PIC, deadline, RAG badge.
+
+
+================================================================
+  8. BRANCH ANALYSIS — THEO CHI NHÁNH
+================================================================
+
+  • 25 chi nhánh trong Khối KHDN.
+  • Lọc theo vùng/zone.
+  • Mỗi chi nhánh hiển thị: tổng GD, digital rate, so sánh
+    vs KPI — màu đỏ nếu dưới ngưỡng, xanh nếu đạt.
+  • Sắp xếp theo digital rate giảm dần.
+
+
+================================================================
+  9. RM ANALYSIS — THEO CHUYÊN VIÊN QUAN HỆ KHÁCH HÀNG
+================================================================
+
+  • 14 RM (Relationship Manager) được theo dõi.
+  • Sắp xếp theo digital rate giảm dần.
+  • Top 3 được highlight đặc biệt.
+  • Ngưỡng KPI: 15% — màu đỏ nếu dưới.
+  • Hiển thị số GD BIZ, BPM, tổng, và tỷ lệ digital.
+
+
+================================================================
+  10. TIMELINE (GANTT CHART)
+================================================================
+
+  • Biểu đồ Gantt hiển thị tất cả task theo trục thời gian.
+  • Phân nhóm theo Initiative/Team.
+  • Màu theo RAG (đỏ/vàng/xanh).
+  • Subtitle động: hiển thị năm hiện tại.
+  • Scroll ngang để xem toàn bộ timeline năm.
+
+
+================================================================
+  11. BÁO CÁO HIỆU SUẤT (Performance)
+================================================================
+
+  3 tab phân tích hiệu suất:
+  • Tab 1: Tổng quan — biểu đồ hoàn thành theo thời gian.
+  • Tab 2: Theo thành viên — so sánh performance từng người.
+  • Tab 3: Xu hướng — RAG distribution theo tuần.
+
+
+================================================================
+  12. QUICK VIEW PANEL (Xem nhanh)
+================================================================
+
+  • Nhấn phím Q hoặc nút ⚡ (góc dưới phải) để mở panel.
+  • Panel trượt từ phải vào — không cần rời trang hiện tại.
+  • Lọc theo Initiative và theo tuần báo cáo.
+  • 4 section: Key Tasks hoàn thành / Kế hoạch tháng tới /
+    Cùng Initiative / Vướng mắc.
+  • Dùng để chuẩn bị nội dung báo cáo tuần nhanh chóng.
+
+
+================================================================
+  13. BÁO CÁO TUẦN TỰ ĐỘNG (Auto Weekly Report)
+================================================================
+
+  • Nhấn "Báo cáo tuần" → chọn tuần → xuất file Excel.
+  • File Excel 4 sheet tự động:
+      Sheet 1: Tóm tắt tuần (tổng hợp chỉ số)
+      Sheet 2: Kết quả đã hoàn thành
+      Sheet 3: Kế hoạch tuần tới
+      Sheet 4: Vướng mắc & Blocked
+  • Định dạng ngày chuẩn: "22-Apr-26".
+  • Sẵn sàng gửi mail / paste vào báo cáo BLĐ.
+
+
+================================================================
+  14. IMPORT / EXPORT EXCEL
+================================================================
+
+  Import
+  ------
+  • Hỗ trợ file .xlsx / .xls.
+  • Tự động nhận diện cột linh hoạt (flexible column mapping).
+  • Task trùng ID → cập nhật (merge), task mới → thêm vào.
+  • Xác nhận trước khi import.
+
+  Export
+  ------
+  • Xuất toàn bộ danh sách task ra file Excel.
+  • Định dạng ngày "22-Apr-26", tiến độ "75%".
+
+
+================================================================
+  15. ĐỒNG BỘ GOOGLE SHEETS
+================================================================
+
+  Tasks (Task_Master)
+  -------------------
+  • Sync thông minh Read-Then-Patch (v6.1): đọc dữ liệu server
+    → merge với local → ghi kết quả merged lên Sheet.
+  • Tránh ghi đè dữ liệu người khác đang sửa cùng lúc.
+
+  KPI (KPI_Summary)
+  -----------------
+  • "Sync GG Sheet": đẩy dữ liệu KPI đã parse từ file xlsx lên.
+  • "Từ GG Sheet": kéo dữ liệu KPI từ Sheet về, cập nhật views.
+
+  Initiative (Initiative_Master)
+  --------------------------------
+  • "Sync GG Sheet" trong Initiative Tracker: đọc/ghi 15 cột
+    (A→O) gồm cả Type và Parent ID.
+
+
+================================================================
+  16. TIỆN ÍCH & TRẢI NGHIỆM
+================================================================
+
+  Phím tắt
+  --------
+  Ctrl+N          Tạo task mới
+  Ctrl+D          Bật/tắt Dark mode
+  Ctrl+B          Thu gọn/mở sidebar
+  Q               Mở Quick View Panel
+  G + D           Chuyển đến Dashboard
+  G + T           Chuyển đến Tasks
+  G + G           Chuyển đến Gantt
+  G + P           Chuyển đến Performance
+  G + K           Chuyển đến KPI Overview
+  Escape          Đóng modal / panel
+
+  Dark Mode
+  ---------
+  • Nhấn biểu tượng 🌙 trên topbar hoặc Ctrl+D.
+  • Ghi nhớ lựa chọn — tự động áp dụng lần sau.
+
+  Mobile
+  ------
+  • Sidebar trượt từ trái (overlay), nút ☰ luôn hiển thị.
+  • Quick View Panel trượt từ dưới lên (bottom sheet).
+  • Thẻ KPI xếp 1-2 cột tùy kích thước màn hình.
+
+  Cache & Offline
+  ---------------
+  • Dữ liệu lưu tạm trong localStorage (key: shtd_v2).
+  • Làm việc offline được, sync khi có kết nối.
+  • Nút "Xóa Cache" để reset về trạng thái ban đầu.
+
+
+================================================================
+  THÔNG TIN KỸ THUẬT
+================================================================
+
+  Nền tảng    : Web tĩnh (HTML + CSS + JS thuần)
+  Lưu trữ    : Google Sheets (qua Google Apps Script)
+  Triển khai  : GitHub Pages — không cần server riêng
+  Thư viện    : Chart.js, SheetJS (xlsx), Font Awesome 6
+  Phiên bản   : v6.2 (cập nhật 06/2026)
+  Tương thích : Chrome, Edge, Firefox, Safari — desktop & mobile
+
+================================================================
