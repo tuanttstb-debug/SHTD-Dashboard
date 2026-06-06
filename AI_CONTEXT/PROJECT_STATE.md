@@ -52,7 +52,7 @@
 | Performance view (3 tabs) | ✅ | |
 | Quick View Panel (Q / FAB) | ✅ | FAB ⚡ bottom-right; topbar btn hidden on mobile |
 | Google Sheets sync — Tasks | ✅ | Read-Then-Patch v6.1 |
-| Google Sheets sync — KPI | ✅ | `kpi-write` / `kpi-read` via `KpiSheetService.gs` (**not yet deployed to Apps Script**) |
+| Google Sheets sync — KPI | ✅ | `kpi-write` / `kpi-read` via `KpiSheetService.gs` (deployed + tested) |
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
@@ -94,7 +94,7 @@ backend/
   Code.gs            ← task + KPI routes
   Config.gs
   SheetService.gs
-  KpiSheetService.gs ← needs Apps Script deploy
+  KpiSheetService.gs ← DEPLOYED + tested
   InitiativeService.gs ← DEPLOYED (15 cols)
   GAS.GS             ← archived patch v6.2
 verify_initiative_v2.mjs ← 37/37 PASS Playwright suite
@@ -114,7 +114,7 @@ verify_mobile.mjs        ← NEW session 7 — 4/4 PASS (mobile topbar)
 | `GS_RANGE` | `Task_Master!A1:W` |
 | `KPI_RANGE` | `KPI_Summary` tab (new — for KPI pipeline sync) |
 | Task backend | ✅ Deployed — URL updated |
-| KPI backend | ✅ Code in repo (`backend/KpiSheetService.gs`) — **not yet deployed to Apps Script** |
+| KPI backend | ✅ Deployed + tested (`backend/KpiSheetService.gs`) |
 | Sheet columns | 23 — `DB_COLS` constant unchanged |
 | localStorage key | `shtd_v2` — schema unchanged |
 
@@ -127,12 +127,9 @@ verify_mobile.mjs        ← NEW session 7 — 4/4 PASS (mobile topbar)
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile | 🟢 Phase D |
-| DEBT-K1 | `KpiSheetService.gs` not deployed — GG Sheet sync for KPI data non-functional | 🟡 Action on PO |
-| DEBT-I1 | `InitiativeService.gs` deployed (15 cols) — cần test Sync button end-to-end | 🟡 Test |
 | DEBT-03 | `extractWorkbook` parseDate doesn't handle "dd-mmm-yy" import | ⚪ Edge case |
 | DEBT-05 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | ⚪ Cosmetic |
 | DEBT-06 | Inline `onchange` + `addEventListener` double handlers on filter elements | ⚪ No double render — cleanup later |
-| TD-026 | Milestone modal `#initFStatus` dùng English; GAS data dùng Vietnamese | 🟡 Next priority |
 
 ---
 

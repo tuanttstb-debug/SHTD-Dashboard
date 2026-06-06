@@ -1,49 +1,25 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-06 (Session 7 — Mobile fix + KPI verify)
-**Context**: Mobile hamburger fixed. KPI views 3/3 PASS. Phase A (A4/A5) confirmed clean. TD-026 and KpiSheetService.gs deploy remain.
-
----
-
-## ⚠️ MUST DO FIRST
-
-### 1. Xác nhận GAS Initiative Sync hoạt động end-to-end (PO action)
-GAS đã deploy (URL mới trong constants.js). Cần test thực tế:
-1. Mở `index.html` → Initiative Tracker
-2. Bấm **Sync GG Sheet** → data load từ `Initiative_Master` tab
-3. Kiểm tra: milestone hiện short label (M1, M2…), status dot đúng màu
-4. Thêm 1 milestone → bấm Sync → kiểm tra ghi lên Sheet
-5. Nếu lỗi "Không tìm thấy InitiativeService" → re-deploy Apps Script với file 15-col mới
-
----
-
-## Step 4 — TD-026: Milestone status dropdown Vietnamese
-
-**File**: `index.html` — `#initFStatus` select in Initiative modal  
-**Problem**: Modal dùng English values (Active/Done/Paused/Blocked) nhưng GAS data dùng Vietnamese (Xong/Đang làm/Chưa bắt đầu) → inconsistent stored values  
-**Fix**: Khi `#fParentId` có giá trị (milestone row), swap `#initFStatus` options sang Vietnamese:
-- `Xong` / `Đang làm` / `Chưa bắt đầu`
-Khi là initiative (no parentId): giữ nguyên Active/Done/Paused/Blocked
+**Prepared**: 2026-06-06 (Session 7 update — PO completed pending tasks)
+**Context**: GAS Initiative Sync tested end-to-end ✅. TD-026 milestone dropdown Vietnamese ✅. KpiSheetService.gs deployed ✅. Mobile hamburger fixed ✅. KPI views 3/3 PASS ✅.
 
 ---
 
 ## GAS Deploy Checklist
 
-| File | Status | Action |
-|---|---|---|
-| `backend/InitiativeService.gs` | ✅ Deployed (15 cols) | Test Sync button with real data |
-| `backend/KpiSheetService.gs` | 🔴 NOT deployed | Paste → re-deploy → test KPI Sync |
+| File | Status |
+|---|---|
+| `backend/InitiativeService.gs` | ✅ Deployed + tested end-to-end |
+| `backend/KpiSheetService.gs` | ✅ Deployed + KPI Sync working |
 
 ---
 
-## Phase D — Mobile UX (remaining, low priority)
+## Phase D — Mobile UX (low priority, deferred)
 
 | ID | Issue | Fix |
 |---|---|---|
 | MOB-01 | Filter bar cramped on mobile | Collapsible filter drawer |
 | MOB-02 | Toolbar button overflow on mobile | Overflow menu or icon-only mode |
 | MOB-03 | Gantt unusable on mobile | Simplified mobile Gantt or hide |
-
-Note: MOB hamburger (was: MOB-00) — **FIXED** in session 7 (`788e396`).
 
 ---
 
@@ -68,7 +44,6 @@ Note: MOB hamburger (was: MOB-00) — **FIXED** in session 7 (`788e396`).
 | TD-018 | `fmtExportDate` duplicated | Remove from app.js:exportExcel, use helpers.js version |
 | TD-021 | `_sLabel`/`_kpProgColor` defined in view files, used globally | Move to `helpers.js` |
 | TD-023 | `_oaActiveTab` not reset on re-render | Add `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()` |
-| TD-026 | Milestone modal `#initFStatus` dùng English (Active/Done); GAS data dùng Vietnamese (Xong/Đang làm) | Swap options khi parentId được chọn — **next priority** |
 
 ---
 
