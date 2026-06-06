@@ -1,4 +1,14 @@
 window.onload = async () => {
+  const auth = getAuthSession();
+  if (!auth) {
+    showLoginScreen();
+    return;
+  }
+  applyUserToUI(auth.user);
+  await startApp();
+};
+
+async function startApp() {
   loadCache();
   setupListeners();
   renderAll();
@@ -9,7 +19,7 @@ window.onload = async () => {
     await autoConnectDB();
     readInitiatives(); // non-blocking — load Initiative_Master sau khi tasks đã load
   }
-};
+}
 
 async function autoConnectDB() {
   showLoading('Đang tải dữ liệu từ Google Sheets…');

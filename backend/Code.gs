@@ -35,6 +35,19 @@ function doPost(e) {
     var body   = JSON.parse(e.postData.contents);
     var action = (body.action || '').toLowerCase();
 
+    // ── auth-login: no token required ──
+    if (action === 'auth-login') {
+      if (!body.username || !body.password) throw new Error('Thiếu thông tin đăng nhập.');
+      var loginResult = authLogin(body.username, body.password);
+      return _jsonResponse({ status: 'ok', token: loginResult.token, user: loginResult.user });
+    }
+
+    // ── all other actions: validate token first ──
+    var tokenData = validateToken(body.token);
+    if (!tokenData) {
+      return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
+    }
+
     if (action === 'read') {
       var values = sheetRead();
       return _jsonResponse({ status: 'ok', values: values });

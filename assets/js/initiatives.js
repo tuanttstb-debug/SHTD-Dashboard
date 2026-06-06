@@ -122,11 +122,7 @@ function _parseInitiativeArray(values) {
 async function readInitiatives() {
   if (!GS_WEBAPP_URL) return;
   try {
-    const res = await fetch(GS_WEBAPP_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'initiative-read' }),
-    });
-    const json = await res.json();
+    const json = await gasPost({ action: 'initiative-read' });
     if (json.status !== 'ok') throw new Error(json.error || 'initiative-read lỗi');
     _parseInitiativeArray(json.values);
     persist();
@@ -139,11 +135,7 @@ async function readInitiatives() {
 async function writeInitiatives() {
   if (!GS_WEBAPP_URL) return;
   const rows = [INI_COLS, ...db.initiatives.map(initiativeToRow)];
-  const res = await fetch(GS_WEBAPP_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'initiative-write', values: rows }),
-  });
-  const json = await res.json();
+  const json = await gasPost({ action: 'initiative-write', values: rows });
   if (json.status !== 'ok') throw new Error(json.error || 'initiative-write lỗi');
 }
 
