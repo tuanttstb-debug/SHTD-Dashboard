@@ -145,9 +145,6 @@ async function syncAction(action) {
       if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
 
       db.tasks = merged;
-      const iMap = new Map();
-      db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
-      db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
 
     } else {
       if (db.tasks.length === 0) throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng (0 task).');
