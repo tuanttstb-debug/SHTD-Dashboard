@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-06 (Session 7 final — all blockers cleared)
-**Context**: Không còn must-do nào. GAS fully deployed & tested. TD-026 resolved. Mobile hamburger fixed. KPI views 3/3 PASS. Backlog chỉ còn Phase D mobile UX + tech debt nhỏ.
+**Prepared**: 2026-06-06 (Session 8 — Auth deployed, W0+W1 done)
+**Context**: Auth gate live on production. No must-do blockers. Next: W2 tech debt, W3 mobile UX, future auth enhancements.
 
 ---
 
@@ -8,18 +8,40 @@
 
 | File | Status |
 |---|---|
-| `backend/InitiativeService.gs` | ✅ Deployed + tested end-to-end |
-| `backend/KpiSheetService.gs` | ✅ Deployed + KPI Sync working |
+| `backend/AuthService.gs` | ✅ Deployed + tested (session 8) |
+| `backend/InitiativeService.gs` | ✅ Deployed + tested |
+| `backend/KpiSheetService.gs` | ✅ Deployed + tested |
 
 ---
 
-## Phase D — Mobile UX (low priority, deferred)
+## W2 — Tech Debt (next priority)
+
+| ID | Debt | Action |
+|---|---|---|
+| TD-008 | No error boundary in renderAll() | Wrap each render call in try-catch; one broken view must not freeze whole app |
+| TD-018 | `fmtExportDate` duplicated in `app.js` vs `helpers.js` | Remove from app.js:exportExcel, use helpers.js version |
+| TD-023 | `_oaActiveTab` not reset on re-render | Add `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()` |
+
+---
+
+## W3 — Phase D Mobile UX (low priority)
 
 | ID | Issue | Fix |
 |---|---|---|
 | MOB-01 | Filter bar cramped on mobile | Collapsible filter drawer |
 | MOB-02 | Toolbar button overflow on mobile | Overflow menu or icon-only mode |
 | MOB-03 | Gantt unusable on mobile | Simplified mobile Gantt or hide |
+
+---
+
+## Auth — Future Enhancements (deferred)
+
+| Enhancement | Notes |
+|---|---|
+| Role-based UI enforcement | Admin: full access; User: hide delete/bulk-delete buttons |
+| Change password UI | User can change own password from user-pill dropdown |
+| Admin user management panel | Add/deactivate users without editing GAS sheet manually |
+| AUTH_SECRET via Script Properties | Currently uses hardcoded fallback — set `AUTH_SECRET` property for production hardening |
 
 ---
 
@@ -34,16 +56,13 @@
 
 ---
 
-## Tech Debt (all low priority)
+## Remaining Tech Debt (low priority)
 
 | ID | Debt | Action |
 |---|---|---|
 | TD-004 | Global state (`db`, sort, etc.) | Phase D |
-| TD-008 | No error boundary in renderAll() | Add try-catch around each render call |
 | TD-009 | Duplicate parseDate in extractWorkbook vs _parseArrayIntoDb | Consolidate to parsers.js |
-| TD-018 | `fmtExportDate` duplicated | Remove from app.js:exportExcel, use helpers.js version |
 | TD-021 | `_sLabel`/`_kpProgColor` defined in view files, used globally | Move to `helpers.js` |
-| TD-023 | `_oaActiveTab` not reset on re-render | Add `_oaActiveTab = 'quang'` at start of `renderOwnerAnalysis()` |
 
 ---
 
@@ -57,4 +76,5 @@
 7. Initiative views: always use `_initRealRoots()` for root initiative list
 8. `syncInitiativeAdd/Edit/Delete()` in `initiatives.js` are the only safe Initiative CRUD entry points
 9. Chart instances: destroyed on re-render via `try { c.destroy() }`
-10. Verify scripts: use `page.route('**/script.google.com/**', r => r.abort())` để isolate khỏi GAS background load
+10. All GAS calls MUST go through `gasPost()` in `auth.js` — never use raw fetch() for GAS endpoints
+11. Verify scripts: use `page.route('**/script.google.com/**', r => r.abort())` to isolate from GAS background load

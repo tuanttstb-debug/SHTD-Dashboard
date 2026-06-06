@@ -233,8 +233,44 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## ~~OBS-01: db.initiatives Silently Overwritten in syncAction()~~ ✅ RESOLVED 2026-06-06
+
+**Resolution (Session 8, commit `5bf9fed`)**: Removed 3-line iMap rebuild from `syncAction()`. `db.initiatives` is now owned exclusively by `readInitiatives()` / `_parseInitiativeArray()`. Initiative Tracker data no longer wiped on every task sync.
+
+---
+
+## AUTH-01: AUTH_SECRET Uses Hardcoded Fallback
+**Rating**: ⚪ LOW
+**Added**: 2026-06-06 (Session 8)
+
+**Issue**: `_authSecret()` in `AuthService.gs` falls back to `'shtd_2026_internal'` if `AUTH_SECRET` Script Property is not set. The fallback is committed in code (visible in repo).
+
+**Fix**: Set `AUTH_SECRET` property in GAS → Project Settings → Script Properties. Any value, kept private.
+
+---
+
+## AUTH-02: Role Stored But Not Enforced in UI
+**Rating**: ⚪ LOW
+**Added**: 2026-06-06 (Session 8)
+
+**Issue**: Token payload includes `role` (Admin/User). `isAdmin()` helper exists in `auth.js`. No buttons are currently hidden or disabled based on role — all authenticated users see identical UI.
+
+**Fix**: Add `isAdmin()` checks to delete buttons, bulk-delete, Clear Cache. Straightforward — 5–6 call sites.
+
+---
+
+## AUTH-03: No Change-Password Feature
+**Rating**: ⚪ LOW
+**Added**: 2026-06-06 (Session 8)
+
+**Issue**: To change a password, PO must manually compute SHA-256 hash and edit `User_Master` sheet directly. No UI for users to change their own password.
+
+**Fix**: Add change-password modal in user-pill dropdown. Client sends old+new password → GAS validates old, writes new hash.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-06 (Session 7)
+**Last updated**: 2026-06-06 (Session 8)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -264,3 +300,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-024 | ⚪ | Initiative ID rename doesn't cascade `parentId` in child milestones | Tiny | Open — fix in `_initSave()` |
 | TD-025 | ⚪ | `writeInitiatives()` full-replace, no patch — last-write-wins | Tiny | Open — acceptable until multi-user initiative editing needed |
 | ~~TD-026~~ | ~~⚪~~ | ~~Milestone modal status dropdown English vs. GAS Vietnamese~~ | Tiny | ✅ **Resolved 2026-06-06** — PO confirmed fixed |
+| ~~OBS-01~~ | ~~🔴~~ | ~~db.initiatives overwritten in syncAction()~~ | Tiny | ✅ **Resolved 2026-06-06** — commit `5bf9fed` |
+| AUTH-01 | ⚪ | AUTH_SECRET hardcoded fallback in AuthService.gs | Tiny | Open — set Script Property in GAS |
+| AUTH-02 | ⚪ | Role in token not enforced in UI (Admin/User identical) | Small | Open — add isAdmin() checks to delete buttons |
+| AUTH-03 | ⚪ | No change-password UI | Small | Open — add to user-pill dropdown |

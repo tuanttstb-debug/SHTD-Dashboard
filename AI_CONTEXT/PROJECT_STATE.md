@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-06 (Session 7 — final, all blockers cleared)
+**As of**: 2026-06-06 (Session 8 — Auth login system deployed)
 **Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `768c722`
-**Remote HEAD**: `768c722` (in sync)
+**Local HEAD**: `a9ad88d`
+**Remote HEAD**: `a9ad88d` (in sync)
 
 ---
 
@@ -12,13 +12,14 @@
 |---|---|---|
 | `index.html` | ~791 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
-| `backend/Code.gs` | 76 | ✅ `doPost()` router — task + KPI routes |
+| `backend/Code.gs` | 89 | ✅ `doPost()` router — auth-login + token gate + task/KPI/initiative routes |
 | `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
+| `backend/AuthService.gs` | 132 | ✅ NEW — SHA-256 hash, HMAC token, authLogin(), validateToken(), setupInitialUsers() |
 | `backend/SheetService.gs` | 48 | ✅ `sheetRead()` / `sheetWrite()` for Task_Master |
-| `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — **not yet deployed to Apps Script** |
+| `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — deployed + tested |
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
-| `assets/css/` | 11 files | ✅ + `initiative.css` |
-| `assets/js/` | 27 modules | ✅ + `initiatives.js`, `views/initiative-tracker.js` |
+| `assets/css/` | 12 files | ✅ + `initiative.css` + `auth.css` |
+| `assets/js/` | 28 modules | ✅ + `initiatives.js`, `views/initiative-tracker.js`, `auth.js` |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -56,6 +57,7 @@
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
+| **Login / Auth** | ✅ | Login screen overlay; HMAC-SHA256 token 24h; User_Master GG Sheet; gasPost() auto-injects token |
 | Mobile sidebar | ✅ | Slide-in overlay; hamburger always visible (fixed session 7) |
 | Mobile layout (general) | ⚠️ | Topbar hamburger fixed. Filter bar/toolbar/Gantt still in backlog (Phase D) |
 | Keyboard shortcuts | ✅ | Ctrl+N, Ctrl+D, Ctrl+B, G+x, Q, G+K (KPI Overview) |
@@ -108,7 +110,7 @@ verify_mobile.mjs        ← NEW session 7 — 4/4 PASS (mobile topbar)
 
 | Config | Value |
 |---|---|
-| `GS_WEBAPP_URL` | Updated — new GAS deployment (commit `b88b448`); Initiative + KPI routes active |
+| `GS_WEBAPP_URL` | Updated — new GAS deployment (session 8); Auth + Initiative + KPI routes active |
 | Initiative backend | ✅ Deployed (15 cols, InitiativeService.gs) — Sync button should work |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | `GS_RANGE` | `Task_Master!A1:W` |
