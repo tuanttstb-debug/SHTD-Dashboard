@@ -5,7 +5,9 @@
 var USER_SHEET_NAME = 'User_Master';
 
 function _authSecret() {
-  return PropertiesService.getScriptProperties().getProperty('AUTH_SECRET') || 'shtd_2026_internal';
+  var secret = PropertiesService.getScriptProperties().getProperty('AUTH_SECRET');
+  if (!secret) throw new Error('AUTH_SECRET chưa được cấu hình trong Script Properties. Liên hệ Admin.');
+  return secret;
 }
 
 function _sha256Hex(plain) {
