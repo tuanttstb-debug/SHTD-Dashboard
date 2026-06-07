@@ -68,15 +68,15 @@ function doPost(e) {
     }
 
     if (action === 'read') {
-      var values = sheetRead();
-      return _jsonResponse({ status: 'ok', values: values });
+      var result = sheetRead();
+      return _jsonResponse({ status: 'ok', values: result.values, serverTs: result.serverTs });
     }
 
     if (action === 'write') {
       if (!body.values || !Array.isArray(body.values) || body.values.length < 2) {
         throw new Error('Payload write thiếu hoặc rỗng.');
       }
-      sheetWrite(body.values);
+      sheetWrite(body.values, body.clientTs);
       auditLog(tokenData, 'task-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
