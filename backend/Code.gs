@@ -70,6 +70,7 @@ function doPost(e) {
         throw new Error('Payload write thiếu hoặc rỗng.');
       }
       sheetWrite(body.values);
+      auditLog(tokenData, 'task-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -78,6 +79,7 @@ function doPost(e) {
         throw new Error('kpi-write: thiếu values.');
       }
       kpiSheetWrite(body.values);
+      auditLog(tokenData, 'kpi-write', (body.values.length) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -94,6 +96,7 @@ function doPost(e) {
         throw new Error('initiative-write: thiếu values.');
       }
       initiativeWrite(body.values);
+      auditLog(tokenData, 'initiative-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
 
