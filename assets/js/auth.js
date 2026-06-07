@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ── User-pill update after login ──
 
 function applyUserToUI(user) {
+  document.body.dataset.role = user.role || 'User';
   const initials = (user.displayName || user.username).slice(0, 2).toUpperCase();
   const pillEl   = document.querySelector('.user-pill');
   if (!pillEl) return;

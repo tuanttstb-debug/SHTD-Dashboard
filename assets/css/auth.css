@@ -116,3 +116,6 @@
 .user-dd-item:hover { background: var(--hover); }
 
 .user-dd-item.danger { color: var(--danger); }
+
+/* ── RBAC: hide admin-only elements for User role ── */
+body[data-role="User"] .admin-only { display: none !important; }

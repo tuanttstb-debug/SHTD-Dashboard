@@ -348,7 +348,7 @@
           <button class="btn-bulk" onclick="bulkSetRag('Amber')"><i class="fa-solid fa-circle" style="color:#fbbf24;"></i> Amber</button>
           <button class="btn-bulk" onclick="bulkSetRag('Red')"><i class="fa-solid fa-circle" style="color:#f87171;"></i> Red</button>
           <button class="btn-bulk" onclick="bulkSetState('Hoàn thành')"><i class="fa-solid fa-check"></i> Đánh dấu Xong</button>
-          <button class="btn-bulk danger" onclick="bulkDelete()"><i class="fa-solid fa-trash"></i> Xóa</button>
+          <button class="btn-bulk danger admin-only" onclick="bulkDelete()"><i class="fa-solid fa-trash"></i> Xóa</button>
           <button class="btn-bulk" onclick="clearSelection()"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
@@ -631,7 +631,7 @@
     </div>
     <div class="modal-footer">
       <div style="display:flex;gap:8px;">
-        <button type="button" class="btn btn-danger btn-sm" id="btnDelete" style="display:none;" onclick="deleteTask()"><i class="fa-solid fa-trash"></i> Xóa</button>
+        <button type="button" class="btn btn-danger btn-sm admin-only" id="btnDelete" style="display:none;" onclick="deleteTask()"><i class="fa-solid fa-trash"></i> Xóa</button>
         <button type="button" class="btn btn-outline btn-sm" id="btnClone" style="display:none;" onclick="cloneTask()"><i class="fa-solid fa-copy"></i> Nhân bản</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
