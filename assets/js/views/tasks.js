@@ -106,22 +106,22 @@ function renderTaskTable() {
       const ov = isOverdue(t.endDate, t.progress);
       const sel = selectedIds.has(t.id) ? 'row-selected' : '';
       const ovCls = ov ? 'row-overdue' : '';
-      let init = t.initiative||'–';
-      if (t.milestone) init += `<br><span style="font-size:10px;background:var(--primary-xlight);padding:2px 5px;border-radius:3px;color:var(--primary);font-weight:700;">${t.milestone}</span>`;
+      let init = esc(t.initiative||'–');
+      if (t.milestone) init += `<br><span style="font-size:10px;background:var(--primary-xlight);padding:2px 5px;border-radius:3px;color:var(--primary);font-weight:700;">${esc(t.milestone)}</span>`;
       return `<tr class="${ovCls} ${sel}" onclick="rowClick(event,'${t.id}')">
         <td onclick="event.stopPropagation()"><input type="checkbox" data-id="${t.id}" ${selectedIds.has(t.id)?'checked':''} onchange="toggleSelect('${t.id}',this.checked)"></td>
-        <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${t.id||'–'}</span></td>
-        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;" title="${t.name}">${t.name}</td>
+        <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${esc(t.id||'–')}</span></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;" title="${esc(t.name)}">${esc(t.name)}</td>
         <td>${init}</td>
-        <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;">${t.category||'–'}</span></td>
-        <td>${t.team||'–'}</td>
-        <td>${t.picRes||'–'}</td>
+        <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;">${esc(t.category||'–')}</span></td>
+        <td>${esc(t.team||'–')}</td>
+        <td>${esc(t.picRes||'–')}</td>
         <td ${ov?'class="text-danger-bold"':''}>${fmtDate(t.startDate)}</td>
         <td ${ov?'class="text-danger-bold"':''}>${fmtDate(t.endDate)}</td>
         <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
         <td>${stateChip(t.state)}</td>
         <td>${ragBadge(t.status)}</td>
-        <td><span style="font-size:12px;color:var(--text-2);font-family:var(--mono);">${t.tuanBC||'–'}</span></td>
+        <td><span style="font-size:12px;color:var(--text-2);font-family:var(--mono);">${esc(t.tuanBC||'–')}</span></td>
       </tr>`;
     }).join('');
   }

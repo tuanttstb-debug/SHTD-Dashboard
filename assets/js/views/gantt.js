@@ -41,11 +41,12 @@ function renderGantt() {
       const cl = t.status === 'Red' ? 'red' : t.status === 'Amber' ? 'amber' : isOverdue(t.endDate,t.progress) ? 'red' : 'green';
       const startPct = posOf(t.startDate);
       const widPct   = widOf(t.startDate, t.endDate);
-      const label    = t.name.length > 30 ? t.name.slice(0,28)+'…' : t.name;
-      return `<div class="gantt-row" onclick="editTask('${t.id}')" title="${t.name} | ${fmtDate(t.startDate)} → ${fmtDate(t.endDate)} | ${t.progress}%">
+      const rawLabel = t.name.length > 30 ? t.name.slice(0,28)+'…' : t.name;
+      const label    = esc(rawLabel);
+      return `<div class="gantt-row" onclick="editTask('${t.id}')" title="${esc(t.name)} | ${fmtDate(t.startDate)} → ${fmtDate(t.endDate)} | ${t.progress}%">
         <div class="gantt-label">
           ${stateChip(t.state).replace('class="state-chip','style="font-size:10px;" class="state-chip')}
-          <span class="gantt-label-text" title="${t.name}">${t.id} – ${label}</span>
+          <span class="gantt-label-text" title="${esc(t.name)}">${esc(t.id)} – ${label}</span>
         </div>
         <div class="gantt-timeline">
           ${todayOffset >= 0 && todayOffset <= totalDays ? `<div class="gantt-today" style="left:${todayPct}%;"></div>` : ''}

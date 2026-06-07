@@ -56,18 +56,18 @@ function _apCard(t) {
   const overdue = t.endDate && new Date(t.endDate) < new Date() && t.state !== 'Hoàn thành';
   return `
     <div class="kanban-card">
-      <div class="kanban-card-title">${t.name}</div>
+      <div class="kanban-card-title">${esc(t.name)}</div>
       ${prog > 0 ? `<div class="prog-wrap" style="margin-bottom:6px;">
         <div class="prog-bar" style="width:100%;"><div class="prog-fill" style="width:${prog}%;"></div></div>
         <span class="prog-pct">${prog}%</span>
       </div>` : ''}
       <div class="kanban-card-meta">
-        <span class="type-pill">${t.id}</span>
-        ${t.team ? `<span class="type-pill">${t.team}</span>` : ''}
+        <span class="type-pill">${esc(t.id)}</span>
+        ${t.team ? `<span class="type-pill">${esc(t.team)}</span>` : ''}
         <i class="fa-solid fa-circle" style="font-size:8px;color:${ragColor};margin-left:auto;" title="RAG: ${t.status}"></i>
       </div>
       <div class="kanban-card-owner">
-        <i class="fa-solid fa-user" style="margin-right:3px;"></i>${t.picRes || '–'}
+        <i class="fa-solid fa-user" style="margin-right:3px;"></i>${esc(t.picRes || '–')}
         ${t.endDate ? `<span style="margin-left:8px;${overdue ? 'color:var(--danger);font-weight:700;' : 'color:var(--text-3);'}">
           <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${t.endDate}
         </span>` : ''}

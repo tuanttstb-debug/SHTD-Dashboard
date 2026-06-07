@@ -485,10 +485,6 @@ function _initMsDotClass(status) {
   return 'active';
 }
 
-function _esc(s) {
-  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
 function _initStatusIcon(status) {
   const s = (status||'').toLowerCase();
   if (s === 'done')    return '<i class="fa-solid fa-check-circle"></i>';

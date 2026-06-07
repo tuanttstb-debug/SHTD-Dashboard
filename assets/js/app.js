@@ -278,14 +278,14 @@ function showDetailModal(filter, title) {
   body.innerHTML = tasks.length === 0
     ? `<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-3);">Không có task nào.</td></tr>`
     : tasks.map(t => `<tr onclick="editTask('${t.id}')" style="cursor:pointer;">
-        <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${t.id}</span></td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${t.name}">${t.name}</td>
-        <td>${t.initiative||'–'}</td>
-        <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 6px;border-radius:4px;font-weight:600;">${t.category||'–'}</span></td>
-        <td>${t.milestone ? `<span style="font-size:11px;background:var(--primary-xlight);padding:2px 6px;border-radius:3px;color:var(--primary);font-weight:700;">${t.milestone}</span>` : '–'}</td>
-        <td>${t.team||'–'}</td><td>${t.picRes||'–'}</td>
+        <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${esc(t.id)}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${esc(t.name)}">${esc(t.name)}</td>
+        <td>${esc(t.initiative||'–')}</td>
+        <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 6px;border-radius:4px;font-weight:600;">${esc(t.category||'–')}</span></td>
+        <td>${t.milestone ? `<span style="font-size:11px;background:var(--primary-xlight);padding:2px 6px;border-radius:3px;color:var(--primary);font-weight:700;">${esc(t.milestone)}</span>` : '–'}</td>
+        <td>${esc(t.team||'–')}</td><td>${esc(t.picRes||'–')}</td>
         <td ${isOverdue(t.endDate,t.progress)?'class="text-danger-bold"':''}>${fmtDate(t.endDate)}</td>
-        <td><span style="font-size:11px;color:var(--text-2);font-family:var(--mono);">${t.tuanBC||'–'}</span></td>
+        <td><span style="font-size:11px;color:var(--text-2);font-family:var(--mono);">${esc(t.tuanBC||'–')}</span></td>
         <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
         <td>${stateChip(t.state)}</td><td>${ragBadge(t.status)}</td>
       </tr>`).join('');
