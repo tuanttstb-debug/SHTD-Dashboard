@@ -13,7 +13,7 @@ let gKeyBuffer = '';
 let debounceTimer = null;
 
 // ── Google Apps Script config ──
-const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxizgL7vWEu7cat5OF0sPUpQEnhzf0_MVeLjnNW5AfNds902gfPspnG1uNWaJ_oFKdH/exec';
+// GS_WEBAPP_URL is defined in assets/js/config.js (deployment config)
 const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
 const GS_RANGE      = 'Task_Master!A1:W';
 
