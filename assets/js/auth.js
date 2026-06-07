@@ -157,6 +157,9 @@ function applyUserToUI(user) {
         <div class="user-dd-name">${user.displayName || user.username}</div>
         <div class="user-dd-role">${user.role} · ${user.team}</div>
       </div>
+      <div class="user-dd-item" onclick="_closePillDropdown();showChangePwModal()">
+        <i class="fa-solid fa-key"></i> Đổi mật khẩu
+      </div>
       <div class="user-dd-item danger" onclick="confirmLogout()">
         <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
       </div>
@@ -178,4 +181,77 @@ async function confirmLogout() {
   _closePillDropdown();
   const ok = await uiConfirm('Đăng xuất', 'Bạn có chắc muốn đăng xuất không?', 'warning', 'Đăng xuất');
   if (ok) doLogout();
+}
+
+// ── Change password ──
+
+function showChangePwModal() {
+  let overlay = document.getElementById('changePwOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'changePwOverlay';
+    overlay.className = 'overlay';
+    overlay.style.cssText = 'display:flex;z-index:3000;';
+    overlay.innerHTML = `
+      <div class="modal" style="max-width:380px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="fa-solid fa-key" style="margin-right:6px;"></i>Đổi mật khẩu</div>
+          <button class="icon-btn" onclick="document.getElementById('changePwOverlay').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+          <div class="form-group">
+            <label class="form-label">Mật khẩu hiện tại</label>
+            <input class="form-control" id="cpOldPw" type="password" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mật khẩu mới <span style="color:var(--text-3);font-weight:400;">(tối thiểu 6 ký tự)</span></label>
+            <input class="form-control" id="cpNewPw" type="password" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nhập lại mật khẩu mới</label>
+            <input class="form-control" id="cpNewPw2" type="password" autocomplete="new-password">
+          </div>
+          <div id="cpError" style="display:none;color:var(--danger);font-size:13px;"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="document.getElementById('changePwOverlay').style.display='none'">Hủy</button>
+          <button class="btn btn-primary" id="cpBtn" onclick="handleChangePw()"><i class="fa-solid fa-floppy-disk"></i> Lưu mật khẩu</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  }
+  ['cpOldPw','cpNewPw','cpNewPw2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('cpError').style.display = 'none';
+  overlay.style.display = 'flex';
+  setTimeout(() => document.getElementById('cpOldPw')?.focus(), 50);
+}
+
+async function handleChangePw() {
+  const oldPw  = document.getElementById('cpOldPw').value;
+  const newPw  = document.getElementById('cpNewPw').value;
+  const newPw2 = document.getElementById('cpNewPw2').value;
+  const errEl  = document.getElementById('cpError');
+  const btn    = document.getElementById('cpBtn');
+
+  const setErr = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
+
+  if (!oldPw || !newPw || !newPw2) { setErr('Vui lòng nhập đầy đủ các trường.'); return; }
+  if (newPw !== newPw2)             { setErr('Mật khẩu mới nhập lại không khớp.'); return; }
+  if (newPw.length < 6)             { setErr('Mật khẩu mới phải có ít nhất 6 ký tự.'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu…';
+  errEl.style.display = 'none';
+
+  try {
+    const res = await gasPost({ action: 'change-password', oldPassword: oldPw, newPassword: newPw });
+    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
+    document.getElementById('changePwOverlay').style.display = 'none';
+    if (typeof toast === 'function') toast('✅ Đã đổi mật khẩu thành công!', 'success');
+  } catch (e) {
+    setErr(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu mật khẩu';
+  }
 }

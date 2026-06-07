@@ -105,6 +105,37 @@ function authLogin(username, password) {
 }
 
 /**
+ * Change password for the authenticated user.
+ * tokenData must already be validated by the caller (Code.gs).
+ * Returns true on success; throws Error on failure.
+ */
+function changePassword(tokenData, oldPassword, newPassword) {
+  if (!oldPassword || !newPassword) throw new Error('Vui lòng nhập đầy đủ mật khẩu cũ và mới.');
+  if (newPassword.length < 6)       throw new Error('Mật khẩu mới phải có ít nhất 6 ký tự.');
+  if (oldPassword === newPassword)  throw new Error('Mật khẩu mới phải khác mật khẩu cũ.');
+
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(USER_SHEET_NAME);
+  if (!sheet) throw new Error('Không tìm thấy bảng người dùng.');
+
+  var data    = sheet.getDataRange().getValues();
+  var H       = data[0].map(function(h) { return String(h).trim(); });
+  var iUser   = H.indexOf('Username');
+  var iHash   = H.indexOf('Password_Hash');
+  var oldHash = _sha256Hex(oldPassword);
+  var newHash = _sha256Hex(newPassword);
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][iUser]).toLowerCase() !== tokenData.u.toLowerCase()) continue;
+    if (String(data[i][iHash]).toLowerCase() !== oldHash) throw new Error('Mật khẩu cũ không đúng.');
+    sheet.getRange(i + 1, iHash + 1).setValue(newHash);
+    SpreadsheetApp.flush();
+    return true;
+  }
+  throw new Error('Không tìm thấy tài khoản.');
+}
+
+/**
  * Run ONCE from Apps Script editor to seed User_Master.
  * Default password = Username (case-sensitive).
  */

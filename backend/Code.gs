@@ -60,6 +60,13 @@ function doPost(e) {
       return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
     }
 
+    if (action === 'change-password') {
+      if (!body.oldPassword || !body.newPassword) throw new Error('Thiếu thông tin đổi mật khẩu.');
+      changePassword(tokenData, body.oldPassword, body.newPassword);
+      auditLog(tokenData, 'change-password', 'password updated');
+      return _jsonResponse({ status: 'ok' });
+    }
+
     if (action === 'read') {
       var values = sheetRead();
       return _jsonResponse({ status: 'ok', values: values });
