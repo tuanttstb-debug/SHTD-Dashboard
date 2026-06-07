@@ -48,6 +48,18 @@ function doPost(e) {
       return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
     }
 
+    // ── role gate: reject unknown roles ──
+    var KNOWN_ROLES = ['Admin', 'User'];
+    if (KNOWN_ROLES.indexOf(tokenData.r) === -1) {
+      return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
+    }
+
+    // ── role gate: Admin-only actions ──
+    var ADMIN_ONLY = ['kpi-write'];
+    if (ADMIN_ONLY.indexOf(action) !== -1 && tokenData.r !== 'Admin') {
+      return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
+    }
+
     if (action === 'read') {
       var values = sheetRead();
       return _jsonResponse({ status: 'ok', values: values });
