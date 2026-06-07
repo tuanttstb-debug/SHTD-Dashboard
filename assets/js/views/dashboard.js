@@ -131,8 +131,8 @@ function renderDashboard() {
     initBody.innerHTML = Object.entries(initSummary).sort((a,b) => b[1].total - a[1].total).map(([k,v]) => {
       const avg = Math.round(v.totProg/v.total);
       const domRag = v.rags.Red > 0 ? 'Red' : v.rags.Amber > 0 ? 'Amber' : 'Green';
-      return `<tr onclick="showDetailModal('${dashTuan ? 'tuaninit-'+activeWeek+'-' : 'initiative-'}${k.replace(/'/g,"\\'")}','Dự án: ${k}')" style="cursor:pointer;">
-        <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="${k}">${k}</td>
+      return `<tr onclick="showDetailModal('${dashTuan ? 'tuaninit-'+activeWeek+'-' : 'initiative-'}${k.replace(/'/g,"\\'")}','Dự án: ${esc(k)}')" style="cursor:pointer;">
+        <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="${esc(k)}">${esc(k)}</td>
         <td>${v.total}</td><td>${v.done}</td>
         <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${avg}%;"></div></div><span class="prog-pct">${avg}%</span></div></td>
         <td>${ragBadge(domRag)}</td>
@@ -143,7 +143,7 @@ function renderDashboard() {
   const maxT = Math.max(...Object.values(teamSt), 1);
   document.getElementById('teamStatList').innerHTML = Object.entries(teamSt).sort((a,b)=>b[1]-a[1]).map(([k,v]) =>
     `<div class="stat-row">
-      <span class="stat-name">${k}</span>
+      <span class="stat-name">${esc(k)}</span>
       <div class="stat-bar-wrap"><div class="stat-bar"><div class="stat-fill" style="width:${v/maxT*100}%;"></div></div></div>
       <span class="stat-count">${v}</span>
     </div>`).join('') || '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">Chưa có dữ liệu</div>';
@@ -152,8 +152,8 @@ function renderDashboard() {
     ? '<div style="color:var(--text-3);font-size:13px;padding:8px 0;">Không có task nào bị block hoặc cần BLĐ 🎉</div>'
     : blocked.slice(0,8).map(t => `<div class="stat-row" style="cursor:pointer;" onclick="editTask('${t.id}')">
         <div style="flex:1;">
-          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.name}">${t.name}</div>
-          <div style="font-size:11px;color:var(--text-3);">${t.id} · ${t.picRes||'–'}</div>
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(t.name)}">${esc(t.name)}</div>
+          <div style="font-size:11px;color:var(--text-3);">${esc(t.id)} · ${esc(t.picRes||'–')}</div>
         </div>
         ${t.state === 'Blocked' ? '<span class="state-chip s5">Blocked</span>' : '<span class="badge badge-red">Cần BLĐ</span>'}
       </div>`).join('');

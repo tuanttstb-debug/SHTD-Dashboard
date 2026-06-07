@@ -1,10 +1,10 @@
 # SESSION HANDOVER
-**Date**: 2026-06-06 (Session 7 — Mobile fix + KPI verify + context cleanup)
+**Date**: 2026-06-06 (Session 8 — OBS-01 fix + Auth login system)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard (branch: master)
-**Local HEAD**: `768c722`
-**Remote HEAD**: `768c722` (in sync)
-**Previous session HEAD**: `249425f`
+**Local HEAD**: `a9ad88d`
+**Remote HEAD**: `a9ad88d` (in sync)
+**Previous session HEAD**: `768c722`
 
 ---
 
@@ -12,15 +12,9 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| A4 | Grep MERGE residue | — | ✅ Already clean — no action |
-| A5 | Grep loadDemoData/clearDemoData | — | ✅ Only in archived Main0505.html — no action |
-| KPI-V | Browser verify KPI Overview / Progress / Owner Analysis | — | ✅ 3/3 PASS, 0 JS errors |
-| MOB | Fix hamburger disappearing on narrow screens | `788e396` | ✅ 4/4 PASS (320–390px) |
-| PO | GAS Initiative Sync tested end-to-end | — | ✅ PO confirmed done |
-| PO | TD-026 milestone status Vietnamese dropdown | — | ✅ PO confirmed done |
-| PO | KpiSheetService.gs deployed + KPI Sync tested | — | ✅ PO confirmed done |
-| DOC | GIOI_THIEU_TINH_NANG.txt — feature overview 16 mục | `768c722` | ✅ |
-| CTX | AI_CONTEXT all files updated + pushed | `8cf45e4`, `e59a4cd` | ✅ |
+| W0 | Fix OBS-01 — db.initiatives silently overwritten in syncAction() | `5bf9fed` | ✅ Tested local + pushed |
+| W1 | Delete 3 temp debug scripts (verify_kpi_zoom, verify_kpi_detail, verify_mobile2) | local only | ✅ Files deleted from disk |
+| AUTH | Full login system: GAS AuthService + client auth.js + login UI | `a9ad88d` | ✅ Deployed to production |
 
 ---
 
@@ -28,19 +22,42 @@
 
 | File | Change |
 |---|---|
-| `assets/css/responsive.css` | Hamburger fix: `flex-shrink:0` on `#hamburger` + `.topbar-right`; `.qv-topbar-btn{display:none}` on ≤768px; `.topbar-title-group` truncation; `.breadcrumb{display:none}` on mobile |
-| `index.html` | Added `class="topbar-title-group"` to page-title wrapper div |
-| `verify_kpi_views.mjs` | NEW — headless Playwright, 3/3 PASS KPI views |
-| `verify_mobile.mjs` | NEW — headless Playwright, 4/4 PASS mobile topbar |
-| `verify_kpi_zoom.mjs` `verify_kpi_detail.mjs` `verify_mobile2.mjs` | Temp debug scripts (committed, can clean up) |
-| `GIOI_THIEU_TINH_NANG.txt` | NEW — Vietnamese feature overview, 16 sections |
-| `AI_CONTEXT/*.md` | SESSION_HANDOVER, PROJECT_STATE, TODO_NEXT updated |
+| `assets/js/api.js` | OBS-01 fix (3 lines removed) + all fetch() → gasPost() |
+| `assets/js/app.js` | Auth check on startup; startApp() extracted for post-login call |
+| `assets/js/initiatives.js` | fetch() → gasPost() |
+| `assets/js/kpi-parser.js` | fetch() → gasPost() |
+| `assets/js/constants.js` | GS_WEBAPP_URL updated (new GAS deployment with auth) |
+| `backend/Code.gs` | auth-login action (no token) + validateToken gate on all other actions |
+| `index.html` | Login overlay HTML; auth.css + auth.js script tags added |
+| `assets/css/auth.css` | NEW — login screen overlay + user-pill dropdown styles |
+| `assets/js/auth.js` | NEW — gasPost() helper, session storage, login/logout UI, applyUserToUI() |
+| `backend/AuthService.gs` | NEW — SHA-256 hash, HMAC-SHA256 token, authLogin(), validateToken(), setupInitialUsers() |
 
 ---
 
-## Root Cause: Mobile Hamburger Bug
+## Architecture: Auth System
 
-`.qv-topbar-btn` ("Quick View" text button) consumed ~120px on topbar. `#hamburger` had no `flex-shrink:0` → co về 0 trên màn hình nhỏ. Fix: ẩn `.qv-topbar-btn` mobile (FAB ⚡ thay thế), lock `#hamburger` + `topbar-right` với `flex-shrink:0`, title truncate ellipsis.
+**Token scheme**: Stateless HMAC-SHA256 signed token, 24h expiry
+```
+payload = JSON.stringify({u, dn, r, t, exp})
+token   = base64(payload) + '.' + HMAC-SHA256(payload, AUTH_SECRET)
+```
+- `AUTH_SECRET` from GAS Script Properties (fallback: `shtd_2026_internal`)
+- No session table in sheet — validation is pure crypto, no DB read
+- Client stores `{token, user, exp}` in `localStorage['shtd_auth_v1']`
+
+**gasPost(body)** in `auth.js` — single GAS fetch helper:
+- Auto-injects token into every request body
+- On `AUTH_REQUIRED` response → calls `doLogout()` automatically
+- All api.js / initiatives.js / kpi-parser.js now use gasPost()
+
+**GAS User_Master sheet** (9 cols):
+`Username | Display_Name | Role | Team | Email | Active | Created_At | Last_Login | Password_Hash`
+
+**Users seeded** (password = Username, case-sensitive):
+- TuanTT4 → Admin
+- DungLQ1 → Admin
+- QuangNN3 → User
 
 ---
 
@@ -48,9 +65,19 @@
 
 | Decision | Reason |
 |---|---|
-| Ẩn `.qv-topbar-btn` trên mobile (≤768px) | FAB ⚡ fixed bottom-right đã phục vụ cùng chức năng |
-| Không ẩn keyboard-btn hay user-pill trên 480px | Sau khi bỏ qv-topbar-btn, topbar-right còn ~140px — đủ chỗ |
-| `breadcrumb` ẩn trên mobile | Tiết kiệm width cho page-title, không mất thông tin quan trọng |
+| Stateless HMAC token (no session sheet) | Avoids GAS quota cost of DB read on every request |
+| Password sent plain over HTTPS, hashed in GAS | Acceptable for internal tool; HTTPS protects transport |
+| Role stored in token but not enforced in UI yet | Phase 1 = auth gate only; role-based UI = future session |
+| AUTH_SECRET hardcoded fallback | Allows deploy without Script Properties setup; upgrade later |
+
+---
+
+## Blockers
+
+None. Production deployed and working.
+
+**Common confusion**: Password_Hash in User_Master sheet is NOT the login password.
+Login password = plain text (e.g., `TuanTT4`). GAS hashes it internally.
 
 ---
 
@@ -58,20 +85,15 @@
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `.qv-topbar-btn` ẩn trên mobile | ⚪ LOW | Nếu sau này cần nút QV trên mobile topbar, bỏ `display:none` trong responsive.css |
-| Temp verify scripts committed | ⚪ LOW | `verify_kpi_zoom.mjs`, `verify_kpi_detail.mjs`, `verify_mobile2.mjs` là debug artifacts — nên xóa khi dọn dẹp |
-
----
-
-## Blockers
-
-Không còn blocker nào. Tất cả MUST DO từ session 6 đã hoàn thành.
+| Token expiry mid-session | ⚪ LOW | After 24h, all gasPost() calls get AUTH_REQUIRED → auto-logout. Expected behavior. |
+| readInitiatives() background call on AUTH_REQUIRED | ⚪ LOW | If token expires during background load, doLogout() fires. Rare (24h window). |
+| All GAS actions now require token | 🟡 MEDIUM | Any GAS call without token returns AUTH_REQUIRED. Verify no code path bypasses gasPost(). |
 
 ---
 
 ## Next Session
 
-Không có task khẩn. Backlog còn lại:
-1. Phase D Mobile UX: MOB-01 (filter bar), MOB-02 (toolbar overflow), MOB-03 (Gantt mobile)
-2. Tech debt nhỏ: TD-004, TD-008, TD-009, TD-018, TD-021, TD-023, TD-024, TD-025
-3. Xóa temp verify scripts nếu cần dọn repo
+Priority order:
+1. **W2 Tech Debt**: TD-008 (error boundary in renderAll), TD-018 (fmtExportDate dedup), TD-023 (_oaActiveTab reset)
+2. **W3 Phase D Mobile UX**: MOB-01, MOB-02, MOB-03
+3. **Future Auth**: Role-based UI (Admin vs User button visibility), change password UI, Admin user management panel

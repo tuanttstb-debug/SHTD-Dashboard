@@ -48,16 +48,36 @@ function doPost(e) {
       return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
     }
 
+    // ── role gate: reject unknown roles ──
+    var KNOWN_ROLES = ['Admin', 'User'];
+    if (KNOWN_ROLES.indexOf(tokenData.r) === -1) {
+      return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
+    }
+
+    // ── role gate: Admin-only actions ──
+    var ADMIN_ONLY = ['kpi-write'];
+    if (ADMIN_ONLY.indexOf(action) !== -1 && tokenData.r !== 'Admin') {
+      return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
+    }
+
+    if (action === 'change-password') {
+      if (!body.oldPassword || !body.newPassword) throw new Error('Thiếu thông tin đổi mật khẩu.');
+      changePassword(tokenData, body.oldPassword, body.newPassword);
+      auditLog(tokenData, 'change-password', 'password updated');
+      return _jsonResponse({ status: 'ok' });
+    }
+
     if (action === 'read') {
-      var values = sheetRead();
-      return _jsonResponse({ status: 'ok', values: values });
+      var result = sheetRead();
+      return _jsonResponse({ status: 'ok', values: result.values, serverTs: result.serverTs });
     }
 
     if (action === 'write') {
       if (!body.values || !Array.isArray(body.values) || body.values.length < 2) {
         throw new Error('Payload write thiếu hoặc rỗng.');
       }
-      sheetWrite(body.values);
+      sheetWrite(body.values, body.clientTs);
+      auditLog(tokenData, 'task-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -66,6 +86,7 @@ function doPost(e) {
         throw new Error('kpi-write: thiếu values.');
       }
       kpiSheetWrite(body.values);
+      auditLog(tokenData, 'kpi-write', (body.values.length) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -82,6 +103,7 @@ function doPost(e) {
         throw new Error('initiative-write: thiếu values.');
       }
       initiativeWrite(body.values);
+      auditLog(tokenData, 'initiative-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
 

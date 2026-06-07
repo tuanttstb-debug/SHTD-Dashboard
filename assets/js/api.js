@@ -31,6 +31,7 @@ async function readFromHandle() {
   const json = await gasPost({ action: 'read' });
   if (json.status !== 'ok') throw new Error('Lỗi đọc: ' + (json.error || 'unknown'));
   _parseArrayIntoDb(json.values);
+  if (json.serverTs) db._serverTs = json.serverTs;
   persist();
   return true;
 }
@@ -43,7 +44,9 @@ async function writeToHandle() {
     throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng lên Sheet (0 task). Thao tác đã bị hủy để bảo vệ dữ liệu.');
   }
   const values = [DB_COLS, ...db.tasks.map(taskToRow)];
-  const json = await gasPost({ action: 'write', values });
+  const body   = { action: 'write', values };
+  if (db._serverTs) body.clientTs = db._serverTs;
+  const json = await gasPost(body);
   if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
 }
 
@@ -70,6 +73,7 @@ async function syncAction(action) {
           _parseArrayIntoDb(json.values);
           serverTasks = tempDb.tasks;
           db = savedDb;
+          if (json.serverTs) db._serverTs = json.serverTs;
         }
       } catch (readErr) {
         console.warn('syncAction: không đọc được Sheet, fallback full-write:', readErr.message);
@@ -98,7 +102,9 @@ async function syncAction(action) {
       });
 
       showLoading('Đang ghi dữ liệu lên Sheet…');
-      const values = [DB_COLS, ...merged.map(taskToRow)];
+      const values    = [DB_COLS, ...merged.map(taskToRow)];
+      const writeBody = { action: 'write', values };
+      if (db._serverTs) writeBody.clientTs = db._serverTs;
 
       if (merged.length === 0 && serverTasks.length > 0) {
         const ok = await uiConfirm(
@@ -116,7 +122,7 @@ async function syncAction(action) {
         }
       }
 
-      const json = await gasPost({ action: 'write', values });
+      const json = await gasPost(writeBody);
       if (json.status !== 'ok') throw new Error('Lỗi ghi: ' + (json.error || 'unknown'));
 
       db.tasks = merged;
@@ -131,6 +137,13 @@ async function syncAction(action) {
     return true;
 
   } catch(e) {
+    if (e.message === 'VERSION_CONFLICT' || (e.message && e.message.includes('VERSION_CONFLICT'))) {
+      toast('⚠️ Dữ liệu vừa được cập nhật bởi người khác. Đang tải lại dữ liệu mới nhất…', 'warning', 6000);
+      try { await readFromHandle(); renderAll(); } catch(_) {}
+      hideLoading();
+      document.getElementById('syncDot').className = 'status-dot connected';
+      return false;
+    }
     try {
       const cached = localStorage.getItem('shtd_v2');
       if (cached) {

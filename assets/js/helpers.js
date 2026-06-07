@@ -1,3 +1,6 @@
+const esc  = s => (s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'));
+const _esc = esc;
+
 const picNorm = n => { const s = (n||'').toString().trim(); return s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : ''; };
 
 const fmtDate = d => { if (!d) return '–'; const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };

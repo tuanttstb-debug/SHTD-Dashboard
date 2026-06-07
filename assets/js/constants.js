@@ -1,5 +1,5 @@
 // ── App state ──
-let db = { tasks: [], initiatives: [] };
+let db = { tasks: [], initiatives: [], _serverTs: null };
 let sort = { key: 'endDate', dir: 'asc' };
 let perfTab = 'initiative';
 let fileHandle = null;
@@ -14,6 +14,7 @@ let debounceTimer = null;
 
 // ── Google Apps Script config ──
 const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzzezX0qvu73U7EBrsj7VeBoPbzg6edLNt818-pzlle2Gx2xfB-NQuxJYfx3jGHRcc/exec';
+// GS_WEBAPP_URL is defined in assets/js/config.js (deployment config)
 const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
 const GS_RANGE      = 'Task_Master!A1:W';
 

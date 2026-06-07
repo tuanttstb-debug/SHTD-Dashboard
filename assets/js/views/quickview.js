@@ -165,22 +165,22 @@ function _qvRenderDone(tasks) {
         <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;">
           <div class="qvp-done-check"><i class="fa-solid fa-check"></i></div>
           <div style="flex:1;min-width:0;">
-            <div class="qvp-card-id">${t.id}</div>
-            <div class="qvp-card-name">${t.name}</div>
+            <div class="qvp-card-id">${esc(t.id)}</div>
+            <div class="qvp-card-name">${esc(t.name)}</div>
           </div>
         </div>
         <div class="qvp-card-badges">${_qvRagBadge(t.status)}</div>
       </div>
       <div class="qvp-card-meta">
-        ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${t.initiative}</span>` : ''}
-        ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
-        ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+        ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${esc(t.initiative)}</span>` : ''}
+        ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${esc(t.team)}</span>` : ''}
+        ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${esc(t.picRes)}</span>` : ''}
         ${t.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar-check"></i>Xong: ${_qvFmtDate(t.endDate)}</span>` : ''}
-        ${t.tuanBC ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${t.tuanBC}</span>` : ''}
+        ${t.tuanBC ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${esc(t.tuanBC)}</span>` : ''}
       </div>
       ${(t.result||'').trim() ? `
         <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:12px;color:var(--text-2);line-height:1.5;">
-          <i class="fa-solid fa-quote-left" style="opacity:.3;margin-right:4px;font-size:10px;"></i>${t.result}
+          <i class="fa-solid fa-quote-left" style="opacity:.3;margin-right:4px;font-size:10px;"></i>${esc(t.result)}
         </div>` : ''}
       <div class="qvp-prog">
         <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:100%;background:var(--success);"></div></div>
@@ -233,8 +233,8 @@ function _qvRenderPlan(tasks) {
       <div class="qvp-card qvp-plan-card ${_qvRagCls(t.status)}" onclick="_qvOpenTask('${t.id}')">
         <div class="qvp-card-top">
           <div style="flex:1;min-width:0;">
-            <div class="qvp-card-id">${t.id}</div>
-            <div class="qvp-card-name">${t.name}</div>
+            <div class="qvp-card-id">${esc(t.id)}</div>
+            <div class="qvp-card-name">${esc(t.name)}</div>
           </div>
           <div class="qvp-card-badges" style="flex-direction:column;align-items:flex-end;gap:4px;">
             ${_qvStateChip(t.state)}
@@ -242,15 +242,15 @@ function _qvRenderPlan(tasks) {
           </div>
         </div>
         <div class="qvp-card-meta">
-          ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${t.initiative}</span>` : ''}
-          ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
-          ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+          ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${esc(t.initiative)}</span>` : ''}
+          ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${esc(t.team)}</span>` : ''}
+          ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${esc(t.picRes)}</span>` : ''}
           ${t.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar"></i>Deadline: ${_qvFmtDate(t.endDate)}</span>` : ''}
         </div>
         ${(t.nextPlan||'').trim() ? `
           <div class="qvp-plan-content">
             <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);display:block;margin-bottom:4px;">Kế hoạch tuần tới</span>
-            ${t.nextPlan}
+            ${esc(t.nextPlan)}
           </div>` : ''}
         <div class="qvp-prog">
           <div class="qvp-prog-bar">
@@ -328,8 +328,8 @@ function _qvRenderInitiative(tasks, filterInit) {
         <div class="qvp-card ${_qvRagCls(t.status)}" onclick="_qvOpenTask('${t.id}')" style="margin-left:${singleMode?0:12}px;">
           <div class="qvp-card-top">
             <div style="flex:1;min-width:0;">
-              <div class="qvp-card-id">${t.id}</div>
-              <div class="qvp-card-name">${t.name}</div>
+              <div class="qvp-card-id">${esc(t.id)}</div>
+              <div class="qvp-card-name">${esc(t.name)}</div>
             </div>
             <div class="qvp-card-badges" style="flex-direction:column;align-items:flex-end;gap:3px;">
               ${_qvStateChip(t.state)}
@@ -337,13 +337,13 @@ function _qvRenderInitiative(tasks, filterInit) {
             </div>
           </div>
           <div class="qvp-card-meta">
-            ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
-            ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+            ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${esc(t.team)}</span>` : ''}
+            ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${esc(t.picRes)}</span>` : ''}
             <span class="qvp-card-meta-item" ${isOverdueTask?'style="color:var(--danger);font-weight:700;"':''}>
               <i class="fa-solid fa-${isOverdueTask?'triangle-exclamation':'calendar'}"></i>
               ${isOverdueTask?'⚠️ Quá hạn: ':'Deadline: '}${_qvFmtDate(t.endDate)}
             </span>
-            ${t.milestone ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:3px;color:var(--primary);font-weight:700;"><i class="fa-solid fa-flag-checkered"></i>${t.milestone}</span>` : ''}
+            ${t.milestone ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:3px;color:var(--primary);font-weight:700;"><i class="fa-solid fa-flag-checkered"></i>${esc(t.milestone)}</span>` : ''}
           </div>
           <div class="qvp-prog">
             <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:${t.progress}%;"></div></div>
@@ -401,33 +401,33 @@ function _qvRenderIssue(tasks) {
     <div class="qvp-card qvp-issue-card rag-issue" onclick="_qvOpenTask('${t.id}')">
       <div class="qvp-card-top">
         <div style="flex:1;min-width:0;">
-          <div class="qvp-card-id">${t.id}</div>
-          <div class="qvp-card-name">${t.name}</div>
+          <div class="qvp-card-id">${esc(t.id)}</div>
+          <div class="qvp-card-name">${esc(t.name)}</div>
         </div>
         <div class="qvp-card-badges" style="flex-direction:column;align-items:flex-end;gap:3px;">
           ${flags.join('')}
         </div>
       </div>
       <div class="qvp-card-meta">
-        ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${t.initiative}</span>` : ''}
-        ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${t.team}</span>` : ''}
-        ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${t.picRes}</span>` : ''}
+        ${t.initiative ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-layer-group"></i>${esc(t.initiative)}</span>` : ''}
+        ${t.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${esc(t.team)}</span>` : ''}
+        ${t.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${esc(t.picRes)}</span>` : ''}
         ${t.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar"></i>${_qvFmtDate(t.endDate)}</span>` : ''}
-        ${t.tuanBC  ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${t.tuanBC}</span>` : ''}
+        ${t.tuanBC  ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${esc(t.tuanBC)}</span>` : ''}
       </div>
       ${(t.vuongMac||'').trim() ? `
         <div class="qvp-issue-text">
           <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--info);display:block;margin-bottom:4px;">
             <i class="fa-solid fa-triangle-exclamation" style="margin-right:3px;"></i>Vướng mắc / Rủi ro
           </span>
-          ${t.vuongMac}
+          ${esc(t.vuongMac)}
         </div>` : ''}
       ${(t.noiDungBLD||'').trim() ? `
         <div class="qvp-issue-text" style="border-top-color:var(--warning);margin-top:${(t.vuongMac||'').trim()?'8px':'0'};">
           <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--warning);display:block;margin-bottom:4px;">
             <i class="fa-solid fa-bell" style="margin-right:3px;"></i>Nội dung cần BLĐ quyết
           </span>
-          ${t.noiDungBLD}
+          ${esc(t.noiDungBLD)}
         </div>` : ''}
       <div class="qvp-prog" style="margin-top:10px;">
         <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:${t.progress}%;background:${t.state==='Blocked'?'var(--danger)':'var(--warning)'};"></div></div>
