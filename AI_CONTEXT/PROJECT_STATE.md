@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-06 (Session 8 — Auth login system deployed)
+**As of**: 2026-06-08 (Session 9 — Phase 0 security + Phase 1 complete)
 **Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `a9ad88d`
-**Remote HEAD**: `a9ad88d` (in sync)
+**Local HEAD**: `5b165e2`
+**Remote HEAD**: `5b165e2` (in sync)
 
 ---
 
@@ -12,14 +12,16 @@
 |---|---|---|
 | `index.html` | ~791 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
-| `backend/Code.gs` | 89 | ✅ `doPost()` router — auth-login + token gate + task/KPI/initiative routes |
+| `backend/Code.gs` | ~115 | ✅ Router — RBAC gates, change-password, serverTs on read, clientTs on write, auditLog hooks |
 | `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
-| `backend/AuthService.gs` | 132 | ✅ NEW — SHA-256 hash, HMAC token, authLogin(), validateToken(), setupInitialUsers() |
-| `backend/SheetService.gs` | 48 | ✅ `sheetRead()` / `sheetWrite()` for Task_Master |
+| `backend/AuthService.gs` | ~165 | ✅ authLogin(), validateToken(), changePassword(), setupInitialUsers(); no hardcoded fallback |
+| `backend/SheetService.gs` | ~65 | ✅ sheetRead() returns {values,serverTs}; sheetWrite() VERSION_CONFLICT check via Script Properties |
+| `backend/AuditService.gs` | 32 | ✅ NEW (Session 9) — auditLog() appends to Audit_Log sheet |
 | `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — deployed + tested |
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
-| `assets/css/` | 12 files | ✅ + `initiative.css` + `auth.css` |
-| `assets/js/` | 28 modules | ✅ + `initiatives.js`, `views/initiative-tracker.js`, `auth.js` |
+| `assets/js/config.js` | 5 | ✅ NEW (Session 9) — GS_WEBAPP_URL deployment variable; update on every GAS redeploy |
+| `assets/css/` | 12 files | ✅ + `initiative.css` + `auth.css` (now includes admin-only RBAC rule) |
+| `assets/js/` | 29 modules | ✅ + `initiatives.js`, `views/initiative-tracker.js`, `auth.js`, `config.js` |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -58,6 +60,10 @@
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
 | **Login / Auth** | ✅ | Login screen overlay; HMAC-SHA256 token 24h; User_Master GG Sheet; gasPost() auto-injects token |
+| **Role-based UI** | ✅ | Admin sees delete buttons; User role hides bulk-delete + modal delete via CSS .admin-only |
+| **Audit Trail** | ✅ | Audit_Log sheet tab; every write (task/kpi/initiative/password) logged with user + timestamp |
+| **Change Password** | ✅ | User-pill dropdown → modal; 6-char min; GAS validates old password before writing new hash |
+| **Optimistic Locking** | ✅ | VERSION_CONFLICT on concurrent task writes; client re-reads from server on conflict |
 | Mobile sidebar | ✅ | Slide-in overlay; hamburger always visible (fixed session 7) |
 | Mobile layout (general) | ⚠️ | Topbar hamburger fixed. Filter bar/toolbar/Gantt still in backlog (Phase D) |
 | Keyboard shortcuts | ✅ | Ctrl+N, Ctrl+D, Ctrl+B, G+x, Q, G+K (KPI Overview) |
@@ -68,14 +74,17 @@
 ## Architecture State
 
 ```
-CURRENT (Phase B + E + F + KPI pipeline complete)
-────────────────────────────────────────────────
-index.html (~791 lines — HTML only)
+CURRENT (Phase 0 security + Phase 1 complete — Session 9)
+──────────────────────────────────────────────────────────
+index.html (~793 lines — HTML only)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
         forms.css, table.css, gantt.css, quickview.css,
-        responsive.css, kpi.css, initiative.css
-  js/   constants.js, helpers.js, storage.js, parsers.js, api.js
+        responsive.css, kpi.css, initiative.css, auth.css
+  js/   config.js          ← GS_WEBAPP_URL (update on each GAS redeploy)
+        constants.js, helpers.js (+ esc()/_esc alias), storage.js, parsers.js
+        api.js (+ serverTs/clientTs optimistic locking)
+        auth.js (+ applyUserToUI data-role, changePw modal)
         ui/toast.js, ui/modal.js, ui/theme.js, ui/navigation.js
         crud.js, bulk.js
         views/dashboard.js, views/tasks.js, views/gantt.js,
@@ -89,19 +98,21 @@ assets/
         views/owner-analysis.js
         views/branch-analysis.js
         views/rm-analysis.js
-        views/initiative-tracker.js
+        views/initiative-tracker.js (uses global esc(), not local _esc)
         initiatives.js
         app.js
 backend/
-  Code.gs            ← task + KPI routes
+  Code.gs            ← RBAC gates + audit hooks + serverTs + change-password
   Config.gs
-  SheetService.gs
+  AuthService.gs     ← no hardcoded fallback; changePassword() added
+  SheetService.gs    ← optimistic locking (TASK_WRITE_TS Script Property)
+  AuditService.gs    ← NEW Session 9 — Audit_Log sheet
   KpiSheetService.gs ← DEPLOYED + tested
   InitiativeService.gs ← DEPLOYED (15 cols)
   GAS.GS             ← archived patch v6.2
 verify_initiative_v2.mjs ← 37/37 PASS Playwright suite
-verify_kpi_views.mjs     ← NEW session 7 — 3/3 PASS
-verify_mobile.mjs        ← NEW session 7 — 4/4 PASS (mobile topbar)
+verify_kpi_views.mjs     ← 3/3 PASS (session 7)
+verify_mobile.mjs        ← 4/4 PASS (session 7)
 ```
 
 ---
@@ -110,7 +121,7 @@ verify_mobile.mjs        ← NEW session 7 — 4/4 PASS (mobile topbar)
 
 | Config | Value |
 |---|---|
-| `GS_WEBAPP_URL` | Updated — new GAS deployment (session 8); Auth + Initiative + KPI routes active |
+| `GS_WEBAPP_URL` | **In `assets/js/config.js`** (moved from constants.js Session 9); current: `AKfycbyld2038CH86TP-...` |
 | Initiative backend | ✅ Deployed (15 cols, InitiativeService.gs) — Sync button should work |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | `GS_RANGE` | `Task_Master!A1:W` |
