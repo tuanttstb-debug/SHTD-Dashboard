@@ -121,6 +121,15 @@ None. Phase 0 and Phase 1 complete. Production deployed and verified by PO.
 
 ---
 
+## Deployment URLs
+
+| Environment | URL | Branch |
+|---|---|---|
+| Testing | https://test-shtd.netlify.app | `master` (Netlify auto-deploy) |
+| Production | GitHub Pages | `main` |
+
+---
+
 ## Next Session — Phase 2: AI Chat (Gemini)
 
 **Prerequisite**: Gemini API key stored in GAS Script Properties as `GEMINI_API_KEY` before coding starts.

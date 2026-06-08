@@ -148,7 +148,11 @@ verify_mobile.mjs        ← 4/4 PASS (session 7)
 
 ## Deployment
 
-- **Platform**: GitHub Pages (static)
-- **Serve method**: `index.html` + `assets/` folder
-- **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
+| Environment | URL | Branch | Platform |
+|---|---|---|---|
+| **Testing** | https://test-shtd.netlify.app | `master` | Netlify (auto-deploy on push) |
+| **Production** | GitHub Pages URL | `main` | GitHub Pages |
+
 - **No build step** — direct file edit → commit → push → deploy
+- **Workflow**: develop on `master` → verify at test-shtd.netlify.app → merge to `main` for production
+- **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
