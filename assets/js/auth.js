@@ -39,6 +39,7 @@ function isAdmin() {
 async function gasPost(body) {
   const session = getAuthSession();
   // TEMP DBG — remove before merge to main
+  window._lastGasToken = session ? session.token : null; // survives doLogout()
   console.log('[DBG] gasPost action=' + body.action + ' | token=' + (session ? session.token.substring(0, 25) + '...' : 'NULL'));
   const payload = Object.assign({}, body, { token: session ? session.token : '' });
   const res = await fetch(GS_WEBAPP_URL, {
