@@ -116,6 +116,7 @@ async function handleLogin() {
     await startApp();
   } catch (e) {
     _setLoginError(e.message);
+  } finally {
     btn.disabled  = false;
     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập';
   }

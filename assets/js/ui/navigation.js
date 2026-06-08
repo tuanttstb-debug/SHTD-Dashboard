@@ -52,7 +52,7 @@ function setupListeners() {
 
     if (e.key === 'g' && !inInput) { gKey = 'g'; return; }
     if (gKey === 'g' && !inInput) {
-      const map = { d:'dashboard', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview' };
+      const map = { d:'dashboard', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
       if (map[e.key]) navigateTo(map[e.key]);
       gKey = null;
     }
@@ -90,6 +90,7 @@ function navigateTo(view) {
     'branch-analysis':'Branch Analysis – Theo chi nhánh',
     'rm-analysis':'RM Analysis – Theo Relationship Manager',
     'initiative-tracker':'Theo dõi Initiative',
+    'ai-chat':'AI Assistant – Trợ lý thông minh',
   };
   document.getElementById('pageTitle').textContent = titles[view] || view;
   if (view === 'gantt')                renderGantt();
@@ -101,6 +102,7 @@ function navigateTo(view) {
   if (view === 'branch-analysis')      renderBranchAnalysis();
   if (view === 'rm-analysis')          renderRmAnalysis();
   if (view === 'initiative-tracker')   renderInitiativeTracker();
+  if (view === 'ai-chat')              renderAiChat();
   closeSidebar();
 }
 

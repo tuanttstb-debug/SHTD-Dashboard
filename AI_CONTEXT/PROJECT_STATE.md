@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-08 (Session 9 — Phase 0 security + Phase 1 complete)
-**Version in index.html**: v6.2 (patches applied)
-**Local HEAD**: `5b165e2`
-**Remote HEAD**: `5b165e2` (in sync)
+**As of**: 2026-06-08 (Session 12 — AI Chat model fix)
+**Version in index.html**: v6.2
+**Remote HEAD (master)**: `364a884`
+**main branch HEAD**: `5b165e2` ← NOT updated — merge only after PO confirms Netlify
 
 ---
 
@@ -12,7 +12,8 @@
 |---|---|---|
 | `index.html` | ~791 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
-| `backend/Code.gs` | ~115 | ✅ Router — RBAC gates, change-password, serverTs on read, clientTs on write, auditLog hooks |
+| `backend/AiService.gs` | ~75 | ⚠️ Session 12 — model updated to `gemini-2.5-flash`; **GAS redeploy + GEMINI_API_KEY Script Property update pending** |
+| `backend/Code.gs` | ~120 | ✅ ai-chat route; KNOWN_ROLES=['Admin','User','Teamlead']; debug-auth removed |
 | `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
 | `backend/AuthService.gs` | ~165 | ✅ authLogin(), validateToken(), changePassword(), setupInitialUsers(); no hardcoded fallback |
 | `backend/SheetService.gs` | ~65 | ✅ sheetRead() returns {values,serverTs}; sheetWrite() VERSION_CONFLICT check via Script Properties |
@@ -59,7 +60,8 @@
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
-| **Login / Auth** | ✅ | Login screen overlay; HMAC-SHA256 token 24h; User_Master GG Sheet; gasPost() auto-injects token |
+| **Login / Auth** | ✅ | Fixed Session 11 — KNOWN_ROLES was missing 'Teamlead' role |
+| **AI Assistant** | ⚠️ | Frontend complete; `gemini-2.5-flash` in repo (Session 12); blocked on GAS redeploy + GEMINI_API_KEY Script Property update |
 | **Role-based UI** | ✅ | Admin sees delete buttons; User role hides bulk-delete + modal delete via CSS .admin-only |
 | **Audit Trail** | ✅ | Audit_Log sheet tab; every write (task/kpi/initiative/password) logged with user + timestamp |
 | **Change Password** | ✅ | User-pill dropdown → modal; 6-char min; GAS validates old password before writing new hash |
@@ -148,7 +150,11 @@ verify_mobile.mjs        ← 4/4 PASS (session 7)
 
 ## Deployment
 
-- **Platform**: GitHub Pages (static)
-- **Serve method**: `index.html` + `assets/` folder
-- **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
+| Environment | URL | Branch | Platform |
+|---|---|---|---|
+| **Testing** | https://test-shtd.netlify.app | `master` | Netlify (auto-deploy on push) |
+| **Production** | GitHub Pages URL | `main` | GitHub Pages |
+
 - **No build step** — direct file edit → commit → push → deploy
+- **Workflow**: develop on `master` → verify at test-shtd.netlify.app → merge to `main` for production
+- **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono

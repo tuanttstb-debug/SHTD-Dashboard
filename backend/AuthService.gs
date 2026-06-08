@@ -25,7 +25,9 @@ function _hmacHex(payload) {
 function _makeToken(u, dn, r, t) {
   var exp     = Date.now() + 24 * 60 * 60 * 1000;
   var payload = JSON.stringify({ u: u, dn: dn, r: r, t: t, exp: exp });
-  var b64     = Utilities.base64Encode(payload, Utilities.Charset.UTF_8);
+  // Utilities.base64Encode produces MIME base64 with \n every 76 chars.
+  // Strip line breaks so the token is a clean single-line string.
+  var b64     = Utilities.base64Encode(payload, Utilities.Charset.UTF_8).replace(/[\r\n]/g, '');
   return b64 + '.' + _hmacHex(payload);
 }
 
@@ -38,7 +40,9 @@ function validateToken(token) {
   try {
     var parts = String(token).split('.');
     if (parts.length !== 2) return null;
-    var payload = Utilities.newBlob(Utilities.base64Decode(parts[0])).getDataAsString();
+    // Strip any line breaks that may have been inserted by base64Encode (MIME format)
+    // or introduced by older tokens stored in localStorage.
+    var payload = Utilities.newBlob(Utilities.base64Decode(parts[0].replace(/[\r\n]/g, ''))).getDataAsString();
     if (_hmacHex(payload) !== parts[1]) return null;
     var data = JSON.parse(payload);
     if (!data.exp || Date.now() > data.exp) return null;

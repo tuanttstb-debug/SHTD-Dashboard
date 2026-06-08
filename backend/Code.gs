@@ -49,7 +49,7 @@ function doPost(e) {
     }
 
     // ── role gate: reject unknown roles ──
-    var KNOWN_ROLES = ['Admin', 'User'];
+    var KNOWN_ROLES = ['Admin', 'User', 'Teamlead'];
     if (KNOWN_ROLES.indexOf(tokenData.r) === -1) {
       return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
     }
@@ -105,6 +105,14 @@ function doPost(e) {
       initiativeWrite(body.values);
       auditLog(tokenData, 'initiative-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'ai-chat') {
+      if (!body.message) throw new Error('ai-chat: thiếu message.');
+      var aiContext = buildContext(tokenData);
+      var aiHistory = Array.isArray(body.history) ? body.history : [];
+      var aiReply = callGemini(aiContext, aiHistory, body.message);
+      return _jsonResponse({ status: 'ok', reply: aiReply });
     }
 
     throw new Error('action không hợp lệ: ' + action);

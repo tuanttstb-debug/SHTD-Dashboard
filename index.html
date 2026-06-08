@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="assets/css/kpi.css">
 <link rel="stylesheet" href="assets/css/initiative.css">
 <link rel="stylesheet" href="assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/ai-chat.css">
 
 </head>
 <body>
@@ -124,6 +125,11 @@
       <div class="nav-item" data-view="rm-analysis">
         <i class="fa-solid fa-people-arrows nav-icon"></i>
         <span class="nav-label">RM Analysis</span>
+      </div>
+      <div class="nav-section-label">Trợ lý</div>
+      <div class="nav-item" data-view="ai-chat">
+        <i class="fa-solid fa-robot nav-icon"></i>
+        <span class="nav-label">AI Assistant</span>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -463,6 +469,11 @@
       <div id="initiativeTrackerRoot"></div>
     </section>
 
+    <!-- ===== AI CHAT ===== -->
+    <section class="view-section" id="view-ai-chat" style="display:none;">
+      <div id="aiChatRoot"></div>
+    </section>
+
   </div>
 
   <!-- STATUS BAR -->
@@ -722,6 +733,7 @@
         <div class="kb-row"><span class="kb-desc">Đến Task list</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">T</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Timeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">G</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Performance</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">P</span></div></div>
+        <div class="kb-row"><span class="kb-desc">Đến AI Assistant</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">A</span></div></div>
       </div>
     </div>
   </div>
@@ -757,6 +769,7 @@
 <script src="assets/js/views/rm-analysis.js"></script>
 <script src="assets/js/initiatives.js"></script>
 <script src="assets/js/views/initiative-tracker.js"></script>
+<script src="assets/js/views/ai-chat.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
