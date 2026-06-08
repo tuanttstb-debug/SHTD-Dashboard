@@ -293,8 +293,32 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-028: TEMP debug-auth Endpoint in Code.gs
+**Rating**: 🔴 CRITICAL (security)
+**Added**: 2026-06-08 (Session 10)
+
+**Issue**: `if (action === 'debug-auth')` block placed BEFORE `validateToken` in `doPost`. Returns `hasSecret`, `secretLen`, and token round-trip result with no authentication required.
+
+**Impact**: Anyone with the GAS URL can confirm whether AUTH_SECRET is set and whether validateToken works. Low data exposure but violates zero-trust principle for internal tools.
+
+**Fix**: Remove the entire `// ── TEMP DEBUG ──` block from `backend/Code.gs`, redeploy. Do NOT merge `master → main` until this is removed.
+
+---
+
+## TD-029: TEMP Debug Log in api.js readFromHandle
+**Rating**: 🟡 MEDIUM
+**Added**: 2026-06-08 (Session 10)
+
+**Issue**: `console.log('[DBG] session khi gọi read:', ...)` in `readFromHandle()` logs the first 30 chars of the auth token to the browser console.
+
+**Impact**: Token prefix visible in DevTools to anyone with browser access. Low risk for internal tool, but not production-safe.
+
+**Fix**: Remove the `const _dbgSess` and `console.log('[DBG]...')` lines from `assets/js/api.js`. Commit as "fix: remove debug scaffolding".
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-08 (Session 9)
+**Last updated**: 2026-06-08 (Session 10)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -331,3 +355,5 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | AUTH-04 | ⚪ | No session invalidation on password change | Small | Open — stateless tokens, 24h window |
 | SEC-01 | ⚪ | onclick attributes with IDs not JSON-escaped | Tiny | Open — low risk, IDs are format-controlled |
 | TD-027 | 🟢 | Initiative writes not covered by optimistic locking | Small | Open — acceptable until multi-user initiative editing needed |
+| TD-028 | 🔴 | TEMP debug-auth endpoint in Code.gs — unauthenticated | Tiny | **MUST remove before `main` merge** |
+| TD-029 | 🟡 | TEMP [DBG] token log in api.js readFromHandle | Tiny | **MUST remove before `main` merge** |

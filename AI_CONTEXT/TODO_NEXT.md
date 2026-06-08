@@ -1,29 +1,54 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-08 (Session 9 — Phase 0 + Phase 1 complete)
-**Context**: Phase 0 security hardening done. Phase 1 RBAC/Audit/ChangePw/Locking done. Phase 2 AI Chat is next.
+**Prepared**: 2026-06-08 (Session 10 — Phase 2 complete, AUTH blocker active)
+**Context**: Phase 2 AI Chat code pushed to master. AUTH system broken — GAS returns AUTH_REQUIRED for all post-login calls. Must resolve before any other work.
 
 ---
 
-## GAS Deploy Checklist
+## 🔴 PRIORITY 0 — Resolve AUTH Blocker (do this FIRST)
+
+### Step 1 — Read [DBG] log from Netlify
+1. Open https://test-shtd.netlify.app → F12 → Console → log in
+2. Find line: `[DBG] session khi gọi read:`
+3. Report result:
+   - `token=eyJ...` → token exists, GAS rejecting it → GAS-side issue
+   - `NULL` → session cleared before read → race condition
+
+### Step 2A — If token=eyJ... (GAS rejecting valid token)
+Deploy fresh Code.gs to GAS (WITH debug-auth endpoint, WITHOUT changing anything else):
+1. Copy `backend/Code.gs` from repo → paste into Apps Script → Save → **New version deploy**
+2. In browser console: `fetch(GS_WEBAPP_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'debug-auth',token:''})}).then(r=>r.json()).then(d=>console.log(JSON.stringify(d)))`
+3. Expected: `{"status":"ok","hasSecret":true,"secretLen":32,"roundtrip":"PASS"}`
+4. If `roundtrip: "FAIL"` → AUTH_SECRET mismatch → reset AUTH_SECRET and re-run `setupInitialUsers()`
+
+### Step 2B — If NULL (race condition)
+The issue is `autoConnectDB` calling `doLogout()` which clears the session before `readInitiatives` runs.
+Fix: add guard in `gasPost()` — do not call `doLogout()` if `startApp` is still initializing.
+
+### Step 3 — After auth is fixed
+- Remove TEMP `debug-auth` block from `backend/Code.gs`
+- Remove TEMP `[DBG]` log from `assets/js/api.js`
+- Commit as "fix: remove debug scaffolding"
+
+---
+
+## GAS Deploy Checklist (Session 10 state)
 
 | File | Status |
 |---|---|
-| `backend/AuthService.gs` | ✅ Deployed (Session 9 — changePassword, no fallback) |
-| `backend/Code.gs` | ✅ Deployed (Session 9 — RBAC, change-password, serverTs, auditLog) |
-| `backend/SheetService.gs` | ✅ Deployed (Session 9 — optimistic locking) |
-| `backend/AuditService.gs` | ✅ Deployed (Session 9 — Audit_Log) |
-| `backend/InitiativeService.gs` | ✅ Deployed + tested |
-| `backend/KpiSheetService.gs` | ✅ Deployed + tested |
+| `backend/AuthService.gs` | ✅ Deployed (Session 9) |
+| `backend/Code.gs` | ⚠️ UNCERTAIN — debug-auth version may or may not be deployed |
+| `backend/SheetService.gs` | ✅ Deployed (Session 9) |
+| `backend/AuditService.gs` | ✅ Deployed (Session 9) |
+| `backend/AiService.gs` | ❌ NEW — NOT YET DEPLOYED (must deploy for ai-chat to work) |
+| `backend/InitiativeService.gs` | ✅ Deployed (Session 9) |
+| `backend/KpiSheetService.gs` | ✅ Deployed (Session 9) |
 
----
-
-## PREREQUISITE Before Phase 2 Coding Starts
-
-**Set `GEMINI_API_KEY` in GAS Script Properties** (Extensions → Apps Script → Project Settings → Script Properties).
-
-Get free key from Google AI Studio: https://aistudio.google.com/app/apikey
-
-Confirm key is set before asking the AI assistant to write `AiService.gs`.
+**Script Properties required:**
+| Key | Value |
+|---|---|
+| `AUTH_SECRET` | `SHTD@2026#SecretKey!XyZ123456789` |
+| `GEMINI_API_KEY` | (stored in GAS Script Properties only — not in repo) |
+| `TASK_WRITE_TS` | Auto-created on first task write |
 
 ---
 
