@@ -318,7 +318,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-08 (Session 11)
+**Last updated**: 2026-06-08 (Session 12 — no new debt)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|

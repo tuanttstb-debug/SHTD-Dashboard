@@ -1,18 +1,19 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-08 (Session 11 — AUTH resolved)
-**Context**: Auth blocker fully resolved. All features on master work. Ready for Phase 2 AI Chat completion and pre-merge verification.
+**Prepared**: 2026-06-08 (Session 12 — AI Chat model fix)
+**Context**: Auth OK. AI Chat code updated (`gemini-2.5-flash`). Blocked on GAS manual redeploy + correct API key in Script Properties.
 
 ---
 
-## 🔴 PRIORITY 0 — Deploy AiService.gs to GAS
+## 🔴 PRIORITY 0 — Update GAS Script Properties + Redeploy AiService.gs
 
-AI Chat route is live in Code.gs but `buildContext()` and `callGemini()` are in `AiService.gs` which has never been deployed. Until deployed, clicking AI Chat returns an error from GAS.
+Model fixed in repo (`gemini-2.5-flash`). GAS editor still has old code + old/invalid key.
 
 **Steps:**
-1. Copy `backend/AiService.gs` from repo → paste as new file in GAS project → Save
-2. Deploy → Manage deployments → New version (same URL)
-3. Test AI Chat on Netlify: type a question about tasks/KPIs
-4. Verify `GEMINI_API_KEY` is set in Script Properties
+1. GAS project → **Project Settings → Script Properties** → set `GEMINI_API_KEY` = new valid key (`AQ.xxx` format confirmed working)
+2. GAS editor → open `AiService.gs` → line 58: change `gemini-2.0-flash` → `gemini-2.5-flash`
+3. Save → **Deploy → Manage deployments → New version** (same URL)
+4. Test AI Chat on https://test-shtd.netlify.app — type a question about tasks/KPIs
+5. If slow (>10s): add `thinkingBudget: 0` to `generationConfig` in `callGemini()` to disable thinking mode
 
 ---
 
