@@ -90,7 +90,7 @@ function doPost(e) {
     }
 
     // ── role gate: reject unknown roles ──
-    var KNOWN_ROLES = ['Admin', 'User'];
+    var KNOWN_ROLES = ['Admin', 'User', 'Teamlead'];
     if (KNOWN_ROLES.indexOf(tokenData.r) === -1) {
       return _jsonResponse({ status: 'error', error: 'AUTH_REQUIRED' });
     }
