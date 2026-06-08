@@ -28,6 +28,8 @@ function taskToRow(t) {
 
 async function readFromHandle() {
   if (!GS_WEBAPP_URL) throw new Error('Chưa cấu hình GS_WEBAPP_URL.');
+  const _dbgSess = getAuthSession();
+  console.log('[DBG] session khi gọi read:', _dbgSess ? 'token=' + (_dbgSess.token || '').substring(0,30) + '...' : 'NULL');
   const json = await gasPost({ action: 'read' });
   if (json.status !== 'ok') throw new Error('Lỗi đọc: ' + (json.error || 'unknown'));
   _parseArrayIntoDb(json.values);
