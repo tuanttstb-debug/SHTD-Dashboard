@@ -42,47 +42,6 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', token: loginResult.token, user: loginResult.user });
     }
 
-    // ── TEMP DEBUG — xóa sau khi debug xong ──
-    if (action === 'debug-auth') {
-      var s = PropertiesService.getScriptProperties().getProperty('AUTH_SECRET');
-      var roundtrip = 'UNKNOWN';
-      if (s) {
-        try {
-          var p = '{"u":"TuanTT4","dn":"TuanTT4","r":"Admin","t":"Số","exp":' + (Date.now()+3600000) + '}';
-          var b64 = Utilities.base64Encode(p, Utilities.Charset.UTF_8).replace(/[\r\n]/g, '');
-          var sig = Utilities.computeHmacSha256Signature(p, s, Utilities.Charset.UTF_8);
-          var hmac = sig.map(function(b){return ('0'+(b&0xFF).toString(16)).slice(-2);}).join('');
-          roundtrip = validateToken(b64 + '.' + hmac) ? 'PASS' : 'FAIL';
-        } catch(ex) { roundtrip = 'ERROR:' + ex.message; }
-      }
-
-      // ── Test the actual token sent from the browser ──
-      var ext = null;
-      if (body.externalToken) {
-        var et = String(body.externalToken);
-        var etParts = et.split('.');
-        ext = { len: et.length, newline: et.indexOf('\n') >= 0, parts: etParts.length };
-        if (etParts.length === 2) {
-          ext.b64Len  = etParts[0].length;
-          ext.hmacLen = etParts[1].length;
-          ext.hmacIsHex = /^[0-9a-f]{64}$/.test(etParts[1]);
-          try {
-            var cleanB64   = etParts[0].replace(/[\r\n]/g, '');
-            var decodedStr = Utilities.newBlob(Utilities.base64Decode(cleanB64)).getDataAsString();
-            var expHmac    = _hmacHex(decodedStr);
-            ext.hmacMatch    = (expHmac === etParts[1]);
-            ext.payloadSnip  = decodedStr.substring(0, 60);
-            ext.expHmacFirst8 = expHmac.substring(0, 8);
-            ext.actHmacFirst8 = etParts[1].substring(0, 8);
-          } catch(ex2) { ext.decodeErr = ex2.message; }
-        }
-        ext.validateResult = validateToken(et) ? 'PASS' : 'FAIL';
-      }
-
-      return _jsonResponse({ status:'ok', hasSecret: !!s, secretLen: s ? s.length : 0, roundtrip: roundtrip, ext: ext });
-    }
-    // ── END TEMP DEBUG ──
-
     // ── all other actions: validate token first ──
     var tokenData = validateToken(body.token);
     if (!tokenData) {
