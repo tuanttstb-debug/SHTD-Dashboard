@@ -293,32 +293,32 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
-## TD-028: TEMP debug-auth Endpoint in Code.gs
-**Rating**: 🔴 CRITICAL (security)
-**Added**: 2026-06-08 (Session 10)
+## ~~TD-028: TEMP debug-auth Endpoint in Code.gs~~ ✅ RESOLVED 2026-06-08
 
-**Issue**: `if (action === 'debug-auth')` block placed BEFORE `validateToken` in `doPost`. Returns `hasSecret`, `secretLen`, and token round-trip result with no authentication required.
-
-**Impact**: Anyone with the GAS URL can confirm whether AUTH_SECRET is set and whether validateToken works. Low data exposure but violates zero-trust principle for internal tools.
-
-**Fix**: Remove the entire `// ── TEMP DEBUG ──` block from `backend/Code.gs`, redeploy. Do NOT merge `master → main` until this is removed.
+**Resolution (Session 11, commit `1c828fc`)**: Entire `debug-auth` block removed from `Code.gs`. GAS redeployed. No unauthenticated endpoint remains.
 
 ---
 
-## TD-029: TEMP Debug Log in api.js readFromHandle
-**Rating**: 🟡 MEDIUM
-**Added**: 2026-06-08 (Session 10)
+## ~~TD-029: TEMP Debug Log in api.js readFromHandle~~ ✅ RESOLVED 2026-06-08
 
-**Issue**: `console.log('[DBG] session khi gọi read:', ...)` in `readFromHandle()` logs the first 30 chars of the auth token to the browser console.
+**Resolution (Session 11, commit `1c828fc`)**: `[DBG]` log and `window._lastGasToken` removed from `auth.js`; `[DBG]` log removed from `api.js`. No token-related console output remains.
 
-**Impact**: Token prefix visible in DevTools to anyone with browser access. Low risk for internal tool, but not production-safe.
+---
 
-**Fix**: Remove the `const _dbgSess` and `console.log('[DBG]...')` lines from `assets/js/api.js`. Commit as "fix: remove debug scaffolding".
+## AUTH-05: KNOWN_ROLES Not Validated Against User_Master Sheet
+**Rating**: 🟢 MEDIUM
+**Added**: 2026-06-08 (Session 11)
+
+**Issue**: `KNOWN_ROLES` in `Code.gs` is a hardcoded array. If a user's role in User_Master sheet is set to a value not in this array (e.g. `Teamlead`, `Manager`, `Viewer`), every post-login GAS call silently returns `AUTH_REQUIRED` with no diagnostic message. Root cause of Session 10–11 auth blocker.
+
+**Impact**: Any future role rename in the sheet breaks all affected users immediately with no clear error.
+
+**Fix**: Either (a) validate roles at `setupInitialUsers` / changePassword time, or (b) replace the whitelist with an allowlist check against a Script Property `ALLOWED_ROLES` so it can be updated without code deploy.
 
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-08 (Session 10)
+**Last updated**: 2026-06-08 (Session 11)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -355,5 +355,6 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | AUTH-04 | ⚪ | No session invalidation on password change | Small | Open — stateless tokens, 24h window |
 | SEC-01 | ⚪ | onclick attributes with IDs not JSON-escaped | Tiny | Open — low risk, IDs are format-controlled |
 | TD-027 | 🟢 | Initiative writes not covered by optimistic locking | Small | Open — acceptable until multi-user initiative editing needed |
-| TD-028 | 🔴 | TEMP debug-auth endpoint in Code.gs — unauthenticated | Tiny | **MUST remove before `main` merge** |
-| TD-029 | 🟡 | TEMP [DBG] token log in api.js readFromHandle | Tiny | **MUST remove before `main` merge** |
+| ~~TD-028~~ | ~~🔴~~ | ~~TEMP debug-auth endpoint~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
+| ~~TD-029~~ | ~~🟡~~ | ~~TEMP [DBG] token log in api.js~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
+| AUTH-05 | 🟢 | KNOWN_ROLES hardcoded — role mismatch silently returns AUTH_REQUIRED | Small | Open |

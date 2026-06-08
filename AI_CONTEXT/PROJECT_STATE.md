@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-08 (Session 10 — Phase 2 pushed, AUTH blocker active)
+**As of**: 2026-06-08 (Session 11 — AUTH blocker resolved)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `a40e9b0`
-**main branch HEAD**: `5b165e2` ← NOT updated — do not merge until AUTH blocker resolved
+**Remote HEAD (master)**: `bbc9b07`
+**main branch HEAD**: `5b165e2` ← NOT updated — merge only after PO confirms Netlify
 
 ---
 
@@ -12,8 +12,8 @@
 |---|---|---|
 | `index.html` | ~791 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
-| `backend/AiService.gs` | ~75 | ⚠️ NEW (Session 10) — buildContext() + callGemini(); pushed but GAS deploy unconfirmed |
-| `backend/Code.gs` | ~135 | ⚠️ ai-chat route added; TEMP debug-auth endpoint present — must remove |
+| `backend/AiService.gs` | ~75 | ⚠️ NEW (Session 10) — buildContext() + callGemini(); pushed but **GAS deploy pending** |
+| `backend/Code.gs` | ~120 | ✅ ai-chat route; KNOWN_ROLES=['Admin','User','Teamlead']; debug-auth removed |
 | `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
 | `backend/AuthService.gs` | ~165 | ✅ authLogin(), validateToken(), changePassword(), setupInitialUsers(); no hardcoded fallback |
 | `backend/SheetService.gs` | ~65 | ✅ sheetRead() returns {values,serverTs}; sheetWrite() VERSION_CONFLICT check via Script Properties |
@@ -60,8 +60,8 @@
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
-| **Login / Auth** | 🔴 BROKEN | AUTH_REQUIRED on all post-login GAS calls — under investigation (Session 10) |
-| **AI Assistant** | ⚠️ | Code pushed to master; GAS AiService.gs not confirmed deployed; blocked by auth issue |
+| **Login / Auth** | ✅ | Fixed Session 11 — KNOWN_ROLES was missing 'Teamlead' role |
+| **AI Assistant** | ⚠️ | Frontend complete; blocked on AiService.gs GAS deploy |
 | **Role-based UI** | ✅ | Admin sees delete buttons; User role hides bulk-delete + modal delete via CSS .admin-only |
 | **Audit Trail** | ✅ | Audit_Log sheet tab; every write (task/kpi/initiative/password) logged with user + timestamp |
 | **Change Password** | ✅ | User-pill dropdown → modal; 6-char min; GAS validates old password before writing new hash |

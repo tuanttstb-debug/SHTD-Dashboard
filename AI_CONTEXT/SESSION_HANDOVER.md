@@ -48,6 +48,18 @@ User also updated their own role back to `Admin` in the sheet.
 
 ---
 
+## Files Changed This Session
+
+| File | Change |
+|---|---|
+| `backend/Code.gs` | `KNOWN_ROLES` → added `'Teamlead'`; removed `debug-auth` TEMP block |
+| `backend/AuthService.gs` | base64 `\n` strip (`.replace(/[\r\n]/g,'')`) in `_makeToken` + `validateToken` — was already in deployed GAS; repo now in sync |
+| `assets/js/auth.js` | Removed `[DBG]` logs + `window._lastGasToken` from `gasPost` |
+| `assets/js/api.js` | Removed `[DBG]` session log from `readFromHandle` |
+| `assets/js/initiatives.js` | Added `getAuthSession()` guard — aborts if session cleared before call |
+| `AI_CONTEXT/SESSION_HANDOVER.md` | Updated to Session 11 |
+| `AI_CONTEXT/TODO_NEXT.md` | Updated priorities |
+
 ## GAS Deploy State
 
 | File | Status |
