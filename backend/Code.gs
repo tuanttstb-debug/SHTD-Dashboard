@@ -107,6 +107,14 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    if (action === 'ai-chat') {
+      if (!body.message) throw new Error('ai-chat: thiếu message.');
+      var aiContext = buildContext(tokenData);
+      var aiHistory = Array.isArray(body.history) ? body.history : [];
+      var aiReply = callGemini(aiContext, aiHistory, body.message);
+      return _jsonResponse({ status: 'ok', reply: aiReply });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {
