@@ -48,8 +48,9 @@ function doPost(e) {
       var result = 'UNKNOWN';
       if (s) {
         try {
-          var p = '{"u":"t","r":"Admin","exp":' + (Date.now()+3600000) + '}';
-          var b64 = Utilities.base64Encode(p, Utilities.Charset.UTF_8);
+          // Use a long payload with Vietnamese chars to simulate a real token (>76 base64 chars)
+          var p = '{"u":"TuanTT4","dn":"TuanTT4","r":"Admin","t":"Số","exp":' + (Date.now()+3600000) + '}';
+          var b64 = Utilities.base64Encode(p, Utilities.Charset.UTF_8).replace(/[\r\n]/g, '');
           var sig = Utilities.computeHmacSha256Signature(p, s, Utilities.Charset.UTF_8);
           var hmac = sig.map(function(b){return ('0'+(b&0xFF).toString(16)).slice(-2);}).join('');
           var tok = b64 + '.' + hmac;
@@ -77,24 +78,6 @@ function doPost(e) {
     if (ADMIN_ONLY.indexOf(action) !== -1 && tokenData.r !== 'Admin') {
       return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
     }
-
-    // ── TEMP DEBUG — xóa sau khi debug xong ──
-    if (action === 'debug-auth') {
-      var s = PropertiesService.getScriptProperties().getProperty('AUTH_SECRET');
-      var result = 'UNKNOWN';
-      if (s) {
-        try {
-          var p = '{"u":"t","r":"Admin","exp":' + (Date.now()+3600000) + '}';
-          var b64 = Utilities.base64Encode(p, Utilities.Charset.UTF_8);
-          var sig = Utilities.computeHmacSha256Signature(p, s, Utilities.Charset.UTF_8);
-          var hmac = sig.map(function(b){return ('0'+(b&0xFF).toString(16)).slice(-2);}).join('');
-          var tok = b64 + '.' + hmac;
-          result = validateToken(tok) ? 'PASS' : 'FAIL';
-        } catch(ex) { result = 'ERROR:' + ex.message; }
-      }
-      return _jsonResponse({ status:'ok', hasSecret: !!s, secretLen: s ? s.length : 0, roundtrip: result });
-    }
-    // ── END TEMP DEBUG ──
 
     if (action === 'change-password') {
       if (!body.oldPassword || !body.newPassword) throw new Error('Thiếu thông tin đổi mật khẩu.');
