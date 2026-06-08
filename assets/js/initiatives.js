@@ -121,6 +121,7 @@ function _parseInitiativeArray(values) {
 /* ── GAS sync: đọc Initiative_Master ── */
 async function readInitiatives() {
   if (!GS_WEBAPP_URL) return;
+  if (!getAuthSession()) return;
   try {
     const json = await gasPost({ action: 'initiative-read' });
     if (json.status !== 'ok') throw new Error(json.error || 'initiative-read lỗi');

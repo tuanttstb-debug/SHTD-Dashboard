@@ -38,6 +38,8 @@ function isAdmin() {
 
 async function gasPost(body) {
   const session = getAuthSession();
+  // TEMP DBG — remove before merge to main
+  console.log('[DBG] gasPost action=' + body.action + ' | token=' + (session ? session.token.substring(0, 25) + '...' : 'NULL'));
   const payload = Object.assign({}, body, { token: session ? session.token : '' });
   const res = await fetch(GS_WEBAPP_URL, {
     method : 'POST',
@@ -46,6 +48,8 @@ async function gasPost(body) {
   });
   if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
   const json = await res.json();
+  // TEMP DBG — remove before merge to main
+  console.log('[DBG] gasPost response action=' + body.action + ' → status=' + json.status + (json.error ? ' error=' + json.error : ''));
   if (json.error === 'AUTH_REQUIRED') {
     doLogout();
     throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
