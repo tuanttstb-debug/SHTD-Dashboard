@@ -16,6 +16,15 @@ AI Chat code has been in repo since Session 12 (`gemini-2.5-flash`). Status of G
 
 ---
 
+## 🟡 PRIORITY 0.5 — Push master to remote
+
+```
+git push origin master
+```
+Local commit `1acec34` (milestone drill-down) has NOT been pushed yet.
+
+---
+
 ## 🟡 PRIORITY 1 — Full smoke test before merging to main
 
 All these must pass on https://test-shtd.netlify.app before PO approves merge:
