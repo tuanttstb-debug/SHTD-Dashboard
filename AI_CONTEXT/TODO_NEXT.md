@@ -1,65 +1,47 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-10 (Session 13 — User Management live)
-**Context**: User Management feature complete + GAS deployed + live-tested. AI Chat deploy status unconfirmed.
+**Prepared**: 2026-06-10 (Session 14 — Milestone drill-down complete, both branches in sync)
+**Context**: master = `0c77763`, main = `7350e98` (merged). Branch strategy: AI push master only; PO merges to main.
 
 ---
 
-## 🔴 PRIORITY 0 — Verify AI Chat on live
+## NGUYÊN TẮC BRANCH (đọc trước khi làm bất cứ điều gì)
 
-AI Chat code has been in repo since Session 12 (`gemini-2.5-flash`). Status of GAS-side fix unknown.
+```
+master  →  push tự do (Developer / AI)  →  auto-deploy Netlify (Testing)
+main    →  PO ONLY — PO tự commit/merge trên GitHub khi đạt yêu cầu
+```
 
-**Steps to verify:**
+**AI/Claude KHÔNG được push lên `main` trừ khi PO yêu cầu rõ ràng trong message.**
+
+---
+
+## 🔴 PRIORITY 0 — Verify AI Chat trên live
+
+AI Chat frontend đã có từ Session 12. GAS-side chưa được xác nhận.
+
+**Steps:**
 1. https://test-shtd.netlify.app → login Admin → AI Assistant
-2. Type a question → check response
-3. If error: go to GAS editor → `AiService.gs` line 58 must be `gemini-2.5-flash` → Script Properties → `GEMINI_API_KEY` = `AQ.xxx` key → Deploy new version
-4. If slow (>10s): add `thinkingBudget: 0` to `generationConfig` in `callGemini()`
+2. Gõ câu hỏi → kiểm tra response
+3. Nếu lỗi → GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` → Script Properties → `GEMINI_API_KEY` = `AQ.xxx` → Deploy new version
+4. Nếu chậm (>10s) → thêm `thinkingBudget: 0` vào `generationConfig` trong `callGemini()`
 
 ---
 
-## 🟡 PRIORITY 0.5 — Push master to remote
-
-```
-git push origin master
-```
-Local commit `1acec34` (milestone drill-down) has NOT been pushed yet.
-
----
-
-## 🟡 PRIORITY 1 — Full smoke test before merging to main
-
-All these must pass on https://test-shtd.netlify.app before PO approves merge:
+## 🟡 PRIORITY 1 — Smoke test toàn diện trên Netlify
 
 | Feature | Check |
 |---|---|
-| Login — Admin / Teamlead / User roles | Each role sees correct menu |
-| User Management — Admin only visible | Teamlead + User must NOT see "Quản trị" section |
-| User Management — list loads | Table with user rows |
-| User Management — add user | Create + verify appears in list |
-| User Management — edit user | Change role/team/active |
-| User Management — reset password | New PW works on login |
-| User Management — toggle active | Locked user cannot login |
-| AI Chat | See P0 above |
-| Existing features | Tasks, KPI, Initiative, Gantt, Reports — no regression |
+| Login — Admin / Teamlead / User | Mỗi role thấy đúng menu |
+| User Management — Admin only | Teamlead + User KHÔNG thấy mục "Quản trị" |
+| User Management — list loads | Bảng user rows xuất hiện |
+| User Management — add / edit / reset PW / toggle active | Flow đầy đủ |
+| Initiative → Milestone → Tasks | Mở accordion → click milestone → sub-panel tasks; badge alignment đúng; "Cập nhật link" hoạt động |
+| AI Chat | Xem P0 |
+| Existing features | Tasks, KPI, Gantt, Report — no regression |
 
 ---
 
-## 🟡 PRIORITY 2 — Merge master → main (after PO confirms)
-
-`main` still at `5b165e2`. Sessions 10–13 accumulated on master:
-- Auth fix (KNOWN_ROLES + Teamlead)
-- AI Chat frontend
-- User Management (full stack)
-
-```
-git checkout main
-git merge master
-git push origin main
-```
-Only after PO confirms all features on Netlify.
-
----
-
-## W2 — Tech Debt (low priority, tackle in downtime)
+## W2 — Tech Debt (low priority)
 
 | ID | Debt | Effort |
 |---|---|---|
@@ -67,13 +49,17 @@ Only after PO confirms all features on Netlify.
 | TD-018 | `fmtExportDate` duplicated app.js vs helpers.js | Tiny |
 | TD-023 | `_oaActiveTab` not reset on re-render → visual inconsistency | Tiny |
 | AUTH-05 | KNOWN_ROLES hardcoded — role mismatch silently fails | Small |
+| TD-030 | User Management table — no search/pagination (acceptable at current scale ~10 users) | Tiny |
 
 ---
 
-## Session Rules (unchanged)
-1. Read SESSION_HANDOVER + PROJECT_STATE first
-2. WORKING_RULE.md — do not touch `DB_COLS`, `localStorage['shtd_v2']`
-3. One logical change per commit
-4. All GAS calls via `gasPost()` — never raw `fetch()`
-5. `GS_WEBAPP_URL` in `assets/js/config.js` — update on every GAS redeploy
-6. `esc()` on ALL user-supplied content rendered via `innerHTML`
+## Session Rules
+
+1. **Đọc SESSION_HANDOVER + PROJECT_STATE trước** — không skip
+2. **Branch**: push lên `master` trước; KHÔNG push/merge lên `main` — PO tự xử lý
+3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2']`
+4. One logical change per commit
+5. Tất cả GAS calls qua `gasPost()` — không raw `fetch()`
+6. `GS_WEBAPP_URL` trong `assets/js/config.js` — cập nhật mỗi lần GAS redeploy
+7. `esc()` trên mọi user-supplied content render qua `innerHTML`
+8. Test local (Playwright hoặc browser) trước khi push
