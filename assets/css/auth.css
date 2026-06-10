@@ -117,5 +117,28 @@
 
 .user-dd-item.danger { color: var(--danger); }
 
-/* ── RBAC: hide admin-only elements for User role ── */
-body[data-role="User"] .admin-only { display: none !important; }
+/* ── RBAC: hide admin-only elements for all non-Admin roles ── */
+body:not([data-role="Admin"]) .admin-only { display: none !important; }
+
+/* ── User Management table ── */
+.um-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.um-badge-admin    { background: var(--danger-bg);  color: var(--danger); }
+.um-badge-teamlead { background: var(--warning-bg); color: var(--warning); }
+.um-badge-user     { background: var(--primary-xlight); color: var(--primary); }
+
+.um-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.um-status.active   { color: var(--success); }
+.um-status.inactive { color: var(--text-3); }

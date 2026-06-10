@@ -55,7 +55,7 @@ function doPost(e) {
     }
 
     // ── role gate: Admin-only actions ──
-    var ADMIN_ONLY = ['kpi-write'];
+    var ADMIN_ONLY = ['kpi-write', 'user-list', 'user-create', 'user-update', 'user-reset-password'];
     if (ADMIN_ONLY.indexOf(action) !== -1 && tokenData.r !== 'Admin') {
       return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
     }
@@ -104,6 +104,31 @@ function doPost(e) {
       }
       initiativeWrite(body.values);
       auditLog(tokenData, 'initiative-write', (body.values.length - 1) + ' rows');
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'user-list') {
+      return _jsonResponse({ status: 'ok', data: userList() });
+    }
+
+    if (action === 'user-create') {
+      if (!body.user || typeof body.user !== 'object') throw new Error('user-create: thiếu user data.');
+      userCreate(body.user);
+      auditLog(tokenData, 'user-create', body.user.username);
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'user-update') {
+      if (!body.user || typeof body.user !== 'object') throw new Error('user-update: thiếu user data.');
+      userUpdate(body.user);
+      auditLog(tokenData, 'user-update', body.user.username);
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'user-reset-password') {
+      if (!body.username || !body.newPassword) throw new Error('user-reset-password: thiếu username hoặc newPassword.');
+      userResetPassword(body.username, body.newPassword);
+      auditLog(tokenData, 'user-reset-password', body.username);
       return _jsonResponse({ status: 'ok' });
     }
 

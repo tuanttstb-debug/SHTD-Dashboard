@@ -1,0 +1,380 @@
+'use strict';
+
+// ── User Management view (Admin only) ──
+
+let _umUsers   = [];   // cache: array of row-objects from server
+let _umHeaders = [];   // cache: header array from server
+let _umEditTarget = null; // username being edited, null = create mode
+
+// ── Public entry point called by navigation.js ──
+
+async function renderUserManagement() {
+  const wrap = document.getElementById('view-user-management');
+  if (!wrap) return;
+
+  wrap.innerHTML = `
+    <div class="um-toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text);">
+        <i class="fa-solid fa-users-gear" style="color:var(--primary);margin-right:8px;"></i>Quản lý người dùng
+      </div>
+      <button class="btn btn-primary" onclick="openUserModal(null)">
+        <i class="fa-solid fa-user-plus"></i> Thêm User mới
+      </button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="table-wrap" id="umTableWrap">
+        <div style="padding:40px;text-align:center;color:var(--text-3);">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;"></i>
+          <div style="margin-top:10px;">Đang tải danh sách người dùng…</div>
+        </div>
+      </div>
+    </div>`;
+
+  await _umLoad();
+}
+
+async function _umLoad() {
+  try {
+    const res = await gasPost({ action: 'user-list' });
+    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi tải danh sách user.');
+    _umHeaders = res.data.header;
+    _umUsers   = res.data.rows.map(function(row) {
+      const obj = {};
+      _umHeaders.forEach(function(h, i) { obj[h] = row[i]; });
+      return obj;
+    });
+    _umRender();
+  } catch (e) {
+    const wrap = document.getElementById('umTableWrap');
+    if (wrap) wrap.innerHTML = `<div style="padding:24px;color:var(--danger);">
+      <i class="fa-solid fa-triangle-exclamation"></i> ${esc(e.message)}
+    </div>`;
+  }
+}
+
+function _umRender() {
+  const wrap = document.getElementById('umTableWrap');
+  if (!wrap) return;
+
+  if (!_umUsers.length) {
+    wrap.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-3);">Chưa có người dùng nào.</div>`;
+    return;
+  }
+
+  const roleTag = {
+    Admin:    `<span class="um-badge um-badge-admin">Admin</span>`,
+    Teamlead: `<span class="um-badge um-badge-teamlead">Teamlead</span>`,
+    User:     `<span class="um-badge um-badge-user">User</span>`,
+  };
+
+  const rows = _umUsers.map(function(u) {
+    const isActive = u.Active === true || String(u.Active).toLowerCase() === 'true';
+    const statusHtml = isActive
+      ? `<span class="um-status active"><i class="fa-solid fa-circle-check"></i> Hoạt động</span>`
+      : `<span class="um-status inactive"><i class="fa-solid fa-circle-xmark"></i> Đã khóa</span>`;
+    const toggleLabel = isActive ? 'Khóa tài khoản' : 'Mở khóa';
+    const toggleIcon  = isActive ? 'fa-lock' : 'fa-lock-open';
+
+    return `<tr>
+      <td style="font-weight:600;">${esc(u.Username)}</td>
+      <td>${esc(u.Display_Name)}</td>
+      <td>${roleTag[u.Role] || esc(u.Role)}</td>
+      <td>${esc(u.Team || '–')}</td>
+      <td>${esc(u.Email || '–')}</td>
+      <td>${statusHtml}</td>
+      <td>${_fmtDate(u.Created_At)}</td>
+      <td>${_fmtDate(u.Last_Login)}</td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" title="Chỉnh sửa" onclick="openUserModal('${esc(u.Username)}')">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm" title="Reset mật khẩu" onclick="openResetPwModal('${esc(u.Username)}')">
+            <i class="fa-solid fa-key"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm" title="${toggleLabel}" onclick="handleToggleActive('${esc(u.Username)}',${isActive})">
+            <i class="fa-solid ${toggleIcon}"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table class="kpi-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Username</th><th>Tên hiển thị</th><th>Role</th><th>Team</th>
+          <th>Email</th><th>Trạng thái</th><th>Ngày tạo</th><th>Đăng nhập cuối</th><th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function _fmtDate(val) {
+  if (!val) return '–';
+  try {
+    const d = new Date(val);
+    if (isNaN(d)) return String(val);
+    return d.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch(_) { return String(val); }
+}
+
+// ── Add / Edit modal ──
+
+function openUserModal(username) {
+  _umEditTarget = username || null;
+  const isEdit  = !!_umEditTarget;
+  const user    = isEdit ? _umUsers.find(function(u) { return u.Username === username; }) : null;
+
+  let overlay = document.getElementById('umUserOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'umUserOverlay';
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-${isEdit ? 'pen-to-square' : 'user-plus'}" style="margin-right:6px;"></i>
+          ${isEdit ? 'Chỉnh sửa User' : 'Thêm User mới'}
+        </div>
+        <button class="icon-btn" onclick="_umCloseModal('umUserOverlay')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="form-group">
+          <label class="form-label">Username <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="umUsername" type="text" placeholder="VD: NguyenVA1"
+            value="${isEdit ? esc(user.Username) : ''}" ${isEdit ? 'readonly style="background:var(--hover);color:var(--text-3);"' : ''}>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tên hiển thị <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="umDisplayName" type="text" placeholder="VD: Nguyễn Văn A"
+            value="${isEdit ? esc(user.Display_Name) : ''}">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Role <span style="color:var(--danger)">*</span></label>
+            <select class="form-control" id="umRole">
+              <option value="User"     ${(!isEdit || user.Role==='User')     ? 'selected':''}>User</option>
+              <option value="Teamlead" ${(isEdit && user.Role==='Teamlead')  ? 'selected':''}>Teamlead</option>
+              <option value="Admin"    ${(isEdit && user.Role==='Admin')     ? 'selected':''}>Admin</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Team</label>
+            <input class="form-control" id="umTeam" type="text" placeholder="VD: Số"
+              value="${isEdit ? esc(user.Team || '') : ''}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-control" id="umEmail" type="email" placeholder="VD: user@example.com"
+            value="${isEdit ? esc(user.Email || '') : ''}">
+        </div>
+
+        ${!isEdit ? `
+        <div class="form-group">
+          <label class="form-label">Mật khẩu <span style="color:var(--danger)">*</span>
+            <span style="font-weight:400;color:var(--text-3);">(tối thiểu 6 ký tự)</span>
+          </label>
+          <input class="form-control" id="umPassword" type="password" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nhập lại mật khẩu <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="umPassword2" type="password" autocomplete="new-password">
+        </div>` : ''}
+
+        ${isEdit ? `
+        <div class="form-group">
+          <label class="form-label">Trạng thái</label>
+          <select class="form-control" id="umActive">
+            <option value="true"  ${(user.Active===true||String(user.Active).toLowerCase()==='true') ? 'selected':''}>Hoạt động</option>
+            <option value="false" ${(user.Active===false||String(user.Active).toLowerCase()==='false') ? 'selected':''}>Đã khóa</option>
+          </select>
+        </div>` : ''}
+
+        <div id="umUserError" style="display:none;color:var(--danger);font-size:13px;padding:8px 12px;background:var(--danger-bg);border-radius:8px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="_umCloseModal('umUserOverlay')">Hủy</button>
+        <button class="btn btn-primary" id="umSaveBtn" onclick="handleSaveUser()">
+          <i class="fa-solid fa-floppy-disk"></i> ${isEdit ? 'Lưu thay đổi' : 'Tạo User'}
+        </button>
+      </div>
+    </div>`;
+
+  setTimeout(function() {
+    const first = isEdit
+      ? document.getElementById('umDisplayName')
+      : document.getElementById('umUsername');
+    if (first) first.focus();
+  }, 50);
+}
+
+async function handleSaveUser() {
+  const isEdit = !!_umEditTarget;
+  const errEl  = document.getElementById('umUserError');
+  const btn    = document.getElementById('umSaveBtn');
+
+  const setErr = function(msg) {
+    errEl.textContent = msg;
+    errEl.style.display = msg ? 'block' : 'none';
+  };
+
+  setErr('');
+
+  const username    = isEdit ? _umEditTarget : (document.getElementById('umUsername')?.value || '').trim();
+  const displayName = (document.getElementById('umDisplayName')?.value || '').trim();
+  const role        = document.getElementById('umRole')?.value;
+  const team        = (document.getElementById('umTeam')?.value || '').trim();
+  const email       = (document.getElementById('umEmail')?.value || '').trim();
+
+  if (!username)    { setErr('Username là bắt buộc.'); return; }
+  if (!displayName) { setErr('Tên hiển thị là bắt buộc.'); return; }
+  if (!role)        { setErr('Vui lòng chọn Role.'); return; }
+
+  let payload;
+
+  if (!isEdit) {
+    const pw  = document.getElementById('umPassword')?.value  || '';
+    const pw2 = document.getElementById('umPassword2')?.value || '';
+    if (!pw)          { setErr('Mật khẩu là bắt buộc.'); return; }
+    if (pw.length < 6){ setErr('Mật khẩu phải có ít nhất 6 ký tự.'); return; }
+    if (pw !== pw2)   { setErr('Mật khẩu nhập lại không khớp.'); return; }
+
+    payload = { action: 'user-create', user: { username, displayName, role, team, email, password: pw, active: true } };
+  } else {
+    const activeVal = document.getElementById('umActive')?.value;
+    const active    = activeVal === 'true';
+    payload = { action: 'user-update', user: { username, displayName, role, team, email, active } };
+  }
+
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu…';
+
+  try {
+    const res = await gasPost(payload);
+    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
+    _umCloseModal('umUserOverlay');
+    toast(isEdit ? '✅ Đã cập nhật User thành công!' : '✅ Đã tạo User mới thành công!', 'success');
+    await _umLoad();
+  } catch (e) {
+    setErr(e.message);
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ${isEdit ? 'Lưu thay đổi' : 'Tạo User'}`;
+  }
+}
+
+// ── Reset password modal ──
+
+function openResetPwModal(username) {
+  let overlay = document.getElementById('umResetPwOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'umResetPwOverlay';
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:380px;">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fa-solid fa-key" style="margin-right:6px;"></i>Reset mật khẩu</div>
+        <button class="icon-btn" onclick="_umCloseModal('umResetPwOverlay')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="font-size:13px;color:var(--text-2);">
+          Reset mật khẩu cho: <strong>${esc(username)}</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mật khẩu mới <span style="color:var(--danger)">*</span>
+            <span style="font-weight:400;color:var(--text-3);">(tối thiểu 6 ký tự)</span>
+          </label>
+          <input class="form-control" id="umRpNew" type="password" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nhập lại mật khẩu mới <span style="color:var(--danger)">*</span></label>
+          <input class="form-control" id="umRpNew2" type="password" autocomplete="new-password">
+        </div>
+        <div id="umRpError" style="display:none;color:var(--danger);font-size:13px;padding:8px 12px;background:var(--danger-bg);border-radius:8px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="_umCloseModal('umResetPwOverlay')">Hủy</button>
+        <button class="btn btn-primary" id="umRpBtn" onclick="handleResetPassword('${esc(username)}')">
+          <i class="fa-solid fa-rotate-right"></i> Reset mật khẩu
+        </button>
+      </div>
+    </div>`;
+
+  setTimeout(function() { document.getElementById('umRpNew')?.focus(); }, 50);
+}
+
+async function handleResetPassword(username) {
+  const errEl = document.getElementById('umRpError');
+  const btn   = document.getElementById('umRpBtn');
+  const setErr = function(msg) { errEl.textContent = msg; errEl.style.display = msg ? 'block' : 'none'; };
+
+  setErr('');
+  const pw  = document.getElementById('umRpNew')?.value  || '';
+  const pw2 = document.getElementById('umRpNew2')?.value || '';
+
+  if (!pw)          { setErr('Vui lòng nhập mật khẩu mới.'); return; }
+  if (pw.length < 6){ setErr('Mật khẩu mới phải có ít nhất 6 ký tự.'); return; }
+  if (pw !== pw2)   { setErr('Mật khẩu nhập lại không khớp.'); return; }
+
+  btn.disabled  = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu…';
+
+  try {
+    const res = await gasPost({ action: 'user-reset-password', username, newPassword: pw });
+    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
+    _umCloseModal('umResetPwOverlay');
+    toast('✅ Đã reset mật khẩu cho ' + username, 'success');
+  } catch (e) {
+    setErr(e.message);
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Reset mật khẩu';
+  }
+}
+
+// ── Toggle active ──
+
+async function handleToggleActive(username, currentActive) {
+  const action = currentActive ? 'khóa' : 'mở khóa';
+  const ok = await uiConfirm(
+    (currentActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'),
+    `Bạn có chắc muốn ${action} tài khoản <strong>${esc(username)}</strong>?`,
+    currentActive ? 'warn' : 'info',
+    (currentActive ? 'Khóa' : 'Mở khóa')
+  );
+  if (!ok) return;
+
+  try {
+    const res = await gasPost({ action: 'user-update', user: { username, active: !currentActive } });
+    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
+    toast(`✅ Đã ${action} tài khoản ${username}.`, 'success');
+    await _umLoad();
+  } catch (e) {
+    toast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── Helpers ──
+
+function _umCloseModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}

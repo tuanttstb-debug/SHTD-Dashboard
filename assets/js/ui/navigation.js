@@ -91,6 +91,7 @@ function navigateTo(view) {
     'rm-analysis':'RM Analysis – Theo Relationship Manager',
     'initiative-tracker':'Theo dõi Initiative',
     'ai-chat':'AI Assistant – Trợ lý thông minh',
+    'user-management':'Quản lý User',
   };
   document.getElementById('pageTitle').textContent = titles[view] || view;
   if (view === 'gantt')                renderGantt();
@@ -103,6 +104,7 @@ function navigateTo(view) {
   if (view === 'rm-analysis')          renderRmAnalysis();
   if (view === 'initiative-tracker')   renderInitiativeTracker();
   if (view === 'ai-chat')              renderAiChat();
+  if (view === 'user-management')      renderUserManagement();
   closeSidebar();
 }
 
