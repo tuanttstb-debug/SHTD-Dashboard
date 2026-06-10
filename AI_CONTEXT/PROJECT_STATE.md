@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-10 (Session 14 — Milestone Task Drill-down)
+**As of**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch strategy confirmed)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `0c77763`
-**Remote HEAD (main)**: `7350e98` ← in sync with master (merged Session 14)
+**Remote HEAD (master)**: `45bf54a` ← both branches in sync
+**Remote HEAD (main)**: `45bf54a` ← PO merged PR #15; PO owns this branch
 
 ---
 

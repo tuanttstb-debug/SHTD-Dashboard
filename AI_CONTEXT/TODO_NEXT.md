@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-10 (Session 14 — Milestone drill-down complete, both branches in sync)
-**Context**: master = `0c77763`, main = `7350e98` (merged). Branch strategy: AI push master only; PO merges to main.
+**Prepared**: 2026-06-10 (Session 14 — end of session)
+**Context**: master = main = `45bf54a`. Branch strategy locked: AI → master only; PO → main.
 
 ---
 

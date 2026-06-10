@@ -327,8 +327,20 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-031: Loose-link Detection Assumes `PARENT-Mn` Milestone ID Pattern
+**Rating**: 🟢 LOW
+**Added**: 2026-06-10 (Session 14)
+
+**Issue**: `_initGetMsTasks` and alignment badge logic use `_msShortLabel(ms.id)` (regex `/-M\d+$/`) to detect "loose link" tasks that used generic M1/M2 labels. If a milestone ID doesn't follow the `PARENT-Mn` pattern (e.g. free-text IDs), the short-label fallback silently never matches — tasks remain "unlinked" even when user intended a link.
+
+**Impact**: Low. All milestones created via the CRUD modal follow the pattern. Only affects ad-hoc or imported milestone IDs.
+
+**Fix** (if needed): Extend `_initGetMsTasks` to also search by milestone `name` substring match as a third fallback tier.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-10 (Session 13 — TD-030 added; no critical new debt)
+**Last updated**: 2026-06-10 (Session 14 — TD-031 added)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -369,3 +381,4 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | ~~TD-029~~ | ~~🟡~~ | ~~TEMP [DBG] token log in api.js~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
 | AUTH-05 | 🟢 | KNOWN_ROLES hardcoded — role mismatch silently returns AUTH_REQUIRED | Small | Open |
 | TD-030 | ⚪ | User Management table has no search/pagination | Tiny | Open — acceptable at current scale |
+| TD-031 | 🟢 | Loose-link detection assumes `PARENT-Mn` milestone ID pattern | Tiny | Open — low risk |
