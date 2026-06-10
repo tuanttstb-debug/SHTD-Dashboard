@@ -1,7 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch strategy confirmed)
+**As of**: 2026-06-10 (Session 15 — Executive Summary / Tổng hợp BLĐ)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `45bf54a` ← both branches in sync
+**Feature branch HEAD**: `a4e57d8` (branch: `claude/dashboard-leader-features-7nmssw`)
+**Remote HEAD (master)**: `45bf54a` — unchanged
 **Remote HEAD (main)**: `45bf54a` ← PO merged PR #15; PO owns this branch
 
 ---
@@ -25,7 +26,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~800 | ✅ HTML-only shell — all CSS/JS external |
+| `index.html` | ~890 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ Session 12 — model `gemini-2.5-flash` in repo; GAS deploy status unconfirmed; GEMINI_API_KEY may not be set |
 | `backend/Code.gs` | ~150 | ✅ ai-chat route; KNOWN_ROLES; debug-auth removed; user CRUD actions (Session 13) |
@@ -37,8 +38,8 @@
 | `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — deployed + tested |
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL deployment variable; update on every GAS redeploy |
-| `assets/css/` | 13 files | ✅ `initiative.css` +71 lines Session 14; `auth.css` RBAC broadened (Session 13) |
-| `assets/js/` | 31 modules | ✅ + `views/user-management.js` (S13) + milestone drill-down in `views/initiative-tracker.js` (S14) |
+| `assets/css/` | 14 files | ✅ + `executive-summary.css` (S15); `initiative.css` +71 lines S14; `auth.css` RBAC broadened (S13) |
+| `assets/js/` | 32 modules | ✅ + `views/executive-summary.js` (S15) + `views/user-management.js` (S13) + milestone drill-down in `views/initiative-tracker.js` (S14) |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -48,6 +49,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **Executive Summary (Tổng hợp BLĐ)** | ✅ | NEW S15 — 5 KPI cards, RAG donut, Attention list, Initiative health table; G+E shortcut |
 | Dashboard KPIs | ✅ | Tuần BC filter included |
 | RAG doughnut chart | ✅ | Click → detail modal |
 | Initiative summary table | ✅ | Click → detail modal |
@@ -94,13 +96,14 @@
 ## Architecture State
 
 ```
-CURRENT (Session 14 — Milestone Task Drill-down)
+CURRENT (Session 15 — Executive Summary)
 ─────────────────────────────────────────────────
-index.html (~800 lines — HTML only)
+index.html (~890 lines — HTML only)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
         forms.css, table.css, gantt.css, quickview.css,
         responsive.css, kpi.css, initiative.css, auth.css, ai-chat.css
+        executive-summary.css   ← NEW Session 15 (120 lines, es- prefix)
   js/   config.js          ← GS_WEBAPP_URL (update on each GAS redeploy)
         constants.js, helpers.js (+ esc()/_esc alias), storage.js, parsers.js
         api.js (+ serverTs/clientTs optimistic locking)
@@ -116,6 +119,7 @@ assets/
         initiatives.js
         views/ai-chat.js
         views/user-management.js    ← NEW Session 13
+        views/executive-summary.js  ← NEW Session 15 (180 lines)
         app.js
 backend/
   Code.gs            ← RBAC gates + audit + user CRUD actions (Session 13)

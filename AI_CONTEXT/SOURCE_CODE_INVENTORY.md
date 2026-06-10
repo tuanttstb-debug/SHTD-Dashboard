@@ -1,4 +1,46 @@
-# SOURCE CODE INVENTORY — SHTD Dashboard v6.2
+# SOURCE CODE INVENTORY — SHTD Dashboard v6.2 (Session 15)
+
+> ⚠️ Phần "Main.html Section Breakdown" bên dưới mô tả trạng thái MONOLITH CŨ trước khi refactor.
+> Project hiện tại đã được tách thành multi-file (index.html + assets/). Xem `SYSTEM_ARCHITECTURE.md`.
+
+## Thay đổi mới nhất — Session 15
+
+| File | Lines | Status |
+|---|---|---|
+| `assets/css/executive-summary.css` | ~120 | ✅ NEW S15 — styles cho Executive Summary view |
+| `assets/js/views/executive-summary.js` | ~180 | ✅ NEW S15 — `renderExecutiveSummary()` + 5 helpers |
+
+### `assets/js/views/executive-summary.js` — Function list
+
+| Function | Responsibility |
+|---|---|
+| `renderExecutiveSummary()` | Main render: single-pass computation + dispatch 4 sub-renders |
+| `_esSet(id, val)` | Utility: set textContent bằng ID |
+| `_esRenderRagChart(rag, total)` | Chart.js donut với guard `typeof Chart === 'undefined'` |
+| `_esRenderRagLegend(rag, total)` | Legend dọc: dot + count + % |
+| `_esRenderAttentionList(attention)` | Priority-sorted list BLĐ→Blocked→Overdue; max 8 + overflow |
+| `_esRenderInitTable(initSummary)` | Initiative table: Red-first sort, progress bar, status tag |
+
+### `assets/css/executive-summary.css` — CSS class list (es- prefix)
+
+| Class | Purpose |
+|---|---|
+| `.es-headline-grid` | 5-col responsive grid cho KPI cards |
+| `.es-kpi-card`, `.es-k-*` | KPI card với top-border accent per type |
+| `.es-kpi-num`, `.es-kpi-pct`, `.es-kpi-label`, `.es-kpi-sub` | KPI typography |
+| `.es-alert-pulse`, `.es-alert-pulse.amber` | Animated dot cho overdue/BLD |
+| `.es-split-zone` | 2-col grid: RAG card + attention card |
+| `.es-rag-card`, `.es-rag-chart-wrap`, `.es-rag-legend*` | RAG health section |
+| `.es-attention-card`, `.es-attention-list`, `.es-attention-item` | Attention list |
+| `.es-att-*`, `.es-att-bld`, `.es-att-blocked`, `.es-att-critical` | Attention item variants |
+| `.es-att-tag.*` | Tag chips per type |
+| `.es-empty-state`, `.es-more-link` | Empty state + overflow link |
+| `.es-init-section`, `.es-init-table`, `.es-init-name` | Initiative table |
+| `.es-prog-wide`, `.es-prog-bar`, `.es-prog-fill.*` | Wide progress bar |
+| `.es-status-tag.*` | Status tags (st-good/st-watch/st-risk) |
+| `.es-meta-bar`, `.es-meta-timestamp` | Timestamp row |
+
+---
 
 ## File Summary
 
