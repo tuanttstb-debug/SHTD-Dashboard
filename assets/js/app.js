@@ -72,7 +72,7 @@ function updateFilterDropdowns() {
   const curI = fiEl.value, curP = fpEl.value;
 
   let initMap = new Map();
-  db.initiatives.forEach(i => { if (i.id !== 'BAU') initMap.set(i.id, `${i.id} – ${i.name}`); });
+  db.initiatives.forEach(i => { if (i.id !== 'BAU' && !i.parentId) initMap.set(i.id, `${i.id} – ${i.name}`); });
   db.tasks.forEach(t => { if (t.initiative && t.initiative !== 'BAU' && !initMap.has(t.initiative)) initMap.set(t.initiative, t.initiative); });
 
   const iOpts = ['<option value="">Tất cả</option>','<option value="BAU">BAU</option>',

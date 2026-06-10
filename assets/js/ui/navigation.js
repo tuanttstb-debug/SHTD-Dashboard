@@ -29,13 +29,14 @@ function setupListeners() {
     else { err.classList.remove('visible'); e.target.classList.remove('error'); }
   });
 
-  document.getElementById('fId').addEventListener('input', e => checkDupId(e.target.value));
-
   document.getElementById('fInit').addEventListener('change', () => {
-    if (!document.getElementById('origId').value) autoGenId();
+    autoGenId();
     _populateMilestoneSelect('');
   });
-  document.getElementById('fTeam').addEventListener('change', () => { if (!document.getElementById('origId').value) autoGenId(); });
+  document.getElementById('fTeam').addEventListener('change', () => autoGenId());
+  document.getElementById('fMs').addEventListener('change', () => {
+    if (!document.getElementById('origId').value) autoGenId();
+  });
 
   let gKey = null;
   document.addEventListener('keydown', e => {

@@ -1,20 +1,20 @@
 # SESSION HANDOVER
-**Date**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch sync)
+**Date**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch strategy)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**master HEAD**: `0c77763`
-**main HEAD**: `7350e98` (merged = in sync with master)
+**master HEAD**: `45bf54a` (= main, fully in sync)
+**main HEAD**: `45bf54a` — PO merged PR #15 during session
 
 ---
 
-## Branch Strategy (Thiết lập từ Session 14)
+## Branch Strategy (Confirmed this session — ENFORCED from now)
 
-| Branch | Ai push? | Mục đích |
+| Branch | Who pushes | Purpose |
 |---|---|---|
-| `master` | Developer / AI tự do push | Testing → Netlify auto-deploy |
-| `main` | **PO ONLY** — commit trực tiếp trên GitHub | Production → GitHub Pages |
+| `master` | Developer / AI | Testing → Netlify auto-deploy |
+| `main` | **PO ONLY** via GitHub PR/commit | Production → GitHub Pages |
 
-**AI/Claude KHÔNG được push lên `main` trừ khi PO yêu cầu rõ ràng.**
+**Rule: AI/Claude KHÔNG push `main` trừ khi PO yêu cầu rõ ràng trong message.**
 
 ---
 
@@ -22,45 +22,54 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| MS-01 | Milestone task drill-down + alignment badges + auto-fix loose link | `1acec34` | ✅ |
-| MS-02 | CSS: init-ms-block, init-ms-task-panel, alignment badge variants | `1acec34` | ✅ |
-| DOCS | Session 14 handover + ai_context update | `0c77763` | ✅ |
-| SYNC | main merged = master (both at `7350e98` / `0c77763`) | — | ✅ |
-| TEST | 14/14 Playwright tests pass (`verify_ms_tasks.mjs`) | — | ✅ |
+| MS-01 | `initiative-tracker.js` — milestone task drill-down, 4 new functions, alignment badges | `1acec34` | ✅ |
+| MS-02 | `initiative.css` — ms-block, ms-task-panel, alignment badge CSS (+71 lines) | `1acec34` | ✅ |
+| MS-03 | `verify_ms_tasks.mjs` — 14/14 Playwright tests pass | `1acec34` | ✅ |
+| OPS-01 | Merged master → main (was behind); PO merged PR #15 → both at `45bf54a` | — | ✅ |
+| OPS-02 | Branch strategy documented in all ai_context files | `a84ff33` | ✅ |
 
 ---
 
-## Feature Summary — Session 14
+## Decisions Made
 
-Mỗi milestone row trong Initiative Tracker có **nút task count** mở sub-panel bên dưới.
-
-| Sub-feature | Detail |
+| Decision | Rationale |
 |---|---|
-| Task count button | Hiển thị số task; màu cam nếu cross-init, xanh nếu loose link |
-| Expand/collapse | Click button → toggle; chevron xoay |
-| ✓ Phù hợp (xanh) | `task.milestone === ms.id` AND `task.initiative === parentId` |
-| 🔵 Liên kết lỏng (xanh nhạt) | Task dùng nhãn tắt M1/M2 thay vì full ID — có nút "Cập nhật link" |
-| ⚠ Cần xem lại (cam) | `task.initiative !== parentId` — task thuộc initiative khác |
-| Auto-update link | "Cập nhật link" → patch `task.milestone` → persist → re-render → sync GAS |
-
-**Hàm mới**: `_initGetMsTasks`, `_initBuildMsTaskList`, `_initToggleMsTaskPanel`, `_initFixLooseLink`
+| Auto-update loose link (no confirm dialog) | User confirmed: tự động là phù hợp nhất |
+| `writeToHandle()` cho fix-link sync (không dùng `syncAction`) | `syncAction` quá nặng (loading overlay + full re-render) cho single-field patch |
+| PO là người duy nhất merge lên `main` | Tránh AI vô tình push production; PO commit trực tiếp trên GitHub |
+| `border-bottom` chuyển từ `.init-milestone-row` → `.init-ms-block` | Cần wrapper để chứa sub-panel bên dưới mỗi milestone row |
 
 ---
 
-## Pending Manual Steps
+## Feature Summary — Milestone Task Drill-down
 
-| Step | Status |
+| Element | Detail |
 |---|---|
-| GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED |
+| Task count button | Góc phải mỗi milestone row; màu theo alignment (warn/loose/default) |
+| Sub-panel | Toggle expand/collapse; pre-rendered khi build card |
+| ✓ Phù hợp | `t.milestone === ms.id` AND `t.initiative === ms.parentId` |
+| 🔵 Liên kết lỏng | `t.milestone === _msShortLabel(ms.id)` — task dùng nhãn tắt (M1/M2) |
+| ⚠ Cần xem lại | `t.initiative !== ms.parentId` — task thuộc initiative khác |
+| Cập nhật link | Click → `task.milestone = fullMsId` → `persist()` → re-render panel → `writeToHandle()` background |
+
+**New functions**: `_initGetMsTasks`, `_initBuildMsTaskList`, `_initToggleMsTaskPanel`, `_initFixLooseLink`
+
+---
+
+## Blockers / Pending Manual Steps
+
+| Item | Status |
+|---|---|
+| GAS `AiService.gs`: line 58 = `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED — AI Chat chưa smoke-test |
 
 ---
 
 ## Deployment State
 
-| Environment | Branch | HEAD | Status |
+| Env | Branch | HEAD | Status |
 |---|---|---|---|
-| Testing (Netlify) | `master` | `0c77763` | ✅ Live — auto-deployed |
-| Production (GitHub Pages) | `main` | `7350e98` | ✅ In sync — PO quản lý |
+| Testing (Netlify) | `master` | `45bf54a` | ❌ **Hết credit — không auto-deploy (xác nhận 2026-06-10)** |
+| Production (GitHub Pages) | `main` | `45bf54a` | ✅ In sync — PO quản lý |
 | GAS Backend | — | — | ✅ Code.gs + UserService.gs deployed; ⚠️ AiService.gs unconfirmed |
 
 ---
@@ -69,12 +78,12 @@ Mỗi milestone row trong Initiative Tracker có **nút task count** mở sub-pa
 
 | File | Change |
 |---|---|
-| `assets/js/views/initiative-tracker.js` | Refactored `_initBuildMilestoneList` + 4 hàm mới (~120 lines) |
-| `assets/css/initiative.css` | +71 lines: ms-block, ms-task-panel, alignment badges, fix-link button |
+| `assets/js/views/initiative-tracker.js` | `_initBuildMilestoneList` refactored + 4 new functions (~120 lines net) |
+| `assets/css/initiative.css` | +71 lines (ms-block, ms-task-panel, alignment badges, fix-link btn) |
 | `verify_ms_tasks.mjs` | NEW — 14-test Playwright suite |
-| `ai_context/SESSION_HANDOVER.md` | Updated |
-| `ai_context/PROJECT_STATE.md` | Updated — branch strategy + S14 features |
-| `ai_context/TODO_NEXT.md` | Updated — branch rule + new smoke test checklist |
+| `AI_CONTEXT/SESSION_HANDOVER.md` | This file |
+| `AI_CONTEXT/PROJECT_STATE.md` | Branch strategy, S14 features, correct HEADs |
+| `AI_CONTEXT/TODO_NEXT.md` | Branch rule promoted to top, smoke test checklist updated |
 
 ---
 
@@ -82,6 +91,7 @@ Mỗi milestone row trong Initiative Tracker có **nút task count** mở sub-pa
 
 | Risk | Severity | Detail |
 |---|---|---|
-| CSS border trên milestone rows | 🟢 LOW | `border-bottom` chuyển từ `.init-milestone-row` sang `.init-ms-block`; override rule đã có |
-| `writeToHandle()` khi fix loose link | 🟢 LOW | Dùng standard write path với VERSION_CONFLICT protection |
-| AI Chat chưa verify | 🟡 MEDIUM | AiService.gs GAS deploy status unknown |
+| `border-bottom` CSS change on milestone rows | 🟢 LOW | Moved to `.init-ms-block`; override rule `.init-ms-block > .init-milestone-row { border-bottom:none }` đã có |
+| `writeToHandle()` trong `_initFixLooseLink` | 🟢 LOW | No VERSION_CONFLICT guard ở đây — nhưng chỉ patch field milestone, ít conflict |
+| AI Chat GAS chưa verify | 🟡 MEDIUM | `AiService.gs` có thể dùng model cũ hoặc thiếu API key |
+| Loose-link detection dùng `_msShortLabel` regex `/-M\d+$/` | 🟢 LOW | Chỉ hoạt động đúng nếu milestone ID theo pattern `PARENT-Mn`; milestone ID tự do sẽ không match |

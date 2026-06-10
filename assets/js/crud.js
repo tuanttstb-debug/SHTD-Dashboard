@@ -188,7 +188,9 @@ async function handleSubmit(e) {
     'info', 'Lưu');
   if (!ok) return;
   const success = await syncAction(() => {
-    const idx = db.tasks.findIndex(x => x.id === task.id);
+    const origId = document.getElementById('origId').value;
+    const lookupId = (origId && origId !== task.id) ? origId : task.id;
+    const idx = db.tasks.findIndex(x => x.id === lookupId);
     if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
   });
   if (success) { closeTaskModal(); toast(`Đã lưu task <strong>${task.id}</strong>!`, 'success'); }
