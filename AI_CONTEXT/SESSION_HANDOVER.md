@@ -1,8 +1,8 @@
 # SESSION HANDOVER
-**Date**: 2026-06-10 (Session 13 — User Management feature)
+**Date**: 2026-06-10 (Session 13 — User Management feature + GAS deploy confirmed)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Remote HEAD**: `927b783` (master)
+**Remote HEAD**: `ac94c8a` (master)
 **Previous session HEAD**: `364a884`
 
 ---
@@ -18,6 +18,8 @@
 | UM-05 | `auth.css` — RBAC rule broadened (Teamlead also hidden); badge/status CSS | `927b783` | ✅ |
 | UM-06 | `navigation.js` — user-management registered in titles + render dispatch | `927b783` | ✅ |
 | TEST | 14/14 Playwright UI tests pass, 0 JS errors | — | ✅ |
+| GAS-DEPLOY | UserService.gs + Code.gs copied to GAS editor + redeployed (same URL) | — | ✅ |
+| LIVE-TEST | User Management verified working on https://test-shtd.netlify.app | — | ✅ |
 
 ---
 
@@ -43,13 +45,12 @@ Admin can now manage users via left menu **"Quản trị → Quản lý User"** 
 
 ---
 
-## Pending Manual Steps (from Session 12 — STILL REQUIRED)
+## Pending Manual Steps
 
 | Step | Status |
 |---|---|
-| GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` → Save → Deploy new version | ⚠️ PENDING |
-| GAS Script Properties → set `GEMINI_API_KEY` = new `AQ.xxx` key | ⚠️ PENDING |
-| UserService.gs + Code.gs must be copied to GAS editor + redeployed | ⚠️ NEW — required for User Management to work on Netlify |
+| GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED — AI Chat not smoke-tested this session |
+| UserService.gs + Code.gs copied to GAS + redeployed | ✅ DONE — live-tested |
 
 ---
 
@@ -57,9 +58,9 @@ Admin can now manage users via left menu **"Quản trị → Quản lý User"** 
 
 | Environment | Branch | Status |
 |---|---|---|
-| Testing | `master` (`927b783`) | ✅ Live — all features on Netlify, GAS redeploy pending |
-| Production | `main` (`5b165e2`) | ⚠️ NOT updated — merge after PO confirms |
-| GAS Backend | — | ⚠️ Deployed (old) — needs UserService.gs + AiService.gs update + redeploy |
+| Testing | `master` (`ac94c8a`) | ✅ Live — User Management verified on Netlify |
+| Production | `main` (`5b165e2`) | ⚠️ NOT updated — merge after PO confirms all features |
+| GAS Backend | same URL | ✅ UserService.gs + Code.gs deployed; ⚠️ AiService.gs status unconfirmed |
 
 ---
 
@@ -73,3 +74,14 @@ Admin can now manage users via left menu **"Quản trị → Quản lý User"** 
 | `index.html` | Nav item + view section + script tag |
 | `assets/css/auth.css` | RBAC rule + badge/status CSS |
 | `assets/js/ui/navigation.js` | user-management registered |
+
+---
+
+## Regression Risks
+
+| Risk | Severity | Detail |
+|---|---|---|
+| RBAC rule broadened | 🟡 MEDIUM | `body:not([data-role="Admin"])` now hides `.admin-only` for Teamlead too — verify Teamlead login still shows correct menu items |
+| GAS URL unchanged | 🟢 LOW | `config.js` not updated this session — confirmed correct |
+| AI Chat still unverified | 🟡 MEDIUM | `AiService.gs` deploy status unknown; AI Chat may still return error on live |
+| `main` branch stale | 🟡 MEDIUM | Sessions 10–13 work (auth fix, AI frontend, User Mgmt) only on master — prod users see none of this |

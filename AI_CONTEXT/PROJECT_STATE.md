@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-08 (Session 12 — AI Chat model fix)
+**As of**: 2026-06-10 (Session 13 — User Management live)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `364a884`
+**Remote HEAD (master)**: `ac94c8a`
 **main branch HEAD**: `5b165e2` ← NOT updated — merge only after PO confirms Netlify
 
 ---
@@ -12,8 +12,9 @@
 |---|---|---|
 | `index.html` | ~791 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
-| `backend/AiService.gs` | ~75 | ⚠️ Session 12 — model updated to `gemini-2.5-flash`; **GAS redeploy + GEMINI_API_KEY Script Property update pending** |
-| `backend/Code.gs` | ~120 | ✅ ai-chat route; KNOWN_ROLES=['Admin','User','Teamlead']; debug-auth removed |
+| `backend/AiService.gs` | ~75 | ⚠️ Session 12 — model `gemini-2.5-flash` in repo; GAS deploy status unconfirmed; GEMINI_API_KEY may not be set |
+| `backend/Code.gs` | ~150 | ✅ ai-chat route; KNOWN_ROLES; debug-auth removed; user CRUD actions added Session 13 |
+| `backend/UserService.gs` | ~130 | ✅ NEW Session 13 — userList/Create/Update/ResetPassword; SHA-256 hash; deployed |
 | `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
 | `backend/AuthService.gs` | ~165 | ✅ authLogin(), validateToken(), changePassword(), setupInitialUsers(); no hardcoded fallback |
 | `backend/SheetService.gs` | ~65 | ✅ sheetRead() returns {values,serverTs}; sheetWrite() VERSION_CONFLICT check via Script Properties |
@@ -21,8 +22,8 @@
 | `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — deployed + tested |
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
 | `assets/js/config.js` | 5 | ✅ NEW (Session 9) — GS_WEBAPP_URL deployment variable; update on every GAS redeploy |
-| `assets/css/` | 12 files | ✅ + `initiative.css` + `auth.css` (now includes admin-only RBAC rule) |
-| `assets/js/` | 29 modules | ✅ + `initiatives.js`, `views/initiative-tracker.js`, `auth.js`, `config.js` |
+| `assets/css/` | 12 files | ✅ `auth.css` RBAC broadened to `body:not([data-role="Admin"])` (Session 13) |
+| `assets/js/` | 30 modules | ✅ + `views/user-management.js` added Session 13 |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -61,8 +62,9 @@
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
 | **Login / Auth** | ✅ | Fixed Session 11 — KNOWN_ROLES was missing 'Teamlead' role |
-| **AI Assistant** | ⚠️ | Frontend complete; `gemini-2.5-flash` in repo (Session 12); blocked on GAS redeploy + GEMINI_API_KEY Script Property update |
-| **Role-based UI** | ✅ | Admin sees delete buttons; User role hides bulk-delete + modal delete via CSS .admin-only |
+| **AI Assistant** | ⚠️ | Frontend complete; `gemini-2.5-flash` in repo; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |
+| **User Management** | ✅ | Admin-only menu; list/add/edit/reset-pw/toggle-active; GAS deployed; live-tested Session 13 |
+| **Role-based UI** | ✅ | Admin: full access. User/Teamlead: `.admin-only` hidden via `body:not([data-role="Admin"])` |
 | **Audit Trail** | ✅ | Audit_Log sheet tab; every write (task/kpi/initiative/password) logged with user + timestamp |
 | **Change Password** | ✅ | User-pill dropdown → modal; 6-char min; GAS validates old password before writing new hash |
 | **Optimistic Locking** | ✅ | VERSION_CONFLICT on concurrent task writes; client re-reads from server on conflict |
@@ -76,13 +78,13 @@
 ## Architecture State
 
 ```
-CURRENT (Phase 0 security + Phase 1 complete — Session 9)
-──────────────────────────────────────────────────────────
-index.html (~793 lines — HTML only)
+CURRENT (Session 13 — User Management added)
+─────────────────────────────────────────────
+index.html (~800 lines — HTML only)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
         forms.css, table.css, gantt.css, quickview.css,
-        responsive.css, kpi.css, initiative.css, auth.css
+        responsive.css, kpi.css, initiative.css, auth.css, ai-chat.css
   js/   config.js          ← GS_WEBAPP_URL (update on each GAS redeploy)
         constants.js, helpers.js (+ esc()/_esc alias), storage.js, parsers.js
         api.js (+ serverTs/clientTs optimistic locking)
@@ -91,30 +93,29 @@ assets/
         crud.js, bulk.js
         views/dashboard.js, views/tasks.js, views/gantt.js,
               views/performance.js, views/quickview.js
-        report.js
-        kpi-data.js
-        kpi-parser.js
-        views/kpi-overview.js
-        views/action-plan.js
-        views/kpi-progress.js
-        views/owner-analysis.js
-        views/branch-analysis.js
-        views/rm-analysis.js
+        report.js, kpi-data.js, kpi-parser.js
+        views/kpi-overview.js, views/action-plan.js, views/kpi-progress.js
+        views/owner-analysis.js, views/branch-analysis.js, views/rm-analysis.js
         views/initiative-tracker.js (uses global esc(), not local _esc)
         initiatives.js
+        views/ai-chat.js
+        views/user-management.js  ← NEW Session 13
         app.js
 backend/
-  Code.gs            ← RBAC gates + audit hooks + serverTs + change-password
+  Code.gs            ← RBAC gates + audit + user CRUD actions (Session 13)
   Config.gs
   AuthService.gs     ← no hardcoded fallback; changePassword() added
   SheetService.gs    ← optimistic locking (TASK_WRITE_TS Script Property)
-  AuditService.gs    ← NEW Session 9 — Audit_Log sheet
-  KpiSheetService.gs ← DEPLOYED + tested
+  AuditService.gs    ← Audit_Log sheet
+  KpiSheetService.gs ← DEPLOYED
   InitiativeService.gs ← DEPLOYED (15 cols)
+  UserService.gs     ← NEW Session 13 — DEPLOYED
+  AiService.gs       ← gemini-2.5-flash in repo; GAS deploy unconfirmed
   GAS.GS             ← archived patch v6.2
-verify_initiative_v2.mjs ← 37/37 PASS Playwright suite
+verify_initiative_v2.mjs ← 37/37 PASS
 verify_kpi_views.mjs     ← 3/3 PASS (session 7)
 verify_mobile.mjs        ← 4/4 PASS (session 7)
+um_test.mjs              ← 14/14 PASS (session 13, local UI test)
 ```
 
 ---
@@ -123,7 +124,7 @@ verify_mobile.mjs        ← 4/4 PASS (session 7)
 
 | Config | Value |
 |---|---|
-| `GS_WEBAPP_URL` | **In `assets/js/config.js`** (moved from constants.js Session 9); current: `AKfycbyld2038CH86TP-...` |
+| `GS_WEBAPP_URL` | **In `assets/js/config.js`**; current: `AKfycbzzezX0...` — unchanged Session 13 |
 | Initiative backend | ✅ Deployed (15 cols, InitiativeService.gs) — Sync button should work |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | `GS_RANGE` | `Task_Master!A1:W` |

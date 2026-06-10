@@ -317,8 +317,18 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-030: User Management Has No Pagination / Search
+**Rating**: ⚪ LOW
+**Added**: 2026-06-10 (Session 13)
+
+**Issue**: `userList()` returns all rows; `_umRender()` renders full table with no pagination or search filter. Acceptable at current scale (~10 users). Would degrade at 100+ users.
+
+**Fix** (if needed): Add client-side search input filtering `_umUsers` by Username/Display_Name. Pagination not needed until team grows significantly.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-08 (Session 12 — no new debt)
+**Last updated**: 2026-06-10 (Session 13 — TD-030 added; no critical new debt)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -358,3 +368,4 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | ~~TD-028~~ | ~~🔴~~ | ~~TEMP debug-auth endpoint~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
 | ~~TD-029~~ | ~~🟡~~ | ~~TEMP [DBG] token log in api.js~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
 | AUTH-05 | 🟢 | KNOWN_ROLES hardcoded — role mismatch silently returns AUTH_REQUIRED | Small | Open |
+| TD-030 | ⚪ | User Management table has no search/pagination | Tiny | Open — acceptable at current scale |
