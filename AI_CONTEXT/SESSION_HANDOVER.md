@@ -1,9 +1,9 @@
 # SESSION HANDOVER
-**Date**: 2026-06-08 (Session 12 — AI Chat model fix)
+**Date**: 2026-06-10 (Session 13 — User Management feature)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Remote HEAD**: `364a884` (master)
-**Previous session HEAD**: `1c828fc`
+**Remote HEAD**: `927b783` (master)
+**Previous session HEAD**: `364a884`
 
 ---
 
@@ -11,31 +11,55 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| AI-FIX | `gemini-1.5-flash` deprecated on v1beta → switched to `gemini-2.0-flash` | `b3781b5` | ✅ |
-| AI-FIX | `gemini-2.0-flash` returns `limit:0` on free tier → switched to `gemini-2.5-flash` (confirmed available via ListModels) | `364a884` | ✅ |
-| INF | GAS Script Properties `GEMINI_API_KEY` not yet updated — AI Chat still broken on Netlify | — | ⚠️ |
-| INF | `AiService.gs` model line in GAS editor not yet updated + not redeployed | — | ⚠️ |
+| UM-01 | `backend/UserService.gs` — `userList()`, `userCreate()`, `userUpdate()`, `userResetPassword()` | `927b783` | ✅ |
+| UM-02 | `backend/Code.gs` — 4 new admin-only actions + audit logging | `927b783` | ✅ |
+| UM-03 | `assets/js/views/user-management.js` — table + add/edit modal + reset PW modal | `927b783` | ✅ |
+| UM-04 | `index.html` — nav item (admin-only), view section, script tag | `927b783` | ✅ |
+| UM-05 | `auth.css` — RBAC rule broadened (Teamlead also hidden); badge/status CSS | `927b783` | ✅ |
+| UM-06 | `navigation.js` — user-management registered in titles + render dispatch | `927b783` | ✅ |
+| TEST | 14/14 Playwright UI tests pass, 0 JS errors | — | ✅ |
 
 ---
 
-## Root Cause (AI Chat model — now partially resolved)
+## Feature Summary
 
-`gemini-1.5-flash` was deprecated on Gemini API `v1beta` → `not found` error.
-Switched to `gemini-2.0-flash` → `limit: 0` error (free tier quota zero for that model on user's account).
-User ran `curl .../models?key=KEY` → ListModels confirmed `gemini-2.5-flash` available.
-Switched to `gemini-2.5-flash` in repo. **GAS has not been redeployed yet** — manual steps remain.
+Admin can now manage users via left menu **"Quản trị → Quản lý User"** (hidden for User & Teamlead roles).
 
-**Key format note**: User's Gemini API key has `AQ.xxx` prefix (new Google AI Studio format as of 2026), not the old `AIzaSy...` format. Key is valid — confirmed by ListModels response.
+| Sub-feature | Detail |
+|---|---|
+| User list | Table: Username, Display Name, Role (badge), Team, Email, Status, Dates, Actions |
+| Add User modal | All fields: Username, Display Name, Role, Team, Email, Password + Confirm (min 6 chars) |
+| Edit User modal | Same fields (Username readonly); includes Active toggle |
+| Reset Password | Admin resets any user's PW without knowing old password |
+| Toggle Active | Lock/unlock account via uiConfirm dialog |
+| RBAC | `body:not([data-role="Admin"]) .admin-only` hides entire Admin section from User & Teamlead |
+
+---
+
+## RBAC Change (Important)
+
+**Before**: `body[data-role="User"] .admin-only { display: none }` — only hid from User role  
+**After**: `body:not([data-role="Admin"]) .admin-only { display: none }` — hides from User AND Teamlead
+
+---
+
+## Pending Manual Steps (from Session 12 — STILL REQUIRED)
+
+| Step | Status |
+|---|---|
+| GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` → Save → Deploy new version | ⚠️ PENDING |
+| GAS Script Properties → set `GEMINI_API_KEY` = new `AQ.xxx` key | ⚠️ PENDING |
+| UserService.gs + Code.gs must be copied to GAS editor + redeployed | ⚠️ NEW — required for User Management to work on Netlify |
 
 ---
 
 ## Deployment State
 
-| Environment | URL | Branch | Status |
-|---|---|---|---|
-| Testing | https://test-shtd.netlify.app | `master` | ✅ Live — AI Chat code updated, GAS redeploy pending |
-| Production | GitHub Pages | `main` | ⚠️ NOT updated — `main` still at `5b165e2` |
-| GAS Backend | `AKfycbzzezX0...` | — | ⚠️ Deployed but `AiService.gs` still has old model — needs redeploy |
+| Environment | Branch | Status |
+|---|---|---|
+| Testing | `master` (`927b783`) | ✅ Live — all features on Netlify, GAS redeploy pending |
+| Production | `main` (`5b165e2`) | ⚠️ NOT updated — merge after PO confirms |
+| GAS Backend | — | ⚠️ Deployed (old) — needs UserService.gs + AiService.gs update + redeploy |
 
 ---
 
@@ -43,27 +67,9 @@ Switched to `gemini-2.5-flash` in repo. **GAS has not been redeployed yet** — 
 
 | File | Change |
 |---|---|
-| `backend/AiService.gs` | Line 58: `gemini-1.5-flash` → `gemini-2.0-flash` (b3781b5) → `gemini-2.5-flash` (364a884) |
-| `ai_context/SESSION_HANDOVER.md` | Updated to Session 12 |
-| `ai_context/TODO_NEXT.md` | Updated P0 steps |
-| `ai_context/PROJECT_STATE.md` | Updated AI Assistant status |
-
-## GAS Deploy State
-
-| File | Status |
-|---|---|
-| `backend/Code.gs` | ✅ Deployed — KNOWN_ROLES includes Teamlead |
-| `backend/AuthService.gs` | ✅ Deployed |
-| `backend/AiService.gs` | ⚠️ Deployed (old version — `gemini-2.0-flash`) — **must update to `gemini-2.5-flash` + redeploy** |
-| All other .gs files | ✅ Deployed (Session 9) |
-
----
-
-## Regression Risks
-
-| Risk | Severity | Detail |
-|---|---|---|
-| GAS `AiService.gs` not redeployed | 🔴 HIGH | AI Chat broken on Netlify until GAS editor updated + new version deployed |
-| `GEMINI_API_KEY` Script Property not updated | 🔴 HIGH | GAS still uses old invalid key — will fail even after redeploy |
-| `gemini-2.5-flash` thinking mode | 🟡 MEDIUM | Model has `"thinking": true` — may add latency + token cost. Monitor first real chat responses. If too slow, add `thinkingConfig: { thinkingBudget: 0 }` to generationConfig |
-| `main` branch not updated | 🟡 MEDIUM | Sessions 10–12 work only on `master`. Do NOT merge until PO confirms all features on Netlify |
+| `backend/UserService.gs` | NEW — userList/Create/Update/ResetPassword |
+| `backend/Code.gs` | 4 new admin-only action handlers + audit |
+| `assets/js/views/user-management.js` | NEW — full CRUD view |
+| `index.html` | Nav item + view section + script tag |
+| `assets/css/auth.css` | RBAC rule + badge/status CSS |
+| `assets/js/ui/navigation.js` | user-management registered |

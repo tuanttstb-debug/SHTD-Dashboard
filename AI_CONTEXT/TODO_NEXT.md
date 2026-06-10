@@ -1,74 +1,63 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-08 (Session 12 — AI Chat model fix)
-**Context**: Auth OK. AI Chat code updated (`gemini-2.5-flash`). Blocked on GAS manual redeploy + correct API key in Script Properties.
+**Prepared**: 2026-06-10 (Session 13 — User Management feature)
+**Context**: User Management complete on master. GAS redeploy still pending (AI Chat + UserService).
 
 ---
 
-## 🔴 PRIORITY 0 — Update GAS Script Properties + Redeploy AiService.gs
+## 🔴 PRIORITY 0 — GAS Redeploy (2 things needed)
 
-Model fixed in repo (`gemini-2.5-flash`). GAS editor still has old code + old/invalid key.
+### P0-A: AI Chat fix (từ Session 12)
+1. GAS editor → `AiService.gs` line 58: đổi thành `gemini-2.5-flash`
+2. GAS → Project Settings → Script Properties → `GEMINI_API_KEY` = key mới (`AQ.xxx`)
+3. Deploy → Manage deployments → New version (giữ nguyên URL)
 
-**Steps:**
-1. GAS project → **Project Settings → Script Properties** → set `GEMINI_API_KEY` = new valid key (`AQ.xxx` format confirmed working)
-2. GAS editor → open `AiService.gs` → line 58: change `gemini-2.0-flash` → `gemini-2.5-flash`
-3. Save → **Deploy → Manage deployments → New version** (same URL)
-4. Test AI Chat on https://test-shtd.netlify.app — type a question about tasks/KPIs
-5. If slow (>10s): add `thinkingBudget: 0` to `generationConfig` in `callGemini()` to disable thinking mode
+### P0-B: User Management — copy mới vào GAS (Session 13)
+1. GAS editor → tạo file mới `UserService.gs` → paste nội dung từ `backend/UserService.gs`
+2. GAS editor → `Code.gs` → cập nhật: thêm 4 action mới + ADMIN_ONLY array (xem `backend/Code.gs`)
+3. Save → Deploy new version (cùng URL)
+4. Test trên https://test-shtd.netlify.app → login Admin → Quản trị → Quản lý User
 
 ---
 
-## 🟡 PRIORITY 1 — Verify full app on Netlify before merging to main
-
-Now that auth works, verify all features end-to-end on https://test-shtd.netlify.app:
+## 🟡 PRIORITY 1 — Smoke test Netlify sau GAS redeploy
 
 | Feature | Check |
 |---|---|
-| Login / Logout | ✅ confirmed working |
-| Task list, filters, CRUD | smoke test |
-| Google Sheets sync (read + write) | smoke test |
-| Initiative Tracker | smoke test |
-| KPI views | smoke test |
-| AI Chat | requires AiService.gs deploy (Priority 0) |
-| Change password | smoke test |
+| Login Admin / Teamlead / User | Smoke test |
+| User Management — xem danh sách | Requires GAS redeploy |
+| User Management — thêm user mới | Requires GAS redeploy |
+| User Management — edit + toggle active | Requires GAS redeploy |
+| AI Chat | Requires P0-A |
+| RBAC: Teamlead/User không thấy menu Quản trị | Test ngay trên Netlify |
 
 ---
 
-## 🟡 PRIORITY 2 — Merge master → main (after PO confirms Netlify)
+## 🟡 PRIORITY 2 — Merge master → main (sau PO confirm)
 
-`main` branch is still at `5b165e2` (before Session 10). Sessions 10+11 changes are only on `master`.
+`main` branch still at `5b165e2`. Sessions 10–13 only on `master`.
 
-**What's accumulated on master since main:**
-- Phase 2 AI Chat (frontend complete, GAS pending AiService.gs)
-- Auth fix: KNOWN_ROLES + Teamlead
-- AuthService.gs base64 \n strip
-- initiatives.js session guard
-- .gitignore
-- AI_CONTEXT docs
-
-**Merge procedure:**
 ```
 git checkout main
 git merge master
 git push origin main
 ```
-Only after PO confirms all features on Netlify.
 
 ---
 
 ## W2 — Tech Debt (low priority)
 
-| ID | Debt | Action |
-|---|---|---|
-| TD-008 | No error boundary in renderAll() | Wrap each view render in try-catch |
-| TD-018 | `fmtExportDate` duplicated in app.js vs helpers.js | Remove from app.js |
-| TD-023 | `_oaActiveTab` not reset on re-render | Reset at start of renderOwnerAnalysis() |
+| ID | Debt |
+|---|---|
+| TD-008 | No error boundary in renderAll() |
+| TD-018 | `fmtExportDate` duplicated in app.js vs helpers.js |
+| TD-023 | `_oaActiveTab` not reset on re-render |
 
 ---
 
 ## Session Rules (unchanged)
-1. Read `SESSION_HANDOVER.md` + `PROJECT_STATE.md` first
-2. Read `WORKING_RULE.md` — do not touch `DB_COLS`, `localStorage['shtd_v2']`
+1. Read SESSION_HANDOVER + PROJECT_STATE first
+2. WORKING_RULE.md — do not touch DB_COLS, localStorage['shtd_v2']
 3. One logical change per commit
-4. All GAS calls MUST go through `gasPost()` — never raw fetch()
-5. `GS_WEBAPP_URL` lives in `assets/js/config.js` — update on every GAS redeploy
-6. `esc()` on ALL user-supplied content rendered via innerHTML
+4. All GAS calls via gasPost() — never raw fetch()
+5. GS_WEBAPP_URL in assets/js/config.js — update on every GAS redeploy
+6. esc() on ALL user-supplied content via innerHTML
