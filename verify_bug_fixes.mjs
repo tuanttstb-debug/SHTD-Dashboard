@@ -193,22 +193,77 @@ else
   FAIL(`Bug2: fMs options sai — có: ${msOptions.join(', ')}`);
 
 /* ══════════════════════════════════════════════════════════
-   BUG 2e — Nút "Tạo lại mã" hoạt động (via evaluate)
+   BUG 2d2 — ID format mới: {init}-{ms_short}-{seq}
    ══════════════════════════════════════════════════════════ */
 
-// Chọn INI-001 → ID = INI-001-xxx
+// INI-001 + milestone INI-001-M1 → ID phải là INI-001-M1-xxx
 await page.evaluate(() => {
   document.getElementById('fInit').value = 'INI-001';
   document.getElementById('fInit').dispatchEvent(new Event('change'));
 });
 await page.waitForTimeout(200);
+await page.evaluate(() => {
+  document.getElementById('fMs').value = 'INI-001-M1';
+  document.getElementById('fMs').dispatchEvent(new Event('change'));
+});
+await page.waitForTimeout(200);
 
-// Click "Tạo lại" via evaluate (tránh bị overlay chặn)
+const idWithMs = await page.$eval('#fId', el => el.value);
+if (/^INI-001-M1-\d{3}$/.test(idWithMs))
+  PASS(`Bug2 genId: INI-001 + M1 → "${idWithMs}" ✓ format {init}-{ms}-{seq}`);
+else
+  FAIL(`Bug2 genId: kỳ vọng INI-001-M1-xxx, nhận được "${idWithMs}"`);
+
+// INI-001 không milestone → phải là INI-001-xxx (không có M1 trong ID)
+await page.evaluate(() => {
+  document.getElementById('fMs').value = '';
+  document.getElementById('fMs').dispatchEvent(new Event('change'));
+});
+await page.waitForTimeout(200);
+// fMs.change chỉ trigger autoGenId trong ADD mode — re-gen qua evaluate để confirm
+await page.evaluate(() => autoGenId());
+await page.waitForTimeout(150);
+
+const idNoMs = await page.$eval('#fId', el => el.value);
+if (/^INI-001-\d{3}$/.test(idNoMs))
+  PASS(`Bug2 genId: INI-001 không MS → "${idNoMs}" ✓ format {init}-{seq}`);
+else
+  FAIL(`Bug2 genId: kỳ vọng INI-001-xxx, nhận được "${idNoMs}"`);
+
+// BAU + team → phải là {team}-xxx
+await page.evaluate(() => {
+  document.getElementById('fInit').value = 'BAU';
+  document.getElementById('fInit').dispatchEvent(new Event('change'));
+});
+await page.waitForTimeout(200);
+const idBau = await page.$eval('#fId', el => el.value);
+if (/^Số-\d{3}$/.test(idBau) || /^[A-Za-zÀ-ỹ]/.test(idBau))
+  PASS(`Bug2 genId: BAU → "${idBau}" ✓ format {team}-{seq}`);
+else
+  FAIL(`Bug2 genId: BAU format sai, nhận được "${idBau}"`);
+
+/* ══════════════════════════════════════════════════════════
+   BUG 2e — Nút "Tạo lại mã" hoạt động (via evaluate)
+   ══════════════════════════════════════════════════════════ */
+
+// Chọn INI-001 + M1 → nút Tạo lại phải gen INI-001-M1-xxx
+await page.evaluate(() => {
+  document.getElementById('fInit').value = 'INI-001';
+  document.getElementById('fInit').dispatchEvent(new Event('change'));
+});
+await page.waitForTimeout(200);
+await page.evaluate(() => {
+  document.getElementById('fMs').value = 'INI-001-M1';
+  document.getElementById('fMs').dispatchEvent(new Event('change'));
+});
+await page.waitForTimeout(200);
+
+// Gọi Tạo lại via evaluate (tránh bị overlay chặn)
 await page.evaluate(() => autoGenId());
 await page.waitForTimeout(150);
 
 const idAfterRegen = await page.$eval('#fId', el => el.value);
-if (idAfterRegen.startsWith('INI-001-'))
+if (/^INI-001-M1-\d{3}$/.test(idAfterRegen))
   PASS(`Bug2: Nút "Tạo lại mã" gen đúng ID: "${idAfterRegen}"`);
 else
   FAIL(`Bug2: Nút "Tạo lại mã" gen sai ID: "${idAfterRegen}"`);

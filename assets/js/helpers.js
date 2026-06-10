@@ -33,8 +33,16 @@ const stateChip = s => {
   return `<span class="state-chip ${map[s]||'s0'}">${s||'–'}</span>`;
 };
 
-function genId(init, team, extra = []) {
-  const pfx = (!init || init === 'BAU') ? (team ? team.replace(/\s+/g,'') : 'SO') : (init + '-');
+function genId(init, team, ms, extra = []) {
+  let pfx;
+  if (!init || init === 'BAU') {
+    pfx = (team ? team.replace(/\s+/g, '') : 'SO') + '-';
+  } else if (ms) {
+    const msShort = (ms.match(/-?(M\d+)$/i) || [])[1] || ms;
+    pfx = init + '-' + msShort + '-';
+  } else {
+    pfx = init + '-';
+  }
   let max = 0;
   [...db.tasks, ...extra].forEach(t => {
     if (t.id && t.id.toUpperCase().startsWith(pfx.toUpperCase())) {
