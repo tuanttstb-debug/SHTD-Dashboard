@@ -11,7 +11,11 @@ function fmtTuanBC(el) {
 }
 
 function autoGenId() {
-  const id = genId(document.getElementById('fInit').value, document.getElementById('fTeam').value);
+  const id = genId(
+    document.getElementById('fInit').value,
+    document.getElementById('fTeam').value,
+    document.getElementById('fMs').value
+  );
   document.getElementById('fId').value = id;
   checkDupId(id);
 }
@@ -214,7 +218,7 @@ function cloneTask() {
     let max = parseInt(match[2]);
     db.tasks.forEach(t => { if (t.id?.startsWith(pfx)) { const n = parseInt(t.id.substring(pfx.length)); if (!isNaN(n) && n > max) max = n; } });
     newId = pfx + String(max+1).padStart(len,'0');
-  } else { newId = genId(document.getElementById('fInit').value, document.getElementById('fTeam').value); }
+  } else { newId = genId(document.getElementById('fInit').value, document.getElementById('fTeam').value, document.getElementById('fMs').value); }
   document.getElementById('origId').value = '';
   document.getElementById('fId').value = newId;
   document.getElementById('fName').value = '';
