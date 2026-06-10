@@ -1,8 +1,8 @@
 # PROJECT STATE
-**As of**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch strategy confirmed)
+**As of**: 2026-06-10 (Session 15 — Bug fixes + genId + Preset Tab Bar)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `45bf54a` ← both branches in sync
-**Remote HEAD (main)**: `45bf54a` ← PO merged PR #15; PO owns this branch
+**Remote HEAD (master)**: `11d054a` ← 4 commits ahead of main
+**Remote HEAD (main)**: `45bf54a` ← PO owns this branch; behind master
 
 ---
 
@@ -65,8 +65,10 @@
 | **Owner Analysis** | ✅ | Browser verified session 7 — 3 tabs |
 | **KPI Dynamic Pipeline** | ✅ | Load `File raw.xlsx` → parse → update KPI views live; sync to/from GG Sheet `KPI_Summary` |
 | **Initiative Tracker** | ✅ | Accordion cards, CRUD modal, cascade delete, filter; milestone short labels (M1…) |
-| **Milestone → Task drill-down** | ✅ | NEW Session 14 — per-milestone task sub-panel with alignment badges; auto-fix loose link |
+| **Milestone → Task drill-down** | ✅ | Session 14 — per-milestone task sub-panel with alignment badges; auto-fix loose link |
 | **Milestone→Task link** | ✅ | Task form `#fMs` auto-populates from Initiative_Master milestones; fallback to M1-M8 |
+| **Task ID auto-gen** | ✅ | Session 15 — `fId` readonly; format `{init}-{ms}-{seq}` (e.g. `Econtract-001-M1-001`); nút "Tạo lại mã"; auto-update khi đổi initiative |
+| **Task Manager Preset Tabs** | ✅ | Session 15 — 4 tabs: Đang làm (default) / Tuần BC này / Quá hạn / Tất cả; badge counts; persist localStorage |
 | **Action Plan Kanban** | ✅ | 4 columns; reads db.tasks where highlight=Y |
 | **Branch Analysis** | ✅ | 25 branches; zone filter; rate vs KPI color coding |
 | **RM Analysis** | ✅ | 14 RMs sorted by digital rate; top-3 highlighted; KPI threshold 15% |
@@ -94,45 +96,44 @@
 ## Architecture State
 
 ```
-CURRENT (Session 14 — Milestone Task Drill-down)
-─────────────────────────────────────────────────
-index.html (~800 lines — HTML only)
+CURRENT (Session 15 — Bug fixes + genId + Preset Tab Bar)
+──────────────────────────────────────────────────────────
+index.html (~820 lines — HTML only; fId readonly + preset-bar block)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
-        forms.css, table.css, gantt.css, quickview.css,
+        forms.css, table.css (+preset CSS), gantt.css, quickview.css,
         responsive.css, kpi.css, initiative.css, auth.css, ai-chat.css
   js/   config.js          ← GS_WEBAPP_URL (update on each GAS redeploy)
-        constants.js, helpers.js (+ esc()/_esc alias), storage.js, parsers.js
+        constants.js (+activePreset), helpers.js (genId 3-param), storage.js, parsers.js
         api.js (+ serverTs/clientTs optimistic locking)
         auth.js (+ applyUserToUI data-role, changePw modal)
         ui/toast.js, ui/modal.js, ui/theme.js, ui/navigation.js
-        crud.js, bulk.js
-        views/dashboard.js, views/tasks.js, views/gantt.js,
-              views/performance.js, views/quickview.js
+          ← S15: navigateTo('tasks') → renderTaskTable(); fInit/fTeam/fMs listeners
+        crud.js ← S15: fId readonly, autoGenId+cloneTask pass ms, handleSubmit origId lookup
+        bulk.js
+        views/dashboard.js, views/tasks.js ← S15: preset logic (5 new fns)
+              views/gantt.js, views/performance.js, views/quickview.js
         report.js, kpi-data.js, kpi-parser.js
         views/kpi-overview.js, views/action-plan.js, views/kpi-progress.js
         views/owner-analysis.js, views/branch-analysis.js, views/rm-analysis.js
         views/initiative-tracker.js ← S14: milestone drill-down + alignment badges
         initiatives.js
         views/ai-chat.js
-        views/user-management.js    ← NEW Session 13
-        app.js
+        views/user-management.js    ← Session 13
+        app.js ← S15: initMap filters !i.parentId
 backend/
-  Code.gs            ← RBAC gates + audit + user CRUD actions (Session 13)
-  Config.gs
-  AuthService.gs     ← no hardcoded fallback; changePassword() added
-  SheetService.gs    ← optimistic locking (TASK_WRITE_TS Script Property)
-  AuditService.gs    ← Audit_Log sheet
-  KpiSheetService.gs ← DEPLOYED
-  InitiativeService.gs ← DEPLOYED (15 cols)
-  UserService.gs     ← NEW Session 13 — DEPLOYED
+  Code.gs, Config.gs, AuthService.gs, SheetService.gs
+  AuditService.gs, KpiSheetService.gs, InitiativeService.gs
+  UserService.gs     ← DEPLOYED (Session 13)
   AiService.gs       ← gemini-2.5-flash in repo; GAS deploy unconfirmed
   GAS.GS             ← archived patch v6.2
 verify_initiative_v2.mjs ← 37/37 PASS
-verify_kpi_views.mjs     ← 3/3 PASS (session 7)
-verify_mobile.mjs        ← 4/4 PASS (session 7)
-um_test.mjs              ← 14/14 PASS (session 13)
-verify_ms_tasks.mjs      ← 14/14 PASS (session 14)
+verify_kpi_views.mjs     ← 3/3 PASS
+verify_mobile.mjs        ← 4/4 PASS
+um_test.mjs              ← 14/14 PASS
+verify_ms_tasks.mjs      ← 14/14 PASS
+verify_bug_fixes.mjs     ← 18/18 PASS (S15: Bug1+Bug2+genId)
+verify_preset.mjs        ← 20/20 PASS (S15: Preset Tab Bar)
 ```
 
 ---

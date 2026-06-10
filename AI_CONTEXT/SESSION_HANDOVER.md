@@ -1,17 +1,17 @@
 # SESSION HANDOVER
-**Date**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch strategy)
+**Date**: 2026-06-10 (Session 15 — Bug fixes + genId + Preset Tab Bar)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**master HEAD**: `45bf54a` (= main, fully in sync)
-**main HEAD**: `45bf54a` — PO merged PR #15 during session
+**master HEAD**: `11d054a`
+**main HEAD**: `45bf54a` — behind master by 4 commits; PO quản lý
 
 ---
 
-## Branch Strategy (Confirmed this session — ENFORCED from now)
+## Branch Strategy (ENFORCED)
 
 | Branch | Who pushes | Purpose |
 |---|---|---|
-| `master` | Developer / AI | Testing → Netlify auto-deploy |
+| `master` | Developer / AI | Testing → local verify (Netlify hết credit) |
 | `main` | **PO ONLY** via GitHub PR/commit | Production → GitHub Pages |
 
 **Rule: AI/Claude KHÔNG push `main` trừ khi PO yêu cầu rõ ràng trong message.**
@@ -20,13 +20,16 @@
 
 ## Tasks Completed This Session
 
-| # | Task | Commit | Status |
+| # | Task | Commit | Tests |
 |---|---|---|---|
-| MS-01 | `initiative-tracker.js` — milestone task drill-down, 4 new functions, alignment badges | `1acec34` | ✅ |
-| MS-02 | `initiative.css` — ms-block, ms-task-panel, alignment badge CSS (+71 lines) | `1acec34` | ✅ |
-| MS-03 | `verify_ms_tasks.mjs` — 14/14 Playwright tests pass | `1acec34` | ✅ |
-| OPS-01 | Merged master → main (was behind); PO merged PR #15 → both at `45bf54a` | — | ✅ |
-| OPS-02 | Branch strategy documented in all ai_context files | `a84ff33` | ✅ |
+| S15-01 | Sync check: master vs main — xác nhận source code giống nhau; local main cập nhật | — | — |
+| S15-02 | Docs: đánh dấu Netlify hết credit | `8f139c0` | — |
+| S15-03 | **Bug 1**: `fInit` dropdown hiển thị milestones → fix `!i.parentId` trong `initMap` | `bdc312f` | 15/15 ✅ |
+| S15-04 | **Bug 2**: Task ID không auto-update → `fId` readonly + nút "Tạo lại" + navigation listeners | `bdc312f` | 15/15 ✅ |
+| S15-05 | `handleSubmit` fix: dùng `origId` làm lookup key khi ID auto-đổi (tránh phantom task) | `bdc312f` | — |
+| S15-06 | **genId mới**: format `{init}-{ms_short}-{seq}` (vd: `Econtract-001-M1-001`) | `45f2f39` | 18/18 ✅ |
+| S15-07 | **Preset Tab Bar**: 4 tabs trên task manager — Đang làm / Tuần BC này / Quá hạn / Tất cả | `11d054a` | 20/20 ✅ |
+| S15-08 | `navigateTo('tasks')` giờ gọi `renderTaskTable()` — bảng fresh khi quay lại màn hình | `11d054a` | — |
 
 ---
 
@@ -34,33 +37,13 @@
 
 | Decision | Rationale |
 |---|---|
-| Auto-update loose link (no confirm dialog) | User confirmed: tự động là phù hợp nhất |
-| `writeToHandle()` cho fix-link sync (không dùng `syncAction`) | `syncAction` quá nặng (loading overlay + full re-render) cho single-field patch |
-| PO là người duy nhất merge lên `main` | Tránh AI vô tình push production; PO commit trực tiếp trên GitHub |
-| `border-bottom` chuyển từ `.init-milestone-row` → `.init-ms-block` | Cần wrapper để chứa sub-panel bên dưới mỗi milestone row |
-
----
-
-## Feature Summary — Milestone Task Drill-down
-
-| Element | Detail |
-|---|---|
-| Task count button | Góc phải mỗi milestone row; màu theo alignment (warn/loose/default) |
-| Sub-panel | Toggle expand/collapse; pre-rendered khi build card |
-| ✓ Phù hợp | `t.milestone === ms.id` AND `t.initiative === ms.parentId` |
-| 🔵 Liên kết lỏng | `t.milestone === _msShortLabel(ms.id)` — task dùng nhãn tắt (M1/M2) |
-| ⚠ Cần xem lại | `t.initiative !== ms.parentId` — task thuộc initiative khác |
-| Cập nhật link | Click → `task.milestone = fullMsId` → `persist()` → re-render panel → `writeToHandle()` background |
-
-**New functions**: `_initGetMsTasks`, `_initBuildMsTaskList`, `_initToggleMsTaskPanel`, `_initFixLooseLink`
-
----
-
-## Blockers / Pending Manual Steps
-
-| Item | Status |
-|---|---|
-| GAS `AiService.gs`: line 58 = `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED — AI Chat chưa smoke-test |
+| `fId` readonly, bỏ label `<span class="req">*</span>` | ID auto-gen, user không cần và không nên gõ trực tiếp |
+| `fInit.change` → `autoGenId()` không guard origId (cả EDIT) | ID phải nhất quán với initiative; dùng `origId` làm lookup để tránh corrupt |
+| `fMs.change` → `autoGenId()` chỉ ADD mode | EDIT mode: milestone không đủ context để thay ID cũ |
+| genId BAU format: `{team}-{seq}` (thêm dấu `-`) | Nhất quán với format mới; trước đây là `Số001` nay là `Số-001` |
+| Preset default = "Đang làm" | 600 task, đa số hoàn thành → default phải lọc noise |
+| `clearFilters()` giữ preset | Preset là context view, không phải filter bar detail |
+| Preset persist `localStorage['shtd_preset']` (key riêng) | Không đụng `shtd_v2` schema |
 
 ---
 
@@ -68,8 +51,8 @@
 
 | Env | Branch | HEAD | Status |
 |---|---|---|---|
-| Testing (Netlify) | `master` | `45bf54a` | ❌ **Hết credit — không auto-deploy (xác nhận 2026-06-10)** |
-| Production (GitHub Pages) | `main` | `45bf54a` | ✅ In sync — PO quản lý |
+| Testing (Netlify) | `master` | `11d054a` | ❌ **Hết credit — không auto-deploy** |
+| Production (GitHub Pages) | `main` | `45bf54a` | ✅ Live — PO quản lý (behind 4 commits) |
 | GAS Backend | — | — | ✅ Code.gs + UserService.gs deployed; ⚠️ AiService.gs unconfirmed |
 
 ---
@@ -78,12 +61,16 @@
 
 | File | Change |
 |---|---|
-| `assets/js/views/initiative-tracker.js` | `_initBuildMilestoneList` refactored + 4 new functions (~120 lines net) |
-| `assets/css/initiative.css` | +71 lines (ms-block, ms-task-panel, alignment badges, fix-link btn) |
-| `verify_ms_tasks.mjs` | NEW — 14-test Playwright suite |
-| `AI_CONTEXT/SESSION_HANDOVER.md` | This file |
-| `AI_CONTEXT/PROJECT_STATE.md` | Branch strategy, S14 features, correct HEADs |
-| `AI_CONTEXT/TODO_NEXT.md` | Branch rule promoted to top, smoke test checklist updated |
+| `assets/js/app.js` | L75: `&& !i.parentId` filter milestones khỏi initMap |
+| `assets/js/helpers.js` | `genId(init, team, ms, extra)` — param ms mới, prefix logic 3 cases |
+| `assets/js/crud.js` | `autoGenId()` + `cloneTask()` pass `fMs.value`; `handleSubmit` dùng `origId` làm lookup |
+| `assets/js/ui/navigation.js` | Bỏ guard `origId` cho fInit/fTeam change; thêm fMs listener (ADD only); `navigateTo('tasks')` → `renderTaskTable()` |
+| `assets/js/constants.js` | +`let activePreset` |
+| `assets/js/views/tasks.js` | `_getThisWeekLabel`, `_applyPreset`, `setPreset`, `updatePresetCounts`, `_initPresetUI`; `getFiltered` + `renderTaskTable` updated |
+| `assets/css/table.css` | +35 lines preset CSS |
+| `index.html` | `fId` → readonly + "Tạo lại mã" btn; preset-bar HTML block |
+| `verify_bug_fixes.mjs` | 18 tests cho Bug1 + Bug2 + genId |
+| `verify_preset.mjs` | NEW — 20 tests cho preset tab bar |
 
 ---
 
@@ -91,7 +78,8 @@
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `border-bottom` CSS change on milestone rows | 🟢 LOW | Moved to `.init-ms-block`; override rule `.init-ms-block > .init-milestone-row { border-bottom:none }` đã có |
-| `writeToHandle()` trong `_initFixLooseLink` | 🟢 LOW | No VERSION_CONFLICT guard ở đây — nhưng chỉ patch field milestone, ít conflict |
-| AI Chat GAS chưa verify | 🟡 MEDIUM | `AiService.gs` có thể dùng model cũ hoặc thiếu API key |
-| Loose-link detection dùng `_msShortLabel` regex `/-M\d+$/` | 🟢 LOW | Chỉ hoạt động đúng nếu milestone ID theo pattern `PARENT-Mn`; milestone ID tự do sẽ không match |
+| `genId` format thay đổi | 🟡 MEDIUM | BAU tasks: `Số001` → `Số-001`. Task cũ có ID `Số001` không bị đổi, nhưng khi clone/add sẽ gen `Số-002` (gap sequence). Chấp nhận được. |
+| `fInit.change` auto-gen trong EDIT mode | 🟡 MEDIUM | Nếu user vô tình đổi initiative trong edit modal → ID đổi. `origId` vẫn giữ nên lưu đúng. Xem xét thêm toast warning. |
+| Preset default "Đang làm" | 🟢 LOW | User quen với "Tất cả" cần click 1 lần; task cũ hoàn thành cần vào tab "Tất cả" |
+| `navigateTo('tasks')` gọi `renderTaskTable()` | 🟢 LOW | Thêm 1 re-render mỗi lần navigate to tasks — negligible với 600 tasks |
+| AI Chat GAS chưa verify | 🟡 MEDIUM | Không thay đổi session này, vẫn unconfirmed |
