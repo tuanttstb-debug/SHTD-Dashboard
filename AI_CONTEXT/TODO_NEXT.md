@@ -1,13 +1,13 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-10 (Session 15 — end of session)
-**Context**: Feature branch `claude/dashboard-leader-features-7nmssw` HEAD `a4e57d8`. master/main = `45bf54a`.
+**Prepared**: 2026-06-10 (Session 16 — BLD Approval Queue)
+**Context**: Feature branch `claude/dashboard-leader-features-7nmssw` HEAD `f30af66`. master/main = `45bf54a`.
 
 ---
 
 ## NGUYÊN TẮC BRANCH (đọc trước khi làm bất cứ điều gì)
 
 ```
-claude/dashboard-leader-features-7nmssw  →  feature branch hiện tại (S15)
+claude/dashboard-leader-features-7nmssw  →  feature branch hiện tại (S16)
 master  →  push tự do (Developer / AI)   →  auto-deploy Netlify (⚠️ hết credit)
 main    →  PO ONLY — PO tự commit/merge trên GitHub khi đạt yêu cầu
 ```
@@ -16,7 +16,16 @@ main    →  PO ONLY — PO tự commit/merge trên GitHub khi đạt yêu cầu
 
 ---
 
-## ✅ COMPLETED THIS SESSION (S15)
+## ✅ COMPLETED THIS SESSION (S16)
+
+- [x] BLD Approval Queue view (Phê duyệt BLĐ) — pending list, approve/reject/info modal, history 7 days
+- [x] Nav item + badge (navBadgeBld) + G+B shortcut
+- [x] No new DB columns — encodes approval state as prefix markers in noiDungBLD
+- [x] Playwright tests: 18/18 PASS
+
+---
+
+## ✅ COMPLETED SESSION 15
 
 - [x] Executive Summary view (Tổng hợp BLĐ) — 5 KPI cards, RAG donut, Attention list, Initiative health table
 - [x] Nav item + G+E shortcut + print support
@@ -34,7 +43,7 @@ Netlify hết credit (xác nhận 2026-06-10) — môi trường Testing KHÔNG 
 - **C) Dùng GitHub Pages cho cả master** (dùng branch `gh-pages` hoặc folder `/docs`) — không cần service ngoài
 - **D) Verify local only** bằng Playwright + `http-server` — tạm thời, không có public URL
 
-**Tạm thời**: verify bằng local server (`npx http-server . -p 3030`) + Playwright tests.
+**Tạm thời**: verify bằng local server (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node verify_*.mjs`) + http-server port 3030.
 
 ---
 
@@ -66,6 +75,7 @@ AI Chat frontend đã có từ Session 12. GAS-side chưa được xác nhận.
 | User Management — add / edit / reset PW / toggle active | Flow đầy đủ |
 | Initiative → Milestone → Tasks | Mở accordion → click milestone → sub-panel tasks; badge alignment đúng; "Cập nhật link" hoạt động |
 | AI Chat | Xem P0 |
+| **BLD Queue** | canBLD=Y tasks appear; approve/reject/info modal works; history 7 days |
 | Existing features | Tasks, KPI, Gantt, Report — no regression |
 
 ---
@@ -85,10 +95,10 @@ AI Chat frontend đã có từ Session 12. GAS-side chưa được xác nhận.
 ## Session Rules
 
 1. **Đọc SESSION_HANDOVER + PROJECT_STATE trước** — không skip
-2. **Branch**: push lên `master` trước; KHÔNG push/merge lên `main` — PO tự xử lý
+2. **Branch**: push lên `claude/dashboard-leader-features-7nmssw`; KHÔNG push/merge lên `main` — PO tự xử lý
 3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2']`
 4. One logical change per commit
 5. Tất cả GAS calls qua `gasPost()` — không raw `fetch()`
 6. `GS_WEBAPP_URL` trong `assets/js/config.js` — cập nhật mỗi lần GAS redeploy
 7. `esc()` trên mọi user-supplied content render qua `innerHTML`
-8. Test local (Playwright hoặc browser) trước khi push
+8. Test local (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node verify_*.mjs`) trước khi push
