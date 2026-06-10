@@ -294,6 +294,26 @@
           </div>
         </div>
 
+        <!-- PRESET TAB BAR -->
+        <div class="preset-bar" id="presetBar">
+          <button class="preset-btn" id="preset-active" onclick="setPreset('active')">
+            <span class="preset-icon">🔵</span> Đang làm
+            <span class="preset-count" id="pcount-active"></span>
+          </button>
+          <button class="preset-btn" id="preset-week" onclick="setPreset('week')">
+            <span class="preset-icon">⚡</span> Tuần BC này
+            <span class="preset-count" id="pcount-week"></span>
+          </button>
+          <button class="preset-btn" id="preset-overdue" onclick="setPreset('overdue')">
+            <span class="preset-icon">⚠</span> Quá hạn
+            <span class="preset-count preset-count-danger" id="pcount-overdue"></span>
+          </button>
+          <button class="preset-btn" id="preset-all" onclick="setPreset('all')">
+            <span class="preset-icon">📋</span> Tất cả
+            <span class="preset-count" id="pcount-all"></span>
+          </button>
+        </div>
+
         <!-- FILTER BAR -->
         <div class="filter-bar">
           <div class="filter-group" style="min-width:80px;max-width:110px;">

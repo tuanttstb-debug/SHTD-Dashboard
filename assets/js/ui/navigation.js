@@ -95,6 +95,7 @@ function navigateTo(view) {
     'user-management':'Quản lý User',
   };
   document.getElementById('pageTitle').textContent = titles[view] || view;
+  if (view === 'tasks')                renderTaskTable();
   if (view === 'gantt')                renderGantt();
   if (view === 'performance')          renderPerfTable();
   if (view === 'kpi-overview')         renderKpiOverview();

@@ -1,18 +1,57 @@
+function _getThisWeekLabel() {
+  const now = new Date();
+  const jan4 = new Date(now.getFullYear(), 0, 4);
+  const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
+}
+
+function _applyPreset(tasks) {
+  if (activePreset === 'active')  return tasks.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng');
+  if (activePreset === 'week')    return tasks.filter(t => (t.tuanBC||'').trim() === _getThisWeekLabel());
+  if (activePreset === 'overdue') return tasks.filter(t => isOverdue(t.endDate, t.progress));
+  return tasks;
+}
+
+function setPreset(name) {
+  activePreset = name;
+  localStorage.setItem('shtd_preset', name);
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`preset-${name}`)?.classList.add('active');
+  currentPage = 1;
+  renderTaskTable();
+  renderFilterChips();
+}
+
+function updatePresetCounts() {
+  const wkLabel = _getThisWeekLabel();
+  const all = db.tasks;
+  const counts = {
+    active:  all.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng').length,
+    week:    all.filter(t => (t.tuanBC||'').trim() === wkLabel).length,
+    overdue: all.filter(t => isOverdue(t.endDate, t.progress)).length,
+    all:     all.length,
+  };
+  Object.entries(counts).forEach(([key, n]) => {
+    const el = document.getElementById(`pcount-${key}`);
+    if (el) el.textContent = n > 0 ? n : '';
+  });
+}
+
+function _initPresetUI() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`preset-${activePreset}`)?.classList.add('active');
+}
+
 function getFiltered() {
-  const fId   = (document.getElementById('filterId')?.value||'').trim().toLowerCase();
-  const fInit = document.getElementById('filterInit')?.value||'';
-  const fTeam = document.getElementById('filterTeam')?.value||'';
-  const fPic  = document.getElementById('filterPic')?.value||'';
-  const fSt   = document.getElementById('filterState')?.value||'';
+  const fId     = (document.getElementById('filterId')?.value||'').trim().toLowerCase();
+  const fInit   = document.getElementById('filterInit')?.value||'';
+  const fTeam   = document.getElementById('filterTeam')?.value||'';
+  const fPic    = document.getElementById('filterPic')?.value||'';
+  const fSt     = document.getElementById('filterState')?.value||'';
   const fRag    = document.getElementById('filterRag')?.value||'';
   const fTuanBC = document.getElementById('filterTuanBC')?.value||'';
-  const thisWeekLabel = (() => {
-    const now = new Date();
-    const jan4 = new Date(now.getFullYear(), 0, 4);
-    const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-    return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
-  })();
-  return db.tasks.filter(t => {
+  const thisWeekLabel = _getThisWeekLabel();
+  const byBar = db.tasks.filter(t => {
     if (fId   && !(t.id||'').toLowerCase().includes(fId)) return false;
     if (fInit && t.initiative !== fInit) return false;
     if (fTeam && t.team !== fTeam) return false;
@@ -25,6 +64,7 @@ function getFiltered() {
     }
     return true;
   });
+  return _applyPreset(byBar);
 }
 
 function renderFilterChips() {
@@ -80,6 +120,8 @@ function sortBy(key) {
 }
 
 function renderTaskTable() {
+  _initPresetUI();
+  updatePresetCounts();
   const tbody = document.getElementById('taskTbody');
   let tasks = getFiltered().sort((a,b) => {
     let va = a[sort.key]||'', vb = b[sort.key]||'';

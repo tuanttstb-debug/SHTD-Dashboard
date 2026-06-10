@@ -11,6 +11,7 @@ let confirmResolve = null;
 const DEFAULT_PICS = ['Tuantt4', 'Dunglq1', 'Quangnn3'];
 let gKeyBuffer = '';
 let debounceTimer = null;
+let activePreset = localStorage.getItem('shtd_preset') || 'active';
 
 // ── Google Apps Script config ──
 // GS_WEBAPP_URL is defined in assets/js/config.js — update that file on each GAS redeploy
