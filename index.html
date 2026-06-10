@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="assets/css/auth.css">
 <link rel="stylesheet" href="assets/css/ai-chat.css">
 <link rel="stylesheet" href="assets/css/executive-summary.css">
+<link rel="stylesheet" href="assets/css/bld-queue.css">
 
 </head>
 <body>
@@ -85,6 +86,11 @@
       <div class="nav-item" data-view="executive-summary">
         <i class="fa-solid fa-crown nav-icon"></i>
         <span class="nav-label">Tổng hợp BLĐ</span>
+      </div>
+      <div class="nav-item" data-view="bld-queue">
+        <i class="fa-solid fa-clipboard-check nav-icon"></i>
+        <span class="nav-label">Phê duyệt BLĐ</span>
+        <span class="nav-badge danger" id="navBadgeBld" style="display:none;">0</span>
       </div>
       <div class="nav-section-label">Quản lý</div>
       <div class="nav-item" data-view="initiative-tracker">
@@ -391,6 +397,41 @@
             <tbody id="esInitTableBody"></tbody>
           </table>
         </div>
+      </div>
+
+    </section>
+
+    <!-- ===== BLD APPROVAL QUEUE ===== -->
+    <section class="view-section" id="view-bld-queue" style="display:none;">
+
+      <!-- Toolbar -->
+      <div class="bld-toolbar">
+        <div class="bld-toolbar-left">
+          <span class="bld-count-chip" id="bldCountChip">0 chờ phê duyệt</span>
+          <span class="bld-timestamp" id="bldTimestamp"></span>
+        </div>
+        <div class="bld-filter-bar">
+          <span class="bld-filter-label"><i class="fa-solid fa-filter" style="margin-right:4px;"></i>Lọc:</span>
+          <select id="bldFilterTeam" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:140px;" onchange="_bldFilterTeam=this.value;renderBldQueue()">
+            <option value="">Tất cả đội</option>
+          </select>
+          <select id="bldFilterInit" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="_bldFilterInit=this.value;renderBldQueue()">
+            <option value="">Tất cả sáng kiến</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="renderBldQueue()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+        </div>
+      </div>
+
+      <!-- Pending list -->
+      <div class="bld-pending-list" id="bldPendingList"></div>
+
+      <!-- History section -->
+      <div id="bldHistoryWrap" style="display:none;">
+        <div class="bld-history-header">
+          <div class="bld-history-title"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i>Đã xử lý (7 ngày qua)</div>
+          <div class="bld-history-line"></div>
+        </div>
+        <div class="bld-history-list" id="bldHistoryList"></div>
       </div>
 
     </section>
@@ -812,6 +853,32 @@
   </div>
 </div>
 
+<!-- ===== BLD ACTION MINI MODAL ===== -->
+<div class="overlay" id="bldActionOverlay" style="display:none;align-items:center;justify-content:center;">
+  <div class="bld-mini-card">
+    <div class="bld-mini-top">
+      <div>
+        <div class="bld-mini-title" id="bldMiniTitle">Phê duyệt yêu cầu</div>
+        <div class="bld-mini-sub" id="bldMiniSubtitle"></div>
+      </div>
+      <div class="modal-close" onclick="bldCloseMiniModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="bld-mini-preview">
+      <div class="bld-mini-prev-name" id="bldMiniTaskName"></div>
+      <div class="bld-mini-prev-id" id="bldMiniTaskId"></div>
+    </div>
+    <div class="bld-mini-body">
+      <label class="bld-mini-label" id="bldMiniLabel">Ghi chú</label>
+      <textarea class="bld-mini-textarea" id="bldMiniTextarea" placeholder="Nhập nội dung…" rows="4"></textarea>
+      <div class="bld-mini-err" id="bldMiniError"></div>
+    </div>
+    <div class="bld-mini-footer">
+      <button class="btn btn-outline" onclick="bldCloseMiniModal()">Hủy</button>
+      <button class="btn btn-success" id="bldMiniConfirmBtn" onclick="bldSubmitAction()">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== CONFIRM MODAL ===== -->
 <div class="overlay" id="confirmOverlay">
   <div class="confirm-modal">
@@ -889,6 +956,7 @@
       <div>
         <div class="kb-row"><span class="kb-desc">Đến Dashboard</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">D</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Tổng hợp BLĐ</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">E</span></div></div>
+        <div class="kb-row"><span class="kb-desc">Đến Phê duyệt BLĐ</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">B</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Task list</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">T</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Timeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">G</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Performance</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">P</span></div></div>
@@ -931,6 +999,7 @@
 <script src="assets/js/views/ai-chat.js"></script>
 <script src="assets/js/views/user-management.js"></script>
 <script src="assets/js/views/executive-summary.js"></script>
+<script src="assets/js/views/bld-queue.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
