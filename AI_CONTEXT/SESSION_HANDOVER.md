@@ -1,9 +1,9 @@
 # SESSION HANDOVER
-**Date**: 2026-06-10 (Session 13 — User Management feature)
+**Date**: 2026-06-10 (Session 14 — Milestone Task Drill-down feature)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Remote HEAD**: `927b783` (master)
-**Previous session HEAD**: `364a884`
+**Remote HEAD**: `ac94c8a` (master — NOT pushed yet)
+**Local HEAD**: `1acec34` (master)
 
 ---
 
@@ -11,45 +11,45 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| UM-01 | `backend/UserService.gs` — `userList()`, `userCreate()`, `userUpdate()`, `userResetPassword()` | `927b783` | ✅ |
-| UM-02 | `backend/Code.gs` — 4 new admin-only actions + audit logging | `927b783` | ✅ |
-| UM-03 | `assets/js/views/user-management.js` — table + add/edit modal + reset PW modal | `927b783` | ✅ |
-| UM-04 | `index.html` — nav item (admin-only), view section, script tag | `927b783` | ✅ |
-| UM-05 | `auth.css` — RBAC rule broadened (Teamlead also hidden); badge/status CSS | `927b783` | ✅ |
-| UM-06 | `navigation.js` — user-management registered in titles + render dispatch | `927b783` | ✅ |
-| TEST | 14/14 Playwright UI tests pass, 0 JS errors | — | ✅ |
+| MS-01 | `assets/js/views/initiative-tracker.js` — milestone task drill-down + alignment badges + auto-fix | `1acec34` | ✅ |
+| MS-02 | `assets/css/initiative.css` — styles for ms-block, ms-task-panel, alignment badges, fix-link button | `1acec34` | ✅ |
+| TEST | 14/14 Playwright tests pass (`verify_ms_tasks.mjs`) | — | ✅ |
 
 ---
 
 ## Feature Summary
 
-Admin can now manage users via left menu **"Quản trị → Quản lý User"** (hidden for User & Teamlead roles).
+Initiative Tracker milestone rows now show a **task count button** that expands a sub-panel listing tasks linked to that milestone.
 
 | Sub-feature | Detail |
 |---|---|
-| User list | Table: Username, Display Name, Role (badge), Team, Email, Status, Dates, Actions |
-| Add User modal | All fields: Username, Display Name, Role, Team, Email, Password + Confirm (min 6 chars) |
-| Edit User modal | Same fields (Username readonly); includes Active toggle |
-| Reset Password | Admin resets any user's PW without knowing old password |
-| Toggle Active | Lock/unlock account via uiConfirm dialog |
-| RBAC | `body:not([data-role="Admin"]) .admin-only` hides entire Admin section from User & Teamlead |
+| Task count button | Per milestone row, right-aligned; shows N task count; color-coded by alignment status |
+| Expand/collapse | Click button → sub-panel toggles open/closed (chevron rotates) |
+| **Phù hợp** badge (green) | `task.milestone === ms.id` (exact full ID match) AND `task.initiative === parentInitId` |
+| **Liên kết lỏng** badge (blue) | `task.milestone === "M1"` short label (same initiative) — includes "Cập nhật link" button |
+| **Cần xem lại** badge (orange) | `task.initiative !== parentInitId` — task belongs to different initiative |
+| **Auto-update link** | "Cập nhật link" button patches `task.milestone → full ID`, persists, re-renders panel inline, syncs to GAS |
+| Button color coding | warn (orange) if cross-init tasks exist; loose (blue) if short-label tasks exist; default otherwise |
 
 ---
 
-## RBAC Change (Important)
+## New Functions Added
 
-**Before**: `body[data-role="User"] .admin-only { display: none }` — only hid from User role  
-**After**: `body:not([data-role="Admin"]) .admin-only { display: none }` — hides from User AND Teamlead
+| Function | File | Purpose |
+|---|---|---|
+| `_initGetMsTasks(ms, parentInitId)` | initiative-tracker.js | Find tasks for a milestone (exact + short-label match) |
+| `_initBuildMsTaskList(ms, parentInitId)` | initiative-tracker.js | Build task table with alignment badges |
+| `_initToggleMsTaskPanel(msId)` | initiative-tracker.js | Toggle sub-panel expand/collapse |
+| `_initFixLooseLink(taskId, fullMsId, msId)` | initiative-tracker.js | Auto-update task.milestone short label → full ID |
 
 ---
 
-## Pending Manual Steps (from Session 12 — STILL REQUIRED)
+## Pending Manual Steps
 
 | Step | Status |
 |---|---|
-| GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` → Save → Deploy new version | ⚠️ PENDING |
-| GAS Script Properties → set `GEMINI_API_KEY` = new `AQ.xxx` key | ⚠️ PENDING |
-| UserService.gs + Code.gs must be copied to GAS editor + redeployed | ⚠️ NEW — required for User Management to work on Netlify |
+| GAS editor → `AiService.gs` line 58: `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED — AI Chat not smoke-tested |
+| Push `master` to remote (`git push origin master`) | ⏳ NOT DONE — local only |
 
 ---
 
@@ -57,9 +57,9 @@ Admin can now manage users via left menu **"Quản trị → Quản lý User"** 
 
 | Environment | Branch | Status |
 |---|---|---|
-| Testing | `master` (`927b783`) | ✅ Live — all features on Netlify, GAS redeploy pending |
-| Production | `main` (`5b165e2`) | ⚠️ NOT updated — merge after PO confirms |
-| GAS Backend | — | ⚠️ Deployed (old) — needs UserService.gs + AiService.gs update + redeploy |
+| Testing | `master` (`1acec34` local / `ac94c8a` remote) | ⚠️ Local commit NOT pushed yet |
+| Production | `main` (`5b165e2`) | ⚠️ NOT updated — merge after PO confirms all features |
+| GAS Backend | same URL | ✅ No GAS changes this session |
 
 ---
 
@@ -67,9 +67,17 @@ Admin can now manage users via left menu **"Quản trị → Quản lý User"** 
 
 | File | Change |
 |---|---|
-| `backend/UserService.gs` | NEW — userList/Create/Update/ResetPassword |
-| `backend/Code.gs` | 4 new admin-only action handlers + audit |
-| `assets/js/views/user-management.js` | NEW — full CRUD view |
-| `index.html` | Nav item + view section + script tag |
-| `assets/css/auth.css` | RBAC rule + badge/status CSS |
-| `assets/js/ui/navigation.js` | user-management registered |
+| `assets/js/views/initiative-tracker.js` | Refactored `_initBuildMilestoneList` + 4 new functions (~120 lines added) |
+| `assets/css/initiative.css` | Added `.init-ms-block`, `.init-ms-task-btn`, `.init-ms-task-panel`, `.init-align-badge` variants, `.init-fix-link-btn` (~71 lines) |
+| `verify_ms_tasks.mjs` | NEW — 14-test Playwright test suite for this feature |
+
+---
+
+## Regression Risks
+
+| Risk | Severity | Detail |
+|---|---|---|
+| CSS border change on milestone rows | 🟢 LOW | `border-bottom` moved from `.init-milestone-row` to `.init-ms-block`; override rule added |
+| Task write on "Cập nhật link" | 🟢 LOW | Uses existing `writeToHandle()` with VERSION_CONFLICT protection |
+| AI Chat still unverified | 🟡 MEDIUM | `AiService.gs` deploy status unknown |
+| `main` branch stale | 🟡 MEDIUM | Sessions 10–14 accumulated on master only |

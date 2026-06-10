@@ -173,22 +173,122 @@ function _initBuildMilestoneList(parentId, milestones) {
     return `<div style="font-size:12px;color:var(--text-3);padding:8px 0;">Chưa có milestone. <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button></div>`;
   }
   const rows = milestones.map(ms => {
-    const dotClass = _initMsDotClass(ms.status);
-    return `<div class="init-milestone-row">
-      <div class="init-step-dot ${dotClass}"></div>
-      <span class="init-ms-id">${_esc(_msShortLabel(ms.id))}</span>
-      <span class="init-ms-name">${_esc(ms.name.replace(/^↳\s*/,''))}</span>
-      <div class="init-prog-wrap">
-        <div class="init-prog-bar" style="width:60px;"><div class="init-prog-fill ${dotClass === 'done' ? 'done' : dotClass === 'blocked' ? 'blocked' : ''}" style="width:${ms.pct||0}%;"></div></div>
-        <span class="init-prog-pct">${ms.pct||0}%</span>
+    const dotClass   = _initMsDotClass(ms.status);
+    const msTasks    = _initGetMsTasks(ms, parentId);
+    const warnCount  = msTasks.filter(t => t.initiative !== parentId).length;
+    const looseCount = msTasks.filter(t => t.milestone !== ms.id).length;
+    const btnExtra   = warnCount ? ' warn' : looseCount ? ' loose' : '';
+    return `
+    <div class="init-ms-block">
+      <div class="init-milestone-row">
+        <div class="init-step-dot ${dotClass}"></div>
+        <span class="init-ms-id">${_esc(_msShortLabel(ms.id))}</span>
+        <span class="init-ms-name">${_esc(ms.name.replace(/^↳\s*/,''))}</span>
+        <div class="init-prog-wrap">
+          <div class="init-prog-bar" style="width:60px;"><div class="init-prog-fill ${dotClass === 'done' ? 'done' : dotClass === 'blocked' ? 'blocked' : ''}" style="width:${ms.pct||0}%;"></div></div>
+          <span class="init-prog-pct">${ms.pct||0}%</span>
+        </div>
+        ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ms.deadline)}</span>` : ''}
+        <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+        <button class="init-ms-task-btn${btnExtra}" id="ms-task-btn-${_esc(ms.id)}" onclick="_initToggleMsTaskPanel('${_esc(ms.id)}')">
+          <i class="fa-solid fa-list-check"></i> ${msTasks.length} task
+          <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i>
+        </button>
       </div>
-      ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ms.deadline)}</span>` : ''}
-      <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
-      <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+      <div class="init-ms-task-panel" id="ms-tasks-${_esc(ms.id)}">
+        ${_initBuildMsTaskList(ms, parentId)}
+      </div>
     </div>`;
   }).join('');
 
-  return rows + `<div style="margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button></div>`;
+  return rows + `<div style="margin-top:8px;padding-left:4px;"><button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button></div>`;
+}
+
+/* ── tasks belonging to a milestone (exact ID + short-label fallback) ── */
+function _initGetMsTasks(ms, parentInitId) {
+  return (db.tasks || []).filter(t =>
+    t.milestone === ms.id ||
+    (t.milestone === _msShortLabel(ms.id) && t.initiative === parentInitId)
+  );
+}
+
+/* ── per-milestone task table with alignment badges ── */
+function _initBuildMsTaskList(ms, parentInitId) {
+  const tasks = _initGetMsTasks(ms, parentInitId);
+  if (!tasks.length) {
+    return `<div style="font-size:12px;color:var(--text-3);padding:10px 4px;">Không có task nào liên kết với milestone này.</div>`;
+  }
+  const rows = tasks.map(t => {
+    const isExact    = t.milestone === ms.id;
+    const isCrossInit = t.initiative !== parentInitId;
+    let alignBadge;
+    if (isCrossInit) {
+      alignBadge = `<span class="init-align-badge warn" title="Task thuộc initiative ${_esc(t.initiative||'?')} — khác initiative này">⚠ Cần xem lại</span>`;
+    } else if (!isExact) {
+      alignBadge = `<span class="init-align-badge loose" title="Đang link qua nhãn tắt '${_esc(t.milestone)}' — chưa dùng ID đầy đủ">
+        🔵 Liên kết lỏng
+        <button class="init-fix-link-btn" onclick="event.stopPropagation();_initFixLooseLink('${_esc(t.id)}','${_esc(ms.id)}','${_esc(ms.id)}')" title="Cập nhật sang ${_esc(ms.id)}">
+          Cập nhật link
+        </button>
+      </span>`;
+    } else {
+      alignBadge = `<span class="init-align-badge ok">✓ Phù hợp</span>`;
+    }
+    return `<tr onclick="editTask('${_esc(t.id)}')" title="Mở task ${_esc(t.id)}">
+      <td><span class="init-task-id">${_esc(t.id)}</span></td>
+      <td><span class="init-task-name" title="${_esc(t.name)}">${_esc(t.name)}</span></td>
+      <td>${stateChip(t.state)}</td>
+      <td style="color:var(--text-3);">${_esc(t.picRes||'–')}</td>
+      <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
+      <td ${isOverdue(t.endDate,t.progress)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(t.endDate)||'–'}</td>
+      <td onclick="event.stopPropagation()">${alignBadge}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="init-task-table">
+    <thead><tr>
+      <th>ID</th><th>Task</th><th>Trạng thái</th>
+      <th>PIC</th><th>Tiến độ</th><th>Deadline</th><th>Đánh giá</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+/* ── toggle milestone task sub-panel ── */
+function _initToggleMsTaskPanel(msId) {
+  const panel = document.getElementById('ms-tasks-' + msId);
+  const btn   = document.getElementById('ms-task-btn-' + msId);
+  if (!panel) return;
+  const isOpen = panel.classList.toggle('open');
+  if (btn) btn.classList.toggle('open', isOpen);
+}
+
+/* ── fix loose link: update task.milestone from short label → full ID ── */
+async function _initFixLooseLink(taskId, fullMsId, msId) {
+  const task = (db.tasks || []).find(t => t.id === taskId);
+  if (!task) return;
+  task.milestone = fullMsId;
+  persist();
+  toast(`Task ${_esc(taskId)}: milestone → ${_esc(fullMsId)}`, 'success');
+
+  // Re-render the milestone list section for the parent initiative
+  const ms = (db.initiatives || []).find(i => i.id === msId);
+  if (ms) {
+    const milestones = (db.initiatives || []).filter(i =>
+      (i.type ? i.type === 'milestone' : (!!i.parentId && i.status !== undefined)) && i.parentId === ms.parentId
+    );
+    const msListEl = document.getElementById('ms-list-' + ms.parentId);
+    if (msListEl) {
+      msListEl.innerHTML = _initBuildMilestoneList(ms.parentId, milestones);
+      // Re-open the panel that was just updated
+      const panel = document.getElementById('ms-tasks-' + msId);
+      if (panel) panel.classList.add('open');
+      const btn = document.getElementById('ms-task-btn-' + msId);
+      if (btn) btn.classList.add('open');
+    }
+  }
+
+  writeToHandle().catch(e => toast('⚠️ Sync lỗi: ' + e.message, 'warning', 5000));
 }
 
 /* ── linked task list (inside card) ── */
