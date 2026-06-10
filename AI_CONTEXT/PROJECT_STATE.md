@@ -168,11 +168,12 @@ verify_ms_tasks.mjs      ← 14/14 PASS (session 14)
 
 ## Deployment
 
-| Environment | URL | Branch | Managed by |
-|---|---|---|---|
-| **Testing** | https://test-shtd.netlify.app | `master` | Developer / AI push |
-| **Production** | GitHub Pages URL | `main` | **PO only** — commit trực tiếp trên GitHub |
+| Environment | URL | Branch | Managed by | Status |
+|---|---|---|---|---|
+| **Testing** | https://test-shtd.netlify.app | `master` | Developer / AI push | ❌ **Netlify hết credit — không auto-deploy** |
+| **Production** | GitHub Pages URL | `main` | **PO only** — commit trực tiếp trên GitHub | ✅ Live |
 
 - **No build step** — direct file edit → commit → push → auto-deploy
-- **Workflow**: develop → push `master` → verify Netlify → PO approves → PO merges to `main`
+- **Workflow hiện tại**: develop → push `master` → ⚠️ Netlify KHÔNG deploy → cần giải pháp thay thế để verify
 - **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
+- **⚠️ Testing environment bị hỏng**: Netlify hết credit (xác nhận 2026-06-10). Cần migrate sang platform khác hoặc nâng cấp plan.

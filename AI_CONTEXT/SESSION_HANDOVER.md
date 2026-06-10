@@ -68,7 +68,7 @@
 
 | Env | Branch | HEAD | Status |
 |---|---|---|---|
-| Testing (Netlify) | `master` | `45bf54a` | ✅ Live |
+| Testing (Netlify) | `master` | `45bf54a` | ❌ **Hết credit — không auto-deploy (xác nhận 2026-06-10)** |
 | Production (GitHub Pages) | `main` | `45bf54a` | ✅ In sync — PO quản lý |
 | GAS Backend | — | — | ✅ Code.gs + UserService.gs deployed; ⚠️ AiService.gs unconfirmed |
 

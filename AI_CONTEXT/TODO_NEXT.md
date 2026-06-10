@@ -15,7 +15,21 @@ main    →  PO ONLY — PO tự commit/merge trên GitHub khi đạt yêu cầu
 
 ---
 
-## 🔴 PRIORITY 0 — Verify AI Chat trên live
+## 🔴 PRIORITY 0 — Fix Testing Environment (Netlify hết credit)
+
+Netlify hết credit (xác nhận 2026-06-10) — môi trường Testing KHÔNG còn auto-deploy từ `master`.
+
+**Options:**
+- **A) Nâng cấp Netlify plan** — giữ nguyên workflow, tốn phí
+- **B) Migrate sang Cloudflare Pages** (miễn phí, unlimited bandwidth) — đổi CI target
+- **C) Dùng GitHub Pages cho cả master** (dùng branch `gh-pages` hoặc folder `/docs`) — không cần service ngoài
+- **D) Verify local only** bằng Playwright + `http-server` — tạm thời, không có public URL
+
+**Tạm thời**: verify bằng local server (`npx http-server . -p 3030`) + Playwright tests.
+
+---
+
+## 🔴 PRIORITY 1 — Verify AI Chat trên live
 
 AI Chat frontend đã có từ Session 12. GAS-side chưa được xác nhận.
 
