@@ -2,6 +2,67 @@
 
 ---
 
+## [Session 15] 2026-06-10 — Executive Summary (Tổng hợp BLĐ)
+
+**Branch**: `claude/dashboard-leader-features-7nmssw`
+**Commit**: `a4e57d8`
+
+### Mục tiêu
+Thêm trang tổng hợp dành riêng cho lãnh đạo trung tâm — read-only, không filter, luôn hiển thị toàn bộ bức tranh với các items cần ra quyết định ưu tiên cao nhất.
+
+### Tính năng mới
+
+**Zone 1 — 5 KPI Cards headline:**
+- Tổng số Task (`#esTotal`)
+- Tỷ lệ hoàn thành % (`#esCompletionPct`) — màu theo ngưỡng (≥70% xanh, ≥40% cam, <40% đỏ)
+- Đang thực hiện (`#esInProg`) với TB tiến độ
+- Quá hạn (`#esOverdue`) — pulse đỏ nếu > 0
+- Blocked & Cần BLĐ (`#esBld`) — pulse cam nếu > 0
+
+**Zone 2A — RAG health donut:**
+- Chart.js doughnut, guard `typeof Chart === 'undefined'` để resilient khi CDN chậm
+- Legend dọc: màu dot + count tuyệt đối + % từng loại
+
+**Zone 2B — Cần xử lý ngay:**
+- Sort priority: Cần BLĐ (1) → Blocked (2) → Quá hạn (3)
+- Max 8 items hiển thị + "xem thêm N..." link → Tasks view
+- Click mỗi item → `editTask()` mở modal chỉnh sửa
+
+**Zone 3 — Initiative health table:**
+- Sort: Red-first → Amber → Green; cùng RAG → donePct tăng dần (tệ nhất trên cùng)
+- Columns: Initiative | Tổng | Xong | Done % | Avg Progress bar | RAG badge | Status tag
+- Progress bar màu: xanh ≥70%, cam 30–70%, đỏ <30%
+- Status tags: Đúng tiến độ / Cần chú ý / Rủi ro cao
+
+**Navigation:**
+- Sidebar nav item: `data-view="executive-summary"`, icon `fa-crown`
+- Page title: `Tổng hợp Lãnh đạo`
+- Phím tắt: `G+E`
+- Print/PDF: nút in + `@media print` layout
+
+### Files thay đổi
+
+| File | Loại | Lines |
+|------|------|-------|
+| `assets/css/executive-summary.css` | NEW | ~120 |
+| `assets/js/views/executive-summary.js` | NEW | ~180 |
+| `index.html` | MOD | +~100 |
+| `assets/js/ui/navigation.js` | MOD | +4 |
+
+### Tests (Playwright)
+- ✅ KPI values đúng với 5 sample tasks (total=5, done%=20%, overdue=3, BLD+blocked=2)
+- ✅ Attention items sort đúng (3 items)
+- ✅ Initiative table sort Red-first (3 rows: DB, DA, BAU)
+- ✅ Empty state (0 tasks) không crash
+- ✅ Dark mode đúng CSS variables
+- ✅ Phím tắt `G+E` hoạt động
+- ✅ Navigate đi/về không crash Chart.js (guard hoạt động)
+
+### Không thay đổi
+Dashboard, Tasks, Gantt, Performance, KPI views, Quick View, Initiative Tracker, User Management, AI Chat, GAS backend
+
+---
+
 ## [Session 6] 2026-06-05 — Initiative DB Type Column + Milestone Fix + Verify v2
 
 **Commits**: `e9f43e4`, `b88b448`

@@ -1,17 +1,26 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-10 (Session 14 — end of session)
-**Context**: master = main = `45bf54a`. Branch strategy locked: AI → master only; PO → main.
+**Prepared**: 2026-06-10 (Session 15 — end of session)
+**Context**: Feature branch `claude/dashboard-leader-features-7nmssw` HEAD `a4e57d8`. master/main = `45bf54a`.
 
 ---
 
 ## NGUYÊN TẮC BRANCH (đọc trước khi làm bất cứ điều gì)
 
 ```
-master  →  push tự do (Developer / AI)  →  auto-deploy Netlify (Testing)
+claude/dashboard-leader-features-7nmssw  →  feature branch hiện tại (S15)
+master  →  push tự do (Developer / AI)   →  auto-deploy Netlify (⚠️ hết credit)
 main    →  PO ONLY — PO tự commit/merge trên GitHub khi đạt yêu cầu
 ```
 
 **AI/Claude KHÔNG được push lên `main` trừ khi PO yêu cầu rõ ràng trong message.**
+
+---
+
+## ✅ COMPLETED THIS SESSION (S15)
+
+- [x] Executive Summary view (Tổng hợp BLĐ) — 5 KPI cards, RAG donut, Attention list, Initiative health table
+- [x] Nav item + G+E shortcut + print support
+- [x] Playwright tests: empty, dark mode, keyboard, re-render — PASS
 
 ---
 
@@ -29,7 +38,13 @@ Netlify hết credit (xác nhận 2026-06-10) — môi trường Testing KHÔNG 
 
 ---
 
-## 🔴 PRIORITY 1 — Verify AI Chat trên live
+## 🟡 PRIORITY 1 — Merge feature branch vào main
+
+Branch `claude/dashboard-leader-features-7nmssw` đã ready. PO review trên GitHub, merge vào main.
+
+---
+
+## 🔴 PRIORITY 2 — Verify AI Chat trên live
 
 AI Chat frontend đã có từ Session 12. GAS-side chưa được xác nhận.
 
@@ -41,7 +56,7 @@ AI Chat frontend đã có từ Session 12. GAS-side chưa được xác nhận.
 
 ---
 
-## 🟡 PRIORITY 1 — Smoke test toàn diện trên Netlify
+## 🟡 PRIORITY 3 — Smoke test toàn diện trên Netlify
 
 | Feature | Check |
 |---|---|

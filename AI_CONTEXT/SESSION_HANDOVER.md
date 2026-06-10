@@ -1,17 +1,18 @@
 # SESSION HANDOVER
-**Date**: 2026-06-10 (Session 14 — Milestone Task Drill-down + Branch strategy)
+**Date**: 2026-06-10 (Session 15 — Executive Summary / Tổng hợp BLĐ)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**master HEAD**: `45bf54a` (= main, fully in sync)
-**main HEAD**: `45bf54a` — PO merged PR #15 during session
+**Feature branch HEAD**: `a4e57d8` (branch: `claude/dashboard-leader-features-7nmssw`)
+**main HEAD**: `45bf54a` — unchanged (PO quản lý)
 
 ---
 
-## Branch Strategy (Confirmed this session — ENFORCED from now)
+## Branch Strategy
 
 | Branch | Who pushes | Purpose |
 |---|---|---|
-| `master` | Developer / AI | Testing → Netlify auto-deploy |
+| `claude/dashboard-leader-features-7nmssw` | AI (session này) | Feature branch — chờ PO review + merge |
+| `master` | Developer / AI | Testing → Netlify (⚠️ hết credit) |
 | `main` | **PO ONLY** via GitHub PR/commit | Production → GitHub Pages |
 
 **Rule: AI/Claude KHÔNG push `main` trừ khi PO yêu cầu rõ ràng trong message.**
@@ -22,11 +23,11 @@
 
 | # | Task | Commit | Status |
 |---|---|---|---|
-| MS-01 | `initiative-tracker.js` — milestone task drill-down, 4 new functions, alignment badges | `1acec34` | ✅ |
-| MS-02 | `initiative.css` — ms-block, ms-task-panel, alignment badge CSS (+71 lines) | `1acec34` | ✅ |
-| MS-03 | `verify_ms_tasks.mjs` — 14/14 Playwright tests pass | `1acec34` | ✅ |
-| OPS-01 | Merged master → main (was behind); PO merged PR #15 → both at `45bf54a` | — | ✅ |
-| OPS-02 | Branch strategy documented in all ai_context files | `a84ff33` | ✅ |
+| ES-01 | `assets/css/executive-summary.css` — NEW, 80 CSS rules, responsive + dark + print | `a4e57d8` | ✅ |
+| ES-02 | `assets/js/views/executive-summary.js` — NEW, `renderExecutiveSummary()` + 5 helpers | `a4e57d8` | ✅ |
+| ES-03 | `index.html` — nav item "Tổng hợp BLĐ", HTML section 3 zones, CSS/script links, KB shortcut | `a4e57d8` | ✅ |
+| ES-04 | `assets/js/ui/navigation.js` — dispatch, title, phím tắt `G+E` | `a4e57d8` | ✅ |
+| TEST | Playwright: empty state, dark mode, G+E shortcut, re-render — tất cả PASS | — | ✅ |
 
 ---
 
@@ -34,25 +35,26 @@
 
 | Decision | Rationale |
 |---|---|
-| Auto-update loose link (no confirm dialog) | User confirmed: tự động là phù hợp nhất |
-| `writeToHandle()` cho fix-link sync (không dùng `syncAction`) | `syncAction` quá nặng (loading overlay + full re-render) cho single-field patch |
-| PO là người duy nhất merge lên `main` | Tránh AI vô tình push production; PO commit trực tiếp trên GitHub |
-| `border-bottom` chuyển từ `.init-milestone-row` → `.init-ms-block` | Cần wrapper để chứa sub-panel bên dưới mỗi milestone row |
+| Read-only view, không filter theo tuần | Lãnh đạo cần toàn bộ bức tranh, không phải slice theo tuần |
+| Attention list sort: BLĐ → Blocked → Quá hạn | Ưu tiên theo impact đến ra quyết định |
+| Initiative table sort: Red-first, worst donePct first | Items cần xử lý nhất nằm đầu bảng |
+| Chart guard `typeof Chart === 'undefined'` | Resilient khi CDN chậm/lỗi — phần còn lại vẫn render |
+| CSS prefix `es-` cho mọi class mới | Tránh conflict với các component hiện có |
 
 ---
 
-## Feature Summary — Milestone Task Drill-down
+## Feature Summary — Executive Summary (Tổng hợp BLĐ)
 
-| Element | Detail |
-|---|---|
-| Task count button | Góc phải mỗi milestone row; màu theo alignment (warn/loose/default) |
-| Sub-panel | Toggle expand/collapse; pre-rendered khi build card |
-| ✓ Phù hợp | `t.milestone === ms.id` AND `t.initiative === ms.parentId` |
-| 🔵 Liên kết lỏng | `t.milestone === _msShortLabel(ms.id)` — task dùng nhãn tắt (M1/M2) |
-| ⚠ Cần xem lại | `t.initiative !== ms.parentId` — task thuộc initiative khác |
-| Cập nhật link | Click → `task.milestone = fullMsId` → `persist()` → re-render panel → `writeToHandle()` background |
+| Zone | Component | Detail |
+|---|---|---|
+| Zone 1 | 5 KPI cards headline | Total, Completion %, In-progress, Overdue (pulse đỏ), BLD+Blocked (pulse cam) |
+| Zone 2A | RAG health donut | Chart.js doughnut, legend với count + % từng loại |
+| Zone 2B | Cần xử lý ngay | Priority list: Cần BLĐ → Blocked → Quá hạn; max 8 + overflow link |
+| Zone 3 | Initiative health table | Sort Red-first; columns: Total, Done, Done%, Avg progress bar, RAG, Status tag |
 
-**New functions**: `_initGetMsTasks`, `_initBuildMsTaskList`, `_initToggleMsTaskPanel`, `_initFixLooseLink`
+**Navigation**: sidebar nav item `data-view="executive-summary"`, title `Tổng hợp Lãnh đạo`, phím tắt `G+E`
+
+**New files**: `assets/css/executive-summary.css`, `assets/js/views/executive-summary.js`
 
 ---
 
@@ -60,7 +62,9 @@
 
 | Item | Status |
 |---|---|
-| GAS `AiService.gs`: line 58 = `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED — AI Chat chưa smoke-test |
+| GAS `AiService.gs`: `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED từ Session 12 — AI Chat chưa smoke-test |
+| Netlify hết credit | ❌ Testing env không auto-deploy — dùng local Playwright |
+| Feature branch chưa merge vào main | ⏳ Chờ PO review PR `claude/dashboard-leader-features-7nmssw` |
 
 ---
 
@@ -68,9 +72,10 @@
 
 | Env | Branch | HEAD | Status |
 |---|---|---|---|
-| Testing (Netlify) | `master` | `45bf54a` | ❌ **Hết credit — không auto-deploy (xác nhận 2026-06-10)** |
-| Production (GitHub Pages) | `main` | `45bf54a` | ✅ In sync — PO quản lý |
-| GAS Backend | — | — | ✅ Code.gs + UserService.gs deployed; ⚠️ AiService.gs unconfirmed |
+| Feature branch | `claude/dashboard-leader-features-7nmssw` | `a4e57d8` | ✅ Pushed |
+| Testing (Netlify) | `master` | `45bf54a` | ❌ Hết credit — không auto-deploy |
+| Production (GitHub Pages) | `main` | `45bf54a` | ✅ Live — PO quản lý |
+| GAS Backend | — | — | ✅ Code.gs + UserService.gs; ⚠️ AiService.gs unconfirmed |
 
 ---
 
@@ -78,12 +83,15 @@
 
 | File | Change |
 |---|---|
-| `assets/js/views/initiative-tracker.js` | `_initBuildMilestoneList` refactored + 4 new functions (~120 lines net) |
-| `assets/css/initiative.css` | +71 lines (ms-block, ms-task-panel, alignment badges, fix-link btn) |
-| `verify_ms_tasks.mjs` | NEW — 14-test Playwright suite |
+| `assets/css/executive-summary.css` | NEW — 120 lines CSS |
+| `assets/js/views/executive-summary.js` | NEW — 180 lines JS |
+| `index.html` | +nav item, +HTML section (~80 lines), +CSS link, +script tag, +KB shortcut entry |
+| `assets/js/ui/navigation.js` | +3 lines: dispatch, title, G+E shortcut |
 | `AI_CONTEXT/SESSION_HANDOVER.md` | This file |
-| `AI_CONTEXT/PROJECT_STATE.md` | Branch strategy, S14 features, correct HEADs |
-| `AI_CONTEXT/TODO_NEXT.md` | Branch rule promoted to top, smoke test checklist updated |
+| `AI_CONTEXT/PROJECT_STATE.md` | Feature status, source files, architecture |
+| `AI_CONTEXT/CHANGE_LOG.md` | Session 15 entry |
+| `AI_CONTEXT/TODO_NEXT.md` | Priority reorder + next features |
+| `AI_CONTEXT/SOURCE_CODE_INVENTORY.md` | New files added |
 
 ---
 
@@ -91,7 +99,7 @@
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `border-bottom` CSS change on milestone rows | 🟢 LOW | Moved to `.init-ms-block`; override rule `.init-ms-block > .init-milestone-row { border-bottom:none }` đã có |
-| `writeToHandle()` trong `_initFixLooseLink` | 🟢 LOW | No VERSION_CONFLICT guard ở đây — nhưng chỉ patch field milestone, ít conflict |
-| AI Chat GAS chưa verify | 🟡 MEDIUM | `AiService.gs` có thể dùng model cũ hoặc thiếu API key |
-| Loose-link detection dùng `_msShortLabel` regex `/-M\d+$/` | 🟢 LOW | Chỉ hoạt động đúng nếu milestone ID theo pattern `PARENT-Mn`; milestone ID tự do sẽ không match |
+| `esChartInst` global variable | 🟢 LOW | Tên riêng biệt với `chartInst` của dashboard — không conflict |
+| Chart guard `typeof Chart === 'undefined'` | 🟢 LOW | Nếu Chart.js chưa load thì chart skip; phần còn lại render bình thường |
+| `editTask()` gọi từ attention list | 🟢 LOW | Function tồn tại trong `crud.js` — đã verify |
+| AI Chat GAS chưa verify | 🟡 MEDIUM | Tồn tại từ Session 12 — không liên quan session này |
