@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="assets/css/initiative.css">
 <link rel="stylesheet" href="assets/css/auth.css">
 <link rel="stylesheet" href="assets/css/ai-chat.css">
+<link rel="stylesheet" href="assets/css/executive-summary.css">
 
 </head>
 <body>
@@ -80,6 +81,10 @@
       <div class="nav-item active" data-view="dashboard">
         <i class="fa-solid fa-chart-pie nav-icon"></i>
         <span class="nav-label">Dashboard</span>
+      </div>
+      <div class="nav-item" data-view="executive-summary">
+        <i class="fa-solid fa-crown nav-icon"></i>
+        <span class="nav-label">Tổng hợp BLĐ</span>
       </div>
       <div class="nav-section-label">Quản lý</div>
       <div class="nav-item" data-view="initiative-tracker">
@@ -266,6 +271,128 @@
           <div id="blockedList"></div>
         </div>
       </div>
+    </section>
+
+    <!-- ===== EXECUTIVE SUMMARY ===== -->
+    <section class="view-section" id="view-executive-summary" style="display:none;">
+
+      <!-- Meta bar -->
+      <div class="es-meta-bar">
+        <div class="es-meta-timestamp">
+          <i class="fa-solid fa-clock" style="margin-right:4px;color:var(--text-3);"></i>
+          Cập nhật: <span id="esTimestamp">–</span>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">
+          <i class="fa-solid fa-print"></i> In / Xuất PDF
+        </button>
+      </div>
+
+      <!-- Zone 1: Headline KPI cards -->
+      <div class="es-headline-grid">
+        <div class="es-kpi-card es-k-total">
+          <div class="es-kpi-icon" style="background:var(--primary-xlight);color:var(--primary);">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div class="es-kpi-num" id="esTotal">0</div>
+          <div class="es-kpi-label">Tổng số Task</div>
+          <div class="es-kpi-sub">Tất cả dự án & BAU</div>
+        </div>
+        <div class="es-kpi-card es-k-done">
+          <div class="es-kpi-icon" style="background:var(--success-bg);color:var(--success);">
+            <i class="fa-solid fa-check-double"></i>
+          </div>
+          <div class="es-kpi-pct" id="esCompletionPct" style="color:var(--success);">0%</div>
+          <div class="es-kpi-label">Tỷ lệ hoàn thành</div>
+          <div class="es-kpi-sub" id="esAvgProg">TB tiến độ: –%</div>
+        </div>
+        <div class="es-kpi-card es-k-inprog">
+          <div class="es-kpi-icon" style="background:var(--info-bg);color:var(--info);">
+            <i class="fa-solid fa-spinner"></i>
+          </div>
+          <div class="es-kpi-num" id="esInProg">0</div>
+          <div class="es-kpi-label">Đang thực hiện</div>
+          <div class="es-kpi-sub">Chưa hoàn thành 100%</div>
+        </div>
+        <div class="es-kpi-card es-k-overdue" id="esOverdueCard">
+          <div class="es-kpi-icon" style="background:var(--danger-bg);color:var(--danger);">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="es-kpi-num" id="esOverdue">0</div>
+            <span class="es-alert-pulse" style="display:none;"></span>
+          </div>
+          <div class="es-kpi-label">Quá hạn</div>
+          <div class="es-kpi-sub">Chưa xong & qua deadline</div>
+        </div>
+        <div class="es-kpi-card es-k-bld" id="esBldCard">
+          <div class="es-kpi-icon" style="background:var(--accent-light);color:var(--accent);">
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="es-kpi-num" id="esBld">0</div>
+            <span class="es-alert-pulse amber" style="display:none;"></span>
+          </div>
+          <div class="es-kpi-label">Blocked & Cần BLĐ</div>
+          <div class="es-kpi-sub">Cần quyết định ngay</div>
+        </div>
+      </div>
+
+      <!-- Zone 2: RAG health + Attention list -->
+      <div class="es-split-zone">
+        <!-- 2A: RAG Health Donut -->
+        <div class="es-rag-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Phân bổ Health (RAG)</div>
+              <div class="card-subtitle">Tổng thể toàn bộ task</div>
+            </div>
+          </div>
+          <div class="es-rag-chart-wrap">
+            <canvas id="esRagChart"></canvas>
+          </div>
+          <div class="es-rag-legend" id="esRagLegend"></div>
+        </div>
+
+        <!-- 2B: Needs Attention -->
+        <div class="es-attention-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <i class="fa-solid fa-bell" style="color:var(--danger);margin-right:6px;"></i>Cần xử lý ngay
+              </div>
+              <div class="card-subtitle">Ưu tiên: Cần BLĐ → Blocked → Quá hạn</div>
+            </div>
+          </div>
+          <div class="es-attention-list" id="esAttentionList"></div>
+        </div>
+      </div>
+
+      <!-- Zone 3: Initiative health table -->
+      <div class="es-init-section">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Sức khỏe từng Initiative</div>
+            <div class="card-subtitle">Sắp xếp theo mức độ rủi ro — Đỏ trước</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="es-init-table">
+            <thead>
+              <tr>
+                <th>Initiative / Dự án</th>
+                <th style="text-align:center;width:70px;">Tổng</th>
+                <th style="text-align:center;width:70px;">Xong</th>
+                <th style="text-align:center;width:70px;">Done %</th>
+                <th style="min-width:160px;">TB Tiến độ</th>
+                <th style="width:80px;">RAG</th>
+                <th style="width:130px;">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="esInitTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </section>
 
     <!-- ===== TASKS ===== -->
@@ -761,6 +888,7 @@
       </div>
       <div>
         <div class="kb-row"><span class="kb-desc">Đến Dashboard</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">D</span></div></div>
+        <div class="kb-row"><span class="kb-desc">Đến Tổng hợp BLĐ</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">E</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Task list</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">T</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Timeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">G</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Performance</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">P</span></div></div>
@@ -802,6 +930,7 @@
 <script src="assets/js/views/initiative-tracker.js"></script>
 <script src="assets/js/views/ai-chat.js"></script>
 <script src="assets/js/views/user-management.js"></script>
+<script src="assets/js/views/executive-summary.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
