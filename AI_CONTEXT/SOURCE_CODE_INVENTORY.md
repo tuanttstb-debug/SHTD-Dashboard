@@ -1,9 +1,54 @@
-# SOURCE CODE INVENTORY — SHTD Dashboard v6.2 (Session 15)
+# SOURCE CODE INVENTORY — SHTD Dashboard v6.2 (Session 16)
 
 > ⚠️ Phần "Main.html Section Breakdown" bên dưới mô tả trạng thái MONOLITH CŨ trước khi refactor.
 > Project hiện tại đã được tách thành multi-file (index.html + assets/). Xem `SYSTEM_ARCHITECTURE.md`.
 
-## Thay đổi mới nhất — Session 15
+## Thay đổi mới nhất — Session 16
+
+| File | Lines | Status |
+|---|---|---|
+| `assets/css/bld-queue.css` | 296 | ✅ NEW S16 — styles cho BLD Approval Queue view |
+| `assets/js/views/bld-queue.js` | 308 | ✅ NEW S16 — `renderBldQueue()` + modal + history helpers |
+
+### `assets/js/views/bld-queue.js` — Function list
+
+| Function | Responsibility |
+|---|---|
+| `renderBldQueue()` | Main render: populate filters, get pending/history, update chip + timestamp |
+| `_bldGetPending()` | Filter `canBLD='Y'` + team/init filters; sort Red-first → Overdue-first |
+| `_bldGetHistory()` | Find tasks with prefix markers in `noiDungBLD` within 7 days |
+| `_bldPopulateFilters()` | Populate team + initiative dropdowns from pending tasks |
+| `_bldRenderPending(items)` | Render cards or empty state into `#bldPendingList` |
+| `_bldBuildItemHTML(t)` | Build HTML for single task card (3 action btns + ghost link) |
+| `_bldRenderHistory(items)` | Render history section; hide `#bldHistoryWrap` if empty |
+| `bldOpenAction(type, taskId)` | Open mini modal with type-specific config (approve/reject/info) |
+| `bldCloseMiniModal()` | Close `#bldActionOverlay`; reset `_bldCurrentAction` |
+| `bldSubmitAction()` | Validate, build marker, call `syncAction()`, re-render + badge |
+
+### `assets/css/bld-queue.css` — CSS class list (bld- prefix)
+
+| Class | Purpose |
+|---|---|
+| `.bld-toolbar`, `.bld-toolbar-left`, `.bld-filter-bar`, `.bld-filter-label` | Toolbar layout |
+| `.bld-count-chip`, `.bld-count-chip.none` | Red/green pending count chip |
+| `.bld-timestamp` | Last-refresh timestamp |
+| `.bld-pending-list` | Flex column container for cards |
+| `.bld-item`, `.bld-item-header`, `.bld-item-name`, `.bld-team-pill` | Card header |
+| `.bld-item-meta`, `.bld-meta-chip`, `.bld-meta-chip.overdue` | Meta row chips |
+| `.bld-item-body`, `.bld-body-label`, `.bld-body-text` | Content preview block |
+| `.bld-item-actions`, `.bld-ghost-link` | Action buttons row |
+| `.bld-history-header`, `.bld-history-title`, `.bld-history-line` | History section header |
+| `.bld-history-list`, `.bld-history-item`, `.bld-history-icon` | History rows |
+| `.bld-history-body`, `.bld-history-name`, `.bld-history-note`, `.bld-history-date` | History row content |
+| `.bld-empty-state`, `.bld-empty-icon`, `.bld-empty-title`, `.bld-empty-sub` | Empty state |
+| `.bld-mini-card`, `.bld-mini-top`, `.bld-mini-title`, `.bld-mini-sub` | Mini modal container |
+| `.bld-mini-preview`, `.bld-mini-prev-name`, `.bld-mini-prev-id` | Task preview in modal |
+| `.bld-mini-body`, `.bld-mini-label`, `.bld-mini-textarea`, `.bld-mini-textarea.error` | Modal form |
+| `.bld-mini-err`, `.bld-mini-err.visible`, `.bld-mini-footer` | Modal validation + footer |
+
+---
+
+## Session 15 — Executive Summary
 
 | File | Lines | Status |
 |---|---|---|
@@ -20,25 +65,6 @@
 | `_esRenderRagLegend(rag, total)` | Legend dọc: dot + count + % |
 | `_esRenderAttentionList(attention)` | Priority-sorted list BLĐ→Blocked→Overdue; max 8 + overflow |
 | `_esRenderInitTable(initSummary)` | Initiative table: Red-first sort, progress bar, status tag |
-
-### `assets/css/executive-summary.css` — CSS class list (es- prefix)
-
-| Class | Purpose |
-|---|---|
-| `.es-headline-grid` | 5-col responsive grid cho KPI cards |
-| `.es-kpi-card`, `.es-k-*` | KPI card với top-border accent per type |
-| `.es-kpi-num`, `.es-kpi-pct`, `.es-kpi-label`, `.es-kpi-sub` | KPI typography |
-| `.es-alert-pulse`, `.es-alert-pulse.amber` | Animated dot cho overdue/BLD |
-| `.es-split-zone` | 2-col grid: RAG card + attention card |
-| `.es-rag-card`, `.es-rag-chart-wrap`, `.es-rag-legend*` | RAG health section |
-| `.es-attention-card`, `.es-attention-list`, `.es-attention-item` | Attention list |
-| `.es-att-*`, `.es-att-bld`, `.es-att-blocked`, `.es-att-critical` | Attention item variants |
-| `.es-att-tag.*` | Tag chips per type |
-| `.es-empty-state`, `.es-more-link` | Empty state + overflow link |
-| `.es-init-section`, `.es-init-table`, `.es-init-name` | Initiative table |
-| `.es-prog-wide`, `.es-prog-bar`, `.es-prog-fill.*` | Wide progress bar |
-| `.es-status-tag.*` | Status tags (st-good/st-watch/st-risk) |
-| `.es-meta-bar`, `.es-meta-timestamp` | Timestamp row |
 
 ---
 
