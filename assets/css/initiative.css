@@ -214,6 +214,77 @@
   white-space: nowrap;
 }
 
+/* Milestone block wrapper — groups row + task sub-panel */
+.init-ms-block {
+  border-bottom: 1px dashed var(--border);
+}
+.init-ms-block:last-of-type { border-bottom: none; }
+/* Remove per-row border now that the block owns it */
+.init-ms-block > .init-milestone-row { border-bottom: none; }
+
+/* Task count toggle button on each milestone row */
+.init-ms-task-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+  color: var(--text-3);
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.init-ms-task-btn:hover,
+.init-ms-task-btn.open  { background: var(--primary-xlight); color: var(--primary); }
+.init-ms-task-btn.warn  { background: var(--danger-bg);      color: var(--danger); }
+.init-ms-task-btn.loose { background: var(--info-bg, #e8f4fd); color: var(--info, #2196F3); }
+.init-ms-task-btn .fa-chevron-down { transition: transform 0.2s; }
+.init-ms-task-btn.open .fa-chevron-down { transform: rotate(180deg); }
+
+/* Per-milestone task sub-panel */
+.init-ms-task-panel {
+  display: none;
+  padding: 6px 0 8px 24px;
+  background: var(--surface);
+  border-top: 1px dashed var(--border);
+}
+.init-ms-task-panel.open { display: block; }
+
+/* Alignment evaluation badges */
+.init-align-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.init-align-badge.ok    { background: var(--success-bg); color: var(--success); }
+.init-align-badge.warn  { background: var(--danger-bg);  color: var(--danger); }
+.init-align-badge.loose { background: var(--info-bg, #e8f4fd); color: var(--info, #2196F3); }
+
+/* "Cập nhật link" button inside loose-link badge */
+.init-fix-link-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.init-fix-link-btn:hover { background: rgba(33,150,243,0.15); }
+
 /* Linked task list */
 .init-task-list {
   display: none;
