@@ -2,6 +2,28 @@
 
 ---
 
+## [Session 17] 2026-06-12 — BLD Queue Bugfix + Test Infrastructure
+
+**Branch**: `fix/bld-queue-submit` → merged `master`
+**Commits**: `3be56fc` (fix), `d3fcd56` (test)
+
+### Bugs Fixed
+
+| ID | File | Fix |
+|---|---|---|
+| BUG-01 | `assets/js/views/bld-queue.js:283` | `draft` param undefined → `db.tasks.find()` |
+| BUG-02 | `assets/js/views/bld-queue.js:294` | Thêm `if (!success) return` sau `syncAction` |
+| BUG-03 | `assets/js/api.js:130` | `else` branch: local fallback thay `writeToHandle()` |
+
+### Test Infrastructure
+
+- Fix Playwright import path cho Windows: `./node_modules/playwright/index.mjs`
+- Fix `loadWithData`: `context.route` abort GAS → chặn `AUTH_REQUIRED` → `loginOverlay`
+- Thêm `waitForFunction` chờ `loadingOverlay` biến mất trước khi click
+- Thêm TEST11–15: submit flow (approve/reject/info) — **34/34 PASS** (was 18)
+
+---
+
 ## [Session 16] 2026-06-10 — BLD Approval Queue (Phê duyệt BLĐ)
 
 **Branch**: `claude/dashboard-leader-features-7nmssw`
