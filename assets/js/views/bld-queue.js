@@ -280,8 +280,8 @@ async function bldSubmitAction() {
     : `[${markerMap[type]} ${actionLabel} ${dateStr}]`;
 
   try {
-    await syncAction(draft => {
-      const t = draft.find(r => r.id === taskId);
+    const success = await syncAction(() => {
+      const t = db.tasks.find(r => r.id === taskId);
       if (!t) return;
       const prev = (t.noiDungBLD || '').trim();
       t.noiDungBLD = prev ? `${marker}\n${prev}` : marker;
@@ -291,6 +291,11 @@ async function bldSubmitAction() {
       // type === 'info' keeps canBLD = 'Y' (stays in queue)
     });
 
+    if (!success) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Thử lại'; }
+      return;
+    }
+
     bldCloseMiniModal();
     toast(
       type === 'approve' ? 'Đã phê duyệt thành công' :
@@ -299,7 +304,6 @@ async function bldSubmitAction() {
       type === 'approve' ? 'success' : type === 'reject' ? 'error' : 'info'
     );
     renderBldQueue();
-    // Update nav badge
     if (typeof updateNavBadges === 'function') updateNavBadges();
   } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = 'Thử lại'; }
