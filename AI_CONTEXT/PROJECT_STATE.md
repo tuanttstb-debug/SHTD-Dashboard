@@ -1,9 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-06-12 (Session 17 — BLD Queue Bugfix + Test Infrastructure)
+**As of**: 2026-06-12 (Session 18 — Rà soát BLĐ: UI + nút duyệt + trường Ý kiến BLĐ)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `73edf95` — S17 docs; includes fix/bld-queue-submit merge
-**Remote HEAD (main)**: `f9872c4` — S15+S16 features; ⏳ chờ PO merge bugfix PR
-**Bugfix branch**: `fix/bld-queue-submit` @ `d3fcd56` — pushed, chờ PR → main
+**Remote HEAD (master)**: `090b94a` — S18: btn-success fix, BUG-04 disable reset, yKienBLD (cột 24), debug_login.mjs
+**Remote HEAD (main)**: `1c57999` — PR #20 merged (S17 bugfix đã lên Production); ⏳ chờ PR S18
+**⚠️ Schema drift**: `master` ghi 24 cột, `main` ghi 23 cột — merge S18 → main sớm để tránh lệch cột X (xem SESSION_HANDOVER Regression Risks)
 
 ---
 
@@ -32,7 +32,7 @@
 | `backend/AiService.gs` | ~75 | ⚠️ Session 12 — model `gemini-2.5-flash` in repo; GAS deploy status unconfirmed; GEMINI_API_KEY may not be set |
 | `backend/Code.gs` | ~150 | ✅ ai-chat route; KNOWN_ROLES; debug-auth removed; user CRUD actions (Session 13) |
 | `backend/UserService.gs` | ~130 | ✅ NEW Session 13 — userList/Create/Update/ResetPassword; SHA-256 hash; deployed |
-| `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` |
+| `backend/Config.gs` | 6 | ✅ `SPREADSHEET_ID`, `SHEET_NAME`, `DATA_RANGE` (S18: comment A1:X — backend KHÔNG cần redeploy, schema động theo header) |
 | `backend/AuthService.gs` | ~165 | ✅ authLogin(), validateToken(), changePassword(), setupInitialUsers(); no hardcoded fallback |
 | `backend/SheetService.gs` | ~65 | ✅ sheetRead() returns {values,serverTs}; sheetWrite() VERSION_CONFLICT check via Script Properties |
 | `backend/AuditService.gs` | 32 | ✅ auditLog() appends to Audit_Log sheet |
@@ -40,8 +40,9 @@
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL deployment variable; update on every GAS redeploy |
 | `assets/css/` | 15 files | ✅ + `bld-queue.css` (S16, 296 lines); `executive-summary.css` (S15); `initiative.css` +71 lines S14; `auth.css` RBAC broadened (S13) |
-| `assets/js/` | 33 modules | ✅ + `views/bld-queue.js` (S16→S17 bugfix: BUG-01 draft param, BUG-02 return value); `views/executive-summary.js` (S15); `views/user-management.js` (S13) |
-| `assets/js/api.js` | ~165 | ✅ S17 BUG-03: local fallback khi GAS offline — `else { persist(); return true; }` thay `writeToHandle()` |
+| `assets/js/` | 33 modules | ✅ + `views/bld-queue.js` (S16→S17 bugfix→S18: BUG-04 disable reset, yKienBLD, `_bldOpinionSrc` legacy fallback); `views/executive-summary.js` (S15); `views/user-management.js` (S13) |
+| `assets/js/api.js` | ~166 | ✅ S17 BUG-03 local fallback; S18: `taskToRow` cột 23 `yKienBLD` |
+| `debug_login.mjs` | 61 | ✅ NEW S18 — tool chẩn đoán login local với user thật (env LOGIN_USER/LOGIN_PASS) |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -51,7 +52,8 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
-| **BLD Approval Queue (Phê duyệt BLĐ)** | ✅ | S16 feature + S17 bugfix (3 bugs: draft TypeError, return value check, local fallback) — 34/34 Playwright PASS |
+| **BLD Approval Queue (Phê duyệt BLĐ)** | ✅ | S16 + S17 bugfix + S18: btn-success CSS, BUG-04 nút disable, Ý kiến BLĐ riêng (yKienBLD) hiển thị card/form/QuickView/report — **46/46 Playwright PASS** |
+| **Ý kiến Ban lãnh đạo (yKienBLD)** | ✅ | NEW S18 — cột 24 (X) Task_Master; ghi qua màn Phê duyệt BLĐ; readonly trong Task form; backward-compat marker cũ trong noiDungBLD |
 | **Executive Summary (Tổng hợp BLĐ)** | ✅ | NEW S15 — 5 KPI cards, RAG donut, Attention list, Initiative health table; G+E shortcut |
 | Dashboard KPIs | ✅ | Tuần BC filter included |
 | RAG doughnut chart | ✅ | Click → detail modal |
@@ -84,7 +86,7 @@
 | Excel import | ✅ | Flexible column mapping |
 | Excel export | ✅ | Date "22-Apr-26", progress "75%" |
 | Dark mode | ✅ | |
-| **Login / Auth** | ✅ | Fixed Session 11 — KNOWN_ROLES includes Teamlead |
+| **Login / Auth** | ✅ | Fixed S11 — KNOWN_ROLES includes Teamlead. S18 verified: login local user thật hoạt động end-to-end (TuanTT4, QuangNN3); DungLQ1 role hạ xuống User |
 | **AI Assistant** | ⚠️ | Frontend complete; `gemini-2.5-flash` in repo; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |
 | **User Management** | ✅ | Admin-only menu; list/add/edit/reset-pw/toggle-active; GAS deployed; live-tested Session 13 |
 | **Role-based UI** | ✅ | Admin: full access. User/Teamlead: `.admin-only` hidden via `body:not([data-role="Admin"])` |
@@ -136,12 +138,13 @@ backend/
   UserService.gs     ← DEPLOYED (Session 13)
   AiService.gs       ← gemini-2.5-flash in repo; GAS deploy unconfirmed
   GAS.GS             ← archived patch v6.2
-verify_initiative_v2.mjs ← 37/37 PASS
+verify_initiative_v2.mjs ← ⚠️ fail local từ khi có auth (không inject token — TD-033)
 verify_kpi_views.mjs     ← 3/3 PASS (session 7)
 verify_mobile.mjs        ← 4/4 PASS (session 7)
 um_test.mjs              ← 14/14 PASS (session 13)
-verify_ms_tasks.mjs      ← 14/14 PASS (session 14)
-verify_bld_queue.mjs     ← 34/34 PASS (session 17 — +TEST11-15 submit flow)
+verify_ms_tasks.mjs      ← 14/14 PASS (re-verified S18)
+verify_bld_queue.mjs     ← 46/46 PASS (S18 — +TEST16-20: disable reset, yKienBLD, form, legacy history)
+debug_login.mjs          ← NEW S18 — login diagnostics
 ```
 
 ---
@@ -153,11 +156,11 @@ verify_bld_queue.mjs     ← 34/34 PASS (session 17 — +TEST11-15 submit flow)
 | `GS_WEBAPP_URL` | **In `assets/js/config.js`**; current: `AKfycbzzezX0...` — unchanged Session 13 |
 | Initiative backend | ✅ Deployed (15 cols, InitiativeService.gs) |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
-| `GS_RANGE` | `Task_Master!A1:W` |
+| `GS_RANGE` | `Task_Master!A1:X` (S18 — 24 cột) |
 | `KPI_RANGE` | `KPI_Summary` tab |
-| Task backend | ✅ Deployed |
+| Task backend | ✅ Deployed — KHÔNG cần redeploy cho cột 24 (schema động) |
 | KPI backend | ✅ Deployed + tested |
-| Sheet columns | 23 — `DB_COLS` constant unchanged |
+| Sheet columns | **24** — S18 thêm 'Ý kiến BLĐ' (PO approve); cột X tự xuất hiện ở lần ghi đầu từ client 24-cột |
 | localStorage key | `shtd_v2` — schema unchanged |
 
 ---
@@ -166,6 +169,8 @@ verify_bld_queue.mjs     ← 34/34 PASS (session 17 — +TEST11-15 submit flow)
 
 | ID | Issue | Priority |
 |---|---|---|
+| SCHEMA-01 | `main` (23 cột) vs `master` (24 cột) ghi chung sheet → cột X có thể lệch/stale đến khi merge | 🟡 Merge S18 → main sớm |
+| TD-033 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | 🟡 Copy pattern từ verify_bld_queue |
 | MOB-01 | Filter bar cramped on mobile | 🟡 Phase D |
 | MOB-02 | Toolbar button overflow on mobile | 🟡 Phase D |
 | MOB-03 | Gantt unusable on mobile | 🟢 Phase D |
@@ -181,7 +186,7 @@ verify_bld_queue.mjs     ← 34/34 PASS (session 17 — +TEST11-15 submit flow)
 |---|---|---|---|---|
 | **Testing (local)** | `http://localhost:3030` | `master` | `npx http-server . -p 3030` | ✅ Dùng tạm — Playwright 34/34 |
 | **Testing (Netlify)** | https://test-shtd.netlify.app | `master` | Auto-deploy | ❌ **Hết credit — không deploy** |
-| **Production** | GitHub Pages URL | `main` | **PO only** | ✅ Live (f9872c4 — S16, chưa có S17 bugfix) |
+| **Production** | GitHub Pages URL | `main` | **PO only** | ✅ Live (1c57999 — có S17 bugfix; chưa có S18) |
 
 - **No build step** — direct file edit → commit → push → auto-deploy
 - **Workflow S17**: develop → `fix/*` branch → push → PO tạo PR → merge `main`

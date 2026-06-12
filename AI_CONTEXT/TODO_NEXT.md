@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-12 (Session 17 — BLD Queue Bugfix)
-**Context**: `master` = `fix/bld-queue-submit` HEAD (merged). `origin/main` = `f9872c4`.
+**Prepared**: 2026-06-12 (Session 18 — Rà soát BLĐ + yKienBLD + login debug)
+**Context**: `master` @ `090b94a` (pushed). `origin/main` @ `1c57999` (đã có S17, chưa có S18).
 
 ---
 
@@ -13,6 +13,20 @@ fix/*   →  bugfix branches → PR → main (PO tạo PR)
 ```
 
 **AI/Claude KHÔNG push lên `main` trừ khi PO yêu cầu rõ ràng.**
+
+---
+
+## ✅ COMPLETED S18
+
+- [x] Fix `.btn-success` chưa định nghĩa — nút "Phê duyệt" trong suốt (components.css)
+- [x] Fix BUG-04: `bldMiniConfirmBtn` không reset disabled → mục thứ 2 không bấm được
+- [x] Trường mới `yKienBLD` (cột 24/X "Ý kiến BLĐ") — lưu DB, không ghi đè noiDungBLD
+- [x] Hiển thị Ý kiến BLĐ: card pending, Task form readonly, Quick View, Excel report
+- [x] Backward-compat history (`_bldOpinionSrc` fallback marker cũ)
+- [x] Đồng nhất page title với nav label (Tổng hợp BLĐ / Phê duyệt BLĐ)
+- [x] verify_bld_queue 34 → 46 tests — 46/46 PASS; verify_ms_tasks re-verified PASS
+- [x] Debug login local: KHÔNG có bug — TuanTT4/Thuha@123 + QuangNN3 đăng nhập OK; thêm `debug_login.mjs`
+- [x] Push `master` `6952fe7..090b94a`
 
 ---
 
@@ -50,14 +64,13 @@ fix/*   →  bugfix branches → PR → main (PO tạo PR)
 
 ---
 
-## 🔴 PRIORITY 1 — PO tạo PR: fix/bld-queue-submit → main
+## 🔴 PRIORITY 1 — PO tạo PR: master → main (S18)
 
-Branch `fix/bld-queue-submit` (`d3fcd56`) đã push. PO vào GitHub tạo PR và merge.
+`master` @ `090b94a` đã push (S17 đã merge vào main qua PR #20 — chỉ còn S18).
 
-**Các file thay đổi trong PR:**
-- `assets/js/views/bld-queue.js` — fix 2 bugs
-- `assets/js/api.js` — local fallback
-- `verify_bld_queue.mjs` — 34/34 tests
+**Lý do ưu tiên cao**: `master` ghi sheet 24 cột, `main` ghi 23 cột — client cũ ghi sau client mới sẽ làm **lệch/stale cột X (Ý kiến BLĐ)** (SCHEMA-01). Merge sớm để đồng bộ schema.
+
+**Commits trong PR**: `4243363` (fix+feat BLĐ S18, 13 files), `090b94a` (debug_login.mjs).
 
 ---
 
@@ -77,7 +90,8 @@ AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận từ S12.
 | Feature | Check |
 |---|---|
 | Login — Admin / Teamlead / User | Mỗi role thấy đúng menu |
-| BLD Queue | canBLD=Y tasks hiện; approve/reject/info modal; task biến mất sau approve/reject; task giữ sau info; history 7 days |
+| BLD Queue | canBLD=Y tasks hiện; **duyệt liên tiếp 2 mục không bị khóa nút**; task biến mất sau approve/reject; task giữ sau info; history 7 days |
+| **Ý kiến BLĐ (S18)** | Sau approve/info: cột X trên Sheet có marker; card pending hiện khối info; Task form hiện `#fYKien` readonly; Quick View + Excel report có cột mới; noiDungBLD KHÔNG bị ghi đè |
 | Executive Summary | 5 KPI cards; RAG donut; Attention list |
 | Tasks / KPI / Gantt / Report | No regression |
 | User Management | Admin only; list/add/edit/reset PW |
@@ -88,6 +102,7 @@ AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận từ S12.
 
 | ID | Debt | Effort |
 |---|---|---|
+| TD-033 | `verify_initiative_v2.mjs` không inject auth → fail local; copy pattern verify_bld_queue | Small |
 | TD-008 | No error boundary in `renderAll()` | Small |
 | TD-018 | `fmtExportDate` duplicated `app.js` vs `helpers.js` | Tiny |
 | TD-023 | `_oaActiveTab` not reset on re-render | Tiny |
@@ -101,7 +116,7 @@ AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận từ S12.
 
 1. **Đọc SESSION_HANDOVER + PROJECT_STATE trước** — không skip
 2. **Branch**: phát triển trên `master` hoặc `fix/*`; KHÔNG push/merge lên `main` — PO tự xử lý
-3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2']`
+3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2']` — trừ khi PO yêu cầu rõ (S18: PO approve thêm cột 24 'Ý kiến BLĐ')
 4. One logical change per commit
 5. Tất cả GAS calls qua `gasPost()` — không raw `fetch()`
 6. `GS_WEBAPP_URL` trong `assets/js/config.js` — cập nhật mỗi lần GAS redeploy
