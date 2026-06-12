@@ -129,7 +129,11 @@ async function syncAction(action) {
 
     } else {
       if (db.tasks.length === 0) throw new Error('BLOCKED: Từ chối ghi dữ liệu rỗng (0 task).');
-      await writeToHandle();
+      // GAS không kết nối được (URL chưa cấu hình hoặc mạng lỗi) — lưu cục bộ
+      persist(); renderAll();
+      document.getElementById('syncDot').className = 'status-dot';
+      toast('⚠️ GAS không phản hồi — đã lưu cục bộ. Nhớ đồng bộ Sheets khi kết nối lại.', 'warning', 5000);
+      return true;
     }
 
     persist(); renderAll();
