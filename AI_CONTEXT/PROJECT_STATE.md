@@ -1,9 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-06-10 (Session 16 — BLD Approval Queue)
+**As of**: 2026-06-12 (Session 17 — BLD Queue Bugfix + Test Infrastructure)
 **Version in index.html**: v6.2
-**Feature branch HEAD**: `f30af66` (branch: `claude/dashboard-leader-features-7nmssw`)
-**Remote HEAD (master)**: `45bf54a` — unchanged
-**Remote HEAD (main)**: `45bf54a` ← PO merged PR #15; PO owns this branch
+**Remote HEAD (master)**: `73edf95` — S17 docs; includes fix/bld-queue-submit merge
+**Remote HEAD (main)**: `f9872c4` — S15+S16 features; ⏳ chờ PO merge bugfix PR
+**Bugfix branch**: `fix/bld-queue-submit` @ `d3fcd56` — pushed, chờ PR → main
 
 ---
 
@@ -11,13 +11,14 @@
 
 | Branch | Mục đích | Ai được push? |
 |---|---|---|
-| `master` | Testing — Netlify auto-deploy → https://test-shtd.netlify.app | Developer / AI |
-| `main` | Production — GitHub Pages | **PO only** — PO commit trực tiếp trên GitHub khi đạt yêu cầu |
+| `master` | Testing — ⚠️ Netlify hết credit → dùng local Playwright | Developer / AI |
+| `main` | Production — GitHub Pages | **PO only** |
+| `fix/*` | Bugfix branches → PR → main (PO tạo PR) | AI / Developer |
 
 **Quy trình**:
-1. Develop → commit → `git push origin master`
-2. Verify trên https://test-shtd.netlify.app
-3. PO review → PO tự merge/commit lên `main` trên GitHub
+1. Develop → commit → `git push origin master` (hoặc `fix/*` branch)
+2. Verify local: `npx http-server . -p 3030 &` → `node verify_bld_queue.mjs`
+3. PO review → PO tạo PR → merge lên `main`
 4. **AI/Claude KHÔNG được push hoặc merge lên `main` trừ khi PO chỉ định rõ ràng**
 
 ---
@@ -39,7 +40,8 @@
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL deployment variable; update on every GAS redeploy |
 | `assets/css/` | 15 files | ✅ + `bld-queue.css` (S16, 296 lines); `executive-summary.css` (S15); `initiative.css` +71 lines S14; `auth.css` RBAC broadened (S13) |
-| `assets/js/` | 33 modules | ✅ + `views/bld-queue.js` (S16, 308 lines); `views/executive-summary.js` (S15); `views/user-management.js` (S13); milestone drill-down in `views/initiative-tracker.js` (S14) |
+| `assets/js/` | 33 modules | ✅ + `views/bld-queue.js` (S16→S17 bugfix: BUG-01 draft param, BUG-02 return value); `views/executive-summary.js` (S15); `views/user-management.js` (S13) |
+| `assets/js/api.js` | ~165 | ✅ S17 BUG-03: local fallback khi GAS offline — `else { persist(); return true; }` thay `writeToHandle()` |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -49,7 +51,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
-| **BLD Approval Queue (Phê duyệt BLĐ)** | ✅ | NEW S16 — pending list, approve/reject/info modal, 7-day history; G+B shortcut; badge |
+| **BLD Approval Queue (Phê duyệt BLĐ)** | ✅ | S16 feature + S17 bugfix (3 bugs: draft TypeError, return value check, local fallback) — 34/34 Playwright PASS |
 | **Executive Summary (Tổng hợp BLĐ)** | ✅ | NEW S15 — 5 KPI cards, RAG donut, Attention list, Initiative health table; G+E shortcut |
 | Dashboard KPIs | ✅ | Tuần BC filter included |
 | RAG doughnut chart | ✅ | Click → detail modal |
@@ -99,7 +101,7 @@
 ## Architecture State
 
 ```
-CURRENT (Session 16 — BLD Approval Queue)
+CURRENT (Session 17 — BLD Queue Bugfix)
 ─────────────────────────────────────────────────
 index.html (~960 lines — HTML only)
 assets/
@@ -139,7 +141,7 @@ verify_kpi_views.mjs     ← 3/3 PASS (session 7)
 verify_mobile.mjs        ← 4/4 PASS (session 7)
 um_test.mjs              ← 14/14 PASS (session 13)
 verify_ms_tasks.mjs      ← 14/14 PASS (session 14)
-verify_bld_queue.mjs     ← 18/18 PASS (session 16)
+verify_bld_queue.mjs     ← 34/34 PASS (session 17 — +TEST11-15 submit flow)
 ```
 
 ---
@@ -177,10 +179,12 @@ verify_bld_queue.mjs     ← 18/18 PASS (session 16)
 
 | Environment | URL | Branch | Managed by | Status |
 |---|---|---|---|---|
-| **Testing** | https://test-shtd.netlify.app | `master` | Developer / AI push | ❌ **Netlify hết credit — không auto-deploy** |
-| **Production** | GitHub Pages URL | `main` | **PO only** — commit trực tiếp trên GitHub | ✅ Live |
+| **Testing (local)** | `http://localhost:3030` | `master` | `npx http-server . -p 3030` | ✅ Dùng tạm — Playwright 34/34 |
+| **Testing (Netlify)** | https://test-shtd.netlify.app | `master` | Auto-deploy | ❌ **Hết credit — không deploy** |
+| **Production** | GitHub Pages URL | `main` | **PO only** | ✅ Live (f9872c4 — S16, chưa có S17 bugfix) |
 
 - **No build step** — direct file edit → commit → push → auto-deploy
-- **Workflow hiện tại**: develop → push `master` → ⚠️ Netlify KHÔNG deploy → cần giải pháp thay thế để verify
+- **Workflow S17**: develop → `fix/*` branch → push → PO tạo PR → merge `main`
+- **Test command (Windows)**: `npx http-server . -p 3030 --silent & node verify_bld_queue.mjs`
 - **CDN deps**: Chart.js, SheetJS xlsx 0.18.5, Font Awesome 6.4.0, DM Sans/Mono
-- **⚠️ Testing environment bị hỏng**: Netlify hết credit (xác nhận 2026-06-10). Cần migrate sang platform khác hoặc nâng cấp plan.
+- **⚠️ Netlify hết credit** (xác nhận 2026-06-10). Options: Cloudflare Pages (khuyến nghị) / GitHub Pages / local only.

@@ -137,9 +137,13 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 **Partial resolution 2026-06-04 (Phase F)**: `verify_kpi.mjs` — Playwright headless test for all 6 KPI Digital views, run after implementation. Also not committed.
 
-**Partial resolution 2026-06-05 (Session 6)**: `verify_initiative_v2.mjs` — **committed** — 37/37 PASS. Tests GAS-format data parsing (backward compat, type derivation, Vietnamese status), UI labels, add/delete CRUD, filter, duplicate guard. Uses `page.route()` to block GAS during test.
+**Partial resolution 2026-06-05 (Session 6)**: `verify_initiative_v2.mjs` — **committed** — 37/37 PASS.
 
-**Remaining gap**: No CI integration, no unit tests for pure functions (parsers, helpers, kpi-data helpers). `verify_initiative_v2.mjs` is the only committed suite.
+**Partial resolution 2026-06-12 (Session 17)**: `verify_bld_queue.mjs` — **34/34 PASS** (up from 18/18 S16). Added TEST11–15 covering submit flow (approve/reject/info), local fallback, badge update. Fixed Playwright infra: Windows import path + `context.route` GAS abort + `waitForFunction` loading overlay.
+
+**Committed suites**: `verify_initiative_v2.mjs` (37), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (34) — total **99 checks**.
+
+**Remaining gap**: No CI integration. No unit tests for pure functions. Import paths in test files are machine-specific (Windows vs Linux `/opt/node22/...`).
 
 ---
 
@@ -340,7 +344,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-10 (Session 15 — TD-032 added; TD-012 partial update)
+**Last updated**: 2026-06-12 (Session 17 — TD-012 updated: 34/34 bld-queue tests, 99 total)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -355,7 +359,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 6 suites: 37+3+4+14+18+20 PASS; no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 4 committed suites: 37+14+14+34=99 PASS; no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
