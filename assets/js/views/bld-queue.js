@@ -44,21 +44,29 @@ function _bldGetPending() {
     });
 }
 
+/* Nguồn chứa marker quyết định của BLĐ:
+   - Mới: trường riêng yKienBLD (cột "Ý kiến BLĐ" trên Sheet)
+   - Cũ (legacy): marker từng được prepend vào noiDungBLD */
+function _bldOpinionSrc(t) {
+  const yk = (t.yKienBLD || '').trim();
+  return yk || (t.noiDungBLD || '').trim();
+}
+
 function _bldGetHistory() {
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const markerRe = /^\[(✅|❌|❓) BLĐ .+ (\d{2}\/\d{2}\/\d{4})/;
   return (db.tasks || [])
-    .filter(t => t.canBLD !== 'Y' && t.noiDungBLD && markerRe.test(t.noiDungBLD))
+    .filter(t => t.canBLD !== 'Y' && markerRe.test(_bldOpinionSrc(t)))
     .filter(t => {
-      const m = markerRe.exec(t.noiDungBLD);
+      const m = markerRe.exec(_bldOpinionSrc(t));
       if (!m) return false;
       const [d, mo, y] = m[2].split('/').map(Number);
       const dt = new Date(y, mo - 1, d);
       return dt.getTime() >= cutoff;
     })
     .sort((a, b) => {
-      const m = markerRe.exec(b.noiDungBLD);
-      const n = markerRe.exec(a.noiDungBLD);
+      const m = markerRe.exec(_bldOpinionSrc(b));
+      const n = markerRe.exec(_bldOpinionSrc(a));
       if (!m || !n) return 0;
       const parseDate = s => { const [d, mo, y] = s.split('/').map(Number); return new Date(y, mo - 1, d); };
       return parseDate(m[2]) - parseDate(n[2]);
@@ -116,6 +124,7 @@ function _bldBuildItemHTML(t) {
   const ragIcon = { Red: '🔴', Amber: '🟡', Green: '🟢' }[t.status] || '⚪';
 
   const textPreview = (t.noiDungBLD || '').trim() || '<em style="color:var(--text-3)">Không có nội dung</em>';
+  const opinion = (t.yKienBLD || '').trim();
 
   return `<div class="bld-item" id="bldItem-${esc(t.id)}">
     <div class="bld-item-header">
@@ -133,6 +142,10 @@ function _bldBuildItemHTML(t) {
       <div class="bld-body-label"><i class="fa-solid fa-message"></i>Nội dung cần BLĐ quyết</div>
       <div class="bld-body-text">${textPreview}</div>
     </div>
+    ${opinion ? `<div class="bld-item-opinion">
+      <div class="bld-opinion-label"><i class="fa-solid fa-comment-dots"></i>Ý kiến Ban lãnh đạo</div>
+      <div class="bld-body-text">${esc(opinion)}</div>
+    </div>` : ''}
     <div class="bld-item-actions">
       <button class="btn btn-sm btn-success" onclick="bldOpenAction('approve','${esc(t.id)}')">
         <i class="fa-solid fa-check"></i> Phê duyệt
@@ -162,7 +175,7 @@ function _bldRenderHistory(items) {
   const markerRe = /^\[(✅|❌|❓) BLĐ (.+?) (\d{2}\/\d{2}\/\d{4})(?:\s*[—–-]\s*(.+?))?\]/;
 
   list.innerHTML = items.map(t => {
-    const m = markerRe.exec(t.noiDungBLD || '');
+    const m = markerRe.exec(_bldOpinionSrc(t));
     const icon = m ? iconMap[m[1]] || '📋' : '📋';
     const note = m && m[4] ? m[4].trim() : '';
     const date = m ? m[3] : '';
@@ -231,7 +244,8 @@ function bldOpenAction(type, taskId) {
   if (err) { err.textContent = ''; err.classList.remove('visible'); }
 
   const btn = document.getElementById('bldMiniConfirmBtn');
-  if (btn) { btn.textContent = cfg.confirm; btn.className = `btn ${cfg.cls}`; }
+  // Reset disabled — nút có thể còn bị khóa từ lần submit trước (bug: duyệt 1 mục xong, mục sau không bấm được)
+  if (btn) { btn.disabled = false; btn.textContent = cfg.confirm; btn.className = `btn ${cfg.cls}`; }
 
   overlay.style.display = 'flex';
   if (ta) setTimeout(() => ta.focus(), 60);
@@ -283,8 +297,9 @@ async function bldSubmitAction() {
     const success = await syncAction(() => {
       const t = db.tasks.find(r => r.id === taskId);
       if (!t) return;
-      const prev = (t.noiDungBLD || '').trim();
-      t.noiDungBLD = prev ? `${marker}\n${prev}` : marker;
+      // Ý kiến BLĐ lưu vào trường riêng yKienBLD — không ghi đè nội dung xin ý kiến của team
+      const prev = (t.yKienBLD || '').trim();
+      t.yKienBLD = prev ? `${marker}\n${prev}` : marker;
       if (type !== 'info') {
         t.canBLD = 'N';
       }
@@ -296,6 +311,7 @@ async function bldSubmitAction() {
       return;
     }
 
+    if (btn) btn.disabled = false;
     bldCloseMiniModal();
     toast(
       type === 'approve' ? 'Đã phê duyệt thành công' :

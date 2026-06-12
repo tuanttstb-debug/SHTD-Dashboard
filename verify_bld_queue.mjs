@@ -33,6 +33,7 @@ const makeTask = (overrides) => ({
   picAcc: 'TuanTT4', picSupport: '', startDate: '2026-01-01',
   result: '', nextPlan: '', vuongMac: '', canBLD: 'Y',
   noiDungBLD: 'Cần BLĐ phê duyệt ngân sách thêm cho Q3',
+  yKienBLD: '',
   crossTeam: 'N', highlight: 'N',
   ...overrides
 });
@@ -407,6 +408,136 @@ async function loadWithData(tasks) {
     if (badgeTxtAfter === '2') PASS('TEST15: Badge cập nhật đúng còn 2');
     else FAIL(`TEST15: Badge sau approve sai — expected 2, got "${badgeTxtAfter}"`);
   } else FAIL('TEST15: Không tìm thấy approve button của item đầu tiên');
+}
+
+/* ══════════════════════════════════════════════════════
+   S18 TESTS
+   - BUG: confirm btn còn disabled khi mở modal lần 2
+   - Trường mới yKienBLD: lưu DB, không ghi đè noiDungBLD
+   - Hiển thị ý kiến BLĐ trên card + task form
+   ══════════════════════════════════════════════════════ */
+
+/* ═══ TEST 16: Sau khi duyệt 1 mục, nút xác nhận KHÔNG bị disable cho mục tiếp theo ═══ */
+{
+  await loadWithData([
+    makeTask({ id: 'T-D1', name: 'Task Duyệt 1' }),
+    makeTask({ id: 'T-D2', name: 'Task Duyệt 2' }),
+  ]);
+
+  // Duyệt mục đầu tiên
+  await page.click('.bld-item:first-child .btn-success');
+  await page.waitForTimeout(200);
+  await page.click('#bldMiniConfirmBtn');
+  await page.waitForTimeout(800);
+
+  // Mở modal duyệt cho mục còn lại
+  const nextApprove = await page.$('.bld-item .btn-success');
+  if (!nextApprove) { FAIL('TEST16: Không còn approve button cho mục thứ 2'); }
+  else {
+    await nextApprove.click();
+    await page.waitForTimeout(200);
+    const isDisabled = await page.$eval('#bldMiniConfirmBtn', el => el.disabled);
+    if (!isDisabled) PASS('TEST16: Nút xác nhận KHÔNG bị disable khi mở modal lần 2');
+    else FAIL('TEST16: BUG — nút xác nhận vẫn disabled sau lần duyệt trước');
+
+    const btnTxt = await page.$eval('#bldMiniConfirmBtn', el => el.textContent.trim());
+    if (btnTxt.includes('phê duyệt')) PASS(`TEST16: Label nút reset đúng: "${btnTxt}"`);
+    else FAIL(`TEST16: Label nút sai: "${btnTxt}"`);
+
+    // Duyệt luôn mục 2 — phải thành công
+    await page.click('#bldMiniConfirmBtn');
+    await page.waitForTimeout(800);
+    const remaining = await page.$$('.bld-item');
+    if (remaining.length === 0) PASS('TEST16: Duyệt liên tiếp 2 mục thành công');
+    else FAIL(`TEST16: Còn ${remaining.length} mục sau khi duyệt cả 2`);
+  }
+}
+
+/* ═══ TEST 17: Ý kiến BLĐ lưu vào yKienBLD, KHÔNG ghi đè noiDungBLD ═══ */
+{
+  await loadWithData([ makeTask({ id: 'T-YK', name: 'Task Ý kiến', noiDungBLD: 'Nội dung gốc của team' }) ]);
+
+  await page.click('.btn-success');
+  await page.waitForTimeout(200);
+  await page.fill('#bldMiniTextarea', 'Đồng ý, triển khai ngay');
+  await page.click('#bldMiniConfirmBtn');
+  await page.waitForTimeout(800);
+
+  const stored = await page.evaluate(() => {
+    const dbData = JSON.parse(localStorage.getItem('shtd_v2') || '{}');
+    return (dbData.tasks || []).find(t => t.id === 'T-YK');
+  });
+  if (stored && (stored.yKienBLD || '').includes('Đồng ý, triển khai ngay')) {
+    PASS('TEST17: Ý kiến BLĐ lưu vào trường yKienBLD');
+  } else FAIL(`TEST17: yKienBLD sai: "${stored?.yKienBLD}"`);
+
+  if (stored && stored.noiDungBLD === 'Nội dung gốc của team') {
+    PASS('TEST17: noiDungBLD giữ nguyên — không bị ghi đè marker');
+  } else FAIL(`TEST17: noiDungBLD bị thay đổi: "${stored?.noiDungBLD}"`);
+
+  if (stored && stored.canBLD === 'N') PASS('TEST17: canBLD chuyển N sau approve');
+  else FAIL(`TEST17: canBLD sai: "${stored?.canBLD}"`);
+}
+
+/* ═══ TEST 18: Yêu cầu bổ sung — ý kiến BLĐ hiển thị trên card pending ═══ */
+{
+  await loadWithData([ makeTask({ id: 'T-OP', name: 'Task hiển thị ý kiến' }) ]);
+
+  await page.click('.btn-secondary');
+  await page.waitForTimeout(200);
+  await page.fill('#bldMiniTextarea', 'Cần bổ sung số liệu Q2');
+  await page.click('#bldMiniConfirmBtn');
+  await page.waitForTimeout(800);
+
+  // Task vẫn ở pending + khối ý kiến hiển thị
+  const opinionEl = await page.$('.bld-item-opinion');
+  if (opinionEl) {
+    const txt = await opinionEl.textContent();
+    if (txt.includes('Cần bổ sung số liệu Q2')) PASS('TEST18: Ý kiến BLĐ hiển thị trên card pending');
+    else FAIL(`TEST18: Khối ý kiến không chứa nội dung: "${txt}"`);
+  } else FAIL('TEST18: .bld-item-opinion không render');
+}
+
+/* ═══ TEST 19: Task form hiển thị trường Ý kiến BLĐ (readonly) cho task canBLD=Y ═══ */
+{
+  await loadWithData([ makeTask({ id: 'T-FORM', name: 'Task form test', yKienBLD: '[❓ BLĐ yêu cầu bổ sung 01/06/2026 — Bổ sung X]' }) ]);
+
+  // Mở task modal qua nút "Xem đầy đủ"
+  await page.click('.bld-ghost-link');
+  await page.waitForTimeout(300);
+
+  const groupVisible = await page.$eval('#fYKienGroup', el => el.style.display !== 'none');
+  if (groupVisible) PASS('TEST19: Trường Ý kiến BLĐ hiển thị trong task form');
+  else FAIL('TEST19: fYKienGroup bị ẩn dù task có ý kiến BLĐ');
+
+  const val = await page.$eval('#fYKien', el => el.value);
+  if (val.includes('Bổ sung X')) PASS('TEST19: Giá trị ý kiến BLĐ đổ đúng vào form');
+  else FAIL(`TEST19: Giá trị form sai: "${val}"`);
+
+  const isReadonly = await page.$eval('#fYKien', el => el.readOnly);
+  if (isReadonly) PASS('TEST19: Trường ý kiến BLĐ là readonly');
+  else FAIL('TEST19: Trường ý kiến BLĐ không readonly');
+
+  await page.keyboard.press('Escape');
+}
+
+/* ═══ TEST 20: History đọc được cả marker mới (yKienBLD) lẫn legacy (noiDungBLD) ═══ */
+{
+  const today = new Date();
+  const dd = String(today.getDate()).padStart(2, '0');
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const yyyy = today.getFullYear();
+  const dateStr = `${dd}/${mm}/${yyyy}`;
+  await loadWithData([
+    makeTask({ id: 'T-NEW', name: 'Task marker mới', canBLD: 'N',
+      noiDungBLD: 'Nội dung gốc', yKienBLD: `[✅ BLĐ duyệt ${dateStr} — OK mới]` }),
+    makeTask({ id: 'T-LEGACY', name: 'Task marker cũ', canBLD: 'N',
+      noiDungBLD: `[❌ BLĐ từ chối ${dateStr} — Lý do cũ]\nNội dung gốc`, yKienBLD: '' }),
+  ]);
+
+  const histItems = await page.$$('.bld-history-item');
+  if (histItems.length === 2) PASS('TEST20: History hiển thị cả marker mới (yKienBLD) lẫn legacy (noiDungBLD)');
+  else FAIL(`TEST20: Expected 2 history items, got ${histItems.length}`);
 }
 
 /* ═══ Final: console errors ═══ */

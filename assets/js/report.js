@@ -130,14 +130,15 @@ function _rptIssues(wb, inProgress) {
       return score(a) - score(b);
     });
 
-  const headers = ['ID','Task / Deliverable','Initiative','Team','PIC Responsible','Trạng thái','RAG','Cần BLĐ','Vướng mắc / Rủi ro','Nội dung cần BLĐ quyết'];
+  const headers = ['ID','Task / Deliverable','Initiative','Team','PIC Responsible','Trạng thái','RAG','Cần BLĐ','Vướng mắc / Rủi ro','Nội dung cần BLĐ quyết','Ý kiến BLĐ'];
   const rows = tasks.map(t => [
     t.id, t.name, t.initiative||'BAU',
     t.team||'', t.picRes||'',
     t.state||'', t.status||'',
     t.canBLD||'N',
     t.vuongMac||'',
-    t.noiDungBLD||''
+    t.noiDungBLD||'',
+    t.yKienBLD||''
   ]);
 
   const aoa = [
@@ -149,6 +150,6 @@ function _rptIssues(wb, inProgress) {
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:14},{wch:50},{wch:16},{wch:10},{wch:18},{wch:20},{wch:8},{wch:10},{wch:50},{wch:50}];
+  ws['!cols'] = [{wch:14},{wch:50},{wch:16},{wch:10},{wch:18},{wch:20},{wch:8},{wch:10},{wch:50},{wch:50},{wch:50}];
   XLSX.utils.book_append_sheet(wb, ws, '4. Vướng mắc & BLĐ');
 }

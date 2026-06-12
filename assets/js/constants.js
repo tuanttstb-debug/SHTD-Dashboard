@@ -16,9 +16,9 @@ let activePreset = localStorage.getItem('shtd_preset') || 'active';
 // ── Google Apps Script config ──
 // GS_WEBAPP_URL is defined in assets/js/config.js — update that file on each GAS redeploy
 const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
-const GS_RANGE      = 'Task_Master!A1:W';
+const GS_RANGE      = 'Task_Master!A1:X';
 
-// ── Sheet column schema (23 cols) ──
+// ── Sheet column schema (24 cols) ──
 const DB_COLS = [
   'ID','Tuần BC','Initiative ID','Category',
   'Team chính','Team phối hợp',
@@ -31,7 +31,8 @@ const DB_COLS = [
   'Trạng thái','Milestone hiện tại',
   'Kết quả tuần qua','Kế hoạch tuần tới','Vướng mắc',
   'Cần BLĐ (Y/N)','Nội dung cần BLĐ quyết',
-  'Cross-team? (Y/N)','Highlight báo cáo lên dashboard? (Y/N)'
+  'Cross-team? (Y/N)','Highlight báo cáo lên dashboard? (Y/N)',
+  'Ý kiến BLĐ'
 ];
 
 const _MMM = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
