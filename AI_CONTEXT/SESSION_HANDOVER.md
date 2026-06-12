@@ -1,9 +1,9 @@
 # SESSION HANDOVER
-**Date**: 2026-06-12 (Session 17 — BLD Queue Bugfix + Test Infrastructure)
-**Model**: Claude Sonnet 4.6
+**Date**: 2026-06-12 (Session 18 — Rà soát BLĐ: UI consistency + nút duyệt + trường Ý kiến BLĐ + login debug)
+**Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Branch pushed**: `fix/bld-queue-submit` → merged into `master`
-**origin/main HEAD**: `f9872c4` — PO quản lý
+**Pushed**: `master` @ `090b94a` (commits `4243363` + `090b94a`)
+**origin/main HEAD**: `1c57999` — PR #20 merged (S17 bugfix đã lên Production)
 
 ---
 
@@ -18,73 +18,37 @@
 
 ---
 
-## Tasks Completed This Session (S17)
+## Tasks Completed This Session (S18)
 
 | # | Task | File | Status |
 |---|---|---|---|
-| BUG-01 | Fix `draft` param undefined → `db.tasks.find()` | `assets/js/views/bld-queue.js:283` | ✅ |
-| BUG-02 | Check `syncAction` return value → `if (!success) return` | `assets/js/views/bld-queue.js:294` | ✅ |
-| BUG-03 | Local fallback GAS offline → `persist()` + return true | `assets/js/api.js:130–136` | ✅ |
-| TEST-01 | Fix Playwright import path → `./node_modules/playwright` (Windows) | `verify_bld_queue.mjs:4` | ✅ |
-| TEST-02 | Fix `loadWithData`: `context.route` GAS abort + `waitForFunction` | `verify_bld_queue.mjs:11–52` | ✅ |
-| TEST-03 | Thêm TEST11–15: submit flow approve/reject/info | `verify_bld_queue.mjs` | ✅ |
-| MERGE | `fix/bld-queue-submit` → `master` (-X theirs cho ai_context conflicts) | — | ✅ |
-
-**Test result**: `verify_bld_queue.mjs` → **34/34 PASS** (was 18 before S17)
-
----
-
-## Root Cause — 3 Bugs
-
-### BUG-01: `draft` param undefined (Critical — TypeError)
-```js
-// BROKEN: draft = undefined → draft.find() → TypeError
-await syncAction(draft => { const t = draft.find(r => r.id === taskId); });
-// FIXED: dùng db.tasks trực tiếp (đúng chuẩn crud.js)
-await syncAction(() => { const t = db.tasks.find(r => r.id === taskId); });
-```
-
-### BUG-02: Không check return value (Logic error)
-`await syncAction(...)` bỏ qua `false` → chạy success toast + close modal dù fail → 2 toast cùng lúc.
-
-### BUG-03: Không có local fallback khi GAS offline
-`else { await writeToHandle(); }` → fail → outer catch rollback db từ localStorage.  
-Fix: `else { persist(); renderAll(); toast('⚠️ GAS không phản hồi...', 'warning'); return true; }`
+| UI-01 | `.btn-success` **chưa từng được định nghĩa** → nút "Phê duyệt" trong suốt. Thêm style solid green | `assets/css/components.css:76` | ✅ |
+| UI-02 | Đồng nhất page title với nav label: "Tổng hợp BLĐ" / "Phê duyệt BLĐ" | `assets/js/ui/navigation.js:86` | ✅ |
+| BUG-04 | `bldMiniConfirmBtn` không reset `disabled` khi mở modal lần 2 → duyệt 1 mục xong, mục sau không bấm được | `assets/js/views/bld-queue.js:243` | ✅ |
+| FEAT-01 | Trường mới `yKienBLD` — cột 24 (X) "Ý kiến BLĐ" trên Task_Master | constants/api/parsers/crud/index/Config.gs | ✅ |
+| FEAT-02 | Marker duyệt/từ chối/bổ sung lưu vào `yKienBLD` — **không còn ghi đè** `noiDungBLD` của team | `bld-queue.js:300` | ✅ |
+| FEAT-03 | Hiển thị Ý kiến BLĐ: card pending (khối info), Task form (readonly `#fYKien`), Quick View, Excel report | bld-queue.js / index.html / quickview.js / report.js | ✅ |
+| COMPAT | History đọc cả marker cũ (noiDungBLD) lẫn mới (yKienBLD) qua `_bldOpinionSrc()` | `bld-queue.js:50` | ✅ |
+| TEST | verify_bld_queue: 34 → **46 tests, 46/46 PASS** (TEST16–20) | `verify_bld_queue.mjs` | ✅ |
+| LOGIN | Debug "local không đăng nhập được user thật" → **KHÔNG có bug** (xem dưới) | `debug_login.mjs` (mới) | ✅ |
 
 ---
 
-## Test Infrastructure Fix
+## Login Investigation — Kết luận: KHÔNG có bug code
 
-**Root cause Playwright failure**: GAS trả `AUTH_REQUIRED` với fake token → `doLogout()` → `loginOverlay` block click.  
-**Fix**: `context.route('**/script.google.com/**', route => route.abort())` — chặn GAS toàn bộ test session.
-
-**Local test credentials** (PO-approved):
-```js
-{ username: 'TuanTT4', role: 'Admin', team: 'Số' }
-```
+- Login local hoạt động end-to-end: verified UI tại localhost:3030 với **TuanTT4/Thuha@123** (Admin, "Trần Thế Tuân") và **QuangNN3/QuangNN3** — đăng nhập OK, load data OK, không bị đá ra.
+- Nguyên nhân báo lỗi: nhập sai mật khẩu (mặc định seed `TuanTT4` đã bị đổi thành `Thuha@123` từ trước).
+- Phát hiện: `DungLQ1` bị hạ role Admin → **User**. `TuanTT4` có thể là Admin duy nhất.
+- Tool mới: `node debug_login.mjs` (env `LOGIN_USER`/`LOGIN_PASS`) — test login UI thật, in GAS response.
 
 ---
 
-## Deployment State
+## Decisions Made
 
-| Env | Branch | Status |
-|---|---|---|
-| `fix/bld-queue-submit` | `d3fcd56` | ✅ Pushed — chờ PO tạo PR → main |
-| `master` | up-to-date với fix branch | ✅ 34/34 PASS local |
-| Netlify | `master` | ❌ Hết credit |
-| GitHub Pages | `main` (f9872c4) | ⏳ Chờ merge bugfix PR |
-
----
-
-## How to Run Tests
-
-```bash
-cd "D:\Công việc\Vibecode\SHTD-Dashboard"
-npx http-server . -p 3030 --silent &
-node verify_bld_queue.mjs
-node verify_ms_tasks.mjs
-node verify_initiative_v2.mjs
-```
+1. **`DB_COLS` 23 → 24 cột** (PO yêu cầu trường Ý kiến BLĐ lưu DB). `GS_RANGE` → `A1:X`.
+2. **GAS backend KHÔNG cần redeploy**: `sheetRead()` dùng `getLastColumn()`, `sheetWrite()` dùng `values[0].length` — schema động theo header client gửi lên. `Config.gs DATA_RANGE` chỉ sửa comment.
+3. Ý kiến BLĐ **chỉ ghi qua màn Phê duyệt BLĐ** — Task form hiển thị readonly (hiện khi task có ý kiến hoặc `canBLD='Y'`); `handleSubmit` preserve giá trị.
+4. `.btn-success` chọn solid green (song song `.btn-primary`/`.btn-secondary` solid; `.btn-success-soft` đã có sẵn cho biến thể nhạt).
 
 ---
 
@@ -93,9 +57,9 @@ node verify_initiative_v2.mjs
 | Item | Status |
 |---|---|
 | GAS AiService.gs + GEMINI_API_KEY | ⚠️ UNCONFIRMED từ S12 |
-| Netlify hết credit | ❌ |
-| PR fix/bld-queue-submit → main | ⏳ Chờ PO |
-| Smoke test trên live | ⏳ Chờ PO merge |
+| Netlify hết credit | ❌ — dùng local Playwright |
+| PR `master` → `main` (S18) | ⏳ Chờ PO |
+| `verify_initiative_v2.mjs` fail local | ⚠️ Pre-existing — không inject auth, loginOverlay chặn (TD-033) |
 
 ---
 
@@ -103,5 +67,28 @@ node verify_initiative_v2.mjs
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `syncAction` local fallback | 🟡 MEDIUM | Khi GAS down, mọi CRUD ops save local. User phải sync lại sau. Toast warning đã có. |
-| Merge -X theirs | 🟢 LOW | ai_context S15 overwrite bởi S16 — đúng |
+| **Mixed-version clients ghi lệch cột X** | 🟡 MEDIUM | Production (`main`) hiện vẫn ghi 23 cột. Nếu client 24-cột ghi trước, rồi client 23-cột ghi sau: `sheetWrite` chỉ clear 23 cột → cột X (Ý kiến BLĐ) **bị lệch hàng/stale**. Mitigation: merge S18 lên `main` sớm; ý kiến mới sẽ được ghi lại đúng ở lần ghi 24-cột kế tiếp. |
+| yKienBLD mất khi edit task bằng client cũ | 🟢 LOW | Client 23-cột rebuild task object không có yKienBLD → trường rỗng khi ghi đè. Hết rủi ro sau khi merge main. |
+| Legacy marker trong noiDungBLD | 🟢 LOW | Dữ liệu cũ giữ nguyên; history fallback đọc được. Không migrate tự động. |
+
+---
+
+## How to Run Tests
+
+```bash
+cd "D:\Công việc\Vibecode\SHTD-Dashboard"
+npx http-server . -p 3030 --silent &
+node verify_bld_queue.mjs     # 46/46 PASS (S18)
+node verify_ms_tasks.mjs      # PASS
+node debug_login.mjs          # login flow với user thật
+# verify_initiative_v2.mjs — fail pre-existing (TD-033), không phải regression
+```
+
+---
+
+## Next Steps
+
+1. **PO tạo PR `master` → `main`** (gồm S18: `4243363`, `090b94a`) — ưu tiên cao vì rủi ro lệch cột X.
+2. Smoke test live sau merge: BLD queue (duyệt liên tiếp 2 mục), Ý kiến BLĐ hiển thị ở card/form/QuickView, Excel report cột mới.
+3. Verify AI Chat trên live (tồn từ S12).
+4. Fix `verify_initiative_v2.mjs`: thêm auth inject + GAS route abort (copy pattern từ `verify_bld_queue.mjs`).

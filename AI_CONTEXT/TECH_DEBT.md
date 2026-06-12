@@ -141,7 +141,9 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 **Partial resolution 2026-06-12 (Session 17)**: `verify_bld_queue.mjs` — **34/34 PASS** (up from 18/18 S16). Added TEST11–15 covering submit flow (approve/reject/info), local fallback, badge update. Fixed Playwright infra: Windows import path + `context.route` GAS abort + `waitForFunction` loading overlay.
 
-**Committed suites**: `verify_initiative_v2.mjs` (37), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (34) — total **99 checks**.
+**Partial resolution 2026-06-12 (Session 18)**: `verify_bld_queue.mjs` — **46/46 PASS**. Added TEST16–20: confirm-btn disable reset, yKienBLD persistence (noiDungBLD untouched), opinion block on card, Task form readonly field, legacy+new history markers. Added `debug_login.mjs` (login diagnostics, not a test suite).
+
+**Committed suites**: `verify_initiative_v2.mjs` (37 — ⚠️ failing, see TD-033), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (46) — total **111 checks**.
 
 **Remaining gap**: No CI integration. No unit tests for pure functions. Import paths in test files are machine-specific (Windows vs Linux `/opt/node22/...`).
 
@@ -343,8 +345,31 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-033: verify_initiative_v2.mjs Không Inject Auth — Fail Local
+**Rating**: 🟢 MEDIUM
+**Added**: 2026-06-12 (Session 18)
+
+**Issue**: `verify_initiative_v2.mjs` chặn GAS routes nhưng KHÔNG inject `shtd_auth_v1` vào localStorage → `loginOverlay` chặn mọi click → test fail tại `navigate()`. Xác nhận fail y hệt trên code gốc (git stash) — pre-existing từ khi auth được thêm (S9), không phải regression.
+
+**Fix**: Copy pattern `loadWithData()` từ `verify_bld_queue.mjs` (inject auth + `context.route` abort + `waitForFunction` loading overlay).
+
+---
+
+## SCHEMA-01: Mixed-Version Clients — Cột X (Ý kiến BLĐ) Lệch/Stale
+**Rating**: 🟡 HIGH (tự hết sau khi merge S18 → main)
+**Added**: 2026-06-12 (Session 18)
+
+**Issue**: S18 thêm cột 24 (X) 'Ý kiến BLĐ'. `sheetWrite()` clear + ghi theo `values[0].length` của client. Production (`main`, 23 cột) và local/master (24 cột) ghi chung Task_Master:
+- Client 24-cột ghi → cột X có data.
+- Client 23-cột ghi sau → chỉ clear/ghi 23 cột → **cột X giữ giá trị cũ, lệch hàng** với data mới.
+- Client 23-cột edit task → rebuild object không có `yKienBLD` → trường rỗng ở lần ghi 24-cột kế.
+
+**Fix**: Merge S18 lên `main` sớm (PR đang chờ PO). Sau merge, mọi client ghi 24 cột — vấn đề tự hết. Không cần migration; marker cũ trong noiDungBLD vẫn đọc được qua `_bldOpinionSrc()`.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-12 (Session 17 — TD-012 updated: 34/34 bld-queue tests, 99 total)
+**Last updated**: 2026-06-12 (Session 18 — +TD-033, +SCHEMA-01; TD-012: 46/46 bld-queue, 111 total)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -359,7 +384,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 4 committed suites: 37+14+14+34=99 PASS; no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 4 committed suites: 37+14+14+46=111 (initiative_v2 failing — TD-033); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
@@ -387,3 +412,5 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-030 | ⚪ | User Management table has no search/pagination | Tiny | Open — acceptable at current scale |
 | TD-031 | 🟢 | Loose-link detection assumes `PARENT-Mn` milestone ID pattern | Tiny | Open — low risk |
 | TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
+| TD-033 | 🟢 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | Small | Open — copy pattern verify_bld_queue |
+| SCHEMA-01 | 🟡 | Mixed-version clients (main 23 cột vs master 24 cột) → cột X lệch/stale | — | Open — tự hết khi PO merge S18 → main |
