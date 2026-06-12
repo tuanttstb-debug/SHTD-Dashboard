@@ -1,49 +1,82 @@
 # SESSION HANDOVER
-**Date**: 2026-06-10 (Session 15 — Bug fixes + genId + Preset Tab Bar)
+**Date**: 2026-06-10 (Session 16 — BLD Approval Queue / Hàng đợi Phê duyệt BLĐ)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**master HEAD**: `11d054a`
-**main HEAD**: `45bf54a` — behind master by 4 commits; PO quản lý
+**Feature branch HEAD**: `d117a80` (branch: `claude/dashboard-leader-features-7nmssw`)
+**main HEAD**: `45bf54a` — unchanged (PO quản lý)
 
 ---
 
-## Branch Strategy (ENFORCED)
+## Branch Strategy
 
 | Branch | Who pushes | Purpose |
 |---|---|---|
-| `master` | Developer / AI | Testing → local verify (Netlify hết credit) |
+| `claude/dashboard-leader-features-7nmssw` | AI (session này) | Feature branch — chờ PO review + merge |
+| `master` | Developer / AI | Testing → Netlify (⚠️ hết credit) |
 | `main` | **PO ONLY** via GitHub PR/commit | Production → GitHub Pages |
 
 **Rule: AI/Claude KHÔNG push `main` trừ khi PO yêu cầu rõ ràng trong message.**
 
 ---
 
-## Tasks Completed This Session
+## Tasks Completed This Session (S16)
 
 | # | Task | Commit | Tests |
 |---|---|---|---|
-| S15-01 | Sync check: master vs main — xác nhận source code giống nhau; local main cập nhật | — | — |
-| S15-02 | Docs: đánh dấu Netlify hết credit | `8f139c0` | — |
-| S15-03 | **Bug 1**: `fInit` dropdown hiển thị milestones → fix `!i.parentId` trong `initMap` | `bdc312f` | 15/15 ✅ |
-| S15-04 | **Bug 2**: Task ID không auto-update → `fId` readonly + nút "Tạo lại" + navigation listeners | `bdc312f` | 15/15 ✅ |
-| S15-05 | `handleSubmit` fix: dùng `origId` làm lookup key khi ID auto-đổi (tránh phantom task) | `bdc312f` | — |
-| S15-06 | **genId mới**: format `{init}-{ms_short}-{seq}` (vd: `Econtract-001-M1-001`) | `45f2f39` | 18/18 ✅ |
-| S15-07 | **Preset Tab Bar**: 4 tabs trên task manager — Đang làm / Tuần BC này / Quá hạn / Tất cả | `11d054a` | 20/20 ✅ |
-| S15-08 | `navigateTo('tasks')` giờ gọi `renderTaskTable()` — bảng fresh khi quay lại màn hình | `11d054a` | — |
+| BLD-01 | `assets/css/bld-queue.css` — NEW, 296 lines, `bld-` prefix | `f30af66` | ✅ |
+| BLD-02 | `assets/js/views/bld-queue.js` — NEW, 308 lines, render + modal + history | `f30af66` | ✅ |
+| BLD-03 | `index.html` — nav item với badge đỏ, HTML section, mini modal overlay, G+B shortcut | `f30af66` | ✅ |
+| BLD-04 | `assets/js/ui/navigation.js` — dispatch, title, G+B key, ESC close | `f30af66` | ✅ |
+| BLD-05 | `assets/js/app.js` — `updateNavBadges()` drives `navBadgeBld` | `f30af66` | ✅ |
+| TEST | `verify_bld_queue.mjs` — 18/18 Playwright PASS | `f30af66` | ✅ |
+| DOCS | AI_CONTEXT: TODO_NEXT, PROJECT_STATE, CHANGE_LOG, SESSION_HANDOVER updated | `d117a80` | ✅ |
 
 ---
 
-## Decisions Made
+## Tasks Completed Previous Session (S15)
+
+| # | Task | Commit | Status |
+|---|---|---|---|
+| ES-01 | `assets/css/executive-summary.css` — NEW | `1f08ea8` | ✅ |
+| ES-02 | `assets/js/views/executive-summary.js` — NEW | `1f08ea8` | ✅ |
+| ES-03 | `index.html` — nav item, HTML section, KB shortcut | `1f08ea8` | ✅ |
+| ES-04 | `assets/js/ui/navigation.js` — dispatch, G+E | `1f08ea8` | ✅ |
+
+---
+
+## Key Decisions — BLD Queue (S16)
 
 | Decision | Rationale |
 |---|---|
-| `fId` readonly, bỏ label `<span class="req">*</span>` | ID auto-gen, user không cần và không nên gõ trực tiếp |
-| `fInit.change` → `autoGenId()` không guard origId (cả EDIT) | ID phải nhất quán với initiative; dùng `origId` làm lookup để tránh corrupt |
-| `fMs.change` → `autoGenId()` chỉ ADD mode | EDIT mode: milestone không đủ context để thay ID cũ |
-| genId BAU format: `{team}-{seq}` (thêm dấu `-`) | Nhất quán với format mới; trước đây là `Số001` nay là `Số-001` |
-| Preset default = "Đang làm" | 600 task, đa số hoàn thành → default phải lọc noise |
-| `clearFilters()` giữ preset | Preset là context view, không phải filter bar detail |
-| Preset persist `localStorage['shtd_preset']` (key riêng) | Không đụng `shtd_v2` schema |
+| Không thêm cột DB mới | `canBLD` (col 19) + `noiDungBLD` (col 20) đủ dùng; thêm cột sẽ phá GAS sync |
+| Approve/reject encode bằng prefix marker trong `noiDungBLD` | `[✅/❌/❓ BLĐ DD/MM/YYYY — note]` — parse được bằng regex |
+| Info request giữ `canBLD='Y'` | Task vẫn ở queue, chưa có quyết định cuối |
+| History filter 7 ngày | Tránh UI quá dài; đủ để audit ngắn hạn |
+| CSS prefix `bld-` | Tránh conflict với các component khác |
+
+---
+
+## Feature Summary — BLD Approval Queue
+
+| Component | Detail |
+|---|---|
+| **Pending list** | Tasks có `canBLD='Y'`; sort Red-first → Overdue-first; filter Team + Initiative |
+| **Nav badge** | `#navBadgeBld` — đỏ, ẩn khi 0, cập nhật mỗi `renderAll()` |
+| **Approve modal** | Note tùy chọn; `canBLD='N'`; prepend `[✅ BLĐ duyệt DD/MM/YYYY…]` |
+| **Reject modal** | Lý do bắt buộc; `canBLD='N'`; prepend `[❌ BLĐ từ chối DD/MM/YYYY…]` |
+| **Info modal** | Nội dung bắt buộc; `canBLD='Y'`; prepend `[❓ BLĐ yêu cầu bổ sung DD/MM/YYYY…]` |
+| **History section** | Tasks xử lý 7 ngày qua có prefix marker; ẩn nếu rỗng |
+| **Keyboard shortcut** | `G+B` → navigate to bld-queue; `ESC` closes mini modal |
+
+---
+
+## Blockers / Pending Manual Steps
+
+| Item | Status |
+|---|---|
+| GAS `AiService.gs`: `gemini-2.5-flash` + `GEMINI_API_KEY` Script Property | ⚠️ UNCONFIRMED từ Session 12 |
+| Netlify hết credit | ❌ Testing env không auto-deploy — dùng local Playwright |
+| Feature branch chưa merge vào main | ⏳ Chờ PO review PR `claude/dashboard-leader-features-7nmssw` |
 
 ---
 
@@ -51,26 +84,41 @@
 
 | Env | Branch | HEAD | Status |
 |---|---|---|---|
-| Testing (Netlify) | `master` | `11d054a` | ❌ **Hết credit — không auto-deploy** |
-| Production (GitHub Pages) | `main` | `45bf54a` | ✅ Live — PO quản lý (behind 4 commits) |
-| GAS Backend | — | — | ✅ Code.gs + UserService.gs deployed; ⚠️ AiService.gs unconfirmed |
+| Feature branch | `claude/dashboard-leader-features-7nmssw` | `d117a80` | ✅ Pushed |
+| Testing (Netlify) | `master` | `45bf54a` | ❌ Hết credit — không auto-deploy |
+| Production (GitHub Pages) | `main` | `45bf54a` | ✅ Live — PO quản lý |
+| GAS Backend | — | — | ✅ Code.gs + UserService.gs; ⚠️ AiService.gs unconfirmed |
 
 ---
 
-## Files Changed This Session
+## Files Changed This Session (S16)
 
 | File | Change |
 |---|---|
-| `assets/js/app.js` | L75: `&& !i.parentId` filter milestones khỏi initMap |
-| `assets/js/helpers.js` | `genId(init, team, ms, extra)` — param ms mới, prefix logic 3 cases |
-| `assets/js/crud.js` | `autoGenId()` + `cloneTask()` pass `fMs.value`; `handleSubmit` dùng `origId` làm lookup |
-| `assets/js/ui/navigation.js` | Bỏ guard `origId` cho fInit/fTeam change; thêm fMs listener (ADD only); `navigateTo('tasks')` → `renderTaskTable()` |
-| `assets/js/constants.js` | +`let activePreset` |
-| `assets/js/views/tasks.js` | `_getThisWeekLabel`, `_applyPreset`, `setPreset`, `updatePresetCounts`, `_initPresetUI`; `getFiltered` + `renderTaskTable` updated |
-| `assets/css/table.css` | +35 lines preset CSS |
-| `index.html` | `fId` → readonly + "Tạo lại mã" btn; preset-bar HTML block |
-| `verify_bug_fixes.mjs` | 18 tests cho Bug1 + Bug2 + genId |
-| `verify_preset.mjs` | NEW — 20 tests cho preset tab bar |
+| `assets/css/bld-queue.css` | NEW — 296 lines, `bld-` prefix |
+| `assets/js/views/bld-queue.js` | NEW — 308 lines: render, filter, modal, history |
+| `index.html` | +nav item + badge, +HTML section (~38 lines), +mini modal (~28 lines), +CSS link, +script tag, +KB shortcut |
+| `assets/js/ui/navigation.js` | +4 lines: dispatch bld-queue, title, G+B key, ESC handler |
+| `assets/js/app.js` | +3 lines: navBadgeBld in updateNavBadges() |
+| `verify_bld_queue.mjs` | NEW — 18 Playwright tests |
+| `AI_CONTEXT/SESSION_HANDOVER.md` | This file |
+| `AI_CONTEXT/PROJECT_STATE.md` | HEAD, file counts, feature list, architecture tree |
+| `AI_CONTEXT/CHANGE_LOG.md` | Session 16 entry at top |
+| `AI_CONTEXT/TODO_NEXT.md` | S16 completed items, S17 priorities |
+
+---
+
+## How to Run Tests Next Session
+
+```bash
+# Start local server (terminal 1)
+npx http-server . -p 3030 --silent &
+
+# Run tests (requires global playwright)
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node verify_bld_queue.mjs
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node verify_ms_tasks.mjs
+PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node verify_initiative_v2.mjs
+```
 
 ---
 
@@ -78,8 +126,8 @@
 
 | Risk | Severity | Detail |
 |---|---|---|
-| `genId` format thay đổi | 🟡 MEDIUM | BAU tasks: `Số001` → `Số-001`. Task cũ có ID `Số001` không bị đổi, nhưng khi clone/add sẽ gen `Số-002` (gap sequence). Chấp nhận được. |
-| `fInit.change` auto-gen trong EDIT mode | 🟡 MEDIUM | Nếu user vô tình đổi initiative trong edit modal → ID đổi. `origId` vẫn giữ nên lưu đúng. Xem xét thêm toast warning. |
-| Preset default "Đang làm" | 🟢 LOW | User quen với "Tất cả" cần click 1 lần; task cũ hoàn thành cần vào tab "Tất cả" |
-| `navigateTo('tasks')` gọi `renderTaskTable()` | 🟢 LOW | Thêm 1 re-render mỗi lần navigate to tasks — negligible với 600 tasks |
-| AI Chat GAS chưa verify | 🟡 MEDIUM | Không thay đổi session này, vẫn unconfirmed |
+| `_bldCurrentAction` global | 🟢 LOW | Tên riêng biệt — không conflict |
+| `_bldFilterTeam` / `_bldFilterInit` globals | 🟢 LOW | Chỉ dùng trong bld-queue scope |
+| `bldCloseMiniModal()` gọi từ ESC handler | 🟢 LOW | Guard: nếu overlay không tồn tại thì no-op |
+| Marker parse regex | 🟢 LOW | Regex test với edge cases trong test suite |
+| AI Chat GAS chưa verify | 🟡 MEDIUM | Tồn tại từ Session 12 — không liên quan session này |

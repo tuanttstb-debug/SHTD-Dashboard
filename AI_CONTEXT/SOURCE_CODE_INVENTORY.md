@@ -1,4 +1,72 @@
-# SOURCE CODE INVENTORY — SHTD Dashboard v6.2
+# SOURCE CODE INVENTORY — SHTD Dashboard v6.2 (Session 16)
+
+> ⚠️ Phần "Main.html Section Breakdown" bên dưới mô tả trạng thái MONOLITH CŨ trước khi refactor.
+> Project hiện tại đã được tách thành multi-file (index.html + assets/). Xem `SYSTEM_ARCHITECTURE.md`.
+
+## Thay đổi mới nhất — Session 16
+
+| File | Lines | Status |
+|---|---|---|
+| `assets/css/bld-queue.css` | 296 | ✅ NEW S16 — styles cho BLD Approval Queue view |
+| `assets/js/views/bld-queue.js` | 308 | ✅ NEW S16 — `renderBldQueue()` + modal + history helpers |
+
+### `assets/js/views/bld-queue.js` — Function list
+
+| Function | Responsibility |
+|---|---|
+| `renderBldQueue()` | Main render: populate filters, get pending/history, update chip + timestamp |
+| `_bldGetPending()` | Filter `canBLD='Y'` + team/init filters; sort Red-first → Overdue-first |
+| `_bldGetHistory()` | Find tasks with prefix markers in `noiDungBLD` within 7 days |
+| `_bldPopulateFilters()` | Populate team + initiative dropdowns from pending tasks |
+| `_bldRenderPending(items)` | Render cards or empty state into `#bldPendingList` |
+| `_bldBuildItemHTML(t)` | Build HTML for single task card (3 action btns + ghost link) |
+| `_bldRenderHistory(items)` | Render history section; hide `#bldHistoryWrap` if empty |
+| `bldOpenAction(type, taskId)` | Open mini modal with type-specific config (approve/reject/info) |
+| `bldCloseMiniModal()` | Close `#bldActionOverlay`; reset `_bldCurrentAction` |
+| `bldSubmitAction()` | Validate, build marker, call `syncAction()`, re-render + badge |
+
+### `assets/css/bld-queue.css` — CSS class list (bld- prefix)
+
+| Class | Purpose |
+|---|---|
+| `.bld-toolbar`, `.bld-toolbar-left`, `.bld-filter-bar`, `.bld-filter-label` | Toolbar layout |
+| `.bld-count-chip`, `.bld-count-chip.none` | Red/green pending count chip |
+| `.bld-timestamp` | Last-refresh timestamp |
+| `.bld-pending-list` | Flex column container for cards |
+| `.bld-item`, `.bld-item-header`, `.bld-item-name`, `.bld-team-pill` | Card header |
+| `.bld-item-meta`, `.bld-meta-chip`, `.bld-meta-chip.overdue` | Meta row chips |
+| `.bld-item-body`, `.bld-body-label`, `.bld-body-text` | Content preview block |
+| `.bld-item-actions`, `.bld-ghost-link` | Action buttons row |
+| `.bld-history-header`, `.bld-history-title`, `.bld-history-line` | History section header |
+| `.bld-history-list`, `.bld-history-item`, `.bld-history-icon` | History rows |
+| `.bld-history-body`, `.bld-history-name`, `.bld-history-note`, `.bld-history-date` | History row content |
+| `.bld-empty-state`, `.bld-empty-icon`, `.bld-empty-title`, `.bld-empty-sub` | Empty state |
+| `.bld-mini-card`, `.bld-mini-top`, `.bld-mini-title`, `.bld-mini-sub` | Mini modal container |
+| `.bld-mini-preview`, `.bld-mini-prev-name`, `.bld-mini-prev-id` | Task preview in modal |
+| `.bld-mini-body`, `.bld-mini-label`, `.bld-mini-textarea`, `.bld-mini-textarea.error` | Modal form |
+| `.bld-mini-err`, `.bld-mini-err.visible`, `.bld-mini-footer` | Modal validation + footer |
+
+---
+
+## Session 15 — Executive Summary
+
+| File | Lines | Status |
+|---|---|---|
+| `assets/css/executive-summary.css` | ~120 | ✅ NEW S15 — styles cho Executive Summary view |
+| `assets/js/views/executive-summary.js` | ~180 | ✅ NEW S15 — `renderExecutiveSummary()` + 5 helpers |
+
+### `assets/js/views/executive-summary.js` — Function list
+
+| Function | Responsibility |
+|---|---|
+| `renderExecutiveSummary()` | Main render: single-pass computation + dispatch 4 sub-renders |
+| `_esSet(id, val)` | Utility: set textContent bằng ID |
+| `_esRenderRagChart(rag, total)` | Chart.js donut với guard `typeof Chart === 'undefined'` |
+| `_esRenderRagLegend(rag, total)` | Legend dọc: dot + count + % |
+| `_esRenderAttentionList(attention)` | Priority-sorted list BLĐ→Blocked→Overdue; max 8 + overflow |
+| `_esRenderInitTable(initSummary)` | Initiative table: Red-first sort, progress bar, status tag |
+
+---
 
 ## File Summary
 

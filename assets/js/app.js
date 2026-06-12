@@ -62,6 +62,9 @@ function updateNavBadges() {
   const ob = document.getElementById('navBadgeOverdue');
   ob.textContent = ov;
   ob.style.display = ov > 0 ? '' : 'none';
+  const bldCount = db.tasks.filter(t => t.canBLD === 'Y').length;
+  const bb = document.getElementById('navBadgeBld');
+  if (bb) { bb.textContent = bldCount; bb.style.display = bldCount > 0 ? '' : 'none'; }
 }
 
 function updateFilterDropdowns() {

@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-06-10 (Session 15 — Bug fixes + genId + Preset Tab Bar)
+**As of**: 2026-06-10 (Session 16 — BLD Approval Queue)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `11d054a` ← 4 commits ahead of main
-**Remote HEAD (main)**: `45bf54a` ← PO owns this branch; behind master
+**Feature branch HEAD**: `f30af66` (branch: `claude/dashboard-leader-features-7nmssw`)
+**Remote HEAD (master)**: `45bf54a` — unchanged
+**Remote HEAD (main)**: `45bf54a` ← PO merged PR #15; PO owns this branch
 
 ---
 
@@ -25,7 +26,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~800 | ✅ HTML-only shell — all CSS/JS external |
+| `index.html` | ~890 | ✅ HTML-only shell — all CSS/JS external |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ Session 12 — model `gemini-2.5-flash` in repo; GAS deploy status unconfirmed; GEMINI_API_KEY may not be set |
 | `backend/Code.gs` | ~150 | ✅ ai-chat route; KNOWN_ROLES; debug-auth removed; user CRUD actions (Session 13) |
@@ -37,8 +38,8 @@
 | `backend/KpiSheetService.gs` | 51 | ✅ KPI Summary GAS backend — deployed + tested |
 | `backend/InitiativeService.gs` | 60 | ✅ `initiativeRead()` / `initiativeWrite()` for Initiative_Master |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL deployment variable; update on every GAS redeploy |
-| `assets/css/` | 13 files | ✅ `initiative.css` +71 lines Session 14; `auth.css` RBAC broadened (Session 13) |
-| `assets/js/` | 31 modules | ✅ + `views/user-management.js` (S13) + milestone drill-down in `views/initiative-tracker.js` (S14) |
+| `assets/css/` | 15 files | ✅ + `bld-queue.css` (S16, 296 lines); `executive-summary.css` (S15); `initiative.css` +71 lines S14; `auth.css` RBAC broadened (S13) |
+| `assets/js/` | 33 modules | ✅ + `views/bld-queue.js` (S16, 308 lines); `views/executive-summary.js` (S15); `views/user-management.js` (S13); milestone drill-down in `views/initiative-tracker.js` (S14) |
 | `assets/js/kpi-parser.js` | 164 | ✅ xlsx parse + GG Sheet sync for KPI data |
 | `assets/js/initiatives.js` | ~120 | ✅ INI_COLS, parser, CRUD sync functions |
 
@@ -48,6 +49,8 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **BLD Approval Queue (Phê duyệt BLĐ)** | ✅ | NEW S16 — pending list, approve/reject/info modal, 7-day history; G+B shortcut; badge |
+| **Executive Summary (Tổng hợp BLĐ)** | ✅ | NEW S15 — 5 KPI cards, RAG donut, Attention list, Initiative health table; G+E shortcut |
 | Dashboard KPIs | ✅ | Tuần BC filter included |
 | RAG doughnut chart | ✅ | Click → detail modal |
 | Initiative summary table | ✅ | Click → detail modal |
@@ -96,13 +99,15 @@
 ## Architecture State
 
 ```
-CURRENT (Session 15 — Bug fixes + genId + Preset Tab Bar)
-──────────────────────────────────────────────────────────
-index.html (~820 lines — HTML only; fId readonly + preset-bar block)
+CURRENT (Session 16 — BLD Approval Queue)
+─────────────────────────────────────────────────
+index.html (~960 lines — HTML only)
 assets/
   css/  tokens.css, base.css, layout.css, components.css,
         forms.css, table.css (+preset CSS), gantt.css, quickview.css,
         responsive.css, kpi.css, initiative.css, auth.css, ai-chat.css
+        executive-summary.css   ← NEW Session 15 (120 lines, es- prefix)
+        bld-queue.css           ← NEW Session 16 (296 lines, bld- prefix)
   js/   config.js          ← GS_WEBAPP_URL (update on each GAS redeploy)
         constants.js (+activePreset), helpers.js (genId 3-param), storage.js, parsers.js
         api.js (+ serverTs/clientTs optimistic locking)
@@ -119,8 +124,10 @@ assets/
         views/initiative-tracker.js ← S14: milestone drill-down + alignment badges
         initiatives.js
         views/ai-chat.js
-        views/user-management.js    ← Session 13
-        app.js ← S15: initMap filters !i.parentId
+        views/user-management.js    ← NEW Session 13
+        views/executive-summary.js  ← NEW Session 15 (180 lines)
+        views/bld-queue.js          ← NEW Session 16 (308 lines)
+        app.js
 backend/
   Code.gs, Config.gs, AuthService.gs, SheetService.gs
   AuditService.gs, KpiSheetService.gs, InitiativeService.gs
@@ -128,12 +135,11 @@ backend/
   AiService.gs       ← gemini-2.5-flash in repo; GAS deploy unconfirmed
   GAS.GS             ← archived patch v6.2
 verify_initiative_v2.mjs ← 37/37 PASS
-verify_kpi_views.mjs     ← 3/3 PASS
-verify_mobile.mjs        ← 4/4 PASS
-um_test.mjs              ← 14/14 PASS
-verify_ms_tasks.mjs      ← 14/14 PASS
-verify_bug_fixes.mjs     ← 18/18 PASS (S15: Bug1+Bug2+genId)
-verify_preset.mjs        ← 20/20 PASS (S15: Preset Tab Bar)
+verify_kpi_views.mjs     ← 3/3 PASS (session 7)
+verify_mobile.mjs        ← 4/4 PASS (session 7)
+um_test.mjs              ← 14/14 PASS (session 13)
+verify_ms_tasks.mjs      ← 14/14 PASS (session 14)
+verify_bld_queue.mjs     ← 18/18 PASS (session 16)
 ```
 
 ---
