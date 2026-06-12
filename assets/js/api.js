@@ -23,6 +23,7 @@ function taskToRow(t) {
     /* 20 Nội dung BLĐ      */ t.noiDungBLD     || '',
     /* 21 Cross-team        */ t.crossTeam      || 'N',
     /* 22 Highlight         */ t.highlight      || 'N',
+    /* 23 Ý kiến BLĐ        */ t.yKienBLD       || '',
   ];
 }
 

@@ -71,6 +71,8 @@
 .btn-ghost:hover{background:var(--surface2);color:var(--text);}
 .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(220,38,38,.25);}
 .btn-danger:hover{background:var(--danger);color:white;}
+.btn-success{background:var(--success);color:white;}
+.btn-success:hover{background:#15803d;}
 .btn-success-soft{background:var(--success-bg);color:var(--success);border:1px solid rgba(22,163,74,.25);}
 .btn-success-soft:hover{background:var(--success);color:white;}
 .btn-sm{padding:6px 12px;font-size:12px;}

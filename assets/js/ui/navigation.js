@@ -83,7 +83,7 @@ function navigateTo(view) {
   const sec = document.getElementById(`view-${view}`);
   if (sec) { sec.style.display = 'contents'; sec.style.animation = 'none'; void sec.offsetWidth; sec.style.animation = ''; }
   const titles = {
-    dashboard:'Executive Dashboard', 'executive-summary':'Tổng hợp Lãnh đạo', 'bld-queue':'Hàng đợi Phê duyệt BLĐ',
+    dashboard:'Executive Dashboard', 'executive-summary':'Tổng hợp BLĐ', 'bld-queue':'Phê duyệt BLĐ',
     tasks:'Quản lý Công việc',
     gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất',
     'kpi-overview':'KPI Digital Overview', 'action-plan':'Action Plan – Kế hoạch hành động',

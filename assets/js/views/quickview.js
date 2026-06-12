@@ -429,6 +429,13 @@ function _qvRenderIssue(tasks) {
           </span>
           ${esc(t.noiDungBLD)}
         </div>` : ''}
+      ${(t.yKienBLD||'').trim() ? `
+        <div class="qvp-issue-text" style="border-top-color:var(--info);margin-top:8px;">
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--info);display:block;margin-bottom:4px;">
+            <i class="fa-solid fa-comment-dots" style="margin-right:3px;"></i>Ý kiến Ban lãnh đạo
+          </span>
+          ${esc(t.yKienBLD)}
+        </div>` : ''}
       <div class="qvp-prog" style="margin-top:10px;">
         <div class="qvp-prog-bar"><div class="qvp-prog-fill" style="width:${t.progress}%;background:${t.state==='Blocked'?'var(--danger)':'var(--warning)'};"></div></div>
         <span class="qvp-prog-pct">${t.progress}%</span>

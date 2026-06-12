@@ -94,6 +94,7 @@ function extractWorkbook(wb) {
   const cIss   = colIdxExact(H, ['vướngmắc','issue']);
   const cBLD   = colIdxExact(H, ['cầnblđ']);
   const cBLDT  = colIdxExact(H, ['nộidungcầnblđ','nộidungblđ']);
+  const cYK    = colIdxExact(H, ['ýkiếnblđ','ykienbld']);
   const cCr    = colIdxExact(H, ['cross-team','crossteam']);
   const cHl    = colIdxExact(H, ['highlightbáocáo','highlight','báocáo']);
   if (cName === -1) return null;
@@ -197,6 +198,7 @@ function extractWorkbook(wb) {
       vuongMac:    cIss   !== -1 ? (r[cIss]||'')   : '',
       canBLD:      parseYN(cBLD  !== -1 ? r[cBLD]  : ''),
       noiDungBLD:  cBLDT  !== -1 ? (r[cBLDT]||'') : '',
+      yKienBLD:    cYK    !== -1 ? (r[cYK]||'')   : '',
       crossTeam:   parseYN(cCr   !== -1 ? r[cCr]   : ''),
       highlight:   parseYN(cHl   !== -1 ? r[cHl]   : ''),
     });
@@ -233,6 +235,7 @@ function _parseArrayIntoDb(values) {
   const cIss   = ci(['vướng mắc','issue']);
   const cBLD   = ci(['cầnblđ']);
   const cBLDT  = ci(['nội dung cần blđ','nội dung blđ']);
+  const cYK    = ci(['ý kiến blđ','ykienbld']);
   const cCross = ci(['cross-team','crossteam']);
   const cHl    = ci(['highlight','báo cáo']);
 
@@ -287,7 +290,7 @@ function _parseArrayIntoDb(values) {
       state: parseState(g(r,cState)),
       status: parseRAG(g(r,cRagM)||g(r,cState)),
       result: g(r,cResult), nextPlan: g(r,cNext), vuongMac: g(r,cIss),
-      canBLD: parseYN(g(r,cBLD)), noiDungBLD: g(r,cBLDT),
+      canBLD: parseYN(g(r,cBLD)), noiDungBLD: g(r,cBLDT), yKienBLD: g(r,cYK),
       crossTeam: parseYN(g(r,cCross)), highlight: parseYN(g(r,cHl)),
     });
   }

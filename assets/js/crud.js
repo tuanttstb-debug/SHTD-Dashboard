@@ -58,6 +58,8 @@ function openTaskModal(task = null) {
   document.getElementById('progPreview').style.width = '0%';
   document.getElementById('btnDelete').style.display = 'none';
   document.getElementById('btnClone').style.display = 'none';
+  document.getElementById('fYKien').value = '';
+  document.getElementById('fYKienGroup').style.display = 'none';
 
   updateFilterDropdowns();
   populatePicDropdown('');
@@ -89,6 +91,10 @@ function openTaskModal(task = null) {
     document.getElementById('fIssue').value = task.vuongMac || '';
     document.getElementById('fBLD').value = task.canBLD || 'N';
     document.getElementById('fBLDTxt').value = task.noiDungBLD || '';
+    document.getElementById('fYKien').value = task.yKienBLD || '';
+    // Hiển thị ý kiến BLĐ cho task đang/đã xin ý kiến
+    document.getElementById('fYKienGroup').style.display =
+      ((task.yKienBLD || '').trim() || task.canBLD === 'Y') ? '' : 'none';
     document.getElementById('fTuanBC').value = task.tuanBC || '';
     document.getElementById('fCat').value = task.category || '';
     document.getElementById('fPicSup').value = task.picSupport || '';
@@ -186,6 +192,7 @@ async function handleSubmit(e) {
     vuongMac: document.getElementById('fIssue').value,
     canBLD: document.getElementById('fBLD').value,
     noiDungBLD: document.getElementById('fBLDTxt').value,
+    yKienBLD: document.getElementById('fYKien').value,
   };
   const ok = await uiConfirm('Xác nhận lưu Task',
     `<strong>${task.id}</strong> – ${task.name}<br><small style="color:var(--text-3);">Deadline: ${fmtDate(task.endDate)} · PIC: ${task.picRes} · ${task.state}</small>`,
