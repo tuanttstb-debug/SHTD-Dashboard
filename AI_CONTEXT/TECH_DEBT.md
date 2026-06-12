@@ -340,7 +340,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-10 (Session 14 — TD-031 added)
+**Last updated**: 2026-06-10 (Session 15 — TD-032 added; TD-012 partial update)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -355,7 +355,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — `verify_initiative_v2.mjs` committed (37/37); no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 6 suites: 37+3+4+14+18+20 PASS; no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
@@ -382,3 +382,4 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | AUTH-05 | 🟢 | KNOWN_ROLES hardcoded — role mismatch silently returns AUTH_REQUIRED | Small | Open |
 | TD-030 | ⚪ | User Management table has no search/pagination | Tiny | Open — acceptable at current scale |
 | TD-031 | 🟢 | Loose-link detection assumes `PARENT-Mn` milestone ID pattern | Tiny | Open — low risk |
+| TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
