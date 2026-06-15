@@ -521,7 +521,16 @@ function _initSave() {
 
   if (!name) { toast('Tên Initiative không được để trống.', 'warning'); return; }
 
-  const parentId = document.getElementById('initFParent').value || null;
+  let parentId = document.getElementById('initFParent').value || null;
+  // Auto-derive parent from ID pattern when dropdown wasn't set explicitly.
+  // e.g. typing "SCF-001-M5" without selecting a parent still links it correctly.
+  if (!parentId && _isMilestone(newId)) {
+    const _derived = _msParentId(newId);
+    if (_derived && (db.initiatives||[]).some(x => x.id === _derived)) {
+      parentId = _derived;
+      document.getElementById('initFParent').value = _derived;
+    }
+  }
   const pctRaw   = parseInt(document.getElementById('initFPct').value) || 0;
 
   const ini = {

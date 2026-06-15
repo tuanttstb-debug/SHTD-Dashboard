@@ -52,10 +52,10 @@ function _parseInitiativeArray(values) {
   const H = values[0];
   const ci = kw => H.findIndex(h => norm(h).includes(norm(kw)));
 
-  const cId   = ci('id');
-  const cName = ci('tên');
-  const cCat  = ci('category');
-  const cAcc  = ci('accountable');
+  let cId   = ci('id');
+  let cName = ci('tên');
+  let cCat  = ci('category');
+  let cAcc  = ci('accountable');
   const cSt   = ci('start');
   const cDl   = ci('deadline/target');
   const cPct  = ci('%ht');
@@ -70,8 +70,19 @@ function _parseInitiativeArray(values) {
 
   const g = (r, c) => c !== -1 ? (r[c] || '').toString().trim() : '';
 
+  // Positional fallback: if the "ID" header wasn't found but row 0 looks like initiative data
+  // (e.g. "SCF-001"), treat the sheet as headerless and use column positions A=0, B=1, C=2, D=3.
+  let startRow = 1;
+  if (cId === -1 && /^[A-Z]{2,}-\d/.test(((values[0] && values[0][0]) || '').toString().trim())) {
+    cId = 0;
+    if (cName === -1) cName = 1;
+    if (cCat  === -1) cCat  = 2;
+    if (cAcc  === -1) cAcc  = 3;
+    startRow = 0;
+  }
+
   db.initiatives = [];
-  for (let i = 1; i < values.length; i++) {
+  for (let i = startRow; i < values.length; i++) {
     const r = values[i];
     const id = g(r, cId);
     if (!id) continue;

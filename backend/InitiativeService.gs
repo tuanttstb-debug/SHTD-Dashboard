@@ -30,7 +30,21 @@ function initiativeRead() {
   if (lastRow < 1) return [];
 
   var lastCol = sheet.getLastColumn();
-  return sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+  var data = sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+
+  // If row 1 is not the standard "ID" header (sheet was manually populated without headers),
+  // prepend the standard INI_COLS header so the JS parser can find columns by name.
+  var firstCell = (data.length > 0 && data[0].length > 0) ? data[0][0].toString().trim() : '';
+  if (firstCell.toLowerCase() !== 'id') {
+    var standardHeader = [
+      'ID','Tên Initiative / Milestone','Category','Accountable',
+      'Start Date','Deadline / Target','% HT','Milestone Đang track',
+      'Deadline Milestone','Trạng thái','Mục tiêu / KPI đầu ra',
+      'Ghi chú','Link tài liệu','Parent ID','Type'
+    ];
+    data.unshift(standardHeader);
+  }
+  return data;
 }
 
 /**
