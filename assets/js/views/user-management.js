@@ -75,7 +75,7 @@ async function renderUserManagement() {
 
     <!-- Table card -->
     <div class="card" style="padding:0;overflow:hidden;">
-      <div class="table-wrap" id="umTableWrap">
+      <div class="table-wrap" id="umTableWrap" style="max-height:calc(100vh - 370px);overflow-y:auto;">
         <div style="padding:40px;text-align:center;color:var(--text-3);">
           <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;"></i>
           <div style="margin-top:10px;">Đang tải danh sách người dùng…</div>
@@ -331,7 +331,8 @@ function _umRenderPagination(totalPages, total) {
 function umGoPage(p) {
   _umPage = p;
   _umRender();
-  document.getElementById('umTableWrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const wrap = document.getElementById('umTableWrap');
+  if (wrap) wrap.scrollTop = 0;
 }
 
 function _fmtDate(val) {
