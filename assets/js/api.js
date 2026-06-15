@@ -1,3 +1,180 @@
+// ── Case Pipeline helpers ──
+
+function calcCaseRag(c) {
+  if (!c.deadline) return '';
+  const d = parseVNDate(c.deadline);
+  if (!d) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff  = Math.ceil((d - today) / 86400000);
+  if (diff <= 0)  return 'Đỏ';
+  if (diff <= 7)  return 'Vàng';
+  return 'Xanh';
+}
+
+function genCaseId() {
+  const pfx = 'CP-';
+  let max = 0;
+  (dbCases || []).forEach(c => {
+    if (c.id && c.id.toUpperCase().startsWith('CP-')) {
+      const n = parseInt(c.id.slice(3));
+      if (!isNaN(n) && n > max) max = n;
+    }
+  });
+  return pfx + String(max + 1).padStart(3, '0');
+}
+
+function caseToRow(c) {
+  return [
+    /* 0  ID                  */ c.id             || '',
+    /* 1  Tuần BC             */ c.tuanBC          || '',
+    /* 2  Team                */ c.team            || '',
+    /* 3  PIC                 */ c.pic             || '',
+    /* 4  ĐVKD                */ c.dvkd            || '',
+    /* 5  Khách hàng / Case   */ c.caseName        || '',
+    /* 6  Loại hình           */ c.loaiHinh        || '',
+    /* 7  Mức độ phức tạp     */ c.complexity      || '',
+    /* 8  Phương án           */ c.phuongAn        || '',
+    /* 9  Giá trị (tỷ đồng)  */ c.giaTriTy != null ? String(c.giaTriTy) : '',
+    /* 10 Stage               */ c.stage           || '',
+    /* 11 Vướng mắc chính     */ c.vuongMac        || '',
+    /* 12 Next step           */ c.nextStep        || '',
+    /* 13 Start Date          */ fmtDateExport(c.startDate),
+    /* 14 Deadline            */ fmtDateExport(c.deadline),
+    /* 15 RAG                 */ c.rag             || '',
+    /* 16 Cần BLĐ?            */ c.canBLD          || 'N',
+    /* 17 Highlight dashboard?*/ c.highlight       || 'N',
+    /* 18 Ghi chú             */ c.ghiChu          || '',
+    /* 19 Ý kiến BLĐ          */ c.yKienBLD        || '',
+  ];
+}
+
+function rowToCase(header, row) {
+  const idx = k => header.indexOf(k);
+  const v   = i => (row[i] || '').toString().trim();
+
+  const rawDate = s => {
+    if (!s) return '';
+    // dd-MMM-yy → yyyy-MM-dd
+    const mmmMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const m = s.match(/^(\d{1,2})-([a-zA-Z]{3})-(\d{2,4})$/);
+    if (m) {
+      const mo = mmmMap[m[2].toLowerCase()];
+      if (mo !== undefined) {
+        const yr = m[3].length === 2 ? 2000 + parseInt(m[3]) : parseInt(m[3]);
+        return `${yr}-${String(mo+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+      }
+    }
+    // dd/MM/yyyy
+    const m2 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m2) return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+    return s;
+  };
+
+  return {
+    id:          v(idx('ID')),
+    tuanBC:      v(idx('Tuần BC')),
+    team:        v(idx('Team')),
+    pic:         v(idx('PIC')),
+    dvkd:        v(idx('ĐVKD')),
+    caseName:    v(idx('Khách hàng / Case')),
+    loaiHinh:    v(idx('Loại hình')),
+    complexity:  v(idx('Mức độ phức tạp')),
+    phuongAn:    v(idx('Phương án')),
+    giaTriTy:    parseFloat(v(idx('Giá trị (tỷ đồng)'))) || 0,
+    stage:       v(idx('Stage')),
+    vuongMac:    v(idx('Vướng mắc chính')),
+    nextStep:    v(idx('Next step')),
+    startDate:   rawDate(v(idx('Start Date'))),
+    deadline:    rawDate(v(idx('Deadline'))),
+    rag:         v(idx('RAG')),
+    canBLD:      v(idx('Cần BLĐ?'))       || 'N',
+    highlight:   v(idx('Highlight dashboard?')) || 'N',
+    ghiChu:      v(idx('Ghi chú')),
+    yKienBLD:    v(idx('Ý kiến BLĐ')),
+  };
+}
+
+function _parseCaseArray(values) {
+  if (!values || values.length < 2) { dbCases = []; return; }
+  const header = values[0];
+  dbCases = values.slice(1)
+    .filter(r => r.some(cell => cell !== ''))
+    .map(r => rowToCase(header, r));
+}
+
+async function readCases() {
+  if (!GS_WEBAPP_URL) return false;
+  try {
+    const json = await gasPost({ action: 'case-pipeline-read' });
+    if (json.status !== 'ok') throw new Error(json.error || 'unknown');
+    _parseCaseArray(json.values);
+    persistCases();
+    return true;
+  } catch(e) {
+    console.warn('readCases error:', e.message);
+    return false;
+  }
+}
+
+async function writeCases() {
+  if (!GS_WEBAPP_URL) return false;
+  const values = [CASE_COLS, ...dbCases.map(caseToRow)];
+  const json   = await gasPost({ action: 'case-pipeline-write', values });
+  if (json.status !== 'ok') throw new Error(json.error || 'unknown');
+  return true;
+}
+
+function persistCases() {
+  try {
+    const raw = localStorage.getItem('shtd_v2') || '{}';
+    const obj = JSON.parse(raw);
+    obj.cases  = dbCases;
+    localStorage.setItem('shtd_v2', JSON.stringify(obj));
+  } catch(e) {}
+}
+
+function loadCasesFromCache() {
+  try {
+    const raw = localStorage.getItem('shtd_v2');
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    if (Array.isArray(obj.cases)) dbCases = obj.cases;
+  } catch(e) {}
+}
+
+async function syncCaseAction(mutateFn) {
+  showLoading('Đang đồng bộ Case Pipeline…');
+  try {
+    if (typeof mutateFn === 'function') mutateFn();
+
+    if (GS_WEBAPP_URL) {
+      try {
+        await writeCases();
+        document.getElementById('syncDot').className = 'status-dot connected';
+      } catch(gasErr) {
+        // GAS offline — save locally, warn user
+        console.warn('syncCaseAction: GAS offline, local save only:', gasErr.message);
+        persistCases();
+        renderCasePipeline();
+        document.getElementById('syncDot').className = 'status-dot';
+        toast('⚠️ GAS không phản hồi — đã lưu Case cục bộ. Nhớ đồng bộ khi kết nối lại.', 'warning', 5000);
+        return true;
+      }
+    }
+
+    persistCases();
+    renderCasePipeline();
+    return true;
+  } catch(e) {
+    console.error('syncCaseAction error:', e);
+    toast('❌ Lỗi đồng bộ Case: ' + e.message, 'error', 6000);
+    document.getElementById('syncDot').className = 'status-dot';
+    return false;
+  } finally {
+    hideLoading();
+  }
+}
+
 function taskToRow(t) {
   return [
     /* 0  ID                */ t.id            || '',

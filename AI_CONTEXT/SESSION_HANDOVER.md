@@ -1,9 +1,9 @@
 # SESSION HANDOVER
-**Date**: 2026-06-12 (Session 18 — Rà soát BLĐ: UI consistency + nút duyệt + trường Ý kiến BLĐ + login debug)
+**Date**: 2026-06-15 (Session 19 — Case Pipeline: Kanban view, CRUD, Excel, BLD Queue integration)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed**: `master` @ `090b94a` (commits `4243363` + `090b94a`)
-**origin/main HEAD**: `1c57999` — PR #20 merged (S17 bugfix đã lên Production)
+**Status**: `master` chưa push — đang chờ lệnh của PO
+**origin/main HEAD**: `1c57999` — PR #20 (S17 bugfix); chưa có S18 (PO chưa tạo PR)
 
 ---
 
@@ -18,37 +18,57 @@
 
 ---
 
-## Tasks Completed This Session (S18)
+## Tasks Completed This Session (S19)
 
-| # | Task | File | Status |
+| # | Task | File(s) | Status |
 |---|---|---|---|
-| UI-01 | `.btn-success` **chưa từng được định nghĩa** → nút "Phê duyệt" trong suốt. Thêm style solid green | `assets/css/components.css:76` | ✅ |
-| UI-02 | Đồng nhất page title với nav label: "Tổng hợp BLĐ" / "Phê duyệt BLĐ" | `assets/js/ui/navigation.js:86` | ✅ |
-| BUG-04 | `bldMiniConfirmBtn` không reset `disabled` khi mở modal lần 2 → duyệt 1 mục xong, mục sau không bấm được | `assets/js/views/bld-queue.js:243` | ✅ |
-| FEAT-01 | Trường mới `yKienBLD` — cột 24 (X) "Ý kiến BLĐ" trên Task_Master | constants/api/parsers/crud/index/Config.gs | ✅ |
-| FEAT-02 | Marker duyệt/từ chối/bổ sung lưu vào `yKienBLD` — **không còn ghi đè** `noiDungBLD` của team | `bld-queue.js:300` | ✅ |
-| FEAT-03 | Hiển thị Ý kiến BLĐ: card pending (khối info), Task form (readonly `#fYKien`), Quick View, Excel report | bld-queue.js / index.html / quickview.js / report.js | ✅ |
-| COMPAT | History đọc cả marker cũ (noiDungBLD) lẫn mới (yKienBLD) qua `_bldOpinionSrc()` | `bld-queue.js:50` | ✅ |
-| TEST | verify_bld_queue: 34 → **46 tests, 46/46 PASS** (TEST16–20) | `verify_bld_queue.mjs` | ✅ |
-| LOGIN | Debug "local không đăng nhập được user thật" → **KHÔNG có bug** (xem dưới) | `debug_login.mjs` (mới) | ✅ |
+| FEAT-CP-1 | GAS Backend `CasePipelineService.gs` — caseRead/caseWrite, auto-create sheet | `backend/CasePipelineService.gs` (mới) | ✅ |
+| FEAT-CP-2 | Route mới trong Code.gs: `case-pipeline-read`, `case-pipeline-write` | `backend/Code.gs` | ✅ |
+| FEAT-CP-3 | Constants: `CASE_STAGES` (14), `CASE_COLS` (20), `CASE_LOAI_HINH`, `CASE_COMPLEXITY`, `dbCases` | `assets/js/constants.js` | ✅ |
+| FEAT-CP-4 | API functions: `caseToRow`, `rowToCase`, `genCaseId`, `calcCaseRag`, `readCases`, `writeCases`, `syncCaseAction`, `persistCases`, `loadCasesFromCache` | `assets/js/api.js` | ✅ |
+| FEAT-CP-5 | CSS: `case-pipeline.css` — Kanban board, cards, summary cards, CRUD modal, stage color groups | `assets/css/case-pipeline.css` (mới) | ✅ |
+| FEAT-CP-6 | View JS: `case-pipeline.js` — renderCasePipeline, Kanban board, summary cards, CRUD modal, filters, Excel import/export | `assets/js/views/case-pipeline.js` (mới) | ✅ |
+| FEAT-CP-7 | index.html: CSS link, nav item (G+C), view section, CRUD modal, script tag | `index.html` | ✅ |
+| FEAT-CP-8 | Navigation: title map, render dispatch, G+C shortcut, ESC close cpModal | `assets/js/ui/navigation.js` | ✅ |
+| FEAT-CP-9 | App.js: `loadCasesFromCache()` on startup, `readCases()` after autoConnectDB, nav badge `navBadgeCase`, `dbCases=[]` on clear | `assets/js/app.js` | ✅ |
+| FEAT-CP-10 | BLD Queue integration: case cards với badge [CASE], `_bldGetPendingCases()`, `_bldBuildCaseHTML()`, `bldOpenAction` multi-source, `bldSubmitAction` branch case/task | `assets/js/views/bld-queue.js` | ✅ |
+| TEST | `verify_case_pipeline.mjs` — **20/20 PASS** (new); `verify_bld_queue.mjs` 46/46 PASS (no regression); `verify_ms_tasks.mjs` 14/14 PASS | Test files | ✅ |
 
 ---
 
-## Login Investigation — Kết luận: KHÔNG có bug code
+## Architecture: Case Pipeline
 
-- Login local hoạt động end-to-end: verified UI tại localhost:3030 với **TuanTT4/Thuha@123** (Admin, "Trần Thế Tuân") và **QuangNN3/QuangNN3** — đăng nhập OK, load data OK, không bị đá ra.
-- Nguyên nhân báo lỗi: nhập sai mật khẩu (mặc định seed `TuanTT4` đã bị đổi thành `Thuha@123` từ trước).
-- Phát hiện: `DungLQ1` bị hạ role Admin → **User**. `TuanTT4` có thể là Admin duy nhất.
-- Tool mới: `node debug_login.mjs` (env `LOGIN_USER`/`LOGIN_PASS`) — test login UI thật, in GAS response.
+```
+Sheet GAS: Case_Pipeline (tự tạo khi chưa tồn tại)
+  20 cols A→T: ID, Tuần BC, Team, PIC, ĐVKD, Khách hàng/Case,
+               Loại hình, Mức độ phức tạp, Phương án, Giá trị (tỷ),
+               Stage, Vướng mắc, Next step, Start Date, Deadline, RAG,
+               Cần BLĐ?, Highlight dashboard?, Ghi chú, Ý kiến BLĐ
+
+Frontend:
+  constants.js  → CASE_STAGES[14], CASE_COLS[20], CASE_LOAI_HINH, CASE_COMPLEXITY, dbCases[]
+  api.js        → caseToRow, rowToCase, genCaseId, calcCaseRag,
+                  readCases, writeCases, syncCaseAction (GAS fallback local),
+                  persistCases, loadCasesFromCache
+  views/case-pipeline.js → renderCasePipeline, Kanban, CRUD, Excel import/export
+  views/bld-queue.js     → _bldGetPendingCases, _bldBuildCaseHTML, multi-source approve
+  case-pipeline.css      → cp- prefix (board, cards, modal, summary)
+
+nav: G+C shortcut; menu vị trí: trước Initiative Tracker
+ID format: CP-001, CP-002...
+RAG: auto từ Deadline (>7 ngày=Xanh, 1-7=Vàng, ≤0=Đỏ); override manual
+BLĐ: case canBLD=Y → xuất hiện BLD Queue với badge [CASE]; approve/reject/info lưu yKienBLD
+```
 
 ---
 
-## Decisions Made
+## Decisions Made (S19)
 
-1. **`DB_COLS` 23 → 24 cột** (PO yêu cầu trường Ý kiến BLĐ lưu DB). `GS_RANGE` → `A1:X`.
-2. **GAS backend KHÔNG cần redeploy**: `sheetRead()` dùng `getLastColumn()`, `sheetWrite()` dùng `values[0].length` — schema động theo header client gửi lên. `Config.gs DATA_RANGE` chỉ sửa comment.
-3. Ý kiến BLĐ **chỉ ghi qua màn Phê duyệt BLĐ** — Task form hiển thị readonly (hiện khi task có ý kiến hoặc `canBLD='Y'`); `handleSubmit` preserve giá trị.
-4. `.btn-success` chọn solid green (song song `.btn-primary`/`.btn-secondary` solid; `.btn-success-soft` đã có sẵn cho biến thể nhạt).
+1. **20 cột DB** (thêm cột T = `Ý kiến BLĐ` từ đầu để tránh schema drift sau khi tích hợp BLĐ).
+2. **GAS backend KHÔNG cần redeploy ngay** — routes mới cần PO deploy GAS lần tiếp theo.
+3. **syncCaseAction có local fallback** — nếu GAS offline, vẫn lưu local + renderCasePipeline + show warning. Không block UX.
+4. **Stage group colors**: new=xanh nhạt, active=info, pending=vàng, done=xanh, blocked=đỏ nhạt.
+5. **BLD Queue**: case card dùng `border-left:4px solid var(--info)` để phân biệt với task card.
 
 ---
 
@@ -56,10 +76,10 @@
 
 | Item | Status |
 |---|---|
-| GAS AiService.gs + GEMINI_API_KEY | ⚠️ UNCONFIRMED từ S12 |
-| Netlify hết credit | ❌ — dùng local Playwright |
-| PR `master` → `main` (S18) | ⏳ Chờ PO |
-| `verify_initiative_v2.mjs` fail local | ⚠️ Pre-existing — không inject auth, loginOverlay chặn (TD-033) |
+| GAS deploy mới (routes case-pipeline-*) | ⏳ Chờ PO deploy GAS |
+| PR `master` → `main` (S18 + S19) | ⏳ Chờ PO — **S18 SCHEMA-01 risk vẫn còn** |
+| Netlify hết credit | ❌ Dùng local Playwright |
+| AI Chat GAS AiService.gs + GEMINI_API_KEY | ⚠️ Unconfirmed từ S12 |
 
 ---
 
@@ -67,9 +87,8 @@
 
 | Risk | Severity | Detail |
 |---|---|---|
-| **Mixed-version clients ghi lệch cột X** | 🟡 MEDIUM | Production (`main`) hiện vẫn ghi 23 cột. Nếu client 24-cột ghi trước, rồi client 23-cột ghi sau: `sheetWrite` chỉ clear 23 cột → cột X (Ý kiến BLĐ) **bị lệch hàng/stale**. Mitigation: merge S18 lên `main` sớm; ý kiến mới sẽ được ghi lại đúng ở lần ghi 24-cột kế tiếp. |
-| yKienBLD mất khi edit task bằng client cũ | 🟢 LOW | Client 23-cột rebuild task object không có yKienBLD → trường rỗng khi ghi đè. Hết rủi ro sau khi merge main. |
-| Legacy marker trong noiDungBLD | 🟢 LOW | Dữ liệu cũ giữ nguyên; history fallback đọc được. Không migrate tự động. |
+| SCHEMA-01 từ S18 | 🟡 MEDIUM | `main` ghi 23 cột, `master` ghi 24 cột Task_Master. Merge S18 sớm. |
+| GAS routes case-pipeline-* chưa deployed | 🟡 MEDIUM | readCases/writeCases sẽ fail server-side. Fallback local hoạt động. |
 
 ---
 
@@ -78,17 +97,17 @@
 ```bash
 cd "D:\Công việc\Vibecode\SHTD-Dashboard"
 npx http-server . -p 3030 --silent &
-node verify_bld_queue.mjs     # 46/46 PASS (S18)
-node verify_ms_tasks.mjs      # PASS
-node debug_login.mjs          # login flow với user thật
-# verify_initiative_v2.mjs — fail pre-existing (TD-033), không phải regression
+node verify_case_pipeline.mjs   # 20/20 PASS (S19)
+node verify_bld_queue.mjs       # 46/46 PASS (no regression)
+node verify_ms_tasks.mjs        # 14/14 PASS (no regression)
 ```
 
 ---
 
 ## Next Steps
 
-1. **PO tạo PR `master` → `main`** (gồm S18: `4243363`, `090b94a`) — ưu tiên cao vì rủi ro lệch cột X.
-2. Smoke test live sau merge: BLD queue (duyệt liên tiếp 2 mục), Ý kiến BLĐ hiển thị ở card/form/QuickView, Excel report cột mới.
-3. Verify AI Chat trên live (tồn từ S12).
-4. Fix `verify_initiative_v2.mjs`: thêm auth inject + GAS route abort (copy pattern từ `verify_bld_queue.mjs`).
+1. **PO tạo PR `master` → `main`** (S18 + S19) — ưu tiên cao SCHEMA-01.
+2. **PO deploy GAS** — thêm `CasePipelineService.gs` + routes `case-pipeline-*` trong Code.gs vào Apps Script project.
+3. Smoke test live sau merge: Case Pipeline load từ Sheet, thêm/sửa/xóa case, BLD Queue hiện case [CASE].
+4. Verify AI Chat trên live (tồn từ S12).
+5. Fix `verify_initiative_v2.mjs` auth inject (TD-033).

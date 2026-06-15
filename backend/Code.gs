@@ -140,6 +140,19 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', reply: aiReply });
     }
 
+    if (action === 'case-pipeline-read') {
+      return _jsonResponse({ status: 'ok', values: caseRead() });
+    }
+
+    if (action === 'case-pipeline-write') {
+      if (!body.values || !Array.isArray(body.values) || body.values.length < 1) {
+        throw new Error('case-pipeline-write: thiếu values.');
+      }
+      caseWrite(body.values);
+      auditLog(tokenData, 'case-pipeline-write', (body.values.length - 1) + ' rows');
+      return _jsonResponse({ status: 'ok' });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

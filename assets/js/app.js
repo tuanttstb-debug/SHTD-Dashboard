@@ -10,6 +10,7 @@ window.onload = async () => {
 
 async function startApp() {
   loadCache();
+  loadCasesFromCache();
   setupListeners();
   renderAll();
   updateClock();
@@ -17,7 +18,8 @@ async function startApp() {
 
   if (GS_WEBAPP_URL) {
     await autoConnectDB();
-    readInitiatives(); // non-blocking — load Initiative_Master sau khi tasks đã load
+    readInitiatives(); // non-blocking
+    readCases();       // non-blocking — load Case_Pipeline sau tasks
   }
 }
 
@@ -65,6 +67,9 @@ function updateNavBadges() {
   const bldCount = db.tasks.filter(t => t.canBLD === 'Y').length;
   const bb = document.getElementById('navBadgeBld');
   if (bb) { bb.textContent = bldCount; bb.style.display = bldCount > 0 ? '' : 'none'; }
+  const caseCount = (dbCases || []).length;
+  const cb = document.getElementById('navBadgeCase');
+  if (cb) { cb.textContent = caseCount; cb.style.display = caseCount > 0 ? '' : 'none'; }
 }
 
 function updateFilterDropdowns() {
@@ -146,7 +151,7 @@ async function uiClearCache() {
     'warn', 'Ngắt kết nối');
   if (!ok) return;
   localStorage.removeItem('shtd_v2');
-  db.tasks = []; db.initiatives = [];
+  db.tasks = []; db.initiatives = []; dbCases = [];
   document.getElementById('btnConnect').innerHTML = '<i class="fa-brands fa-google"></i> Kết nối GG Sheets';
   document.getElementById('btnConnect').className = 'btn btn-outline btn-sm';
   document.getElementById('btnSync').style.display = 'none';

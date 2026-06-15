@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-12 (Session 18 — Rà soát BLĐ + yKienBLD + login debug)
-**Context**: `master` @ `090b94a` (pushed). `origin/main` @ `1c57999` (đã có S17, chưa có S18).
+**Prepared**: 2026-06-15 (Session 19 — Case Pipeline full implementation)
+**Context**: `master` chưa push (đang chờ PO). `origin/main` @ `1c57999` (chưa có S18, S19).
 
 ---
 
@@ -16,85 +16,75 @@ fix/*   →  bugfix branches → PR → main (PO tạo PR)
 
 ---
 
-## ✅ COMPLETED S18
+## ✅ COMPLETED S19
 
-- [x] Fix `.btn-success` chưa định nghĩa — nút "Phê duyệt" trong suốt (components.css)
-- [x] Fix BUG-04: `bldMiniConfirmBtn` không reset disabled → mục thứ 2 không bấm được
-- [x] Trường mới `yKienBLD` (cột 24/X "Ý kiến BLĐ") — lưu DB, không ghi đè noiDungBLD
-- [x] Hiển thị Ý kiến BLĐ: card pending, Task form readonly, Quick View, Excel report
-- [x] Backward-compat history (`_bldOpinionSrc` fallback marker cũ)
-- [x] Đồng nhất page title với nav label (Tổng hợp BLĐ / Phê duyệt BLĐ)
-- [x] verify_bld_queue 34 → 46 tests — 46/46 PASS; verify_ms_tasks re-verified PASS
-- [x] Debug login local: KHÔNG có bug — TuanTT4/Thuha@123 + QuangNN3 đăng nhập OK; thêm `debug_login.mjs`
-- [x] Push `master` `6952fe7..090b94a`
-
----
-
-## ✅ COMPLETED S17
-
-- [x] Fix BUG-01: `draft` param undefined → `db.tasks.find()` trong `bldSubmitAction`
-- [x] Fix BUG-02: check return value `syncAction` → `if (!success) return`
-- [x] Fix BUG-03: local fallback khi GAS offline — `persist()` + return true
-- [x] Fix Playwright test: import path, `context.route` GAS abort, `waitForFunction`
-- [x] Thêm TEST11–15: submit flow approve/reject/info — 34/34 PASS
-- [x] Merge `fix/bld-queue-submit` → `master`
+- [x] GAS Backend: `CasePipelineService.gs` (caseRead, caseWrite, auto-create sheet)
+- [x] Code.gs routes: `case-pipeline-read`, `case-pipeline-write`
+- [x] Frontend constants: CASE_STAGES (14), CASE_COLS (20), CASE_LOAI_HINH, CASE_COMPLEXITY, dbCases
+- [x] API layer: caseToRow, rowToCase, genCaseId, calcCaseRag, readCases, writeCases, syncCaseAction (với GAS fallback), persistCases, loadCasesFromCache
+- [x] CSS: `case-pipeline.css` (Kanban, cards, modal, summary, stage groups)
+- [x] View: `case-pipeline.js` (renderCasePipeline, Kanban 14 cols, summary cards, CRUD modal, filters, Excel import/export)
+- [x] index.html: CSS link, nav item, view section, CRUD modal, G+C shortcut in kb-grid, script tag
+- [x] navigation.js: title map, render dispatch, G+C shortcut, ESC close cpModal
+- [x] app.js: startup cache load, readCases, navBadgeCase, dbCases reset on clear
+- [x] BLD Queue: _bldGetPendingCases, _bldBuildCaseHTML, bldOpenAction multi-source, bldSubmitAction case branch
+- [x] Tests: verify_case_pipeline.mjs 20/20 PASS; verify_bld_queue.mjs 46/46 PASS; verify_ms_tasks.mjs 14/14 PASS
 
 ---
 
-## ✅ COMPLETED S16
+## 🔴 PRIORITY 1 — PO tạo PR: master → main (S18 + S19)
 
-- [x] BLD Approval Queue view — pending list, approve/reject/info modal, history 7 days
-- [x] Nav badge `navBadgeBld` + G+B shortcut + 18/18 Playwright PASS
+`master` chưa push session này (chờ lệnh PO). Sau khi PO cho phép:
+1. `git push origin master`
+2. PO tạo PR `master` → `main` trên GitHub
+3. **Lý do ưu tiên cao**: SCHEMA-01 (S18) — `master` ghi Task_Master 24 cột, `main` ghi 23 cột.
 
-## ✅ COMPLETED S15
-
-- [x] Executive Summary view — 5 KPI cards, RAG donut, Attention list, G+E shortcut
-
----
-
-## 🔴 PRIORITY 0 — Fix Testing Environment (Netlify hết credit)
-
-**Options** (chưa chọn):
-- **A) Nâng cấp Netlify plan** — giữ workflow, tốn phí
-- **B) Cloudflare Pages** (miễn phí, unlimited) — **khuyến nghị**
-- **C) GitHub Pages cho master** (`gh-pages` branch hoặc `/docs`)
-- **D) Local only** — `npx http-server . -p 3030` + Playwright — hiện đang dùng tạm
-
-**Hiện tại**: option D — chạy `node verify_bld_queue.mjs` + `node verify_ms_tasks.mjs` + `node verify_initiative_v2.mjs` để verify.
+**Commits sẽ include**: S18 (2 commits) + S19 (nhiều files, Case Pipeline full)
 
 ---
 
-## 🔴 PRIORITY 1 — PO tạo PR: master → main (S18)
+## 🔴 PRIORITY 2 — PO deploy GAS (Case Pipeline routes)
 
-`master` @ `090b94a` đã push (S17 đã merge vào main qua PR #20 — chỉ còn S18).
+**Các file GAS cần thêm vào Apps Script project**:
+- `backend/CasePipelineService.gs` → copy toàn bộ nội dung
+- `backend/Code.gs` → thêm 2 routes case-pipeline-read và case-pipeline-write (đã có sẵn trong file)
 
-**Lý do ưu tiên cao**: `master` ghi sheet 24 cột, `main` ghi 23 cột — client cũ ghi sau client mới sẽ làm **lệch/stale cột X (Ý kiến BLĐ)** (SCHEMA-01). Merge sớm để đồng bộ schema.
-
-**Commits trong PR**: `4243363` (fix+feat BLĐ S18, 13 files), `090b94a` (debug_login.mjs).
-
----
-
-## 🔴 PRIORITY 2 — Verify AI Chat trên live
-
-AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận từ S12.
-
-**Steps:**
-1. Login Admin → AI Assistant → gõ câu hỏi
-2. Nếu lỗi → GAS editor → `AiService.gs` → Script Properties → `GEMINI_API_KEY` → Deploy new version
-3. Nếu chậm >10s → thêm `thinkingBudget: 0` vào `generationConfig` trong `callGemini()`
+**Sau khi deploy**: không cần thay đổi `GS_WEBAPP_URL` (dùng chung deployment).
 
 ---
 
-## 🟡 PRIORITY 3 — Smoke test toàn diện sau khi merge
+## 🔴 PRIORITY 3 — Smoke test sau khi merge + deploy
 
 | Feature | Check |
 |---|---|
-| Login — Admin / Teamlead / User | Mỗi role thấy đúng menu |
-| BLD Queue | canBLD=Y tasks hiện; **duyệt liên tiếp 2 mục không bị khóa nút**; task biến mất sau approve/reject; task giữ sau info; history 7 days |
-| **Ý kiến BLĐ (S18)** | Sau approve/info: cột X trên Sheet có marker; card pending hiện khối info; Task form hiện `#fYKien` readonly; Quick View + Excel report có cột mới; noiDungBLD KHÔNG bị ghi đè |
-| Executive Summary | 5 KPI cards; RAG donut; Attention list |
-| Tasks / KPI / Gantt / Report | No regression |
-| User Management | Admin only; list/add/edit/reset PW |
+| Case Pipeline load | Mở view → board render 14 cột |
+| Case từ Sheet | readCases() lấy dữ liệu từ Case_Pipeline sheet |
+| Thêm case | Điền form → save → card xuất hiện trên board + ghi vào Sheet |
+| Sửa case | Click card → modal pre-fill → save → cập nhật trên board |
+| BLD Queue | Case canBLD=Y xuất hiện với badge [CASE]; approve → yKienBLD lưu vào Sheet |
+| Excel export | Xuất file CasePipeline_*.xlsx với 20 cột đúng |
+| Excel import | Import file mẫu → merge vào dbCases |
+| G+C shortcut | Chuyển sang Case Pipeline từ bất kỳ view nào |
+| S18 regression | BLD Queue task approve/reject vẫn hoạt động 46/46 |
+
+---
+
+## 🔴 PRIORITY 4 — Verify AI Chat trên live
+
+AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận.
+
+**Steps**:
+1. Login Admin → AI Assistant → gõ câu hỏi
+2. Nếu lỗi → GAS editor → AiService.gs → Script Properties → `GEMINI_API_KEY` → Deploy new version
+
+---
+
+## 🟡 PRIORITY 5 — Fix Testing Environment (Netlify hết credit)
+
+Options (chưa chọn):
+- **A) Cloudflare Pages** (miễn phí, unlimited) — khuyến nghị
+- **B) GitHub Pages cho master** (gh-pages branch)
+- **C) Local only** — hiện đang dùng tạm
 
 ---
 
@@ -116,10 +106,10 @@ AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận từ S12.
 
 1. **Đọc SESSION_HANDOVER + PROJECT_STATE trước** — không skip
 2. **Branch**: phát triển trên `master` hoặc `fix/*`; KHÔNG push/merge lên `main` — PO tự xử lý
-3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2']` — trừ khi PO yêu cầu rõ (S18: PO approve thêm cột 24 'Ý kiến BLĐ')
+3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2'].tasks` — trừ khi PO yêu cầu
 4. One logical change per commit
 5. Tất cả GAS calls qua `gasPost()` — không raw `fetch()`
 6. `GS_WEBAPP_URL` trong `assets/js/config.js` — cập nhật mỗi lần GAS redeploy
 7. `esc()` trên mọi user-supplied content render qua `innerHTML`
-8. **Test local**: `npx http-server . -p 3030 &` → `node verify_bld_queue.mjs` (Windows, không cần PLAYWRIGHT_BROWSERS_PATH)
-9. `syncAction` giờ có local fallback — khi GAS down vẫn save local. Nhắc user sync sau.
+8. **Test local**: `npx http-server . -p 3030 &` → `node verify_case_pipeline.mjs` + `node verify_bld_queue.mjs`
+9. `syncCaseAction` có local fallback — khi GAS down vẫn save local.

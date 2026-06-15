@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="assets/css/ai-chat.css">
 <link rel="stylesheet" href="assets/css/executive-summary.css">
 <link rel="stylesheet" href="assets/css/bld-queue.css">
+<link rel="stylesheet" href="assets/css/case-pipeline.css">
 
 </head>
 <body>
@@ -93,6 +94,11 @@
         <span class="nav-badge danger" id="navBadgeBld" style="display:none;">0</span>
       </div>
       <div class="nav-section-label">Quản lý</div>
+      <div class="nav-item" data-view="case-pipeline">
+        <i class="fa-solid fa-filter-circle-dollar nav-icon"></i>
+        <span class="nav-label">Case Pipeline</span>
+        <span class="nav-badge" id="navBadgeCase" style="display:none;">0</span>
+      </div>
       <div class="nav-item" data-view="initiative-tracker">
         <i class="fa-solid fa-diagram-project nav-icon"></i>
         <span class="nav-label">Theo dõi Initiative</span>
@@ -432,6 +438,86 @@
           <div class="bld-history-line"></div>
         </div>
         <div class="bld-history-list" id="bldHistoryList"></div>
+      </div>
+
+    </section>
+
+    <!-- ===== CASE PIPELINE ===== -->
+    <section class="view-section" id="view-case-pipeline" style="display:none;">
+
+      <!-- Toolbar -->
+      <div class="cp-toolbar">
+        <div class="cp-toolbar-left">
+          <span class="cp-timestamp" id="cpTimestamp"></span>
+        </div>
+        <div class="cp-toolbar-right">
+          <span class="cp-filter-label"><i class="fa-solid fa-filter" style="margin-right:4px;"></i>Lọc:</span>
+          <select id="cpFilterTeam" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:130px;" onchange="cpFilterChange()">
+            <option value="">Tất cả đội</option>
+          </select>
+          <select id="cpFilterLoai" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:120px;" onchange="cpFilterChange()">
+            <option value="">Tất cả loại</option>
+          </select>
+          <select id="cpFilterStage" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="cpFilterChange()">
+            <option value="">Tất cả stage</option>
+          </select>
+          <select id="cpFilterRag" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:110px;" onchange="cpFilterChange()">
+            <option value="">Tất cả RAG</option>
+            <option value="Đỏ">🔴 Đỏ</option>
+            <option value="Vàng">🟡 Vàng</option>
+            <option value="Xanh">🟢 Xanh</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="renderCasePipeline()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+          <input type="file" id="cpImportFile" accept=".xlsx,.xls" style="display:none" onchange="importCasesFromExcel(this.files[0]);this.value=''">
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('cpImportFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
+          <button class="btn btn-outline btn-sm" onclick="exportCasesToExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
+          <button class="btn btn-primary btn-sm" onclick="openCaseModal(null)"><i class="fa-solid fa-plus"></i> Thêm Case</button>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="cp-summary-grid">
+        <div class="cp-stat-card">
+          <div class="cp-stat-icon" style="background:var(--primary-xlight);color:var(--primary);">
+            <i class="fa-solid fa-briefcase"></i>
+          </div>
+          <div class="cp-stat-body">
+            <div class="cp-stat-num" id="cpStatTotal">0</div>
+            <div class="cp-stat-label">Tổng số Case</div>
+          </div>
+        </div>
+        <div class="cp-stat-card">
+          <div class="cp-stat-icon" style="background:var(--success-bg);color:var(--success);">
+            <i class="fa-solid fa-sack-dollar"></i>
+          </div>
+          <div class="cp-stat-body">
+            <div class="cp-stat-num" id="cpStatValue">0</div>
+            <div class="cp-stat-label">Tổng giá trị pipeline</div>
+          </div>
+        </div>
+        <div class="cp-stat-card">
+          <div class="cp-stat-icon" style="background:var(--danger-bg);color:var(--danger);">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="cp-stat-body">
+            <div class="cp-stat-num" id="cpStatOverdue" style="color:var(--danger);">0</div>
+            <div class="cp-stat-label">Quá hạn deadline</div>
+          </div>
+        </div>
+        <div class="cp-stat-card">
+          <div class="cp-stat-icon" style="background:var(--accent-light,var(--warning-bg));color:var(--accent,var(--warning));">
+            <i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+          <div class="cp-stat-body">
+            <div class="cp-stat-num" id="cpStatBld">0</div>
+            <div class="cp-stat-label">Cần BLĐ duyệt</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kanban board -->
+      <div class="cp-board-wrap">
+        <div class="cp-board" id="cpBoard"></div>
       </div>
 
     </section>
@@ -858,6 +944,176 @@
   </div>
 </div>
 
+<!-- ===== CASE PIPELINE CRUD MODAL ===== -->
+<div class="overlay" id="cpModal" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:760px;width:95%;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="cpModalTitle">Thêm Case mới</div>
+        <div class="modal-subtitle">Case Pipeline · Quản lý cơ hội kinh doanh</div>
+      </div>
+      <div class="modal-close" onclick="closeCaseModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="modal-body">
+      <div class="cp-modal-grid">
+
+        <!-- Row 1: ID + Tuần BC -->
+        <div class="form-group">
+          <label class="form-label">Mã Case</label>
+          <input type="text" id="cpfId" class="form-control" readonly style="background:var(--surface2);cursor:default;">
+          <div class="form-hint">Tự động sinh — không sửa</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tuần BC</label>
+          <input type="text" id="cpfTuanBC" class="form-control" placeholder="VD: Tuần 18/2026">
+        </div>
+
+        <!-- Row 2: Khách hàng / Case (full width) -->
+        <div class="form-group cp-modal-full">
+          <label class="form-label">Khách hàng / Case <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="cpfCaseName" class="form-control" placeholder="Tên khách hàng hoặc tên case…">
+        </div>
+
+        <!-- Row 3: Team + PIC -->
+        <div class="form-group">
+          <label class="form-label">Team</label>
+          <input type="text" id="cpfTeam" class="form-control" placeholder="VD: PTKDMB">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIC</label>
+          <input type="text" id="cpfPic" class="form-control" placeholder="VD: AnhDT24">
+        </div>
+
+        <!-- Row 4: ĐVKD + Loại hình -->
+        <div class="form-group">
+          <label class="form-label">ĐVKD</label>
+          <input type="text" id="cpfDvkd" class="form-control" placeholder="VD: HDG">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Loại hình</label>
+          <select id="cpfLoaiHinh" class="form-control">
+            <option value="">-- Chọn --</option>
+            <option>Món</option>
+            <option>Dự án</option>
+            <option>HMTD</option>
+            <option>Rà soát</option>
+          </select>
+        </div>
+
+        <!-- Row 5: Mức độ phức tạp + Giá trị -->
+        <div class="form-group">
+          <label class="form-label">Mức độ phức tạp</label>
+          <select id="cpfComplexity" class="form-control">
+            <option value="">-- Chọn --</option>
+            <option>Cao</option>
+            <option>Trung bình</option>
+            <option>Thấp</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Giá trị (tỷ đồng)</label>
+          <input type="number" id="cpfGiaTri" class="form-control" placeholder="VD: 220" step="0.1" min="0">
+        </div>
+
+        <!-- Row 6: Phương án (full width) -->
+        <div class="form-group cp-modal-full">
+          <label class="form-label">Phương án</label>
+          <input type="text" id="cpfPhuongAn" class="form-control" placeholder="Mô tả phương án cụ thể…">
+        </div>
+
+        <!-- Row 7: Stage (full width) -->
+        <div class="form-group cp-modal-full">
+          <label class="form-label">Stage <span style="color:var(--danger)">*</span></label>
+          <select id="cpfStage" class="form-control">
+            <option value="">-- Chọn stage --</option>
+            <option>Tiếp nhận</option>
+            <option>Đã gặp KH/đang bổ sung thông tin</option>
+            <option>Chờ dữ liệu/ĐVKD</option>
+            <option>Chờ bổ sung hồ sơ</option>
+            <option>Đang phân tích</option>
+            <option>Chờ TTĐ/Thẩm định</option>
+            <option>Trình nội bộ</option>
+            <option>Đã xong phương án</option>
+            <option>Đã trình TTV BĐS, đang phối hợp để báo cáo lại</option>
+            <option>Trình phê duyệt</option>
+            <option>Chờ giải ngân/triển khai</option>
+            <option>Đã phê duyệt</option>
+            <option>Đang triển khai</option>
+            <option>Tạm dừng/Blocked</option>
+          </select>
+        </div>
+
+        <!-- Row 8: Vướng mắc + Next step -->
+        <div class="form-group">
+          <label class="form-label">Vướng mắc chính</label>
+          <textarea id="cpfVuongMac" class="form-control" rows="2" placeholder="Khó khăn đang gặp…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Next step</label>
+          <textarea id="cpfNextStep" class="form-control" rows="2" placeholder="Bước tiếp theo cần thực hiện…"></textarea>
+        </div>
+
+        <!-- Row 9: Start Date + Deadline -->
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input type="date" id="cpfStartDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input type="date" id="cpfDeadline" class="form-control">
+        </div>
+
+        <!-- Row 10: RAG + Cần BLĐ + Highlight -->
+        <div class="form-group">
+          <label class="form-label">RAG (manual override)</label>
+          <select id="cpfRag" class="form-control">
+            <option value="">🤖 Tự động theo Deadline</option>
+            <option value="Xanh">🟢 Xanh</option>
+            <option value="Vàng">🟡 Vàng</option>
+            <option value="Đỏ">🔴 Đỏ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cần BLĐ duyệt?</label>
+          <select id="cpfCanBLD" class="form-control">
+            <option value="N">N – Không</option>
+            <option value="Y">Y – Cần BLĐ</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Highlight dashboard?</label>
+          <select id="cpfHighlight" class="form-control">
+            <option value="N">N – Không</option>
+            <option value="Y">Y – Highlight</option>
+          </select>
+        </div>
+
+        <!-- Row last: Ghi chú (full width) -->
+        <div class="form-group cp-modal-full">
+          <label class="form-label">Ghi chú</label>
+          <textarea id="cpfGhiChu" class="form-control" rows="2" placeholder="Ghi chú thêm…"></textarea>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-danger btn-sm" id="cpModalDeleteBtn" style="display:none;" onclick="deleteCaseItem()">
+          <i class="fa-solid fa-trash"></i> Xóa
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="shortcut-hint">ESC = Đóng</span>
+        <button type="button" class="btn btn-outline" onclick="closeCaseModal()">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="handleCaseSubmit()">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Case
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== BLD ACTION MINI MODAL ===== -->
 <div class="overlay" id="bldActionOverlay" style="display:none;align-items:center;justify-content:center;">
   <div class="bld-mini-card">
@@ -966,6 +1222,7 @@
         <div class="kb-row"><span class="kb-desc">Đến Timeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">G</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Performance</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">P</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến AI Assistant</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">A</span></div></div>
+        <div class="kb-row"><span class="kb-desc">Đến Case Pipeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">C</span></div></div>
       </div>
     </div>
   </div>
@@ -1005,6 +1262,7 @@
 <script src="assets/js/views/user-management.js"></script>
 <script src="assets/js/views/executive-summary.js"></script>
 <script src="assets/js/views/bld-queue.js"></script>
+<script src="assets/js/views/case-pipeline.js"></script>
 <script src="assets/js/app.js"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>

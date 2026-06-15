@@ -44,7 +44,7 @@ function setupListeners() {
     const inInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
 
     if (e.key === 'Escape') {
-      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal();
+      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal();
     }
     if (e.ctrlKey && e.key === 'n' && !inInput) { e.preventDefault(); openTaskModal(); }
     if (e.ctrlKey && e.key === 'd') { e.preventDefault(); toggleDark(); }
@@ -53,7 +53,7 @@ function setupListeners() {
 
     if (e.key === 'g' && !inInput) { gKey = 'g'; return; }
     if (gKey === 'g' && !inInput) {
-      const map = { d:'dashboard', e:'executive-summary', b:'bld-queue', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
+      const map = { d:'dashboard', e:'executive-summary', b:'bld-queue', c:'case-pipeline', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
       if (map[e.key]) navigateTo(map[e.key]);
       gKey = null;
     }
@@ -84,6 +84,7 @@ function navigateTo(view) {
   if (sec) { sec.style.display = 'contents'; sec.style.animation = 'none'; void sec.offsetWidth; sec.style.animation = ''; }
   const titles = {
     dashboard:'Executive Dashboard', 'executive-summary':'Tổng hợp BLĐ', 'bld-queue':'Phê duyệt BLĐ',
+    'case-pipeline':'Case Pipeline – Cơ hội kinh doanh',
     tasks:'Quản lý Công việc',
     gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất',
     'kpi-overview':'KPI Digital Overview', 'action-plan':'Action Plan – Kế hoạch hành động',
@@ -98,6 +99,7 @@ function navigateTo(view) {
   document.getElementById('pageTitle').textContent = titles[view] || view;
   if (view === 'executive-summary')    renderExecutiveSummary();
   if (view === 'bld-queue')            renderBldQueue();
+  if (view === 'case-pipeline')        renderCasePipeline();
   if (view === 'tasks')                renderTaskTable();
   if (view === 'gantt')                renderGantt();
   if (view === 'performance')          renderPerfTable();

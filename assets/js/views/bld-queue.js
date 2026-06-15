@@ -1,27 +1,25 @@
 /* ===== BLD APPROVAL QUEUE VIEW ===== */
 
-let _bldCurrentAction = null; // { type: 'approve'|'reject'|'info', taskId: string }
+let _bldCurrentAction = null; // { type: 'approve'|'reject'|'info', taskId: string, source: 'task'|'case' }
 let _bldFilterTeam = '';
 let _bldFilterInit = '';
 
 /* ─── Main render ─── */
 function renderBldQueue() {
   _bldPopulateFilters();
-  const pending = _bldGetPending();
-  const history = _bldGetHistory();
-  _bldRenderPending(pending);
+  const pendingTasks  = _bldGetPending();
+  const pendingCases  = _bldGetPendingCases();
+  const history       = _bldGetHistory();
+  _bldRenderPending(pendingTasks, pendingCases);
   _bldRenderHistory(history);
 
-  // Count chip
-  const chip = document.getElementById('bldCountChip');
+  const total = pendingTasks.length + pendingCases.length;
+  const chip  = document.getElementById('bldCountChip');
   if (chip) {
-    chip.textContent = pending.length
-      ? `${pending.length} chờ phê duyệt`
-      : 'Không có mục nào';
-    chip.classList.toggle('none', pending.length === 0);
+    chip.textContent = total ? `${total} chờ phê duyệt` : 'Không có mục nào';
+    chip.classList.toggle('none', total === 0);
   }
 
-  // Timestamp
   const ts = document.getElementById('bldTimestamp');
   if (ts) ts.textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
 }
@@ -100,11 +98,24 @@ function _bldPopulateFilters() {
   }
 }
 
+/* ─── Pending Cases helper ─── */
+function _bldGetPendingCases() {
+  return (dbCases || [])
+    .filter(c => c.canBLD === 'Y')
+    .filter(c => !_bldFilterTeam || c.team === _bldFilterTeam)
+    .sort((a, b) => {
+      const ragO = { Đỏ: 0, Vàng: 1, Xanh: 2 };
+      const ra = ragO[_cpCalcRagLabel ? _cpCalcRagLabel(a) : (a.rag || '')] ?? 3;
+      const rb = ragO[_cpCalcRagLabel ? _cpCalcRagLabel(b) : (b.rag || '')] ?? 3;
+      return ra - rb;
+    });
+}
+
 /* ─── Render pending list ─── */
-function _bldRenderPending(items) {
+function _bldRenderPending(taskItems, caseItems) {
   const el = document.getElementById('bldPendingList');
   if (!el) return;
-  if (!items.length) {
+  if (!taskItems.length && !caseItems.length) {
     el.innerHTML = `<div class="bld-empty-state">
       <div class="bld-empty-icon"><i class="fa-solid fa-circle-check"></i></div>
       <div class="bld-empty-title">Không có mục chờ phê duyệt</div>
@@ -112,7 +123,55 @@ function _bldRenderPending(items) {
     </div>`;
     return;
   }
-  el.innerHTML = items.map(t => _bldBuildItemHTML(t)).join('');
+  el.innerHTML =
+    taskItems.map(t => _bldBuildItemHTML(t)).join('') +
+    caseItems.map(c => _bldBuildCaseHTML(c)).join('');
+}
+
+function _bldBuildCaseHTML(c) {
+  const rag     = (typeof _cpCalcRagLabel === 'function') ? _cpCalcRagLabel(c) : (c.rag || '');
+  const ragIcon = { Đỏ: '🔴', Vàng: '🟡', Xanh: '🟢' }[rag] || '⚪';
+  const ragCls  = { Đỏ: 'badge-red', Vàng: 'badge-amber', Xanh: 'badge-green' }[rag] || 'badge-gray';
+  const opinion = (c.yKienBLD || '').trim();
+
+  return `<div class="bld-item" id="bldCaseItem-${esc(c.id)}" style="border-left:4px solid var(--info);">
+    <div class="bld-item-header">
+      <div class="bld-item-name" title="${esc(c.caseName)}">
+        <span style="font-size:11px;font-weight:700;background:var(--info-bg);color:var(--info);padding:2px 6px;border-radius:4px;margin-right:6px;">[CASE]</span>
+        ${esc(c.caseName || c.id)}
+      </div>
+      ${c.team ? `<span class="bld-team-pill">${esc(c.team)}</span>` : ''}
+      <span class="badge ${ragCls}">${ragIcon} ${esc(rag || '–')}</span>
+    </div>
+    <div class="bld-item-meta">
+      ${c.deadline ? `<span class="bld-meta-chip"><i class="fa-solid fa-calendar"></i>${esc(fmtDate(c.deadline))}</span>` : ''}
+      ${c.pic ? `<span class="bld-meta-chip"><i class="fa-solid fa-user"></i>${esc(c.pic)}</span>` : ''}
+      ${c.loaiHinh ? `<span class="bld-meta-chip"><i class="fa-solid fa-tag"></i>${esc(c.loaiHinh)}</span>` : ''}
+      ${c.giaTriTy ? `<span class="bld-meta-chip"><i class="fa-solid fa-sack-dollar"></i>${Number(c.giaTriTy).toLocaleString('vi-VN')} tỷ</span>` : ''}
+    </div>
+    <div class="bld-item-body">
+      <div class="bld-body-label"><i class="fa-solid fa-message"></i>Phương án</div>
+      <div class="bld-body-text">${c.phuongAn ? esc(c.phuongAn) : '<em style="color:var(--text-3)">Chưa có phương án</em>'}</div>
+    </div>
+    ${opinion ? `<div class="bld-item-opinion">
+      <div class="bld-opinion-label"><i class="fa-solid fa-comment-dots"></i>Ý kiến Ban lãnh đạo</div>
+      <div class="bld-body-text">${esc(opinion)}</div>
+    </div>` : ''}
+    <div class="bld-item-actions">
+      <button class="btn btn-sm btn-success" onclick="bldOpenAction('approve','${esc(c.id)}','case')">
+        <i class="fa-solid fa-check"></i> Phê duyệt
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="bldOpenAction('reject','${esc(c.id)}','case')">
+        <i class="fa-solid fa-xmark"></i> Từ chối
+      </button>
+      <button class="btn btn-sm btn-secondary" onclick="bldOpenAction('info','${esc(c.id)}','case')">
+        <i class="fa-solid fa-circle-question"></i> Yêu cầu bổ sung
+      </button>
+      <button class="bld-ghost-link" onclick="openCaseModal('${esc(c.id)}')">
+        <i class="fa-solid fa-pen-to-square"></i> Xem đầy đủ
+      </button>
+    </div>
+  </div>`;
 }
 
 function _bldBuildItemHTML(t) {
@@ -191,10 +250,13 @@ function _bldRenderHistory(items) {
 }
 
 /* ─── Mini action modal ─── */
-function bldOpenAction(type, taskId) {
-  const task = (db.tasks || []).find(t => t.id === taskId);
+function bldOpenAction(type, itemId, source) {
+  source = source || 'task';
+  const task = source === 'case'
+    ? (dbCases || []).find(c => c.id === itemId)
+    : (db.tasks || []).find(t => t.id === itemId);
   if (!task) return;
-  _bldCurrentAction = { type, taskId };
+  _bldCurrentAction = { type, taskId: itemId, source };
 
   const overlay = document.getElementById('bldActionOverlay');
   if (!overlay) return;
@@ -231,7 +293,7 @@ function bldOpenAction(type, taskId) {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set('bldMiniTitle', cfg.title);
   set('bldMiniSubtitle', cfg.sub);
-  set('bldMiniTaskName', task.name);
+  set('bldMiniTaskName', source === 'case' ? (task.caseName || task.id) : task.name);
   set('bldMiniTaskId', task.id);
 
   const lbl = document.getElementById('bldMiniLabel');
@@ -259,7 +321,7 @@ function bldCloseMiniModal() {
 
 async function bldSubmitAction() {
   if (!_bldCurrentAction) return;
-  const { type, taskId } = _bldCurrentAction;
+  const { type, taskId, source } = _bldCurrentAction;
 
   const ta = document.getElementById('bldMiniTextarea');
   const err = document.getElementById('bldMiniError');
@@ -294,17 +356,24 @@ async function bldSubmitAction() {
     : `[${markerMap[type]} ${actionLabel} ${dateStr}]`;
 
   try {
-    const success = await syncAction(() => {
-      const t = db.tasks.find(r => r.id === taskId);
-      if (!t) return;
-      // Ý kiến BLĐ lưu vào trường riêng yKienBLD — không ghi đè nội dung xin ý kiến của team
-      const prev = (t.yKienBLD || '').trim();
-      t.yKienBLD = prev ? `${marker}\n${prev}` : marker;
-      if (type !== 'info') {
-        t.canBLD = 'N';
-      }
-      // type === 'info' keeps canBLD = 'Y' (stays in queue)
-    });
+    let success;
+    if (source === 'case') {
+      success = await syncCaseAction(() => {
+        const c = dbCases.find(r => r.id === taskId);
+        if (!c) return;
+        const prev = (c.yKienBLD || '').trim();
+        c.yKienBLD = prev ? `${marker}\n${prev}` : marker;
+        if (type !== 'info') c.canBLD = 'N';
+      });
+    } else {
+      success = await syncAction(() => {
+        const t = db.tasks.find(r => r.id === taskId);
+        if (!t) return;
+        const prev = (t.yKienBLD || '').trim();
+        t.yKienBLD = prev ? `${marker}\n${prev}` : marker;
+        if (type !== 'info') t.canBLD = 'N';
+      });
+    }
 
     if (!success) {
       if (btn) { btn.disabled = false; btn.textContent = 'Thử lại'; }

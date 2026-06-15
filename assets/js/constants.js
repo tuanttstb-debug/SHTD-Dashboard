@@ -36,3 +36,51 @@ const DB_COLS = [
 ];
 
 const _MMM = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Case Pipeline ──
+let dbCases = [];
+
+const CASE_STAGES = [
+  'Tiếp nhận',
+  'Đã gặp KH/đang bổ sung thông tin',
+  'Chờ dữ liệu/ĐVKD',
+  'Chờ bổ sung hồ sơ',
+  'Đang phân tích',
+  'Chờ TTĐ/Thẩm định',
+  'Trình nội bộ',
+  'Đã xong phương án',
+  'Đã trình TTV BĐS, đang phối hợp để báo cáo lại',
+  'Trình phê duyệt',
+  'Chờ giải ngân/triển khai',
+  'Đã phê duyệt',
+  'Đang triển khai',
+  'Tạm dừng/Blocked',
+];
+
+const CASE_STAGE_GROUP = {
+  'Tiếp nhận':                                          'new',
+  'Đã gặp KH/đang bổ sung thông tin':                  'active',
+  'Chờ dữ liệu/ĐVKD':                                  'active',
+  'Chờ bổ sung hồ sơ':                                 'active',
+  'Đang phân tích':                                     'active',
+  'Chờ TTĐ/Thẩm định':                                 'pending',
+  'Trình nội bộ':                                       'pending',
+  'Đã xong phương án':                                  'pending',
+  'Đã trình TTV BĐS, đang phối hợp để báo cáo lại':   'pending',
+  'Trình phê duyệt':                                    'pending',
+  'Chờ giải ngân/triển khai':                          'done',
+  'Đã phê duyệt':                                      'done',
+  'Đang triển khai':                                    'done',
+  'Tạm dừng/Blocked':                                   'blocked',
+};
+
+const CASE_LOAI_HINH   = ['Món', 'Dự án', 'HMTD', 'Rà soát'];
+const CASE_COMPLEXITY  = ['Cao', 'Trung bình', 'Thấp'];
+
+const CASE_COLS = [
+  'ID', 'Tuần BC', 'Team', 'PIC', 'ĐVKD', 'Khách hàng / Case',
+  'Loại hình', 'Mức độ phức tạp', 'Phương án', 'Giá trị (tỷ đồng)',
+  'Stage', 'Vướng mắc chính', 'Next step',
+  'Start Date', 'Deadline', 'RAG',
+  'Cần BLĐ?', 'Highlight dashboard?', 'Ghi chú', 'Ý kiến BLĐ'
+];
