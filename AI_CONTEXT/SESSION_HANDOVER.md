@@ -2,19 +2,19 @@
 **Date**: 2026-06-15 (Session 19 — Case Pipeline: Kanban view, CRUD, Excel, BLD Queue integration)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Status**: `master` chưa push — đang chờ lệnh của PO
-**origin/main HEAD**: `1c57999` — PR #20 (S17 bugfix); chưa có S18 (PO chưa tạo PR)
+**Pushed**: `main` @ `a00a611` — S18 + S19 đã lên Production
+**origin/main HEAD**: `a00a611` — Case Pipeline full (S19)
 
 ---
 
-## Branch Strategy
+## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19)
 
 | Branch | Mục đích | Ai được push? |
 |---|---|---|
-| `master` | Testing → local Playwright (Netlify ❌ hết credit) | Developer / AI |
-| `main` | Production → GitHub Pages | **PO ONLY** |
+| `main` | Production + development — push trực tiếp | Developer / AI |
+| `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
 
-**Rule: AI/Claude KHÔNG push `main` trừ khi PO yêu cầu rõ ràng.**
+**⚠️ Không dùng `master` nữa kể từ S19. Phát triển và push thẳng lên `main`.**
 
 ---
 

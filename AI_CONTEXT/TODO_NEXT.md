@@ -4,15 +4,15 @@
 
 ---
 
-## NGUYÊN TẮC BRANCH
+## NGUYÊN TẮC BRANCH (ĐÃ THAY ĐỔI TỪ S19)
 
 ```
-master  →  push tự do (Developer / AI)  →  local Playwright test (Netlify ❌ hết credit)
-main    →  PO ONLY — PO tự merge trên GitHub
-fix/*   →  bugfix branches → PR → main (PO tạo PR)
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  KHÔNG DÙNG NỮA kể từ S19
 ```
 
-**AI/Claude KHÔNG push lên `main` trừ khi PO yêu cầu rõ ràng.**
+**AI/Claude push thẳng lên `main`. Không cần PR workflow nữa.**
 
 ---
 

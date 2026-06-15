@@ -1,19 +1,19 @@
 # PROJECT STATE
 **As of**: 2026-06-15 (Session 19 — Case Pipeline full implementation)
 **Version in index.html**: v6.2
-**Remote HEAD (master)**: `090b94a` — S18 (chưa push S19, đang chờ PO)
-**Remote HEAD (main)**: `1c57999` — PR #20 merged (S17 bugfix); ⏳ chờ PR S18+S19
-**⚠️ Schema drift**: `master` Task_Master ghi 24 cột, `main` ghi 23 cột — merge sớm (SCHEMA-01)
+**Remote HEAD (main)**: `a00a611` — S18 + S19 Case Pipeline full — **LIVE on Production**
+**Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
 
-## Branch Strategy (NGUYÊN TẮC BẮT BUỘC)
+## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19)
 
 | Branch | Mục đích | Ai được push? |
 |---|---|---|
-| `master` | Testing — ⚠️ Netlify hết credit → dùng local Playwright | Developer / AI |
-| `main` | Production — GitHub Pages | **PO only** |
-| `fix/*` | Bugfix branches → PR → main (PO tạo PR) | AI / Developer |
+| `main` | Production + development — push trực tiếp | Developer / AI |
+| `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
+
+**⚠️ Không dùng `master` nữa kể từ S19.**
 
 ---
 
