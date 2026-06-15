@@ -102,7 +102,7 @@ Options (chưa chọn):
 | TD-018 | `fmtExportDate` duplicated `app.js` vs `helpers.js` | Tiny |
 | TD-023 | `_oaActiveTab` not reset on re-render | Tiny |
 | AUTH-05 | KNOWN_ROLES hardcoded | Small |
-| TD-030 | User Management table — no search/pagination | Tiny |
+| ~~TD-030~~ | ~~User Management table — no search/pagination~~ | ✅ Done S22 |
 | TD-031 | BAU task ID gap sequence khi clone | Tiny |
 
 ---

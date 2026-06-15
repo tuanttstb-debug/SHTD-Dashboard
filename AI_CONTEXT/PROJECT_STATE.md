@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-15 (Session 21 — Team/PIC User_Master integration + Case Pipeline UI redesign)
+**As of**: 2026-06-15 (Session 22 — User Management search/filter/sort/pagination)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `47b9316` — S21 Team/PIC User_Master LIVE
+**Remote HEAD (main)**: `2a65710` — S22 User Management enhanced LIVE
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -67,7 +67,7 @@
 | KPI Overview / Progress / Owner | ✅ | |
 | Initiative Tracker | ✅ | S14 milestone drill-down; S20: syncInitiativeAction() — showLoading + syncDot + GAS fallback toast |
 | **AI Assistant** | ⚠️ | Frontend complete; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |
-| User Management | ✅ | Admin-only; S13 |
+| User Management | ✅ | Admin-only; S13 CRUD; S22: search/filter/sort/pagination added (TD-030 resolved) |
 | Login / Auth | ✅ | S11+S18 verified |
 | Optimistic Locking | ✅ | Task_Master; Case_Pipeline không cần (simple write-all) |
 | Dark mode | ✅ | |

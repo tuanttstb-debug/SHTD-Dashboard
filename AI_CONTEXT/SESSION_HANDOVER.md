@@ -1,10 +1,11 @@
 # SESSION HANDOVER
-**Date**: 2026-06-15 (Session 21 — Team/PIC dropdowns driven by User_Master + Case Pipeline UI redesign + Initiative sync)
+**Date**: 2026-06-15 (Session 22 — User Management: search/filter/sort/pagination)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **Pushed S20**: `6bf7a75` — Case Pipeline UI redesign (Table-primary) + Initiative sync standardization
 **Pushed S21**: `47b9316` — Team/PIC User_Master integration
-**origin/main HEAD**: `47b9316` ✅
+**Pushed S22**: `2a65710` — User Management search/filter/sort/pagination (TD-030)
+**origin/main HEAD**: `2a65710` ✅
 
 ---
 
@@ -103,6 +104,14 @@ syncInitiativeAction(): showLoading + syncDot syncing/connected + GAS + hideLoad
 6. **Extra option for mismatched PIC** (S21): Nếu currentVal không có trong danh sách users của team hiện tại (ví dụ PIC được assign từ team khác), append extra option để tránh mất dữ liệu khi save.
 7. **Initiative Accountable no team filter** (S21): Initiative không có field Team trong DB — Accountable hiện tất cả active users.
 8. **populatePicDropdown() kept** (S21): Giữ legacy function (không gọi nữa từ modal) để không break filter bar. Marked as legacy trong comment.
+
+---
+
+## Tasks Completed (S22 — commit `2a65710`)
+
+| # | Task | File(s) | Status |
+|---|---|---|---|
+| TD-030 | user-management.js: search (username/name/email, debounce 150ms), filter Team/Role/Status, filter chips với clear, sort 5 cols, pagination 15/page với count info, layout toolbar+filter-bar+card khớp pattern case-pipeline | `assets/js/views/user-management.js` | ✅ |
 
 ---
 
