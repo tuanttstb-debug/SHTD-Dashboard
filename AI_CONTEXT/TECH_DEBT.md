@@ -366,7 +366,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-15 (Session 20 — TD-012: case-pipeline 22/22, 133 total; TD-025 partially addressed UX-wise via syncInitiativeAction)
+**Last updated**: 2026-06-15 (Session 21 — TD-006/TD-015 partially resolved via User_Master; TD-012 unchanged at 133 checks)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -375,7 +375,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-003 | ~~🔴~~ | Conflicting function versions | Small | ✅ **Resolved 2026-06-03** |
 | TD-004 | 🟡 | Global state | Medium | Open — Phase D |
 | TD-005 | 🟡 | Inline styles | Medium | Open — Phase B |
-| TD-006 | 🟡 | Hardcoded dropdowns | Medium | Accepted — PO confirmed stable |
+| TD-006 | 🟡→🟢 | Hardcoded dropdowns | Medium | **Partial S21** — Team/PIC now driven by User_Master. Other option sets (Stage, Loại hình, Complexity, RAG) still hardcoded in HTML |
 | ~~TD-007~~ | ~~🟡~~ | ~~Manual patch process~~ | Medium | ✅ **Resolved 2026-06-04** — GAS.GS fully superseded |
 | TD-008 | 🟡 | No error boundary | Small | Open |
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
@@ -384,7 +384,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-012 | 🟢→⚪ | No tests | Large | Partial — 5 committed suites: 37+14+14+46+22=133 (initiative_v2 failing — TD-033); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
-| TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |
+| TD-015 | ~~⚪~~ | ~~Hardcoded default PIC~~ | Tiny | ✅ **Resolved S21** — fPicAcc/fPicRes now populated from User_Master; no hardcoded 'Tuantt4' default |
 | ~~TD-016~~ | ~~⚪~~ | ~~Stale comment line 2702~~ | Tiny | ✅ **Resolved 2026-06-04** — never existed in extracted parsers.js |
 | ~~TD-017~~ | ~~⚪~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | Tiny | ✅ **Resolved 2026-06-04** — dynamic year |
 | TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | Tiny | Open — defer to Phase F cleanup |

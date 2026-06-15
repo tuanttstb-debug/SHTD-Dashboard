@@ -1,9 +1,10 @@
 # SESSION HANDOVER
-**Date**: 2026-06-15 (Session 20 — Case Pipeline UI redesign: Table-primary + Kanban toggle + Initiative sync standardization)
+**Date**: 2026-06-15 (Session 21 — Team/PIC dropdowns driven by User_Master + Case Pipeline UI redesign + Initiative sync)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed**: `main` @ `c60e74f` (S19 — chưa push S20, đang chờ lệnh)
-**origin/main HEAD**: `c60e74f` — Case Pipeline full (S19) + GAS deployed ✅
+**Pushed S20**: `6bf7a75` — Case Pipeline UI redesign (Table-primary) + Initiative sync standardization
+**Pushed S21**: `47b9316` — Team/PIC User_Master integration
+**origin/main HEAD**: `47b9316` ✅
 
 ---
 
@@ -14,65 +15,94 @@
 | `main` | Production + development — push trực tiếp | Developer / AI |
 | `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
 
-**⚠️ Không dùng `master` nữa kể từ S19. Phát triển và push thẳng lên `main`.**
+**⚠️ Không dùng `master` nữa kể từ S19.**
 
 ---
 
-## Tasks Completed This Session (S20)
+## Tasks Completed (S20 — commit `6bf7a75`)
 
 | # | Task | File(s) | Status |
 |---|---|---|---|
-| FEAT-CP-UI-1 | index.html: Restructure #view-case-pipeline — summary cards above .card, toolbar với view toggle, preset bar 4 tabs, filter bar pattern Task Manager, filter chips, table wrap (default), board wrap (hidden) | `index.html` | ✅ |
-| FEAT-CP-UI-2 | case-pipeline.css: Thêm .cp-view-toggle / .cp-view-btn, .cp-stage-chip.group-*, .cp-rag-dot, .row-overdue, .text-danger-bold, .sort-icon | `assets/css/case-pipeline.css` | ✅ |
-| FEAT-CP-UI-3 | case-pipeline.js: Thêm _cpInitPresetTabs() (sync active class cho preset buttons on render), gọi từ renderCasePipeline() | `assets/js/views/case-pipeline.js` | ✅ |
-| FEAT-CP-UI-4 | api.js: Thêm syncDot.className = 'status-dot syncing' tại đầu syncCaseAction | `assets/js/api.js` | ✅ |
-| FEAT-INI-SYNC | initiatives.js: Thêm syncInitiativeAction() (Task Manager gold standard — showLoading + syncDot + GAS fallback + toast), cập nhật syncInitiativeAdd/Edit/Delete dùng pattern mới thay vì fire-and-forget | `assets/js/initiatives.js` | ✅ |
-| TEST | verify_case_pipeline.mjs: Cập nhật 20 test → 22 test cho table-primary design (thêm TEST05b kanban toggle + TEST05b preset tabs, đổi TEST05/07/12/13/14/16/17 từ .cp-card → #cpTbody tr) | `verify_case_pipeline.mjs` | ✅ **22/22 PASS** |
-| REG | verify_bld_queue.mjs: Không regression | — | ✅ **46/46 PASS** |
+| CP-UI-1 | index.html: Restructure #view-case-pipeline — card wrapper, toolbar + view toggle, preset bar 4 tabs, filter bar Task Manager pattern, filter chips, #cpTableWrap (default), #cpBoardWrap (hidden) | `index.html` | ✅ |
+| CP-UI-2 | case-pipeline.css: +.cp-view-toggle/.cp-view-btn, .cp-stage-chip.group-*, .cp-rag-dot, .row-overdue, .text-danger-bold, sort-icon | `assets/css/case-pipeline.css` | ✅ |
+| CP-UI-3 | case-pipeline.js: Table-primary (20/page, 10 sortable cols), 4 preset tabs, _cpInitPresetTabs() | `assets/js/views/case-pipeline.js` | ✅ |
+| CP-UI-4 | api.js: syncCaseAction + syncDot 'syncing' at start | `assets/js/api.js` | ✅ |
+| INI-SYNC | initiatives.js: syncInitiativeAction() gold standard pattern, syncInitiativeAdd/Edit/Delete updated | `assets/js/initiatives.js` | ✅ |
+| TEST-S20 | verify_case_pipeline.mjs: 22/22 PASS (+TEST05b, +TEST08b, table row selectors) | `verify_case_pipeline.mjs` | ✅ |
+
+## Tasks Completed (S21 — commit `47b9316`)
+
+| # | Task | File(s) | Status |
+|---|---|---|---|
+| UM-1 | constants.js: +TEAM_LIST (8 teams, fallback khi GAS offline) | `assets/js/constants.js` | ✅ |
+| UM-2 | api.js: +`_appUsers[]`, `loadAppUsers()`, `getAppTeams()`, `getUsersByTeam()`, `_populateTeamSelect()`, `_populateUserSelect()` | `assets/js/api.js` | ✅ |
+| UM-3 | app.js: `loadAppUsers()` non-blocking sau `autoConnectDB()` | `assets/js/app.js` | ✅ |
+| UM-4 | index.html: Task modal `fTeam`→select+onchange, `fPicAcc`→select; Case modal `cpfTeam`→select+onchange, `cpfPic`→select | `index.html` | ✅ |
+| UM-5 | crud.js: `openTaskModal()` dùng `_populateTeamSelect`/`_populateUserSelect`; +`onTaskTeamChange()` (re-filter PIC + autoGenId) | `assets/js/crud.js` | ✅ |
+| UM-6 | case-pipeline.js: `openCaseModal()` dùng helpers; +`onCaseTeamChange()` | `assets/js/views/case-pipeline.js` | ✅ |
+| UM-7 | initiative-tracker.js: `initFAcc` input→select; `_initOpenModal()` populate via `_populateUserSelect` (all users) | `assets/js/views/initiative-tracker.js` | ✅ |
+| TEST-S21 | verify_case_pipeline.mjs: Fix TEST12 `.fill()` → `.selectOption()` cho cpfTeam | `verify_case_pipeline.mjs` | ✅ **22/22 PASS** |
+| REG | verify_bld_queue.mjs / verify_ms_tasks.mjs: no regression | — | ✅ **46/46 + 14/14** |
+
+---
+
+## Architecture: Team/PIC User_Master (S21)
+
+```
+Luồng:
+  startApp() → loadAppUsers() [non-blocking] → GAS 'user-list' → _appUsers[]
+
+_appUsers = [{Username, Display_Name, Role, Team, Email, Active, ...}, ...]
+  - In-memory only (KHÔNG persist localStorage — dữ liệu user nhạy cảm)
+  - Filter: Active !== 'false'
+
+Helpers (api.js):
+  getAppTeams()            → unique teams từ _appUsers, sorted; fallback TEAM_LIST khi empty
+  getUsersByTeam(team)     → filter _appUsers by team; '' = tất cả users
+  _populateTeamSelect(id, currentVal)
+    - required=true  → không có empty option, default to teams[0]
+    - required=false → có "– Chọn team –" option
+  _populateUserSelect(id, team, currentVal)
+    - team=''      → show "– Chọn team trước –" (hint)
+    - users empty  → fallback: hiện currentVal nếu có (offline graceful)
+    - users exist  → options = Display_Name (Username); currentVal pre-selected
+    - currentVal không match option → append extra option (bảo toàn dữ liệu)
+
+Áp dụng:
+  Task modal:   fTeam (required) → fPicAcc (required) → fPicRes (required)
+                onTaskTeamChange() → re-filter cả hai PIC + autoGenId()
+  Case modal:   cpfTeam (optional) → cpfPic (optional)
+                onCaseTeamChange() → re-filter cpfPic
+  Initiative:   initFAcc → all users (no team filter — initiative không có field team)
+  
+  populatePicDropdown() — GIỮ NGUYÊN như legacy cho filter bar filterPic
+```
 
 ---
 
 ## Architecture: Case Pipeline UI (S20)
 
 ```
-Dual-mode view:
-  Default:  Table view  (#cpTableWrap visible, #cpBoardWrap hidden)
-  Toggle:   Kanban view (#cpBoardWrap visible, #cpTableWrap hidden)
-  Persist:  localStorage 'cp_view'
-
-Preset tabs (4):
-  'active'  → Đang xử lý  — group NOT in ['done','blocked']
-  'bld'     → Cần BLĐ     — canBLD === 'Y'
-  'overdue' → Quá hạn     — RAG Đỏ
-  'all'     → Tất cả
-
-Filter bar (Task Manager pattern):
-  Text search: #cpSearch (debounce 150ms)
-  Dropdowns: #cpFilterStage, #cpFilterTeam, #cpFilterLoai, #cpFilterRag
-  Active chips: #cpFilterChips
-
-Table:
-  10 cols: ID | Khách hàng/Case | Stage | Team | PIC | Giá trị | Deadline | RAG | Loại hình | Phức tạp/BLĐ
-  Sortable headers, 20 rows/page, pagination, empty state
-  Overdue rows: class row-overdue (danger-bg background)
-  Stage chips: .cp-stage-chip.group-* (same group colors as Kanban headers)
-  RAG dots: .cp-rag-dot.red/amber/green/none
-
-Initiative sync (S20):
-  Old: syncInitiativeAdd/Edit/Delete → fire-and-forget writeInitiatives().catch(toast)
-  New: syncInitiativeAction(mutateFn) → showLoading + syncDot syncing + GAS + syncDot connected/reset + hideLoading
-       Same pattern as syncCaseAction (same as syncAction Task Manager)
+Dual-mode:  Table (default, #cpTableWrap) ↔ Kanban (#cpBoardWrap)
+Persist:    localStorage 'cp_view'
+Presets:    'active' / 'bld' / 'overdue' / 'all' (state: _cpPreset)
+Filter:     _cpGetFiltered() = preset + search (debounce) + 4 dropdowns
+Table:      10 cols, sortable, 20/page, pagination, empty state
+syncInitiativeAction(): showLoading + syncDot syncing/connected + GAS + hideLoading
 ```
 
 ---
 
-## Decisions Made (S20)
+## Decisions Made (S20–S21)
 
-1. **Table-primary**: Table là default view (paginated 20/page, sortable). Kanban là toggle phụ. Giải quyết vấn đề 200 cases × 14 columns = 3360px min-width impossible to navigate.
-2. **4 preset tabs**: Đang xử lý / Cần BLĐ / Quá hạn / Tất cả — mapping với workflow thực tế ngân hàng.
-3. **Initiative sync scope**: Case Pipeline + Initiative (không phải tất cả features). Timeline và các view khác không dùng direct GAS write nên không cần sync standardization.
-4. **_cpInitPresetTabs()**: Thêm vào renderCasePipeline() để sync active class cho preset buttons mỗi khi re-render — không để phụ thuộc vào trạng thái HTML static.
-5. **syncInitiativeAction pattern**: Wraps mutateFn (db mutation + persist) + GAS write trong một unified function với UX feedback đầy đủ. syncInitiativeDelete giữ async/await để caller có thể await nếu cần.
+1. **Table-primary** (S20): Default view cho Case Pipeline giải quyết 200 cases × 14 cols scalability problem.
+2. **_cpInitPresetTabs()** (S20): Gọi trong renderCasePipeline() để sync active class — không phụ thuộc HTML static.
+3. **syncInitiativeAction gold standard** (S20): Đồng nhất pattern với syncCaseAction / syncAction.
+4. **_appUsers in-memory only** (S21): User data không persist localStorage vì sensitive. Mỗi session load lại từ GAS.
+5. **Offline fallback** (S21): getAppTeams() → TEAM_LIST; _populateUserSelect() → hiện currentVal. App vẫn hoạt động khi GAS down.
+6. **Extra option for mismatched PIC** (S21): Nếu currentVal không có trong danh sách users của team hiện tại (ví dụ PIC được assign từ team khác), append extra option để tránh mất dữ liệu khi save.
+7. **Initiative Accountable no team filter** (S21): Initiative không có field Team trong DB — Accountable hiện tất cả active users.
+8. **populatePicDropdown() kept** (S21): Giữ legacy function (không gọi nữa từ modal) để không break filter bar. Marked as legacy trong comment.
 
 ---
 
@@ -80,7 +110,7 @@ Initiative sync (S20):
 
 | Item | Status |
 |---|---|
-| Netlify hết credit | ❌ Dùng local Playwright |
+| Netlify hết credit | ❌ Dùng local Playwright / GitHub Pages |
 | AI Chat GAS AiService.gs + GEMINI_API_KEY | ⚠️ Unconfirmed từ S12 |
 
 ---
@@ -89,7 +119,8 @@ Initiative sync (S20):
 
 | Risk | Severity | Detail |
 |---|---|---|
-| Initiative sync flow changed | 🟡 MEDIUM | syncInitiativeAdd/Edit/Delete đã đổi pattern. Nếu writeInitiatives() throw unexpected error, showLoading có thể không hide (finally block handle). Cần smoke test initiative CRUD trên live. |
+| Team/PIC modal fields đổi từ input→select | 🟡 MEDIUM | fPicAcc từ text input → select. Task submit đọc .value vẫn đúng. Nếu _appUsers empty (GAS down) và không có currentVal → fPicAcc select rỗng → form submit sẽ fail required validation. Cần smoke test khi GAS online. |
+| Initiative sync flow changed (S20) | 🟡 MEDIUM | syncInitiativeAdd/Edit/Delete pattern đổi. Cần smoke test initiative CRUD trên live. |
 | AI Chat chưa smoke-test live | 🟡 MEDIUM | AiService.gs + GEMINI_API_KEY chưa xác nhận từ S12. |
 
 ---
@@ -99,7 +130,7 @@ Initiative sync (S20):
 ```bash
 cd "D:\Công việc\Vibecode\SHTD-Dashboard"
 npx http-server . -p 3030 --silent &
-node verify_case_pipeline.mjs   # 22/22 PASS (S20)
+node verify_case_pipeline.mjs   # 22/22 PASS (S21)
 node verify_bld_queue.mjs       # 46/46 PASS (no regression)
 node verify_ms_tasks.mjs        # 14/14 PASS (no regression)
 ```
@@ -108,7 +139,9 @@ node verify_ms_tasks.mjs        # 14/14 PASS (no regression)
 
 ## Next Steps
 
-1. Smoke test Case Pipeline live: Table view load, filter, preset tabs, add/edit/delete case, kanban toggle, excel export.
-2. Smoke test Initiative CRUD live — verify syncInitiativeAction() hoạt động đúng sau khi đổi pattern.
-3. Verify AI Chat trên live (tồn từ S12).
-4. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
+1. **Smoke test live — Task modal**: Mở Add/Edit task → Team dropdown có options từ User_Master → chọn team → PIC Accountable/Responsible lọc đúng users.
+2. **Smoke test live — Case Pipeline**: Team + PIC dropdown trên Case modal; table-primary view; preset tabs; filter.
+3. **Smoke test live — Initiative**: Accountable dropdown có options từ User_Master.
+4. **Smoke test — Initiative CRUD**: syncInitiativeAction() → syncDot animation + toast feedback đúng.
+5. Verify AI Chat trên live (tồn từ S12).
+6. Fix `verify_initiative_v2.mjs` auth inject (TD-033).

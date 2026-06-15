@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-15 (Session 20 — Case Pipeline UI redesign: Table-primary + preset tabs + Initiative sync standardization)
+**As of**: 2026-06-15 (Session 21 — Team/PIC User_Master integration + Case Pipeline UI redesign)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `c60e74f` — S19 Case Pipeline full + GAS deployed (**S20 chưa push — local only**)
+**Remote HEAD (main)**: `47b9316` — S21 Team/PIC User_Master LIVE
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -33,14 +33,16 @@
 | `backend/KpiSheetService.gs` | 51 | ✅ deployed |
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
-| `assets/js/constants.js` | ~60 | ✅ S19: CASE_STAGES, CASE_COLS, CASE_LOAI_HINH, CASE_COMPLEXITY, dbCases |
+| `assets/js/constants.js` | ~65 | ✅ S21: +TEAM_LIST (8 teams: BL1/BL2/CV1/CV2/PTKD MB/PTKD MN/QLDM/Số — offline fallback) |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL |
 | `assets/css/case-pipeline.css` | ~370 | ✅ S20: +view toggle, stage chips, RAG dots, row-overdue, sort icons |
-| `assets/js/views/case-pipeline.js` | ~600 | ✅ S20: Table-primary (paginated 20/page, sortable), preset tabs (4), filter chips, _cpInitPresetTabs(); Kanban secondary toggle |
-| `assets/js/api.js` | ~280 | ✅ S20: syncCaseAction thêm syncDot syncing at start |
+| `assets/js/views/case-pipeline.js` | ~630 | ✅ S21: +openCaseModal uses _populateTeamSelect/_populateUserSelect; +onCaseTeamChange() |
+| `assets/js/views/initiative-tracker.js` | ~340 | ✅ S21: initFAcc input→select; _initOpenModal() populate via _populateUserSelect (all users, no team filter) |
+| `assets/js/api.js` | ~350 | ✅ S21: +_appUsers[], loadAppUsers(), getAppTeams(), getUsersByTeam(), _populateTeamSelect(), _populateUserSelect() — User_Master driven dropdowns with offline fallback |
 | `assets/js/initiatives.js` | ~170 | ✅ S20: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
-| `assets/js/app.js` | ~320 | ✅ S19: loadCasesFromCache, readCases, navBadgeCase, dbCases reset |
+| `assets/js/app.js` | ~325 | ✅ S21: +loadAppUsers() non-blocking on startup (after autoConnectDB) |
+| `assets/js/crud.js` | ~420 | ✅ S21: openTaskModal() uses _populateTeamSelect/_populateUserSelect; +onTaskTeamChange() (re-filter both PICs + autoGenId) |
 | `assets/js/views/bld-queue.js` | ~380 | ✅ S18+S19: case card [CASE], _bldGetPendingCases, multi-source approve/reject, yKienBLD |
 
 ---
@@ -50,6 +52,7 @@
 | Feature | Works? | Notes |
 |---|---|---|
 | **Case Pipeline (Table + Kanban)** | ✅ | S20: Table-primary (paginated, sortable, 4 preset tabs, filter bar+chips, filter search); Kanban toggle secondary. S19: GAS deployed 2026-06-15 |
+| **Task/Case/Initiative Team+PIC dropdowns** | ✅ | S21: Driven by User_Master (GAS user-list); cascaded Team→PIC; offline fallback to TEAM_LIST + currentVal |
 | **Case CRUD** | ✅ | Add/Edit/Delete với validation; auto-gen CP-XXX ID; modal |
 | **Case Excel Import/Export** | ✅ | 20 cột; import merge by ID; export với column widths |
 | **Case BLD Queue integration** | ✅ | Case canBLD=Y → badge [CASE] trong BLD Queue; approve/reject/info lưu yKienBLD |
@@ -74,7 +77,7 @@
 ## Architecture State
 
 ```
-CURRENT (Session 19 — Case Pipeline)
+CURRENT (Session 21 — Team/PIC User_Master + Case Pipeline Table-primary)
 ─────────────────────────────────────────────────────────
 index.html (~1150 lines — HTML only)
 assets/

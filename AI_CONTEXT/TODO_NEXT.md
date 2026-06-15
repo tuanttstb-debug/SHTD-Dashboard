@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-15 (Session 20 — Case Pipeline UI redesign: Table-primary + Initiative sync standardization)
-**Context**: `origin/main` @ `c60e74f` — S19 LIVE. S20 local changes chưa push (chờ lệnh PO).
+**Prepared**: 2026-06-15 (Session 21 — Team/PIC User_Master cascade dropdowns)
+**Context**: `origin/main` @ `47b9316` — S21 LIVE (S20 Table-primary + S21 User_Master dropdowns deployed).
 
 ---
 
@@ -41,22 +41,36 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 - [x] initiatives.js: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới
 - [x] verify_case_pipeline.mjs: 22/22 PASS (table-primary — +TEST05b kanban toggle, +TEST08b preset tabs)
 
+## ✅ COMPLETED S21
+
+- [x] constants.js: +TEAM_LIST (8 teams: BL1/BL2/CV1/CV2/PTKD MB/PTKD MN/QLDM/Số) — offline fallback
+- [x] api.js: +_appUsers[], loadAppUsers() (GAS 'user-list'), getAppTeams(), getUsersByTeam(), _populateTeamSelect(), _populateUserSelect() với offline fallback + PIC mismatch protection
+- [x] app.js: loadAppUsers() non-blocking trên startup
+- [x] index.html: Task modal fTeam→select+onchange, fPicAcc/fPicRes→select; Case modal cpfTeam→select+onchange, cpfPic→select
+- [x] crud.js: openTaskModal() dùng _populateTeamSelect/_populateUserSelect; +onTaskTeamChange() (re-filter PIC + autoGenId)
+- [x] case-pipeline.js: openCaseModal() dùng helpers; +onCaseTeamChange()
+- [x] initiative-tracker.js: initFAcc input→select; populate via _populateUserSelect (all users)
+- [x] verify_case_pipeline.mjs: Fix TEST12 .fill()→.selectOption() cho cpfTeam — 22/22 PASS
+- [x] verify_bld_queue.mjs: 46/46 PASS (no regression); verify_ms_tasks.mjs: 14/14 PASS
+
 ---
 
-## 🔴 PRIORITY 1 — Smoke test đầy đủ Case Pipeline live (S20 UI)
+## 🔴 PRIORITY 1 — Smoke test live: User_Master dropdowns + Case Pipeline (S20+S21)
 
 | Feature | Check |
 |---|---|
+| **Task modal — Team dropdown** | Mở Thêm/Sửa task → fTeam có options từ User_Master (không rỗng) |
+| **Task modal — PIC cascade** | Chọn team → fPicAcc/fPicRes lọc đúng users của team đó |
+| **Case modal — Team+PIC** | Mở Thêm/Sửa case → cpfTeam/cpfPic hoạt động giống task modal |
+| **Initiative modal — Accountable** | Mở modal → initFAcc có options (tất cả active users) |
 | Case Pipeline load | Mở view → Table view là default, hiển thị đúng dữ liệu từ Sheet |
 | Preset tabs | Click từng tab Đang xử lý / Cần BLĐ / Quá hạn / Tất cả → count đúng |
 | Filter bar | Lọc Stage/Team/Loại hình/RAG + text search → table update |
 | Kanban toggle | Click "Kanban" → board 14 cột; click "Danh sách" → back to table |
 | Thêm case | Điền form → save → row xuất hiện trong table + ghi vào Sheet |
 | Sửa case | Click row → modal pre-fill → save → cập nhật trên table |
-| Xóa case | Xóa → row biến khỏi table + xóa khỏi Sheet |
+| Initiative CRUD | Thêm/sửa/xóa → syncDot syncing→connected, showLoading ẩn đúng |
 | BLD Queue | Case canBLD=Y xuất hiện với badge [CASE]; approve → yKienBLD lưu vào Sheet |
-| Excel export | Xuất file CasePipeline_*.xlsx với 20 cột đúng |
-| Initiative CRUD | Thêm/sửa/xóa initiative → syncDot syncing→connected, showLoading ẩn đúng |
 
 ---
 
