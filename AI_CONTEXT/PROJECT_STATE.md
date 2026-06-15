@@ -1,5 +1,5 @@
 # PROJECT STATE
-**As of**: 2026-06-15 (Session 19 — Case Pipeline full implementation)
+**As of**: 2026-06-15 (Session 19 — Case Pipeline full implementation + GAS deployed + smoke test thêm task OK)
 **Version in index.html**: v6.2
 **Remote HEAD (main)**: `a00a611` — S18 + S19 Case Pipeline full — **LIVE on Production**
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
@@ -32,7 +32,7 @@
 | `backend/AuditService.gs` | 32 | ✅ deployed |
 | `backend/KpiSheetService.gs` | 51 | ✅ deployed |
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
-| `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **chưa deploy GAS**, chờ PO |
+| `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~60 | ✅ S19: CASE_STAGES, CASE_COLS, CASE_LOAI_HINH, CASE_COMPLEXITY, dbCases |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL |
 | `assets/css/case-pipeline.css` | ~260 | ✅ NEW S19 |
@@ -48,7 +48,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
-| **Case Pipeline (Kanban)** | ✅ | NEW S19 — 14-col Kanban, summary cards, filter, G+C shortcut; **GAS deploy pending** |
+| **Case Pipeline (Kanban)** | ✅ | NEW S19 — 14-col Kanban, summary cards, filter, G+C shortcut; GAS deployed 2026-06-15 |
 | **Case CRUD** | ✅ | Add/Edit/Delete với validation; auto-gen CP-XXX ID; modal |
 | **Case Excel Import/Export** | ✅ | 20 cột; import merge by ID; export với column widths |
 | **Case BLD Queue integration** | ✅ | Case canBLD=Y → badge [CASE] trong BLD Queue; approve/reject/info lưu yKienBLD |
@@ -103,7 +103,7 @@ backend/
   Code.gs (+case-pipeline routes), Config.gs, AuthService.gs,
   SheetService.gs, AuditService.gs, KpiSheetService.gs,
   InitiativeService.gs, UserService.gs, AiService.gs, GAS.GS
-  CasePipelineService.gs ← NEW S19 (chưa deploy GAS)
+  CasePipelineService.gs ← NEW S19 (deployed 2026-06-15)
 verify_case_pipeline.mjs ← NEW S19 — 20/20 PASS
 verify_bld_queue.mjs     ← 46/46 PASS (no regression)
 verify_ms_tasks.mjs      ← 14/14 PASS (no regression)
@@ -120,7 +120,7 @@ debug_login.mjs          ← S18 login diagnostics
 |---|---|
 | `GS_WEBAPP_URL` | In `assets/js/config.js`; unchanged S19 |
 | Task backend | ✅ Deployed — 24 cột (S18) |
-| Case Pipeline backend | ⚠️ **Chưa deploy** — Code.gs routes + CasePipelineService.gs cần PO deploy |
+| Case Pipeline backend | ✅ **Deployed** 2026-06-15 — Code.gs routes + CasePipelineService.gs live; GS_WEBAPP_URL không đổi |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
 | Task sheet | `Task_Master!A1:X` (24 cột) |
 | Case sheet | `Case_Pipeline` (20 cột A→T; tự tạo khi chưa có) |
@@ -131,7 +131,6 @@ debug_login.mjs          ← S18 login diagnostics
 
 | ID | Issue | Priority |
 |---|---|---|
-| GAS-CP | CasePipelineService.gs + Code.gs routes chưa deploy | 🔴 PO deploy GAS |
 | TD-033 | `verify_initiative_v2.mjs` fail local (no auth inject) | 🟡 |
 | MOB-01/02/03 | Filter bar, toolbar, Gantt trên mobile | 🟡 Phase D |
 | DEBT-03/05/06 | Tech debt nhỏ | ⚪ |
@@ -144,4 +143,32 @@ debug_login.mjs          ← S18 login diagnostics
 |---|---|---|---|
 | **Testing (local)** | `http://localhost:3030` | `main` | ✅ Dùng tạm |
 | **Testing (Netlify)** | https://test-shtd.netlify.app | — | ❌ **Hết credit** |
-| **Production** | GitHub Pages URL | `main` | ✅ Live (`a00a611` — S18+S19 Case Pipeline) |
+| **Production** | GitHub Pages URL | `main` | ✅ Live (`c60e74f` — S19 Case Pipeline + GAS deployed) |
+
+---
+
+## Deployment Process (Git Sync Protocol)
+
+> **Quy tắc bắt buộc**: git tại remote phải LUÔN đồng bộ với local. Không để local differ với `origin/main`.
+
+### Quy trình chuẩn mỗi thay đổi:
+```
+1. Thay đổi file(s) → chạy test local nếu có
+2. git add <files>
+3. git commit -m "type: mô tả ngắn"
+4. git push origin HEAD:main   ← LUÔN push ngay, không delay
+```
+
+### Quy trình GAS deploy:
+```
+1. Sửa file backend/*.gs trong repo (git commit + push trước)
+2. Copy nội dung vào Apps Script editor
+3. Deploy → New deployment (hoặc Manage deployments → chọn version)
+4. GS_WEBAPP_URL không đổi nếu dùng cùng deployment ID
+5. Ghi chú version mới vào PROJECT_STATE.md → commit + push
+```
+
+### Không được phép:
+- Code local mà không commit + push ngay
+- Deploy GAS trước khi commit code vào git
+- Để `master` differ với `main` (master không dùng từ S19)

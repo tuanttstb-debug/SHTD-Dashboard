@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-06-15 (Session 19 — Case Pipeline full implementation)
-**Context**: `origin/main` @ `a00a611` — S18+S19 đã LIVE. `master` không còn dùng.
+**Context**: `origin/main` @ `c60e74f` — S19 Case Pipeline LIVE + GAS deployed. `master` không còn dùng.
 
 ---
 
@@ -29,36 +29,29 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 - [x] app.js: startup cache load, readCases, navBadgeCase, dbCases reset on clear
 - [x] BLD Queue: _bldGetPendingCases, _bldBuildCaseHTML, bldOpenAction multi-source, bldSubmitAction case branch
 - [x] Tests: verify_case_pipeline.mjs 20/20 PASS; verify_bld_queue.mjs 46/46 PASS; verify_ms_tasks.mjs 14/14 PASS
+- [x] PO deploy GAS: CasePipelineService.gs + Code.gs routes case-pipeline-* (2026-06-15; GS_WEBAPP_URL không đổi)
+- [x] Smoke test thêm task live: ✅ thành công
 
 ---
 
-## 🔴 PRIORITY 1 — PO deploy GAS (Case Pipeline routes)
-
-**Các file GAS cần thêm vào Apps Script project**:
-- `backend/CasePipelineService.gs` → copy toàn bộ nội dung
-- `backend/Code.gs` → thêm 2 routes case-pipeline-read và case-pipeline-write (đã có sẵn trong file)
-
-**Sau khi deploy**: không cần thay đổi `GS_WEBAPP_URL` (dùng chung deployment).
-
----
-
-## 🔴 PRIORITY 2 — Smoke test sau khi GAS deploy
+## 🔴 PRIORITY 1 — Smoke test đầy đủ Case Pipeline live
 
 | Feature | Check |
 |---|---|
 | Case Pipeline load | Mở view → board render 14 cột |
 | Case từ Sheet | readCases() lấy dữ liệu từ Case_Pipeline sheet |
+| ~~Thêm task~~ | ~~✅ smoke-test OK~~ |
 | Thêm case | Điền form → save → card xuất hiện trên board + ghi vào Sheet |
 | Sửa case | Click card → modal pre-fill → save → cập nhật trên board |
+| Xóa case | Xóa → card biến khỏi board + xóa khỏi Sheet |
 | BLD Queue | Case canBLD=Y xuất hiện với badge [CASE]; approve → yKienBLD lưu vào Sheet |
 | Excel export | Xuất file CasePipeline_*.xlsx với 20 cột đúng |
 | Excel import | Import file mẫu → merge vào dbCases |
 | G+C shortcut | Chuyển sang Case Pipeline từ bất kỳ view nào |
-| S18 regression | BLD Queue task approve/reject vẫn hoạt động 46/46 |
 
 ---
 
-## 🔴 PRIORITY 3 — Verify AI Chat trên live
+## 🔴 PRIORITY 2 — Verify AI Chat trên live
 
 AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận.
 
@@ -68,7 +61,7 @@ AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận.
 
 ---
 
-## 🟡 PRIORITY 4 — Fix Testing Environment (Netlify hết credit)
+## 🟡 PRIORITY 3 — Fix Testing Environment (Netlify hết credit)
 
 Options (chưa chọn):
 - **A) Cloudflare Pages** (miễn phí, unlimited) — khuyến nghị
@@ -102,3 +95,4 @@ Options (chưa chọn):
 7. `esc()` trên mọi user-supplied content render qua `innerHTML`
 8. **Test local**: `npx http-server . -p 3030 &` → `node verify_case_pipeline.mjs` + `node verify_bld_queue.mjs`
 9. `syncCaseAction` có local fallback — khi GAS down vẫn save local.
+10. **Git sync**: commit + `git push origin HEAD:main` ngay sau mỗi thay đổi — git remote LUÔN phải đồng bộ với local. Không delay push.

@@ -1,9 +1,9 @@
 # SESSION HANDOVER
-**Date**: 2026-06-15 (Session 19 — Case Pipeline: Kanban view, CRUD, Excel, BLD Queue integration)
+**Date**: 2026-06-15 (Session 19 — Case Pipeline: Kanban view, CRUD, Excel, BLD Queue integration + GAS deployed)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed**: `main` @ `a00a611` — S18 + S19 đã lên Production
-**origin/main HEAD**: `a00a611` — Case Pipeline full (S19)
+**Pushed**: `main` @ `c60e74f` — context sync post-GAS deploy
+**origin/main HEAD**: `c60e74f` — Case Pipeline full (S19) + GAS deployed ✅
 
 ---
 
@@ -65,10 +65,11 @@ BLĐ: case canBLD=Y → xuất hiện BLD Queue với badge [CASE]; approve/reje
 ## Decisions Made (S19)
 
 1. **20 cột DB** (thêm cột T = `Ý kiến BLĐ` từ đầu để tránh schema drift sau khi tích hợp BLĐ).
-2. **GAS backend KHÔNG cần redeploy ngay** — routes mới cần PO deploy GAS lần tiếp theo.
+2. **GAS backend deployed cùng ngày S19** — PO deploy CasePipelineService.gs + 2 routes vào Apps Script; link không đổi.
 3. **syncCaseAction có local fallback** — nếu GAS offline, vẫn lưu local + renderCasePipeline + show warning. Không block UX.
 4. **Stage group colors**: new=xanh nhạt, active=info, pending=vàng, done=xanh, blocked=đỏ nhạt.
 5. **BLD Queue**: case card dùng `border-left:4px solid var(--info)` để phân biệt với task card.
+6. **Git sync protocol**: commit + push lên `origin/main` ngay sau mỗi thay đổi — không để local differ với remote.
 
 ---
 
@@ -76,7 +77,6 @@ BLĐ: case canBLD=Y → xuất hiện BLD Queue với badge [CASE]; approve/reje
 
 | Item | Status |
 |---|---|
-| GAS deploy mới (routes case-pipeline-*) | ⏳ Chờ PO deploy GAS |
 | Netlify hết credit | ❌ Dùng local Playwright |
 | AI Chat GAS AiService.gs + GEMINI_API_KEY | ⚠️ Unconfirmed từ S12 |
 
@@ -86,7 +86,7 @@ BLĐ: case canBLD=Y → xuất hiện BLD Queue với badge [CASE]; approve/reje
 
 | Risk | Severity | Detail |
 |---|---|---|
-| GAS routes case-pipeline-* chưa deployed | 🟡 MEDIUM | readCases/writeCases sẽ fail server-side. Fallback local hoạt động. Cần PO deploy GAS. |
+| AI Chat chưa smoke-test live | 🟡 MEDIUM | AiService.gs + GEMINI_API_KEY chưa xác nhận từ S12. |
 
 ---
 
@@ -104,7 +104,6 @@ node verify_ms_tasks.mjs        # 14/14 PASS (no regression)
 
 ## Next Steps
 
-1. **PO deploy GAS** — thêm `CasePipelineService.gs` + routes `case-pipeline-*` trong Code.gs vào Apps Script project.
-2. Smoke test live: Case Pipeline load từ Sheet, thêm/sửa/xóa case, BLD Queue hiện case [CASE].
-3. Verify AI Chat trên live (tồn từ S12).
-4. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
+1. Smoke test đầy đủ Case Pipeline live: Case Pipeline load từ Sheet, sửa/xóa case, BLD Queue [CASE].
+2. Verify AI Chat trên live (tồn từ S12).
+3. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
