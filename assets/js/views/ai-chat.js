@@ -19,8 +19,8 @@ function renderAiChat() {
     '<div class="ai-chat-header">' +
       '<div class="ai-chat-header-icon"><i class="fa-solid fa-robot"></i></div>' +
       '<div class="ai-chat-header-info">' +
-        '<div class="ai-chat-header-title">SHTD AI Assistant</div>' +
-        '<div class="ai-chat-header-sub">Hỏi về task, KPI, initiative của dự án · Powered by Gemini</div>' +
+        '<div class="ai-chat-header-title">AI Assistant</div>' +
+        '<div class="ai-chat-header-sub">Hỏi về task, KPI, initiative của Trung tâm · Powered by Gemini</div>' +
       '</div>' +
       '<button class="ai-chat-clear-btn" onclick="clearAiChat()" title="Xóa cuộc trò chuyện">' +
         '<i class="fa-solid fa-trash-can"></i> Xóa</button>' +
@@ -46,7 +46,7 @@ function _renderAiMessages() {
     container.innerHTML =
       '<div class="ai-chat-empty">' +
         '<div class="ai-chat-empty-icon"><i class="fa-solid fa-robot"></i></div>' +
-        '<div class="ai-chat-empty-text">Hỏi tôi bất cứ điều gì về dữ liệu dự án SHTD</div>' +
+        '<div class="ai-chat-empty-text">Hỏi tôi bất cứ điều gì về dữ liệu của Trung tâm SP&GPTD</div>' +
         '<div class="ai-chat-suggestions">' +
           _aiSuggestions.map(function(s) {
             return '<button class="ai-chat-suggestion" onclick="sendAiSuggestion(' + "'" + s + "'" + ')">' + esc(s) + '</button>';
