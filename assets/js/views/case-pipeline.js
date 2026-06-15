@@ -419,8 +419,11 @@ function openCaseModal(id) {
 
   fv('cpfId',         c ? c.id          : genCaseId());
   fv('cpfTuanBC',     c ? c.tuanBC      : _cpCurrentWeek());
-  _populateTeamSelect('cpfTeam', c ? c.team : '');
-  _populateUserSelect('cpfPic',  c ? c.team : '', c ? c.pic : '');
+  const _cpCu = !c ? getCurrentUser() : null;
+  const _cpDefTeam = _cpCu ? (_cpCu.team || '') : '';
+  const _cpDefUser = _cpCu ? (_cpCu.username || '') : '';
+  _populateTeamSelect('cpfTeam', c ? c.team : _cpDefTeam);
+  _populateUserSelect('cpfPic',  c ? c.team : _cpDefTeam, c ? c.pic : _cpDefUser);
   fv('cpfDvkd',       c ? c.dvkd        : '');
   fv('cpfCaseName',   c ? c.caseName    : '');
   fv('cpfLoaiHinh',   c ? c.loaiHinh    : '');

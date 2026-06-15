@@ -104,12 +104,15 @@ function openTaskModal(task = null) {
     document.getElementById('modalTitle').textContent = 'Thêm Task mới';
     document.getElementById('modalSubtitle').textContent = 'Điền thông tin công việc';
     document.getElementById('origId').value = '';
-    _populateTeamSelect('fTeam', 'Số');
+    const _cu = getCurrentUser();
+    const _defTeam = (_cu && _cu.team) || '';
+    const _defUser = (_cu && _cu.username) || '';
+    _populateTeamSelect('fTeam', _defTeam);
     document.getElementById('fType').value = 'Task';
     document.getElementById('fState').value = 'Chưa bắt đầu';
     document.getElementById('fRag').value = 'Green';
-    _populateUserSelect('fPicAcc', 'Số', '');
-    _populateUserSelect('fPicRes', 'Số', '');
+    _populateUserSelect('fPicAcc', _defTeam, _defUser);
+    _populateUserSelect('fPicRes', _defTeam, _defUser);
     const _td=new Date();document.getElementById('fStart').value=`${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
     autoGenId();
     _populateMilestoneSelect('');

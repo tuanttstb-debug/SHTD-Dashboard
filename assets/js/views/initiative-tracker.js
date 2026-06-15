@@ -462,7 +462,8 @@ function _initOpenModal(id) {
     document.getElementById('initFStatus').value = 'Active';
     document.getElementById('initFCat').value = '';
     selParent.value = '';
-    _populateUserSelect('initFAcc', '', '');
+    const _initCu = getCurrentUser();
+    _populateUserSelect('initFAcc', null, (_initCu && _initCu.username) || '');
   } else {
     // Edit mode
     const ini = (db.initiatives||[]).find(i => i.id === id);
@@ -472,7 +473,7 @@ function _initOpenModal(id) {
     document.getElementById('initFId').value     = ini.id;
     document.getElementById('initFName').value   = ini.name;
     document.getElementById('initFCat').value    = ini.category || '';
-    _populateUserSelect('initFAcc', '', ini.accountable || '');
+    _populateUserSelect('initFAcc', null, ini.accountable || '');
     document.getElementById('initFStart').value  = ini.startDate || '';
     document.getElementById('initFDeadline').value = ini.deadline || '';
     document.getElementById('initFPct').value    = ini.pct !== undefined ? ini.pct : 0;

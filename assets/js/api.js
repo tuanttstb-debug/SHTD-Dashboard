@@ -394,14 +394,15 @@ function _populateUserSelect(selectId, team, currentVal) {
   if (!el) return;
   const isReq = el.hasAttribute('required');
 
-  if (!team) {
+  if (team === '') {
     el.innerHTML = '<option value="">– Chọn team trước –</option>'
       + (currentVal ? `<option value="${esc(currentVal)}">${esc(currentVal)}</option>` : '');
     if (currentVal) el.value = currentVal;
     return;
   }
 
-  const users = getUsersByTeam(team);
+  // team === null → show all users (no team filter); team string → filter by team
+  const users = getUsersByTeam(team || '');
 
   if (!users.length) {
     el.innerHTML = (!isReq ? '<option value="">– Chọn –</option>' : '')
