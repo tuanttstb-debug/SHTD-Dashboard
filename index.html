@@ -917,10 +917,7 @@
           <div class="form-section-title"><i class="fa-solid fa-people-group" style="margin-right:6px;"></i>Phân công</div>
           <div class="form-group">
             <label class="form-label">Team chính <span class="req">*</span></label>
-            <select id="fTeam" class="form-control" required>
-              <option>Số</option><option>CV1</option><option>CV2</option><option>BL1</option>
-              <option>BL2</option><option>PTKD MB</option><option>PTKD MN</option><option>QLDM</option>
-            </select>
+            <select id="fTeam" class="form-control" required onchange="onTaskTeamChange()"></select>
           </div>
           <div class="form-group">
             <label class="form-label">Team phối hợp</label>
@@ -928,7 +925,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">PIC Accountable <span class="req">*</span></label>
-            <input type="text" id="fPicAcc" class="form-control" value="Tuantt4" required>
+            <select id="fPicAcc" class="form-control" required></select>
           </div>
           <div class="form-group">
             <label class="form-label">PIC Responsible <span class="req">*</span></label>
@@ -1062,11 +1059,11 @@
         <!-- Row 3: Team + PIC -->
         <div class="form-group">
           <label class="form-label">Team</label>
-          <input type="text" id="cpfTeam" class="form-control" placeholder="VD: PTKDMB">
+          <select id="cpfTeam" class="form-control" onchange="onCaseTeamChange()"></select>
         </div>
         <div class="form-group">
           <label class="form-label">PIC</label>
-          <input type="text" id="cpfPic" class="form-control" placeholder="VD: AnhDT24">
+          <select id="cpfPic" class="form-control"></select>
         </div>
 
         <!-- Row 4: ĐVKD + Loại hình -->

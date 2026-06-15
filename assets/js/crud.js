@@ -62,7 +62,6 @@ function openTaskModal(task = null) {
   document.getElementById('fYKienGroup').style.display = 'none';
 
   updateFilterDropdowns();
-  populatePicDropdown('');
 
   if (task) {
     document.getElementById('modalTitle').textContent = 'Chỉnh sửa Task';
@@ -74,10 +73,11 @@ function openTaskModal(task = null) {
     const fi = document.getElementById('fInit');
     fi.value = task.initiative || 'BAU';
     _populateMilestoneSelect(task.milestone || '');
-    document.getElementById('fTeam').value = task.team || 'Số';
+    const _team = task.team || 'Số';
+    _populateTeamSelect('fTeam', _team);
     document.getElementById('fTeamPh').value = task.teamPhoiHop || '';
-    document.getElementById('fPicAcc').value = task.picAcc || 'Tuantt4';
-    populatePicDropdown(task.picRes);
+    _populateUserSelect('fPicAcc', _team, task.picAcc || '');
+    _populateUserSelect('fPicRes', _team, task.picRes || '');
     document.getElementById('fStart').value = task.startDate || '';
     document.getElementById('fEnd').value = task.endDate || '';
     document.getElementById('fProg').value = task.progress || 0;
@@ -104,13 +104,13 @@ function openTaskModal(task = null) {
     document.getElementById('modalTitle').textContent = 'Thêm Task mới';
     document.getElementById('modalSubtitle').textContent = 'Điền thông tin công việc';
     document.getElementById('origId').value = '';
-    document.getElementById('fTeam').value = 'Số';
+    _populateTeamSelect('fTeam', 'Số');
     document.getElementById('fType').value = 'Task';
     document.getElementById('fState').value = 'Chưa bắt đầu';
     document.getElementById('fRag').value = 'Green';
-    document.getElementById('fPicAcc').value = 'Tuantt4';
+    _populateUserSelect('fPicAcc', 'Số', '');
+    _populateUserSelect('fPicRes', 'Số', '');
     const _td=new Date();document.getElementById('fStart').value=`${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
-    populatePicDropdown('');
     autoGenId();
     _populateMilestoneSelect('');
   }
@@ -138,8 +138,17 @@ function _populateMilestoneSelect(currentValue) {
   if (currentValue) sel.value = currentValue;
 }
 
+function onTaskTeamChange() {
+  const team = (document.getElementById('fTeam') || {}).value || '';
+  _populateUserSelect('fPicAcc', team, '');
+  _populateUserSelect('fPicRes', team, '');
+  autoGenId();
+}
+
 function populatePicDropdown(selected) {
+  /* Legacy — kept for filter bar (filterPic). Modal PIC fields now use _populateUserSelect. */
   const sel = document.getElementById('fPicRes');
+  if (!sel) return;
   const pics = new Set(DEFAULT_PICS);
   db.tasks.forEach(t => { if (t.picRes) pics.add(picNorm(t.picRes)); });
   if (selected) pics.add(picNorm(selected));

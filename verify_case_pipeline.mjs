@@ -191,7 +191,7 @@ async function run() {
   try {
     await page.locator('#cpfCaseName').fill('Test Case Playwright');
     await page.locator('#cpfStage').selectOption('Tiếp nhận');
-    await page.locator('#cpfTeam').fill('TEST-TEAM');
+    await page.locator('#cpfTeam').selectOption({ index: 1 }); // pick first non-empty option from TEAM_LIST
     await page.locator('#cpfGiaTri').fill('88');
     await page.locator('button:has-text("Lưu Case")').click();
     await page.waitForTimeout(600);

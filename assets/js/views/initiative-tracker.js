@@ -388,7 +388,9 @@ function _initModalTemplate() {
           </div>
           <div class="form-group">
             <label class="form-label">Accountable</label>
-            <input class="form-control" id="initFAcc" placeholder="VD: MaiTTT7">
+            <select class="form-control" id="initFAcc">
+              <option value="">– Chọn –</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Start Date</label>
@@ -455,11 +457,12 @@ function _initOpenModal(id) {
     // Add mode
     document.getElementById('initModalTitle').textContent = 'Thêm Initiative / Milestone';
     document.getElementById('initOrigId').value = '';
-    ['initFId','initFName','initFAcc','initFStart','initFDeadline','initFMsTrack','initFMsDl','initFKpi','initFNotes','initFDoc'].forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
+    ['initFId','initFName','initFStart','initFDeadline','initFMsTrack','initFMsDl','initFKpi','initFNotes','initFDoc'].forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
     document.getElementById('initFPct').value = '0';
     document.getElementById('initFStatus').value = 'Active';
     document.getElementById('initFCat').value = '';
     selParent.value = '';
+    _populateUserSelect('initFAcc', '', '');
   } else {
     // Edit mode
     const ini = (db.initiatives||[]).find(i => i.id === id);
@@ -469,7 +472,7 @@ function _initOpenModal(id) {
     document.getElementById('initFId').value     = ini.id;
     document.getElementById('initFName').value   = ini.name;
     document.getElementById('initFCat').value    = ini.category || '';
-    document.getElementById('initFAcc').value    = ini.accountable || '';
+    _populateUserSelect('initFAcc', '', ini.accountable || '');
     document.getElementById('initFStart').value  = ini.startDate || '';
     document.getElementById('initFDeadline').value = ini.deadline || '';
     document.getElementById('initFPct').value    = ini.pct !== undefined ? ini.pct : 0;

@@ -20,6 +20,7 @@ async function startApp() {
     await autoConnectDB();
     readInitiatives(); // non-blocking
     readCases();       // non-blocking — load Case_Pipeline sau tasks
+    loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
   }
 }
 

@@ -343,3 +343,86 @@ async function syncAction(action) {
     hideLoading();
   }
 }
+/* ══════════════════════════════════════════
+   USER MASTER — global cache for Team/PIC dropdowns
+══════════════════════════════════════════ */
+let _appUsers = [];
+
+async function loadAppUsers() {
+  if (!GS_WEBAPP_URL || !getAuthSession()) return;
+  try {
+    const res = await gasPost({ action: 'user-list' });
+    if (res.status !== 'ok' || !res.data) return;
+    const { header, rows } = res.data;
+    _appUsers = rows
+      .map(row => {
+        const obj = {};
+        header.forEach((h, i) => { obj[h] = row[i]; });
+        return obj;
+      })
+      .filter(u => String(u.Active).toLowerCase() !== 'false');
+  } catch(e) {
+    console.warn('loadAppUsers failed:', e.message);
+  }
+}
+
+function getAppTeams() {
+  if (_appUsers.length) {
+    return [...new Set(_appUsers.map(u => u.Team).filter(Boolean))].sort();
+  }
+  return TEAM_LIST;
+}
+
+function getUsersByTeam(team) {
+  if (!_appUsers.length) return [];
+  return _appUsers.filter(u => !team || u.Team === team);
+}
+
+function _populateTeamSelect(selectId, currentVal) {
+  const el = document.getElementById(selectId);
+  if (!el) return;
+  const teams  = getAppTeams();
+  const isReq  = el.hasAttribute('required');
+  el.innerHTML = (!isReq ? '<option value="">– Chọn team –</option>' : '')
+    + teams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  if (currentVal && teams.includes(currentVal)) el.value = currentVal;
+  else if (isReq && teams.length) el.value = teams[0];
+}
+
+function _populateUserSelect(selectId, team, currentVal) {
+  const el = document.getElementById(selectId);
+  if (!el) return;
+  const isReq = el.hasAttribute('required');
+
+  if (!team) {
+    el.innerHTML = '<option value="">– Chọn team trước –</option>'
+      + (currentVal ? `<option value="${esc(currentVal)}">${esc(currentVal)}</option>` : '');
+    if (currentVal) el.value = currentVal;
+    return;
+  }
+
+  const users = getUsersByTeam(team);
+
+  if (!users.length) {
+    el.innerHTML = (!isReq ? '<option value="">– Chọn –</option>' : '')
+      + (currentVal ? `<option value="${esc(currentVal)}">${esc(currentVal)}</option>` : '');
+    if (currentVal) el.value = currentVal;
+    return;
+  }
+
+  el.innerHTML = (!isReq ? '<option value="">– Chọn –</option>' : '')
+    + users.map(u => {
+        const label = u.Display_Name
+          ? `${esc(u.Display_Name)} (${esc(u.Username)})`
+          : esc(u.Username);
+        return `<option value="${esc(u.Username)}">${label}</option>`;
+      }).join('');
+
+  if (currentVal) el.value = currentVal;
+  else if (isReq && users.length) el.value = users[0].Username;
+
+  if (currentVal && el.value !== currentVal) {
+    el.innerHTML += `<option value="${esc(currentVal)}">${esc(currentVal)}</option>`;
+    el.value = currentVal;
+  }
+}

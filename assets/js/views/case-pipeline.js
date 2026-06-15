@@ -419,8 +419,8 @@ function openCaseModal(id) {
 
   fv('cpfId',         c ? c.id          : genCaseId());
   fv('cpfTuanBC',     c ? c.tuanBC      : _cpCurrentWeek());
-  fv('cpfTeam',       c ? c.team        : '');
-  fv('cpfPic',        c ? c.pic         : '');
+  _populateTeamSelect('cpfTeam', c ? c.team : '');
+  _populateUserSelect('cpfPic',  c ? c.team : '', c ? c.pic : '');
   fv('cpfDvkd',       c ? c.dvkd        : '');
   fv('cpfCaseName',   c ? c.caseName    : '');
   fv('cpfLoaiHinh',   c ? c.loaiHinh    : '');
@@ -441,6 +441,11 @@ function openCaseModal(id) {
   if (delBtn) delBtn.style.display = c ? 'inline-flex' : 'none';
 
   document.getElementById('cpModal').style.display = 'flex';
+}
+
+function onCaseTeamChange() {
+  const team = (document.getElementById('cpfTeam') || {}).value || '';
+  _populateUserSelect('cpfPic', team, '');
 }
 
 function closeCaseModal() {
