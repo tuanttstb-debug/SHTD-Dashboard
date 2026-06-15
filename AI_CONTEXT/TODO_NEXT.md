@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-06-15 (Session 19 — Case Pipeline full implementation)
-**Context**: `master` chưa push (đang chờ PO). `origin/main` @ `1c57999` (chưa có S18, S19).
+**Context**: `origin/main` @ `a00a611` — S18+S19 đã LIVE. `master` không còn dùng.
 
 ---
 
@@ -32,18 +32,7 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 
 ---
 
-## 🔴 PRIORITY 1 — PO tạo PR: master → main (S18 + S19)
-
-`master` chưa push session này (chờ lệnh PO). Sau khi PO cho phép:
-1. `git push origin master`
-2. PO tạo PR `master` → `main` trên GitHub
-3. **Lý do ưu tiên cao**: SCHEMA-01 (S18) — `master` ghi Task_Master 24 cột, `main` ghi 23 cột.
-
-**Commits sẽ include**: S18 (2 commits) + S19 (nhiều files, Case Pipeline full)
-
----
-
-## 🔴 PRIORITY 2 — PO deploy GAS (Case Pipeline routes)
+## 🔴 PRIORITY 1 — PO deploy GAS (Case Pipeline routes)
 
 **Các file GAS cần thêm vào Apps Script project**:
 - `backend/CasePipelineService.gs` → copy toàn bộ nội dung
@@ -53,7 +42,7 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 
 ---
 
-## 🔴 PRIORITY 3 — Smoke test sau khi merge + deploy
+## 🔴 PRIORITY 2 — Smoke test sau khi GAS deploy
 
 | Feature | Check |
 |---|---|
@@ -69,7 +58,7 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 
 ---
 
-## 🔴 PRIORITY 4 — Verify AI Chat trên live
+## 🔴 PRIORITY 3 — Verify AI Chat trên live
 
 AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận.
 
@@ -79,7 +68,7 @@ AI Chat frontend hoàn chỉnh từ S12. GAS-side chưa xác nhận.
 
 ---
 
-## 🟡 PRIORITY 5 — Fix Testing Environment (Netlify hết credit)
+## 🟡 PRIORITY 4 — Fix Testing Environment (Netlify hết credit)
 
 Options (chưa chọn):
 - **A) Cloudflare Pages** (miễn phí, unlimited) — khuyến nghị
@@ -105,7 +94,7 @@ Options (chưa chọn):
 ## Session Rules
 
 1. **Đọc SESSION_HANDOVER + PROJECT_STATE trước** — không skip
-2. **Branch**: phát triển trên `master` hoặc `fix/*`; KHÔNG push/merge lên `main` — PO tự xử lý
+2. **Branch**: push thẳng lên `main`; `master` không dùng nữa kể từ S19
 3. Không thay đổi `DB_COLS`, `localStorage['shtd_v2'].tasks` — trừ khi PO yêu cầu
 4. One logical change per commit
 5. Tất cả GAS calls qua `gasPost()` — không raw `fetch()`

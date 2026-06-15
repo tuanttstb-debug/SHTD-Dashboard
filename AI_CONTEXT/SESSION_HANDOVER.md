@@ -77,7 +77,6 @@ BLĐ: case canBLD=Y → xuất hiện BLD Queue với badge [CASE]; approve/reje
 | Item | Status |
 |---|---|
 | GAS deploy mới (routes case-pipeline-*) | ⏳ Chờ PO deploy GAS |
-| PR `master` → `main` (S18 + S19) | ⏳ Chờ PO — **S18 SCHEMA-01 risk vẫn còn** |
 | Netlify hết credit | ❌ Dùng local Playwright |
 | AI Chat GAS AiService.gs + GEMINI_API_KEY | ⚠️ Unconfirmed từ S12 |
 
@@ -87,8 +86,7 @@ BLĐ: case canBLD=Y → xuất hiện BLD Queue với badge [CASE]; approve/reje
 
 | Risk | Severity | Detail |
 |---|---|---|
-| SCHEMA-01 từ S18 | 🟡 MEDIUM | `main` ghi 23 cột, `master` ghi 24 cột Task_Master. Merge S18 sớm. |
-| GAS routes case-pipeline-* chưa deployed | 🟡 MEDIUM | readCases/writeCases sẽ fail server-side. Fallback local hoạt động. |
+| GAS routes case-pipeline-* chưa deployed | 🟡 MEDIUM | readCases/writeCases sẽ fail server-side. Fallback local hoạt động. Cần PO deploy GAS. |
 
 ---
 
@@ -106,8 +104,7 @@ node verify_ms_tasks.mjs        # 14/14 PASS (no regression)
 
 ## Next Steps
 
-1. **PO tạo PR `master` → `main`** (S18 + S19) — ưu tiên cao SCHEMA-01.
-2. **PO deploy GAS** — thêm `CasePipelineService.gs` + routes `case-pipeline-*` trong Code.gs vào Apps Script project.
-3. Smoke test live sau merge: Case Pipeline load từ Sheet, thêm/sửa/xóa case, BLD Queue hiện case [CASE].
-4. Verify AI Chat trên live (tồn từ S12).
-5. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
+1. **PO deploy GAS** — thêm `CasePipelineService.gs` + routes `case-pipeline-*` trong Code.gs vào Apps Script project.
+2. Smoke test live: Case Pipeline load từ Sheet, thêm/sửa/xóa case, BLD Queue hiện case [CASE].
+3. Verify AI Chat trên live (tồn từ S12).
+4. Fix `verify_initiative_v2.mjs` auth inject (TD-033).

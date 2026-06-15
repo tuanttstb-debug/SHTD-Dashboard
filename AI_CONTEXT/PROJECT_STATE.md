@@ -40,8 +40,7 @@
 | `assets/js/api.js` | ~280 | ✅ S19: Case API (caseToRow, rowToCase, genCaseId, syncCaseAction...) |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~320 | ✅ S19: loadCasesFromCache, readCases, navBadgeCase, dbCases reset |
-| `assets/js/views/bld-queue.js` | ~380 | ✅ S19: case card [CASE], _bldGetPendingCases, multi-source approve/reject |
-| `assets/js/views/bld-queue.js` | ~380 | ✅ S18: btn-success fix, BUG-04 disable reset, yKienBLD |
+| `assets/js/views/bld-queue.js` | ~380 | ✅ S18+S19: case card [CASE], _bldGetPendingCases, multi-source approve/reject, yKienBLD |
 
 ---
 
@@ -132,7 +131,6 @@ debug_login.mjs          ← S18 login diagnostics
 
 | ID | Issue | Priority |
 |---|---|---|
-| SCHEMA-01 | `main` 23 cột vs `master` 24 cột Task_Master → lệch cột X | 🔴 Merge S18+S19 → main sớm |
 | GAS-CP | CasePipelineService.gs + Code.gs routes chưa deploy | 🔴 PO deploy GAS |
 | TD-033 | `verify_initiative_v2.mjs` fail local (no auth inject) | 🟡 |
 | MOB-01/02/03 | Filter bar, toolbar, Gantt trên mobile | 🟡 Phase D |
@@ -144,6 +142,6 @@ debug_login.mjs          ← S18 login diagnostics
 
 | Environment | URL | Branch | Status |
 |---|---|---|---|
-| **Testing (local)** | `http://localhost:3030` | `master` | ✅ Dùng tạm |
-| **Testing (Netlify)** | https://test-shtd.netlify.app | `master` | ❌ **Hết credit** |
-| **Production** | GitHub Pages URL | `main` | ✅ Live (1c57999 — S17; chưa có S18+S19) |
+| **Testing (local)** | `http://localhost:3030` | `main` | ✅ Dùng tạm |
+| **Testing (Netlify)** | https://test-shtd.netlify.app | — | ❌ **Hết credit** |
+| **Production** | GitHub Pages URL | `main` | ✅ Live (`a00a611` — S18+S19 Case Pipeline) |
