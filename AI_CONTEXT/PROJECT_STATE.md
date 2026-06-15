@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-15 (Session 19 — Case Pipeline full implementation + GAS deployed + smoke test thêm task OK)
+**As of**: 2026-06-15 (Session 20 — Case Pipeline UI redesign: Table-primary + preset tabs + Initiative sync standardization)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `a00a611` — S18 + S19 Case Pipeline full — **LIVE on Production**
+**Remote HEAD (main)**: `c60e74f` — S19 Case Pipeline full + GAS deployed (**S20 chưa push — local only**)
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -21,7 +21,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1150 | ✅ S19: CSS link + nav item + view section + CRUD modal Case Pipeline |
+| `index.html` | ~1220 | ✅ S20: #view-case-pipeline restructure — card wrapper, toolbar+view toggle, preset bar, filter bar, table wrap, board wrap |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S19: thêm routes `case-pipeline-read`, `case-pipeline-write` |
@@ -35,9 +35,10 @@
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~60 | ✅ S19: CASE_STAGES, CASE_COLS, CASE_LOAI_HINH, CASE_COMPLEXITY, dbCases |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL |
-| `assets/css/case-pipeline.css` | ~260 | ✅ NEW S19 |
-| `assets/js/views/case-pipeline.js` | ~310 | ✅ NEW S19 — Kanban, CRUD, Excel |
-| `assets/js/api.js` | ~280 | ✅ S19: Case API (caseToRow, rowToCase, genCaseId, syncCaseAction...) |
+| `assets/css/case-pipeline.css` | ~370 | ✅ S20: +view toggle, stage chips, RAG dots, row-overdue, sort icons |
+| `assets/js/views/case-pipeline.js` | ~600 | ✅ S20: Table-primary (paginated 20/page, sortable), preset tabs (4), filter chips, _cpInitPresetTabs(); Kanban secondary toggle |
+| `assets/js/api.js` | ~280 | ✅ S20: syncCaseAction thêm syncDot syncing at start |
+| `assets/js/initiatives.js` | ~170 | ✅ S20: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~320 | ✅ S19: loadCasesFromCache, readCases, navBadgeCase, dbCases reset |
 | `assets/js/views/bld-queue.js` | ~380 | ✅ S18+S19: case card [CASE], _bldGetPendingCases, multi-source approve/reject, yKienBLD |
@@ -48,7 +49,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
-| **Case Pipeline (Kanban)** | ✅ | NEW S19 — 14-col Kanban, summary cards, filter, G+C shortcut; GAS deployed 2026-06-15 |
+| **Case Pipeline (Table + Kanban)** | ✅ | S20: Table-primary (paginated, sortable, 4 preset tabs, filter bar+chips, filter search); Kanban toggle secondary. S19: GAS deployed 2026-06-15 |
 | **Case CRUD** | ✅ | Add/Edit/Delete với validation; auto-gen CP-XXX ID; modal |
 | **Case Excel Import/Export** | ✅ | 20 cột; import merge by ID; export với column widths |
 | **Case BLD Queue integration** | ✅ | Case canBLD=Y → badge [CASE] trong BLD Queue; approve/reject/info lưu yKienBLD |
@@ -61,7 +62,7 @@
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
-| Initiative Tracker | ✅ | S14 milestone drill-down |
+| Initiative Tracker | ✅ | S14 milestone drill-down; S20: syncInitiativeAction() — showLoading + syncDot + GAS fallback toast |
 | **AI Assistant** | ⚠️ | Frontend complete; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |
 | User Management | ✅ | Admin-only; S13 |
 | Login / Auth | ✅ | S11+S18 verified |
@@ -97,14 +98,14 @@ assets/
         views/initiative-tracker.js, initiatives.js
         views/ai-chat.js, views/user-management.js, views/executive-summary.js
         views/bld-queue.js   ← S19: case cards, multi-source approve
-        views/case-pipeline.js ← NEW S19 (310 lines)
+        views/case-pipeline.js ← S20: Table-primary + preset + filter chips (~600 lines)
         app.js               ← S19: loadCasesFromCache, readCases, navBadgeCase
 backend/
   Code.gs (+case-pipeline routes), Config.gs, AuthService.gs,
   SheetService.gs, AuditService.gs, KpiSheetService.gs,
   InitiativeService.gs, UserService.gs, AiService.gs, GAS.GS
   CasePipelineService.gs ← NEW S19 (deployed 2026-06-15)
-verify_case_pipeline.mjs ← NEW S19 — 20/20 PASS
+verify_case_pipeline.mjs ← S20 — 22/22 PASS (table-primary, +TEST05b/08b)
 verify_bld_queue.mjs     ← 46/46 PASS (no regression)
 verify_ms_tasks.mjs      ← 14/14 PASS (no regression)
 verify_kpi_views.mjs     ← 3/3 PASS (S7)
@@ -143,7 +144,7 @@ debug_login.mjs          ← S18 login diagnostics
 |---|---|---|---|
 | **Testing (local)** | `http://localhost:3030` | `main` | ✅ Dùng tạm |
 | **Testing (Netlify)** | https://test-shtd.netlify.app | — | ❌ **Hết credit** |
-| **Production** | GitHub Pages URL | `main` | ✅ Live (`c60e74f` — S19 Case Pipeline + GAS deployed) |
+| **Production** | GitHub Pages URL | `main` | ✅ Live (`c60e74f` — S19 Case Pipeline + GAS deployed); **S20 local chưa push** |
 
 ---
 

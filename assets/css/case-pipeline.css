@@ -269,6 +269,81 @@
   font-style: italic;
 }
 
+/* ─── View toggle (Table / Kanban) ─── */
+.cp-view-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.cp-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--text-2);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.cp-view-btn:not(:last-child) {
+  border-right: 1px solid var(--border-strong);
+}
+.cp-view-btn:hover { background: var(--surface-alt, var(--hover-bg)); color: var(--text-1); }
+.cp-view-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ─── Stage chip in table (colored by group) ─── */
+.cp-stage-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+.cp-stage-chip.group-new     { background: var(--primary-xlight); color: var(--primary); }
+.cp-stage-chip.group-active  { background: var(--info-bg);         color: var(--info); }
+.cp-stage-chip.group-pending { background: var(--warning-bg);      color: var(--warning-dark, #92400e); }
+.cp-stage-chip.group-done    { background: var(--success-bg);      color: var(--success); }
+.cp-stage-chip.group-blocked { background: var(--danger-bg);       color: var(--danger); }
+
+/* ─── RAG dot in table rows ─── */
+.cp-rag-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.cp-rag-dot.red   { background: var(--danger); }
+.cp-rag-dot.amber { background: var(--warning); }
+.cp-rag-dot.green { background: var(--success); }
+.cp-rag-dot.none  { background: var(--border-strong); }
+
+/* ─── Overdue row highlight in table ─── */
+.row-overdue { background: var(--danger-bg) !important; }
+.text-danger-bold { color: var(--danger); font-weight: 700; }
+
+/* ─── Sort icon in table header ─── */
+th .sort-icon {
+  display: inline-block;
+  font-size: 10px;
+  opacity: 0.5;
+  margin-left: 2px;
+  cursor: pointer;
+}
+th:hover .sort-icon { opacity: 1; }
+th { cursor: pointer; user-select: none; }
+
 /* ─── Case CRUD Modal overrides ─── */
 .cp-modal-grid {
   display: grid;

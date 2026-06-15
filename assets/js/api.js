@@ -144,6 +144,7 @@ function loadCasesFromCache() {
 
 async function syncCaseAction(mutateFn) {
   showLoading('Đang đồng bộ Case Pipeline…');
+  document.getElementById('syncDot').className = 'status-dot syncing';
   try {
     if (typeof mutateFn === 'function') mutateFn();
 

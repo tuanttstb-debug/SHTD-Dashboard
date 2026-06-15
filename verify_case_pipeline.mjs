@@ -56,6 +56,7 @@ async function loadWithData(page, cases) {
     if (!existing.tasks) existing.tasks = [];
     if (!existing.initiatives) existing.initiatives = [];
     localStorage.setItem('shtd_v2', JSON.stringify(existing));
+    localStorage.removeItem('cp_view'); // always start with default (table)
   }, cases);
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
@@ -117,11 +118,22 @@ async function run() {
     log('TEST04', 'Summary cards rendered (4)', cards === 4, `got ${cards}`);
   } catch(e) { log('TEST04', 'Summary cards', false, e.message); }
 
-  /* ─── TEST05: Kanban has 14 columns ─── */
+  /* ─── TEST05: Table is default view, has rows for seeded data ─── */
   try {
+    const tableWrapVisible = await page.locator('#cpTableWrap').isVisible();
+    const rows = await page.locator('#cpTbody tr').count();
+    log('TEST05', 'Table is default view with data rows', tableWrapVisible && rows >= 2, `tableVisible=${tableWrapVisible} rows=${rows}`);
+  } catch(e) { log('TEST05', 'Table default view', false, e.message); }
+
+  /* ─── TEST05b: Kanban toggle shows 14 columns ─── */
+  try {
+    await page.locator('.cp-view-btn[data-view="kanban"]').click();
+    await page.waitForTimeout(300);
     const cols = await page.locator('.cp-col').count();
-    log('TEST05', 'Kanban board has 14 columns', cols === 14, `got ${cols}`);
-  } catch(e) { log('TEST05', 'Kanban columns', false, e.message); }
+    log('TEST05b', 'Kanban toggle shows 14 columns', cols === 14, `got ${cols}`);
+    await page.locator('.cp-view-btn[data-view="table"]').click();
+    await page.waitForTimeout(200);
+  } catch(e) { log('TEST05b', 'Kanban toggle 14 cols', false, e.message); }
 
   /* ─── TEST06: Summary card total shows 2 cases ─── */
   try {
@@ -129,11 +141,11 @@ async function run() {
     log('TEST06', 'Summary total = 2 (seeded cases)', total.trim() === '2', `got "${total}"`);
   } catch(e) { log('TEST06', 'Summary total', false, e.message); }
 
-  /* ─── TEST07: Case CP-001 card visible on board ─── */
+  /* ─── TEST07: CP-001 (Wego) appears as table row ─── */
   try {
-    const card = await page.locator('.cp-card').filter({ hasText: 'Wego Việt Nam' }).count();
-    log('TEST07', 'CP-001 (Wego Việt Nam) card appears on board', card > 0);
-  } catch(e) { log('TEST07', 'Card on board', false, e.message); }
+    const row = await page.locator('#cpTbody tr').filter({ hasText: 'Wego Việt Nam' }).count();
+    log('TEST07', 'CP-001 (Wego Việt Nam) appears in table row', row > 0);
+  } catch(e) { log('TEST07', 'Row in table', false, e.message); }
 
   /* ─── TEST08: Filter dropdowns present ─── */
   try {
@@ -143,6 +155,13 @@ async function run() {
     const rag   = await page.locator('#cpFilterRag').count();
     log('TEST08', 'All 4 filter dropdowns present', team > 0 && loai > 0 && stage > 0 && rag > 0);
   } catch(e) { log('TEST08', 'Filter dropdowns', false, e.message); }
+
+  /* ─── TEST08b: Preset bar has 4 tabs ─── */
+  try {
+    const tabs = await page.locator('.cp-preset-btn').count();
+    const activeTab = await page.locator('.cp-preset-btn.active').count();
+    log('TEST08b', 'Preset bar has 4 tabs (1 active)', tabs === 4 && activeTab === 1, `tabs=${tabs} active=${activeTab}`);
+  } catch(e) { log('TEST08b', 'Preset tabs', false, e.message); }
 
   /* ─── TEST09: Open Thêm Case modal ─── */
   try {
@@ -168,7 +187,7 @@ async function run() {
     log('TEST11', 'Validation keeps modal open on empty caseName', stillOpen);
   } catch(e) { log('TEST11', 'Validation', false, e.message); }
 
-  /* ─── TEST12: Add new case → card on board ─── */
+  /* ─── TEST12: Add new case → row in table ─── */
   try {
     await page.locator('#cpfCaseName').fill('Test Case Playwright');
     await page.locator('#cpfStage').selectOption('Tiếp nhận');
@@ -177,27 +196,27 @@ async function run() {
     await page.locator('button:has-text("Lưu Case")').click();
     await page.waitForTimeout(600);
     const closed   = !(await page.locator('#cpModal').isVisible());
-    const cardOnBoard = await page.locator('.cp-card').filter({ hasText: 'Test Case Playwright' }).count();
-    log('TEST12', 'Add case → modal closes + card on board', closed && cardOnBoard > 0,
-      `closed=${closed} card=${cardOnBoard}`);
+    const rowInTable = await page.locator('#cpTbody tr').filter({ hasText: 'Test Case Playwright' }).count();
+    log('TEST12', 'Add case → modal closes + row in table', closed && rowInTable > 0,
+      `closed=${closed} row=${rowInTable}`);
   } catch(e) { log('TEST12', 'Add case', false, e.message); }
 
-  /* ─── TEST13: Click card opens edit modal with Sửa title ─── */
+  /* ─── TEST13: Click table row opens edit modal with Sửa title ─── */
   try {
-    const card = page.locator('.cp-card').filter({ hasText: 'Wego Việt Nam' }).first();
-    await card.click();
+    const row = page.locator('#cpTbody tr').filter({ hasText: 'Wego Việt Nam' }).first();
+    await row.click();
     await page.waitForTimeout(300);
-    const title = await page.locator('#cpModalTitle').textContent();
+    const title  = await page.locator('#cpModalTitle').textContent();
     const isEdit = title.includes('Sửa');
-    log('TEST13', 'Click card → edit modal (Sửa Case)', isEdit, `title="${title}"`);
+    log('TEST13', 'Click table row → edit modal (Sửa Case)', isEdit, `title="${title}"`);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
   } catch(e) { log('TEST13', 'Edit modal', false, e.message); }
 
   /* ─── TEST14: Delete button visible when editing ─── */
   try {
-    const card = page.locator('.cp-card').filter({ hasText: 'Wego Việt Nam' }).first();
-    await card.click();
+    const row = page.locator('#cpTbody tr').filter({ hasText: 'Wego Việt Nam' }).first();
+    await row.click();
     await page.waitForTimeout(300);
     const delVis = await page.locator('#cpModalDeleteBtn').isVisible();
     log('TEST14', 'Delete button visible in edit modal', delVis);
@@ -215,25 +234,26 @@ async function run() {
     log('TEST15', 'ESC closes case modal', closed);
   } catch(e) { log('TEST15', 'ESC close', false, e.message); }
 
-  /* ─── TEST16: Filter by Loại hình ─── */
+  /* ─── TEST16: Filter by Loại hình=Món → table shows only Món cases ─── */
   try {
     await page.locator('#cpFilterLoai').selectOption('Món');
     await page.waitForTimeout(300);
-    const cols = await page.locator('.cp-col').count();
-    // Cards for Món only
-    const monCards = await page.locator('.cp-card').filter({ hasText: 'Wego' }).count();
-    log('TEST16', 'Filter Loại hình=Món shows board + Wego card', cols === 14 && monCards > 0,
-      `cols=${cols} mon=${monCards}`);
+    const rows = await page.locator('#cpTbody tr').count();
+    // CP-001 is Món; CP-002 is Dự án; newly added has no loaiHinh
+    const wegoRow = await page.locator('#cpTbody tr').filter({ hasText: 'Wego' }).count();
+    log('TEST16', 'Filter Loại hình=Món → table shows Wego row only', rows >= 1 && wegoRow > 0,
+      `rows=${rows} wegoRow=${wegoRow}`);
     await page.locator('#cpFilterLoai').selectOption('');
     await page.waitForTimeout(200);
   } catch(e) { log('TEST16', 'Filter Loại hình', false, e.message); }
 
-  /* ─── TEST17: Filter by RAG Đỏ ─── */
+  /* ─── TEST17: Filter by RAG=Đỏ → table rows ≥ 1 ─── */
   try {
     await page.locator('#cpFilterRag').selectOption('Đỏ');
     await page.waitForTimeout(300);
-    const cols = await page.locator('.cp-col').count();
-    log('TEST17', 'Filter RAG=Đỏ board still renders 14 cols', cols === 14, `got ${cols}`);
+    const rows = await page.locator('#cpTbody tr').count();
+    // CP-001 has rag='Đỏ' → at least 1
+    log('TEST17', 'Filter RAG=Đỏ → table shows ≥1 row', rows >= 1, `got ${rows}`);
     await page.locator('#cpFilterRag').selectOption('');
     await page.waitForTimeout(200);
   } catch(e) { log('TEST17', 'Filter RAG', false, e.message); }

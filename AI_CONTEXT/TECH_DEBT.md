@@ -145,7 +145,9 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 **Partial resolution 2026-06-15 (Session 19)**: `verify_case_pipeline.mjs` — **20/20 PASS** (new). Covers nav, 14-col Kanban, summary cards, filter, CRUD modal, ID gen, validation, BLD Queue case integration.
 
-**Committed suites**: `verify_initiative_v2.mjs` (37 — ⚠️ failing, see TD-033), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (46), `verify_case_pipeline.mjs` (20) — total **131 checks**.
+**Partial resolution 2026-06-15 (Session 20)**: `verify_case_pipeline.mjs` — **22/22 PASS**. +TEST05b (kanban toggle 14 cols), +TEST08b (preset bar 4 tabs). Rewritten TEST05/07/12/13/14/16/17 từ .cp-card → #cpTbody tr để phù hợp table-primary design.
+
+**Committed suites**: `verify_initiative_v2.mjs` (37 — ⚠️ failing, see TD-033), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (46), `verify_case_pipeline.mjs` (22) — total **133 checks**.
 
 **Remaining gap**: No CI integration. No unit tests for pure functions. Import paths in test files are machine-specific (Windows vs Linux `/opt/node22/...`).
 
@@ -364,7 +366,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-15 (Session 19 — SCHEMA-01 ✅ resolved; TD-012: +case-pipeline 20/20, 131 total)
+**Last updated**: 2026-06-15 (Session 20 — TD-012: case-pipeline 22/22, 133 total; TD-025 partially addressed UX-wise via syncInitiativeAction)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -379,7 +381,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 5 committed suites: 37+14+14+46+20=131 (initiative_v2 failing — TD-033); no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 5 committed suites: 37+14+14+46+22=133 (initiative_v2 failing — TD-033); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ⚪ | Hardcoded default PIC | Tiny | Open |

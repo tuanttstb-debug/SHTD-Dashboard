@@ -140,27 +140,52 @@ async function writeInitiatives() {
   if (json.status !== 'ok') throw new Error(json.error || 'initiative-write lỗi');
 }
 
+/* ── Unified GAS sync (Task Manager gold standard pattern) ── */
+async function syncInitiativeAction(mutateFn) {
+  showLoading('Đang đồng bộ Initiative…');
+  document.getElementById('syncDot').className = 'status-dot syncing';
+  try {
+    if (typeof mutateFn === 'function') mutateFn();
+    if (GS_WEBAPP_URL) {
+      try {
+        await writeInitiatives();
+        document.getElementById('syncDot').className = 'status-dot connected';
+      } catch(gasErr) {
+        document.getElementById('syncDot').className = 'status-dot';
+        toast('⚠️ GAS không phản hồi — đã lưu Initiative cục bộ.', 'warning', 5000);
+        return true;
+      }
+    }
+    return true;
+  } catch(e) {
+    toast('❌ Lỗi đồng bộ Initiative: ' + e.message, 'error', 6000);
+    document.getElementById('syncDot').className = 'status-dot';
+    return false;
+  } finally {
+    hideLoading();
+  }
+}
+
 /* ── CRUD helpers ── */
 function syncInitiativeAdd(ini) {
-  db.initiatives.push(ini);
-  persist();
-  writeInitiatives().catch(e => toast('⚠️ Lưu GG Sheets lỗi: ' + e.message, 'warning', 5000));
+  syncInitiativeAction(() => {
+    db.initiatives.push(ini);
+    persist();
+  });
 }
 
 function syncInitiativeEdit(ini) {
-  const idx = db.initiatives.findIndex(x => x.id === ini.id);
-  if (idx === -1) return;
-  db.initiatives[idx] = ini;
-  persist();
-  writeInitiatives().catch(e => toast('⚠️ Lưu GG Sheets lỗi: ' + e.message, 'warning', 5000));
+  syncInitiativeAction(() => {
+    const idx = db.initiatives.findIndex(x => x.id === ini.id);
+    if (idx === -1) return;
+    db.initiatives[idx] = ini;
+    persist();
+  });
 }
 
 async function syncInitiativeDelete(id) {
-  db.initiatives = db.initiatives.filter(x => x.id !== id);
-  persist();
-  try {
-    await writeInitiatives();
-  } catch (e) {
-    toast('⚠️ Xóa GG Sheets lỗi: ' + e.message, 'warning', 5000);
-  }
+  await syncInitiativeAction(() => {
+    db.initiatives = db.initiatives.filter(x => x.id !== id);
+    persist();
+  });
 }

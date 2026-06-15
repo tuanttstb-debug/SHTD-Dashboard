@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-15 (Session 19 — Case Pipeline full implementation)
-**Context**: `origin/main` @ `c60e74f` — S19 Case Pipeline LIVE + GAS deployed. `master` không còn dùng.
+**Prepared**: 2026-06-15 (Session 20 — Case Pipeline UI redesign: Table-primary + Initiative sync standardization)
+**Context**: `origin/main` @ `c60e74f` — S19 LIVE. S20 local changes chưa push (chờ lệnh PO).
 
 ---
 
@@ -32,22 +32,31 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 - [x] PO deploy GAS: CasePipelineService.gs + Code.gs routes case-pipeline-* (2026-06-15; GS_WEBAPP_URL không đổi)
 - [x] Smoke test thêm task live: ✅ thành công
 
+## ✅ COMPLETED S20
+
+- [x] index.html: Restructure #view-case-pipeline — card wrapper, toolbar + view toggle (Table/Kanban), preset bar 4 tabs, filter bar (Task Manager pattern), filter chips, #cpTableWrap (default), #cpBoardWrap (hidden)
+- [x] case-pipeline.css: Thêm .cp-view-toggle/.cp-view-btn, .cp-stage-chip.group-*, .cp-rag-dot, .row-overdue, .text-danger-bold, .sort-icon styles
+- [x] case-pipeline.js: Full rewrite → Table-primary (paginated 20/page, sortable 10 cols), 4 preset tabs, _cpGetFiltered() unified, debounced search, filter chips, _cpInitPresetTabs() on every render
+- [x] api.js: syncCaseAction thêm syncDot.className = 'status-dot syncing' tại đầu hàm
+- [x] initiatives.js: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới
+- [x] verify_case_pipeline.mjs: 22/22 PASS (table-primary — +TEST05b kanban toggle, +TEST08b preset tabs)
+
 ---
 
-## 🔴 PRIORITY 1 — Smoke test đầy đủ Case Pipeline live
+## 🔴 PRIORITY 1 — Smoke test đầy đủ Case Pipeline live (S20 UI)
 
 | Feature | Check |
 |---|---|
-| Case Pipeline load | Mở view → board render 14 cột |
-| Case từ Sheet | readCases() lấy dữ liệu từ Case_Pipeline sheet |
-| ~~Thêm task~~ | ~~✅ smoke-test OK~~ |
-| Thêm case | Điền form → save → card xuất hiện trên board + ghi vào Sheet |
-| Sửa case | Click card → modal pre-fill → save → cập nhật trên board |
-| Xóa case | Xóa → card biến khỏi board + xóa khỏi Sheet |
+| Case Pipeline load | Mở view → Table view là default, hiển thị đúng dữ liệu từ Sheet |
+| Preset tabs | Click từng tab Đang xử lý / Cần BLĐ / Quá hạn / Tất cả → count đúng |
+| Filter bar | Lọc Stage/Team/Loại hình/RAG + text search → table update |
+| Kanban toggle | Click "Kanban" → board 14 cột; click "Danh sách" → back to table |
+| Thêm case | Điền form → save → row xuất hiện trong table + ghi vào Sheet |
+| Sửa case | Click row → modal pre-fill → save → cập nhật trên table |
+| Xóa case | Xóa → row biến khỏi table + xóa khỏi Sheet |
 | BLD Queue | Case canBLD=Y xuất hiện với badge [CASE]; approve → yKienBLD lưu vào Sheet |
 | Excel export | Xuất file CasePipeline_*.xlsx với 20 cột đúng |
-| Excel import | Import file mẫu → merge vào dbCases |
-| G+C shortcut | Chuyển sang Case Pipeline từ bất kỳ view nào |
+| Initiative CRUD | Thêm/sửa/xóa initiative → syncDot syncing→connected, showLoading ẩn đúng |
 
 ---
 

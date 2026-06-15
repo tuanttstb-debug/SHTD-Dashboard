@@ -1,10 +1,17 @@
 /* ===== CASE PIPELINE VIEW ===== */
 
+let _cpViewMode = localStorage.getItem('cp_view') || 'table';
+let _cpPreset   = 'active';
+let _cpPage     = 1;
+let _cpSort     = { key: 'id', dir: 'asc' };
+let _cpSearch   = '';
 let _cpFilterTeam  = '';
 let _cpFilterRag   = '';
 let _cpFilterLoai  = '';
 let _cpFilterStage = '';
-let _cpEditId      = null;  // null = new, string = editing existing
+let _cpEditId      = null;
+
+const CP_PAGE_SIZE = 20;
 
 /* ══════════════════════════════════════════
    MAIN RENDER
@@ -12,54 +19,198 @@ let _cpEditId      = null;  // null = new, string = editing existing
 function renderCasePipeline() {
   _cpPopulateFilters();
   _cpRenderSummary();
-  _cpRenderBoard();
+  updateCpPresetCounts();
+  _cpInitViewToggle();
+  _cpInitPresetTabs();
+  renderCpFilterChips();
+
+  const tableWrap = document.getElementById('cpTableWrap');
+  const boardWrap = document.getElementById('cpBoardWrap');
+
+  if (_cpViewMode === 'kanban') {
+    if (tableWrap) tableWrap.style.display = 'none';
+    if (boardWrap) boardWrap.style.display = '';
+    _cpRenderBoard();
+  } else {
+    if (tableWrap) tableWrap.style.display = '';
+    if (boardWrap) boardWrap.style.display = 'none';
+    _cpRenderTable();
+  }
+
   const ts = document.getElementById('cpTimestamp');
   if (ts) ts.textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
 }
 
-/* ──────────────────────────────────────────
-   FILTER helpers
-────────────────────────────────────────── */
+function _cpInitViewToggle() {
+  document.querySelectorAll('.cp-view-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === _cpViewMode);
+  });
+}
+
+function _cpInitPresetTabs() {
+  document.querySelectorAll('.cp-preset-btn').forEach(b => {
+    b.classList.toggle('active', b.id === `cp-preset-${_cpPreset}`);
+  });
+}
+
+function cpToggleView(mode) {
+  _cpViewMode = mode;
+  localStorage.setItem('cp_view', mode);
+  _cpPage = 1;
+  renderCasePipeline();
+}
+
+/* ══════════════════════════════════════════
+   PRESET
+══════════════════════════════════════════ */
+function cpSetPreset(name) {
+  _cpPreset = name;
+  _cpPage = 1;
+  document.querySelectorAll('.cp-preset-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`cp-preset-${name}`)?.classList.add('active');
+  _cpRenderSummary();
+  if (_cpViewMode === 'kanban') _cpRenderBoard();
+  else _cpRenderTable();
+}
+
+function _cpApplyPreset(cases) {
+  if (_cpPreset === 'active') {
+    return cases.filter(c => {
+      const g = CASE_STAGE_GROUP[c.stage] || 'active';
+      return g !== 'done' && g !== 'blocked';
+    });
+  }
+  if (_cpPreset === 'bld')     return cases.filter(c => c.canBLD === 'Y');
+  if (_cpPreset === 'overdue') return cases.filter(c => _cpCalcRagLabel(c) === 'Đỏ');
+  return cases;
+}
+
+function updateCpPresetCounts() {
+  const all = dbCases || [];
+  const counts = {
+    active:  all.filter(c => { const g = CASE_STAGE_GROUP[c.stage] || 'active'; return g !== 'done' && g !== 'blocked'; }).length,
+    bld:     all.filter(c => c.canBLD === 'Y').length,
+    overdue: all.filter(c => _cpCalcRagLabel(c) === 'Đỏ').length,
+    all:     all.length,
+  };
+  Object.entries(counts).forEach(([key, n]) => {
+    const el = document.getElementById(`cp-pcount-${key}`);
+    if (el) el.textContent = n > 0 ? n : '';
+  });
+}
+
+/* ══════════════════════════════════════════
+   FILTER + SEARCH (unified)
+══════════════════════════════════════════ */
+function _cpGetFiltered() {
+  let cases = _cpApplyPreset(dbCases || []);
+
+  const fSearch = (_cpSearch || '').trim().toLowerCase();
+  if (fSearch) {
+    cases = cases.filter(c =>
+      (c.id       || '').toLowerCase().includes(fSearch) ||
+      (c.caseName || '').toLowerCase().includes(fSearch) ||
+      (c.pic      || '').toLowerCase().includes(fSearch) ||
+      (c.dvkd     || '').toLowerCase().includes(fSearch)
+    );
+  }
+
+  return cases.filter(c => {
+    if (_cpFilterTeam  && c.team     !== _cpFilterTeam)  return false;
+    if (_cpFilterLoai  && c.loaiHinh !== _cpFilterLoai)  return false;
+    if (_cpFilterStage && c.stage    !== _cpFilterStage) return false;
+    if (_cpFilterRag && _cpCalcRagLabel(c) !== _cpFilterRag) return false;
+    return true;
+  });
+}
+
+/* ── keep _cpApplyFilters for legacy board path ── */
 function _cpApplyFilters(cases) {
   return cases.filter(c => {
     if (_cpFilterTeam  && c.team     !== _cpFilterTeam)  return false;
     if (_cpFilterLoai  && c.loaiHinh !== _cpFilterLoai)  return false;
     if (_cpFilterStage && c.stage    !== _cpFilterStage) return false;
-    if (_cpFilterRag) {
-      const ragActual = _cpCalcRagLabel(c);
-      if (ragActual !== _cpFilterRag) return false;
-    }
+    if (_cpFilterRag && _cpCalcRagLabel(c) !== _cpFilterRag) return false;
     return true;
   });
 }
 
-function _cpPopulateFilters() {
-  const cases = dbCases || [];
+function cpFilterChange() {
+  _cpFilterTeam  = (document.getElementById('cpFilterTeam')  || {}).value || '';
+  _cpFilterLoai  = (document.getElementById('cpFilterLoai')  || {}).value || '';
+  _cpFilterStage = (document.getElementById('cpFilterStage') || {}).value || '';
+  _cpFilterRag   = (document.getElementById('cpFilterRag')   || {}).value || '';
+  _cpSearch      = (document.getElementById('cpSearch')      || {}).value || '';
+  _cpPage = 1;
+  _cpRenderSummary();
+  renderCpFilterChips();
+  if (_cpViewMode === 'kanban') _cpRenderBoard();
+  else _cpRenderTable();
+}
 
-  const teamSel  = document.getElementById('cpFilterTeam');
-  const loaiSel  = document.getElementById('cpFilterLoai');
+function cpSearchChange() {
+  _cpSearch = (document.getElementById('cpSearch') || {}).value || '';
+  _cpPage = 1;
+  clearTimeout(window._cpSearchTimer);
+  window._cpSearchTimer = setTimeout(() => {
+    _cpRenderSummary();
+    renderCpFilterChips();
+    if (_cpViewMode === 'kanban') _cpRenderBoard();
+    else _cpRenderTable();
+  }, 150);
+}
+
+function renderCpFilterChips() {
+  const labels = {
+    cpFilterStage: v => `Stage: ${v}`,
+    cpFilterTeam:  v => `Team: ${v}`,
+    cpFilterLoai:  v => `Loại: ${v}`,
+    cpFilterRag:   v => `RAG: ${v}`,
+    cpSearch:      v => `Tìm: "${v}"`,
+  };
+  const chips = [];
+  Object.entries(labels).forEach(([id, label]) => {
+    const v = (document.getElementById(id) || {}).value;
+    if (v) chips.push(`<span class="chip">${label(v)}<span class="chip-x" onclick="clearCpFilter('${id}')">✕</span></span>`);
+  });
+  const el = document.getElementById('cpFilterChips');
+  if (el) el.innerHTML = chips.join('');
+}
+
+function clearCpFilter(id) {
+  const el = document.getElementById(id);
+  if (el) el.value = '';
+  cpFilterChange();
+}
+
+function clearCpFilters() {
+  ['cpFilterTeam','cpFilterLoai','cpFilterStage','cpFilterRag','cpSearch'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  cpFilterChange();
+}
+
+/* ──────────────────────────────────────────
+   FILTER POPULATE
+────────────────────────────────────────── */
+function _cpPopulateFilters() {
+  const cases   = dbCases || [];
+  const teamSel = document.getElementById('cpFilterTeam');
   const stageSel = document.getElementById('cpFilterStage');
 
   if (teamSel) {
     const teams = [...new Set(cases.map(c => c.team).filter(Boolean))].sort();
     const prev  = teamSel.value;
-    teamSel.innerHTML = '<option value="">Tất cả đội</option>' +
+    teamSel.innerHTML = '<option value="">Tất cả</option>' +
       teams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
     teamSel.value = teams.includes(prev) ? prev : '';
     _cpFilterTeam = teamSel.value;
   }
 
-  if (loaiSel) {
-    const prev = loaiSel.value;
-    loaiSel.innerHTML = '<option value="">Tất cả loại</option>' +
-      CASE_LOAI_HINH.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
-    loaiSel.value = CASE_LOAI_HINH.includes(prev) ? prev : '';
-    _cpFilterLoai = loaiSel.value;
-  }
-
   if (stageSel) {
     const prev = stageSel.value;
-    stageSel.innerHTML = '<option value="">Tất cả stage</option>' +
+    stageSel.innerHTML = '<option value="">Tất cả</option>' +
       CASE_STAGES.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
     stageSel.value = CASE_STAGES.includes(prev) ? prev : '';
     _cpFilterStage = stageSel.value;
@@ -67,7 +218,7 @@ function _cpPopulateFilters() {
 }
 
 /* ──────────────────────────────────────────
-   RAG computed label (Vietnamese)
+   RAG helpers
 ────────────────────────────────────────── */
 function _cpCalcRagLabel(c) {
   if (c.rag) return c.rag;
@@ -76,60 +227,144 @@ function _cpCalcRagLabel(c) {
 
 function _cpRagClass(rag) {
   if (!rag) return 'none';
-  const m = { 'Đỏ': 'red', 'Vàng': 'amber', 'Xanh': 'green' };
-  return m[rag] || 'none';
+  return { 'Đỏ': 'red', 'Vàng': 'amber', 'Xanh': 'green' }[rag] || 'none';
 }
 
-/* ──────────────────────────────────────────
+/* ══════════════════════════════════════════
    SUMMARY CARDS
-────────────────────────────────────────── */
+══════════════════════════════════════════ */
 function _cpRenderSummary() {
-  const cases    = dbCases || [];
-  const filtered = _cpApplyFilters(cases);
-
+  const filtered    = _cpGetFiltered();
   const totalVal    = filtered.reduce((s, c) => s + (c.giaTriTy || 0), 0);
   const overdueList = filtered.filter(c => {
     const d = parseVNDate(c.deadline);
     if (!d) return false;
     const today = new Date(); today.setHours(0,0,0,0);
-    const done  = ['Đã phê duyệt','Đang triển khai'];
-    return d < today && !done.includes(c.stage);
+    return d < today && !['Đã phê duyệt','Đang triển khai','Chờ giải ngân/triển khai'].includes(c.stage);
   });
   const bldList = filtered.filter(c => c.canBLD === 'Y');
-
-  const el = id => document.getElementById(id);
-
   const fmt = n => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
-
-  if (el('cpStatTotal'))    el('cpStatTotal').textContent   = filtered.length;
-  if (el('cpStatValue'))    el('cpStatValue').textContent   = fmt(totalVal) + ' tỷ';
-  if (el('cpStatOverdue'))  el('cpStatOverdue').textContent = overdueList.length;
-  if (el('cpStatBld'))      el('cpStatBld').textContent     = bldList.length;
+  const el  = id => document.getElementById(id);
+  if (el('cpStatTotal'))   el('cpStatTotal').textContent   = filtered.length;
+  if (el('cpStatValue'))   el('cpStatValue').textContent   = fmt(totalVal) + ' tỷ';
+  if (el('cpStatOverdue')) el('cpStatOverdue').textContent = overdueList.length;
+  if (el('cpStatBld'))     el('cpStatBld').textContent     = bldList.length;
 }
 
-/* ──────────────────────────────────────────
+/* ══════════════════════════════════════════
+   TABLE VIEW
+══════════════════════════════════════════ */
+function _cpRenderTable() {
+  const filtered = _cpGetFiltered().sort((a, b) => {
+    let va = a[_cpSort.key] ?? '', vb = b[_cpSort.key] ?? '';
+    if (_cpSort.key === 'giaTriTy') { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+    if (va < vb) return _cpSort.dir === 'asc' ? -1 : 1;
+    if (va > vb) return _cpSort.dir === 'asc' ?  1 : -1;
+    return 0;
+  });
+
+  const total      = filtered.length;
+  const totalPages = Math.ceil(total / CP_PAGE_SIZE) || 1;
+  if (_cpPage > totalPages) _cpPage = totalPages;
+  const paged = filtered.slice((_cpPage - 1) * CP_PAGE_SIZE, _cpPage * CP_PAGE_SIZE);
+
+  const countEl = document.getElementById('cpCountInfo');
+  if (countEl) {
+    const start = (_cpPage - 1) * CP_PAGE_SIZE + 1;
+    const end   = Math.min(_cpPage * CP_PAGE_SIZE, total);
+    countEl.textContent = total > 0
+      ? `Hiển thị ${start}–${end} / ${total} case`
+      : 'Không có case nào';
+  }
+
+  const tbody = document.getElementById('cpTbody');
+  if (!tbody) return;
+
+  if (!paged.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-3);">
+      <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+      Không có case nào. Thử thay đổi bộ lọc hoặc thêm mới.
+    </td></tr>`;
+  } else {
+    tbody.innerHTML = paged.map(c => {
+      const rag = _cpCalcRagLabel(c);
+      const rc  = _cpRagClass(rag);
+      const val = c.giaTriTy ? Number(c.giaTriTy).toLocaleString('vi-VN') + ' tỷ' : '–';
+      const grp = CASE_STAGE_GROUP[c.stage] || 'active';
+
+      let complexChip = '';
+      if (c.complexity) {
+        const cxCls = { 'Cao': 'cao', 'Trung bình': 'tb', 'Thấp': 'thap' }[c.complexity] || 'tb';
+        complexChip = `<span class="cp-chip cp-chip-complex-${cxCls}" style="font-size:10px;">${esc(c.complexity)}</span>`;
+      }
+      const bldChip = c.canBLD === 'Y'
+        ? `<span class="cp-chip cp-chip-bld" style="font-size:10px;">BLĐ</span>` : '';
+
+      return `<tr onclick="cpOpenDetail('${esc(c.id)}')" class="${rc === 'red' ? 'row-overdue' : ''}">
+        <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;font-size:12px;">${esc(c.id || '–')}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.caseName || '')}"><strong>${esc(c.caseName || '–')}</strong></td>
+        <td><span class="cp-stage-chip group-${grp}">${esc(c.stage || '–')}</span></td>
+        <td>${esc(c.team || '–')}</td>
+        <td style="white-space:nowrap;">${esc(c.pic || '–')}</td>
+        <td style="font-weight:700;color:var(--primary);font-family:var(--mono);white-space:nowrap;">${val}</td>
+        <td ${rc === 'red' ? 'class="text-danger-bold"' : ''} style="white-space:nowrap;">${fmtDate(c.deadline) || '–'}</td>
+        <td style="text-align:center;"><span class="cp-rag-dot ${rc}"></span></td>
+        <td><span class="cp-chip cp-chip-loai" style="font-size:10px;">${esc(c.loaiHinh || '–')}</span></td>
+        <td style="white-space:nowrap;">${complexChip}${bldChip ? ' ' + bldChip : ''}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  _cpRenderTablePagination(totalPages);
+}
+
+function _cpRenderTablePagination(totalPages) {
+  const el = document.getElementById('cpPagination');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="cpGoPage(${_cpPage - 1})" ${_cpPage === 1 ? 'disabled' : ''}>‹</button>`;
+  for (let p = 1; p <= totalPages; p++) {
+    if (totalPages > 7 && p > 2 && p < totalPages - 1 && Math.abs(p - _cpPage) > 1) {
+      if (p === 3 || p === totalPages - 2) html += `<span class="page-info">…</span>`;
+      continue;
+    }
+    html += `<button class="page-btn ${p === _cpPage ? 'active' : ''}" onclick="cpGoPage(${p})">${p}</button>`;
+  }
+  html += `<button class="page-btn" onclick="cpGoPage(${_cpPage + 1})" ${_cpPage === totalPages ? 'disabled' : ''}>›</button>`;
+  el.innerHTML = html;
+}
+
+function cpGoPage(p) { _cpPage = p; _cpRenderTable(); }
+
+function cpSortBy(key) {
+  if (_cpSort.key === key) _cpSort.dir = _cpSort.dir === 'asc' ? 'desc' : 'asc';
+  else { _cpSort.key = key; _cpSort.dir = 'asc'; }
+  _cpPage = 1;
+  _cpRenderTable();
+}
+
+/* ══════════════════════════════════════════
    KANBAN BOARD
-────────────────────────────────────────── */
+══════════════════════════════════════════ */
 function _cpRenderBoard() {
-  const board    = document.getElementById('cpBoard');
+  const board = document.getElementById('cpBoard');
   if (!board) return;
 
-  const filtered = _cpApplyFilters(dbCases || []);
+  const filtered = _cpGetFiltered();
   const byStage  = {};
   CASE_STAGES.forEach(s => { byStage[s] = []; });
   filtered.forEach(c => {
     const s = c.stage || '';
     if (byStage[s] !== undefined) byStage[s].push(c);
-    else { byStage[s] = [c]; }
+    else byStage[s] = [c];
   });
 
   board.innerHTML = CASE_STAGES.map(stage => {
-    const items  = byStage[stage] || [];
-    const group  = CASE_STAGE_GROUP[stage] || 'active';
-    const cards  = items.length
+    const items = byStage[stage] || [];
+    const group = CASE_STAGE_GROUP[stage] || 'active';
+    const cards = items.length
       ? items.map(c => _cpCardHtml(c)).join('')
       : `<div class="cp-col-empty">Không có case</div>`;
-
     return `
       <div class="cp-col">
         <div class="cp-col-header group-${group}">
@@ -142,9 +377,9 @@ function _cpRenderBoard() {
 }
 
 function _cpCardHtml(c) {
-  const rag    = _cpCalcRagLabel(c);
-  const rc     = _cpRagClass(rag);
-  const val    = c.giaTriTy ? `${Number(c.giaTriTy).toLocaleString('vi-VN')} tỷ` : '–';
+  const rag = _cpCalcRagLabel(c);
+  const rc  = _cpRagClass(rag);
+  const val = c.giaTriTy ? `${Number(c.giaTriTy).toLocaleString('vi-VN')} tỷ` : '–';
 
   let chips = `<span class="cp-chip cp-chip-loai">${esc(c.loaiHinh || '–')}</span>`;
   if (c.complexity) {
@@ -168,18 +403,6 @@ function _cpCardHtml(c) {
     </div>`;
 }
 
-/* ──────────────────────────────────────────
-   FILTER EVENTS (called from HTML onchange)
-────────────────────────────────────────── */
-function cpFilterChange() {
-  _cpFilterTeam  = (document.getElementById('cpFilterTeam')  || {}).value || '';
-  _cpFilterLoai  = (document.getElementById('cpFilterLoai')  || {}).value || '';
-  _cpFilterStage = (document.getElementById('cpFilterStage') || {}).value || '';
-  _cpFilterRag   = (document.getElementById('cpFilterRag')   || {}).value || '';
-  _cpRenderSummary();
-  _cpRenderBoard();
-}
-
 /* ══════════════════════════════════════════
    CRUD MODAL
 ══════════════════════════════════════════ */
@@ -194,8 +417,7 @@ function openCaseModal(id) {
     if (el) el.value = val != null ? val : '';
   };
 
-  const newId = c ? c.id : genCaseId();
-  fv('cpfId',         c ? c.id          : newId);
+  fv('cpfId',         c ? c.id          : genCaseId());
   fv('cpfTuanBC',     c ? c.tuanBC      : _cpCurrentWeek());
   fv('cpfTeam',       c ? c.team        : '');
   fv('cpfPic',        c ? c.pic         : '');
@@ -288,16 +510,8 @@ async function deleteCaseItem() {
   });
 }
 
-/* ──────────────────────────────────────────
-   DETAIL / Quick-open
-────────────────────────────────────────── */
-function cpOpenDetail(id) {
-  openCaseModal(id);
-}
+function cpOpenDetail(id) { openCaseModal(id); }
 
-/* ──────────────────────────────────────────
-   HELPERS
-────────────────────────────────────────── */
 function _cpCurrentWeek() {
   const now  = new Date();
   const jan1 = new Date(now.getFullYear(), 0, 1);
@@ -309,13 +523,11 @@ function _cpCurrentWeek() {
    EXCEL EXPORT
 ══════════════════════════════════════════ */
 function exportCasesToExcel() {
-  const cases = _cpApplyFilters(dbCases || []);
+  const cases = _cpGetFiltered();
   if (!cases.length) { toast('Không có case nào để xuất.', 'warning'); return; }
 
   const rows = [CASE_COLS, ...cases.map(caseToRow)];
   const ws   = XLSX.utils.aoa_to_sheet(rows);
-
-  // Column widths
   ws['!cols'] = [
     {wch:10},{wch:14},{wch:12},{wch:12},{wch:10},{wch:30},
     {wch:12},{wch:16},{wch:35},{wch:12},
@@ -323,7 +535,6 @@ function exportCasesToExcel() {
     {wch:12},{wch:12},{wch:8},
     {wch:10},{wch:18},{wch:25},{wch:30},
   ];
-
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Case_Pipeline');
   XLSX.writeFile(wb, `CasePipeline_${new Date().toISOString().slice(0,10)}.xlsx`);
@@ -338,15 +549,14 @@ function importCasesFromExcel(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb     = XLSX.read(e.target.result, { type: 'binary', cellDates: false });
-      const ws     = wb.Sheets[wb.SheetNames[0]];
-      const raw    = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const wb  = XLSX.read(e.target.result, { type: 'binary', cellDates: false });
+      const ws  = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       if (!raw || raw.length < 2) { toast('File không có dữ liệu.', 'warning'); return; }
 
       const header   = raw[0].map(h => String(h).trim());
       const imported = [];
       const existing = new Set((dbCases || []).map(c => c.id));
-
       let newCount = 0, updateCount = 0, errCount = 0;
 
       for (let i = 1; i < raw.length; i++) {
@@ -357,8 +567,7 @@ function importCasesFromExcel(file) {
           if (!c.caseName && !c.id) { errCount++; continue; }
           if (!c.id) c.id = genCaseId() + '_' + i;
           if (!CASE_STAGES.includes(c.stage)) c.stage = CASE_STAGES[0];
-          if (existing.has(c.id)) { updateCount++; }
-          else { newCount++; }
+          if (existing.has(c.id)) updateCount++; else newCount++;
           imported.push(c);
         } catch(_) { errCount++; }
       }

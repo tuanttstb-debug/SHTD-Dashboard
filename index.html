@@ -445,38 +445,8 @@
     <!-- ===== CASE PIPELINE ===== -->
     <section class="view-section" id="view-case-pipeline" style="display:none;">
 
-      <!-- Toolbar -->
-      <div class="cp-toolbar">
-        <div class="cp-toolbar-left">
-          <span class="cp-timestamp" id="cpTimestamp"></span>
-        </div>
-        <div class="cp-toolbar-right">
-          <span class="cp-filter-label"><i class="fa-solid fa-filter" style="margin-right:4px;"></i>Lọc:</span>
-          <select id="cpFilterTeam" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:130px;" onchange="cpFilterChange()">
-            <option value="">Tất cả đội</option>
-          </select>
-          <select id="cpFilterLoai" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:120px;" onchange="cpFilterChange()">
-            <option value="">Tất cả loại</option>
-          </select>
-          <select id="cpFilterStage" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="cpFilterChange()">
-            <option value="">Tất cả stage</option>
-          </select>
-          <select id="cpFilterRag" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:110px;" onchange="cpFilterChange()">
-            <option value="">Tất cả RAG</option>
-            <option value="Đỏ">🔴 Đỏ</option>
-            <option value="Vàng">🟡 Vàng</option>
-            <option value="Xanh">🟢 Xanh</option>
-          </select>
-          <button class="btn btn-outline btn-sm" onclick="renderCasePipeline()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
-          <input type="file" id="cpImportFile" accept=".xlsx,.xls" style="display:none" onchange="importCasesFromExcel(this.files[0]);this.value=''">
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('cpImportFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
-          <button class="btn btn-outline btn-sm" onclick="exportCasesToExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
-          <button class="btn btn-primary btn-sm" onclick="openCaseModal(null)"><i class="fa-solid fa-plus"></i> Thêm Case</button>
-        </div>
-      </div>
-
       <!-- Summary cards -->
-      <div class="cp-summary-grid">
+      <div class="cp-summary-grid" style="margin-bottom:16px;">
         <div class="cp-stat-card">
           <div class="cp-stat-icon" style="background:var(--primary-xlight);color:var(--primary);">
             <i class="fa-solid fa-briefcase"></i>
@@ -515,10 +485,125 @@
         </div>
       </div>
 
-      <!-- Kanban board -->
-      <div class="cp-board-wrap">
-        <div class="cp-board" id="cpBoard"></div>
-      </div>
+      <div class="card">
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div style="font-size:17px;font-weight:800;">Case Pipeline – Cơ hội kinh doanh</div>
+            <span class="cp-timestamp" id="cpTimestamp"></span>
+          </div>
+          <div class="toolbar-right">
+            <div class="cp-view-toggle">
+              <button class="cp-view-btn active" data-view="table" onclick="cpToggleView('table')" title="Bảng danh sách"><i class="fa-solid fa-table-list"></i> Danh sách</button>
+              <button class="cp-view-btn" data-view="kanban" onclick="cpToggleView('kanban')" title="Kanban board"><i class="fa-solid fa-table-columns"></i> Kanban</button>
+            </div>
+            <input type="file" id="cpImportFile" accept=".xlsx,.xls" style="display:none" onchange="importCasesFromExcel(this.files[0]);this.value=''">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('cpImportFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
+            <button class="btn btn-outline btn-sm" onclick="exportCasesToExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
+            <button class="btn btn-primary btn-sm" onclick="openCaseModal(null)"><i class="fa-solid fa-plus"></i> Thêm Case</button>
+          </div>
+        </div>
+
+        <!-- Preset tabs -->
+        <div class="preset-bar">
+          <button class="preset-btn cp-preset-btn active" id="cp-preset-active" onclick="cpSetPreset('active')">
+            <span class="preset-icon">🔵</span> Đang xử lý
+            <span class="preset-count" id="cp-pcount-active"></span>
+          </button>
+          <button class="preset-btn cp-preset-btn" id="cp-preset-bld" onclick="cpSetPreset('bld')">
+            <span class="preset-icon">⚡</span> Cần BLĐ
+            <span class="preset-count preset-count-danger" id="cp-pcount-bld"></span>
+          </button>
+          <button class="preset-btn cp-preset-btn" id="cp-preset-overdue" onclick="cpSetPreset('overdue')">
+            <span class="preset-icon">⚠</span> Quá hạn
+            <span class="preset-count preset-count-danger" id="cp-pcount-overdue"></span>
+          </button>
+          <button class="preset-btn cp-preset-btn" id="cp-preset-all" onclick="cpSetPreset('all')">
+            <span class="preset-icon">📋</span> Tất cả
+            <span class="preset-count" id="cp-pcount-all"></span>
+          </button>
+        </div>
+
+        <!-- Filter bar (Task Manager pattern) -->
+        <div class="filter-bar">
+          <div class="filter-group" style="min-width:120px;max-width:200px;">
+            <div class="filter-label">Tìm case</div>
+            <input type="text" id="cpSearch" class="form-control" oninput="cpSearchChange()" placeholder="ID / tên / PIC…" style="font-size:12px;padding:7px 10px;">
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Stage</div>
+            <select id="cpFilterStage" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Team</div>
+            <select id="cpFilterTeam" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Loại hình</div>
+            <select id="cpFilterLoai" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option>Món</option><option>Dự án</option><option>HMTD</option><option>Rà soát</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">RAG</div>
+            <select id="cpFilterRag" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option value="Đỏ">🔴 Đỏ</option>
+              <option value="Vàng">🟡 Vàng</option>
+              <option value="Xanh">🟢 Xanh</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn btn-ghost btn-sm" onclick="clearCpFilters()" title="Xóa bộ lọc"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+          </div>
+        </div>
+        <div class="filter-chips" id="cpFilterChips"></div>
+
+        <!-- Table view (default) -->
+        <div id="cpTableWrap">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:12px;color:var(--text-3);" id="cpCountInfo"></span>
+            <button class="btn btn-ghost btn-sm" onclick="renderCasePipeline()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+          </div>
+          <div class="table-wrap">
+            <table id="cpTable">
+              <thead>
+                <tr>
+                  <th onclick="cpSortBy('id')" style="width:80px;">ID <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('caseName')">Khách hàng / Case <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('stage')">Stage <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('team')" style="width:80px;">Team <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('pic')" style="width:110px;">PIC <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('giaTriTy')" style="width:100px;">Giá trị <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('deadline')" style="width:100px;">Deadline <span class="sort-icon">↕</span></th>
+                  <th style="width:60px;">RAG</th>
+                  <th onclick="cpSortBy('loaiHinh')" style="width:100px;">Loại hình <span class="sort-icon">↕</span></th>
+                  <th style="width:130px;">Phức tạp / BLĐ</th>
+                </tr>
+              </thead>
+              <tbody id="cpTbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="cpPagination"></div>
+        </div>
+
+        <!-- Kanban board (toggled) -->
+        <div id="cpBoardWrap" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:8px;">
+            <button class="btn btn-ghost btn-sm" onclick="renderCasePipeline()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+          </div>
+          <div class="cp-board-wrap">
+            <div class="cp-board" id="cpBoard"></div>
+          </div>
+        </div>
+
+      </div><!-- /.card -->
 
     </section>
 
