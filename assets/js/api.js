@@ -215,6 +215,16 @@ async function readFromHandle() {
   return true;
 }
 
+// Local-only mutation: update cache + re-render, no GAS write.
+// Used for individual Task CRUD and bulk Task operations.
+// Only Excel import (handleImport) goes through syncAction to write GAS.
+function localAction(mutateFn) {
+  if (typeof mutateFn === 'function') mutateFn();
+  persist();
+  renderAll();
+  return true;
+}
+
 async function writeToHandle() {
   if (!GS_WEBAPP_URL) {
     throw new Error('Chưa cấu hình GS_WEBAPP_URL. Xem hướng dẫn triển khai Apps Script.');
