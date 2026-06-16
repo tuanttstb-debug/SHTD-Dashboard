@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-16 (Session 23 — Filter cascade, Import RBAC, Modal grid fix)
+**As of**: 2026-06-16 (Session 23b — Task local-only write refactor)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `41f4018` — PR #27 merge — tất cả S23 LIVE (filter cascade + RBAC + modal fix)
+**Remote HEAD (main)**: `65388ae` — S23b Task CRUD local-only write (no GAS); only Excel import writes GAS
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -43,8 +43,11 @@
 | `assets/js/views/tasks.js` | ~400 | ✅ S23: +_populateFilterPic(team), +onFilterTeamChange(); cascades PIC filter từ Team filter |
 | `assets/js/views/case-pipeline.js` | ~680 | ✅ S23: +_cpSyncFilterPic(), +cpFilterTeamChange(), +_cpFilterPic/_cpFilterDvkd state, DVKD column, importCasesFromExcel canImport() guard; S21: +openCaseModal helpers |
 | `assets/js/views/initiative-tracker.js` | ~365 | ✅ S22b: repair milestone-to-parent linking; S21: initFAcc input→select |
-| `assets/js/api.js` | ~350 | ✅ S21: +_appUsers[], loadAppUsers(), getAppTeams(), getUsersByTeam(), _populateTeamSelect(), _populateUserSelect() — User_Master driven dropdowns with offline fallback |
-| `assets/js/app.js` | ~330 | ✅ S23: handleImport() canImport() guard; S21: +loadAppUsers() non-blocking |
+| `assets/js/api.js` | ~365 | ✅ S23b: +localAction() — local-only task mutation (no GAS); S21: +_appUsers[], loadAppUsers(), helpers |
+| `assets/js/crud.js` | ~420 | ✅ S23b: saveTask()/deleteTask() → localAction() (no GAS); S21: User_Master dropdowns |
+| `assets/js/bulk.js` | ~42 | ✅ S23b: bulkSetRag/State/Delete → localAction(); fixed count-before-clear bug |
+| `assets/js/views/bld-queue.js` | ~390 | ✅ S23b: task BLD approval → localAction(); Case BLD still syncCaseAction |
+| `assets/js/app.js` | ~330 | ✅ S23: handleImport() canImport() guard + retains syncAction (sole GAS write path for tasks) |
 | `assets/js/initiatives.js` | ~170 | ✅ S20: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~325 | ✅ S21: +loadAppUsers() non-blocking on startup (after autoConnectDB) |
@@ -72,7 +75,7 @@
 | **Executive Summary** | ✅ | S15 |
 | Dashboard KPIs | ✅ | |
 | Task list + filters + presets | ✅ | |
-| Task CRUD | ✅ | |
+| Task CRUD (local-only write) | ✅ | S23b: Add/Edit/Delete/Bulk → localStorage only. GAS write chỉ qua Excel import. |
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |

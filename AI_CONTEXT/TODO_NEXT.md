@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-16 (Session 23 — Filter cascade, Import RBAC, Modal grid fix)
-**Context**: `origin/main` @ `dfac565`; `origin/master` @ `6ad6c32` (modal fix pending PO merge).
+**Prepared**: 2026-06-16 (Session 23b — Task local-only write refactor)
+**Context**: `origin/main` @ `65388ae` — Task CRUD local-only; Excel import is sole GAS write path for tasks.
 
 ---
 
@@ -67,27 +67,46 @@ master →  ĐÃ XÓA sau PR #27 (S23)
 - [x] Case Pipeline filter: PIC cascade từ Team — `_cpSyncFilterPic()`, `cpFilterTeamChange()` (`b3262eb`)
 - [x] Case Pipeline: DVKD column trong bảng + DVKD filter dropdown (`b3262eb`)
 - [x] Import RBAC: `lead-only` CSS class + `canImport()` JS guard — restrict import tới Admin+Teamlead (`dfac565`)
-- [x] Modal grid fix: `minmax(0,1fr)` trong forms.css + case-pipeline.css + initiative.css (`6ad6c32` — master only, pending merge)
+- [x] Modal grid fix: `minmax(0,1fr)` trong forms.css + case-pipeline.css + initiative.css (`6ad6c32`)
 - [x] Tests: verify_filter_cascade.mjs 23/23, verify_import_rbac.mjs 15/15, verify_modal_layout.mjs 9/9
+- [x] ai_context handover S23 (`11c5770`)
+
+## ✅ COMPLETED S23b
+
+- [x] refactor(sync): Task CRUD/bulk/BLD-approval → `localAction()` (local only, no GAS write) (`65388ae`)
+  - `api.js`: +`localAction()` function
+  - `crud.js`: saveTask(), deleteTask() use localAction
+  - `bulk.js`: bulkSetRag(), bulkSetState(), bulkDelete() use localAction; fixed count-before-clear bug
+  - `bld-queue.js`: task BLD approval path uses localAction; Case BLD still syncCaseAction (unchanged)
+  - Only `handleImport()` in app.js retains `syncAction()` — sole GAS write path for tasks
 
 ---
 
-## 🔴 PRIORITY 1 — Smoke test live: S23 features + User_Master dropdowns + Case Pipeline
+## 🔴 PRIORITY 0 — UX: Thông báo user về workflow mới (Task local-only)
+
+Task CRUD giờ chỉ lưu localStorage. User cần biết để không bị mất dữ liệu:
+
+**Cân nhắc thêm:**
+- Toast khi save/delete task: "Đã lưu cục bộ. Dùng Export → Import để đồng bộ lên Google Sheets."
+- Banner trong Task view: "⚠️ Thay đổi task chỉ lưu trên thiết bị này. Export Excel thường xuyên."
+- Hoặc auto-export trigger sau mỗi bulk import thành công
+
+---
+
+## 🔴 PRIORITY 1 — Smoke test live: S23 + S23b features
 
 | Feature | Check |
 |---|---|
+| **Task save — local only** | Edit task → save → reload page → task vẫn trong localStorage; Sheet KHÔNG cập nhật |
+| **Task import → GAS** | Import Excel → confirm → Sheet cập nhật (syncAction chạy) |
 | **Task filter — PIC cascade** | Chọn Team trong filter bar → filterPic dropdown update đúng users |
-| **Case filter — PIC cascade** | Chọn Team → cpFilterPic update; DVKD column hiển thị trong bảng; filter DVKD hoạt động |
-| **Import RBAC** | Login User → Import button ẩn; login Teamlead/Admin → visible; JS guard block khi gọi trực tiếp |
+| **Case filter — PIC cascade** | Chọn Team → cpFilterPic update; DVKD column hiển thị; filter DVKD hoạt động |
+| **Import RBAC** | Login User → Import button ẩn; login Teamlead/Admin → visible |
 | **Modal layout** | Mở Edit modal Task/Case/Initiative → 2 cột đều nhau, không bị squeeze |
-| **Pre-fill Add modal** | Mở Thêm Task/Case/Initiative → Team và PIC pre-fill từ logged-in user |
-| **Task modal — Team dropdown** | Mở Thêm/Sửa task → fTeam có options từ User_Master (không rỗng) |
-| **Task modal — PIC cascade** | Chọn team → fPicAcc/fPicRes lọc đúng users của team đó |
-| **Case modal — Team+PIC** | Mở Thêm/Sửa case → cpfTeam/cpfPic hoạt động giống task modal |
+| **Task BLD approval** | BLD approve task → yKienBLD cập nhật local; Sheet KHÔNG cập nhật ngay |
+| **Case BLD approval** | BLD approve case → yKienBLD lưu vào Sheet ngay (syncCaseAction) |
 | Case Pipeline load | Mở view → Table view là default, hiển thị đúng dữ liệu từ Sheet |
-| Preset tabs | Click từng tab Đang xử lý / Cần BLĐ / Quá hạn / Tất cả → count đúng |
 | Initiative CRUD | Thêm/sửa/xóa → syncDot syncing→connected, showLoading ẩn đúng |
-| BLD Queue | Case canBLD=Y xuất hiện với badge [CASE]; approve → yKienBLD lưu vào Sheet |
 
 ---
 

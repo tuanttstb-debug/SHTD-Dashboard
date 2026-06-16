@@ -1,12 +1,12 @@
 # SESSION HANDOVER
-**Date**: 2026-06-16 (Session 23 — Filter cascade, Import RBAC, Modal grid fix)
+**Date**: 2026-06-16 (Session 23b — Task local-only write refactor)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed S20**: `6bf7a75` — Case Pipeline UI redesign (Table-primary) + Initiative sync standardization
 **Pushed S21**: `47b9316` — Team/PIC User_Master integration
 **Pushed S22**: `2a65710` — User Management search/filter/sort/pagination (TD-030)
-**Pushed S23 (→ main via PR #27)**: `b3262eb` (filter cascade) → `dfac565` (RBAC) → `6ad6c32` (modal fix)
-**origin/main HEAD**: `41f4018` ✅ (PR #27 merge — tất cả S23 commits live)
+**Pushed S23 (→ main via PR #27)**: `b3262eb` → `dfac565` → `6ad6c32` (filter cascade + RBAC + modal fix)
+**Pushed S23b**: `11c5770` (ai_context handover) → `65388ae` (task local-only write refactor)
+**origin/main HEAD**: `65388ae` ✅
 
 ---
 
@@ -173,6 +173,46 @@ Test: verify_modal_layout.mjs — 9/9 PASS (diff=0.0px trên cả 3 modal)
 
 ---
 
+## Tasks Completed (S23b — commit `65388ae`)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S23b-T1 | Refactor: Task CRUD/bulk ops write local only; only Excel import writes GAS | `api.js`, `crud.js`, `bulk.js`, `bld-queue.js` | ✅ on main |
+
+### Architecture: Task Write Isolation (S23b)
+
+```
+TRƯỚC:
+  saveTask() / deleteTask() / bulkSet*() / bulkDelete() / task BLD approval
+    → syncAction() → READ từ GAS → MERGE → WRITE lên GAS
+
+SAU:
+  saveTask() / deleteTask() / bulkSet*() / bulkDelete() / task BLD approval
+    → localAction() → persist(localStorage) → renderAll()   ← KHÔNG ghi GAS
+
+CHỈ GHI GAS (giữ nguyên):
+  handleImport() — Excel bulk import      → syncAction() ✅
+  syncCaseAction() — Case CRUD/BLD        → GAS write ✅
+  syncInitiativeAction() — Initiative CRUD → GAS write ✅
+  writeToHandle() (initiative-tracker.js)  → GAS write ✅
+
+localAction() (api.js):
+  function localAction(mutateFn) {
+    if (typeof mutateFn === 'function') mutateFn();
+    persist();    // localStorage['shtd_v2']
+    renderAll();  // re-render toàn bộ UI
+    return true;
+  }
+```
+
+### Decision: S23b
+
+- **Task write local-only**: PO yêu cầu tách biệt hoàn toàn — task data chỉ lên GAS qua Excel import, không tự động push từ UI. Tránh cache cũ/stale ghi đè Sheet khi user edit/delete ngẫu nhiên.
+- **BLD task approval local-only**: Ý kiến BLĐ cho Task cũng local-only. Ý kiến BLĐ cho Case vẫn qua syncCaseAction (GAS write).
+- **Bug fix**: `bulkSetState()` và `bulkDelete()` lưu count TRƯỚC khi `selectedIds.clear()` — toast hiện đúng số lượng.
+
+---
+
 ## Tasks Completed (S22 — commit `2a65710`)
 
 | # | Task | File(s) | Status |
@@ -195,11 +235,12 @@ Test: verify_modal_layout.mjs — 9/9 PASS (diff=0.0px trên cả 3 modal)
 
 | Risk | Severity | Detail |
 |---|---|---|
-| Team/PIC modal fields đổi từ input→select | 🟡 MEDIUM | fPicAcc từ text input → select. Task submit đọc .value vẫn đúng. Nếu _appUsers empty (GAS down) và không có currentVal → fPicAcc select rỗng → form submit sẽ fail required validation. Cần smoke test khi GAS online. |
+| **Task edits không lên GAS (S23b)** | 🔴 HIGH | saveTask/deleteTask/bulk/BLD task giờ chỉ lưu localStorage. Nếu user clear cache / đăng xuất / đổi thiết bị mà không export Excel trước → mất toàn bộ task edits. Cần thông báo user workflow mới: edit → export → import khi cần đẩy lên Sheet. |
+| **BLD task approval không lên GAS (S23b)** | 🔴 HIGH | Ý kiến BLĐ cho Task (yKienBLD) chỉ lưu local. Sheet không cập nhật cho đến khi Excel import. Case BLD approval vẫn lên GAS bình thường. |
+| Team/PIC modal fields đổi từ input→select | 🟡 MEDIUM | fPicAcc từ text input → select. Nếu _appUsers empty (GAS down) và không có currentVal → fPicAcc select rỗng → form submit fail. Cần smoke test khi GAS online. |
 | Initiative sync flow changed (S20) | 🟡 MEDIUM | syncInitiativeAdd/Edit/Delete pattern đổi. Cần smoke test initiative CRUD trên live. |
 | AI Chat chưa smoke-test live | 🟡 MEDIUM | AiService.gs + GEMINI_API_KEY chưa xác nhận từ S12. |
-| Pre-fill Team/PIC từ logged-in user (S22b) | 🟡 MEDIUM | Nếu logged-in user team không trong TEAM_LIST hoặc không match _appUsers, modal có thể mở với giá trị rỗng. |
-| DVKD column colspan (S23-T3) | 🟡 LOW | Empty state colspan trong Case Pipeline table tăng từ 10→11. Nếu có test nào check colspan cứng, cần cập nhật. |
+| DVKD column colspan (S23-T3) | ⚪ LOW | Empty state colspan tăng 10→11. Nếu có test check colspan cứng, cần cập nhật. |
 
 ---
 
@@ -220,8 +261,13 @@ node verify_modal_layout.mjs     # 9/9 PASS (NEW S23)
 
 ## Next Steps
 
-1. **Smoke test live — Task filter**: Chọn Team → filterPic update đúng users.
-3. **Smoke test live — Case Pipeline filter**: Team → cpFilterPic cascade; DVKD filter; DVKD column hiển thị.
+1. **UX: thông báo user về workflow mới** — Task edit chỉ lưu local; cần export Excel và import lại để đồng bộ GAS. Cân nhắc thêm banner/toast nhắc nhở.
+2. **Smoke test live — Task save**: Edit task → lưu → reload → kiểm tra data vẫn trong cache; Export Excel → kiểm tra dữ liệu đúng.
+3. **Smoke test live — Task filter**: Chọn Team → filterPic update đúng users.
+4. **Smoke test live — Case Pipeline filter**: Team → cpFilterPic cascade; DVKD filter; DVKD column hiển thị.
+5. **Smoke test live — Import RBAC + Modal layout**: Kiểm tra các S23 features trên live.
+6. Verify AI Chat trên live (tồn từ S12).
+7. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
 4. **Smoke test live — Import RBAC**: Login với role User → Import button ẩn; role Admin/Teamlead → visible.
 5. **Smoke test live — Modal layout**: Mở Task/Case/Initiative edit modal → 2 cột đều nhau.
 6. **Smoke test live — Task/Case modal Team+PIC**: Dropdown có options, cascade đúng.

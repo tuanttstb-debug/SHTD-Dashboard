@@ -355,6 +355,28 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-034: Task Data Loss Risk — Local-Only Write Without User Warning
+**Rating**: 🔴 CRITICAL
+**Added**: 2026-06-16 (Session 23b)
+
+**Issue**: `saveTask()`, `deleteTask()`, `bulkSetRag/State/Delete()`, and task BLD approval now use `localAction()` — they only persist to `localStorage['shtd_v2']` and never write to Google Sheets. The only path that writes task data to GAS is `handleImport()` (Excel import).
+
+**Impact**:
+- User edits a task → closes tab or clears browser cache → edits are permanently lost.
+- Task BLD approval (`yKienBLD`) is recorded locally but never reaches the Sheet — reports pulling from Sheet will not show the approval.
+- No visual indicator distinguishes "saved to Sheet" from "saved locally only".
+- Multi-device users: changes on Device A are invisible on Device B until export+re-import.
+
+**Mitigation needed** (choose one or combine):
+1. **Toast/banner**: "Đã lưu cục bộ. Export Excel để đồng bộ lên Google Sheets." on every save.
+2. **Auto-export prompt**: After N saves, prompt user to export.
+3. **Restore GAS write for task CRUD** (reverses S23b decision) — if PO decides the risk outweighs the cost.
+4. **Direct write endpoint**: Add a lightweight GAS `task-patch` action that accepts a single task delta (no full-sheet read-write cycle) — avoids the stale-cache merge problem while keeping Sheet current.
+
+**Fix priority**: Discuss with PO before next session. Option 4 (task-patch endpoint) is recommended long-term.
+
+---
+
 ## ~~SCHEMA-01: Mixed-Version Clients — Cột X (Ý kiến BLĐ) Lệch/Stale~~ ✅ RESOLVED 2026-06-15
 
 **Resolution (Session 19, commit `a00a611`)**: S18+S19 merged trực tiếp vào `main`. `master` branch bỏ từ S19. Mọi client giờ ghi Task_Master 24 cột đồng nhất. Không cần migration.
@@ -362,7 +384,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-16 (Session 23 — TD-030 resolved S22; TD-012 updated to 180 checks; +3 new test suites)
+**Last updated**: 2026-06-16 (Session 23b — +TD-034 task data loss risk; TD-012 unchanged at 180 checks)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -406,4 +428,5 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-031 | 🟢 | Loose-link detection assumes `PARENT-Mn` milestone ID pattern | Tiny | Open — low risk |
 | TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
 | TD-033 | 🟢 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | Small | Open — copy pattern verify_bld_queue |
+| TD-034 | 🔴 | Task data loss risk — CRUD/BLD local-only, no GAS write | Small | Open — cần UX warning hoặc auto-export trigger. User phải export Excel thủ công để đồng bộ Sheet. |
 | ~~SCHEMA-01~~ | ~~🟡~~ | ~~Mixed-version clients cột X lệch/stale~~ | — | ✅ **Resolved 2026-06-15** — S18+S19 merged to main, master abandoned |
