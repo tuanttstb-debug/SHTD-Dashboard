@@ -302,4 +302,23 @@ function _parseArrayIntoDb(values) {
     db.tasks.forEach(t => { if (t.initiative && !iMap.has(t.initiative)) iMap.set(t.initiative, t.initiative); });
     db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
   }
+  _resolvePickerCase();
+}
+
+// Resolve t.picRes → canonical Username từ _appUsers (case-insensitive lookup).
+// Gọi sau _parseArrayIntoDb() và sau loadAppUsers() để đảm bảo nhất quán
+// dù task load trước hay sau user list.
+function _resolvePickerCase() {
+  if (!Array.isArray(_appUsers) || !_appUsers.length) return;
+  const lookup = new Map(_appUsers.map(u => [u.Username.toLowerCase(), u.Username]));
+  db.tasks.forEach(t => {
+    if (t.picRes) {
+      const canonical = lookup.get(t.picRes.toLowerCase());
+      if (canonical) t.picRes = canonical;
+    }
+    if (t.picAcc) {
+      const canonical = lookup.get(t.picAcc.toLowerCase());
+      if (canonical) t.picAcc = canonical;
+    }
+  });
 }

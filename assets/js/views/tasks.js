@@ -55,7 +55,7 @@ function getFiltered() {
     if (fId   && !(t.id||'').toLowerCase().includes(fId)) return false;
     if (fInit && t.initiative !== fInit) return false;
     if (fTeam && t.team !== fTeam) return false;
-    if (fPic  && t.picRes !== fPic) return false;
+    if (fPic  && (t.picRes||'').toLowerCase() !== fPic.toLowerCase()) return false;
     if (fSt   && t.state !== fSt) return false;
     if (fRag  && t.status !== fRag) return false;
     if (fTuanBC) {

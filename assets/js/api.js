@@ -371,6 +371,8 @@ async function loadAppUsers() {
         return obj;
       })
       .filter(u => String(u.Active).toLowerCase() !== 'false');
+    // Tasks có thể đã load từ cache trước khi user list về — resolve lại case
+    if (typeof _resolvePickerCase === 'function') _resolvePickerCase();
   } catch(e) {
     console.warn('loadAppUsers failed:', e.message);
   }
