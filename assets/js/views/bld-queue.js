@@ -158,6 +158,7 @@ function _bldBuildCaseHTML(c) {
       <div class="bld-body-text">${esc(opinion)}</div>
     </div>` : ''}
     <div class="bld-item-actions">
+      ${isAdmin() ? `
       <button class="btn btn-sm btn-success" onclick="bldOpenAction('approve','${esc(c.id)}','case')">
         <i class="fa-solid fa-check"></i> Phê duyệt
       </button>
@@ -167,6 +168,7 @@ function _bldBuildCaseHTML(c) {
       <button class="btn btn-sm btn-secondary" onclick="bldOpenAction('info','${esc(c.id)}','case')">
         <i class="fa-solid fa-circle-question"></i> Yêu cầu bổ sung
       </button>
+      ` : ''}
       <button class="bld-ghost-link" onclick="openCaseModal('${esc(c.id)}')">
         <i class="fa-solid fa-pen-to-square"></i> Xem đầy đủ
       </button>
@@ -206,6 +208,7 @@ function _bldBuildItemHTML(t) {
       <div class="bld-body-text">${esc(opinion)}</div>
     </div>` : ''}
     <div class="bld-item-actions">
+      ${isAdmin() ? `
       <button class="btn btn-sm btn-success" onclick="bldOpenAction('approve','${esc(t.id)}')">
         <i class="fa-solid fa-check"></i> Phê duyệt
       </button>
@@ -215,6 +218,7 @@ function _bldBuildItemHTML(t) {
       <button class="btn btn-sm btn-secondary" onclick="bldOpenAction('info','${esc(t.id)}')">
         <i class="fa-solid fa-circle-question"></i> Yêu cầu bổ sung
       </button>
+      ` : ''}
       <button class="bld-ghost-link" onclick="editTask('${esc(t.id)}')">
         <i class="fa-solid fa-pen-to-square"></i> Xem đầy đủ
       </button>

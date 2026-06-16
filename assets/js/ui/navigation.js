@@ -44,7 +44,7 @@ function setupListeners() {
     const inInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
 
     if (e.key === 'Escape') {
-      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal();
+      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCaseViewPopup();
     }
     if (e.ctrlKey && e.key === 'n' && !inInput) { e.preventDefault(); openTaskModal(); }
     if (e.ctrlKey && e.key === 'd') { e.preventDefault(); toggleDark(); }

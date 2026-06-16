@@ -574,7 +574,68 @@ async function deleteCaseItem() {
   });
 }
 
-function cpOpenDetail(id) { openCaseModal(id); }
+let _cpViewId = null;
+
+function cpOpenDetail(id) { openCaseViewPopup(id); }
+
+function openCaseViewPopup(id) {
+  const c = (dbCases || []).find(x => x.id === id);
+  if (!c) return;
+  _cpViewId = id;
+
+  const rag = _cpCalcRagLabel(c);
+  const ragIcon = { 'Đỏ': '🔴', 'Vàng': '🟡', 'Xanh': '🟢' }[rag] || '⚪';
+  const ragCls  = { 'Đỏ': 'badge-red', 'Vàng': 'badge-amber', 'Xanh': 'badge-green' }[rag] || 'badge-gray';
+  const grp     = CASE_STAGE_GROUP[c.stage] || 'active';
+
+  document.getElementById('cpViewTitle').textContent = c.caseName || c.id;
+  document.getElementById('cpViewSubtitle').textContent = `ID: ${c.id}  ·  ${c.tuanBC || ''}`;
+
+  const editBtn = document.getElementById('cpViewEditBtn');
+  if (editBtn) editBtn.style.display = canImport() ? 'inline-flex' : 'none';
+
+  const fmt = (label, val, icon) => val
+    ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-${icon}"></i>${label}</span><span class="cp-view-val">${val}</span></div>`
+    : '';
+
+  document.getElementById('cpViewBody').innerHTML = `
+    <div style="padding:0 4px 8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <span class="cp-stage-chip group-${grp}">${esc(c.stage || '–')}</span>
+        <span class="badge ${ragCls}">${ragIcon} ${esc(rag || '–')}</span>
+        ${c.loaiHinh ? `<span class="cp-chip cp-chip-loai">${esc(c.loaiHinh)}</span>` : ''}
+        ${c.complexity ? `<span class="cp-chip cp-chip-complex-${({'Cao':'cao','Trung bình':'tb','Thấp':'thap'}[c.complexity]||'tb')}">${esc(c.complexity)}</span>` : ''}
+        ${c.canBLD === 'Y' ? `<span class="cp-chip cp-chip-bld">Cần BLĐ</span>` : ''}
+        ${c.highlight === 'Y' ? `<span class="cp-chip cp-chip-hl">★ Highlight</span>` : ''}
+      </div>
+      <div class="cp-view-grid">
+        ${fmt('Team', esc(c.team), 'users')}
+        ${fmt('PIC', esc(c.pic), 'user')}
+        ${fmt('ĐVKD', esc(c.dvkd), 'building')}
+        ${fmt('Giá trị', c.giaTriTy ? Number(c.giaTriTy).toLocaleString('vi-VN') + ' tỷ' : null, 'sack-dollar')}
+        ${fmt('Bắt đầu', esc(fmtDate(c.startDate)), 'calendar-plus')}
+        ${fmt('Deadline', esc(fmtDate(c.deadline)), 'calendar-xmark')}
+      </div>
+      ${c.phuongAn ? `<div class="cp-view-section"><div class="cp-view-section-title"><i class="fa-solid fa-lightbulb"></i>Phương án</div><div class="cp-view-text">${esc(c.phuongAn)}</div></div>` : ''}
+      ${c.vuongMac ? `<div class="cp-view-section"><div class="cp-view-section-title"><i class="fa-solid fa-triangle-exclamation"></i>Vướng mắc</div><div class="cp-view-text">${esc(c.vuongMac)}</div></div>` : ''}
+      ${c.nextStep ? `<div class="cp-view-section"><div class="cp-view-section-title"><i class="fa-solid fa-arrow-right"></i>Bước tiếp theo</div><div class="cp-view-text">${esc(c.nextStep)}</div></div>` : ''}
+      ${c.ghiChu ? `<div class="cp-view-section"><div class="cp-view-section-title"><i class="fa-solid fa-note-sticky"></i>Ghi chú</div><div class="cp-view-text">${esc(c.ghiChu)}</div></div>` : ''}
+      ${c.yKienBLD ? `<div class="cp-view-section" style="background:var(--info-bg);border-left:3px solid var(--info);"><div class="cp-view-section-title" style="color:var(--info);"><i class="fa-solid fa-comment-dots"></i>Ý kiến Ban lãnh đạo</div><div class="cp-view-text">${esc(c.yKienBLD)}</div></div>` : ''}
+    </div>`;
+
+  document.getElementById('cpViewOverlay').style.display = 'flex';
+}
+
+function closeCaseViewPopup() {
+  document.getElementById('cpViewOverlay').style.display = 'none';
+  _cpViewId = null;
+}
+
+function cpViewOpenEdit() {
+  const id = _cpViewId;
+  closeCaseViewPopup();
+  if (id) openCaseModal(id);
+}
 
 function _cpCurrentWeek() {
   const now  = new Date();

@@ -1248,6 +1248,26 @@
   </div>
 </div>
 
+<!-- ===== CASE VIEW POPUP ===== -->
+<div class="overlay" id="cpViewOverlay" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="cpViewTitle">Chi tiết Case</div>
+        <div class="modal-subtitle" id="cpViewSubtitle">Case Pipeline</div>
+      </div>
+      <div class="modal-close" onclick="closeCaseViewPopup()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="modal-body" id="cpViewBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeCaseViewPopup()">Đóng</button>
+      <button class="btn btn-primary" id="cpViewEditBtn" style="display:none;" onclick="cpViewOpenEdit()">
+        <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== DETAIL MODAL ===== -->
 <div class="overlay" id="detailOverlay">
   <div class="modal detail-modal">

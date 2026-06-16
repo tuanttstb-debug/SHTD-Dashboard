@@ -55,7 +55,7 @@ function doPost(e) {
     }
 
     // ── role gate: Admin-only actions ──
-    var ADMIN_ONLY = ['kpi-write', 'user-list', 'user-create', 'user-update', 'user-reset-password'];
+    var ADMIN_ONLY = ['kpi-write', 'user-create', 'user-update', 'user-reset-password'];
     if (ADMIN_ONLY.indexOf(action) !== -1 && tokenData.r !== 'Admin') {
       return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
     }
