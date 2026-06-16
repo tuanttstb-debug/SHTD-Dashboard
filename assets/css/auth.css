@@ -120,6 +120,9 @@
 /* ── RBAC: hide admin-only elements for all non-Admin roles ── */
 body:not([data-role="Admin"]) .admin-only { display: none !important; }
 
+/* ── RBAC: hide lead-only elements for plain User role (Admin + Teamlead can see) ── */
+body[data-role="User"] .lead-only { display: none !important; }
+
 /* ── User Management table ── */
 .um-badge {
   display: inline-block;

@@ -498,8 +498,8 @@
               <button class="cp-view-btn active" data-view="table" onclick="cpToggleView('table')" title="Bảng danh sách"><i class="fa-solid fa-table-list"></i> Danh sách</button>
               <button class="cp-view-btn" data-view="kanban" onclick="cpToggleView('kanban')" title="Kanban board"><i class="fa-solid fa-table-columns"></i> Kanban</button>
             </div>
-            <input type="file" id="cpImportFile" accept=".xlsx,.xls" style="display:none" onchange="importCasesFromExcel(this.files[0]);this.value=''">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('cpImportFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
+            <input type="file" id="cpImportFile" class="lead-only" accept=".xlsx,.xls" style="display:none" onchange="importCasesFromExcel(this.files[0]);this.value=''">
+            <button class="btn btn-outline btn-sm lead-only" onclick="document.getElementById('cpImportFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
             <button class="btn btn-outline btn-sm" onclick="exportCasesToExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
             <button class="btn btn-primary btn-sm" onclick="openCaseModal(null)"><i class="fa-solid fa-plus"></i> Thêm Case</button>
           </div>
@@ -638,8 +638,8 @@
             <button class="btn btn-danger btn-sm" onclick="uiClearCache()"><i class="fa-solid fa-eraser"></i> Xóa Cache</button>
             <button id="btnConnect" class="btn btn-outline btn-sm" onclick="connectDB()" title="Đăng nhập Google để kết nối Sheets DB"><i class="fa-brands fa-google"></i> Kết nối GG Sheets</button>
             <button id="btnSync" class="btn btn-success-soft btn-sm" onclick="syncDB()" style="display:none;" title="Tải lại dữ liệu từ Google Sheets"><i class="fa-solid fa-rotate"></i> Sync</button>
-            <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImport(event)">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
+            <input type="file" id="importFile" class="lead-only" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImport(event)">
+            <button class="btn btn-outline btn-sm lead-only" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
             <button class="btn btn-outline btn-sm" onclick="exportExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
             <button class="btn btn-outline btn-sm" onclick="openReportModal()" title="Xuất báo cáo tuần Excel"><i class="fa-solid fa-file-lines"></i> Báo cáo tuần</button>
             <button class="btn btn-primary" onclick="openTaskModal()" title="Ctrl+N"><i class="fa-solid fa-plus"></i> Thêm Task</button>

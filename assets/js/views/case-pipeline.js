@@ -609,6 +609,7 @@ function exportCasesToExcel() {
    EXCEL IMPORT
 ══════════════════════════════════════════ */
 function importCasesFromExcel(file) {
+  if (!canImport()) { toast('Bạn không có quyền import dữ liệu.', 'error'); return; }
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {

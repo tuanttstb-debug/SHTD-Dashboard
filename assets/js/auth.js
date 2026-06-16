@@ -34,6 +34,11 @@ function isAdmin() {
   return u && u.role === 'Admin';
 }
 
+function canImport() {
+  const u = getCurrentUser();
+  return u && (u.role === 'Admin' || u.role === 'Teamlead');
+}
+
 // ── Shared GAS fetch helper — injects auth token automatically ──
 
 async function gasPost(body) {

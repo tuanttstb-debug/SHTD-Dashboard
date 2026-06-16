@@ -164,6 +164,7 @@ async function uiClearCache() {
 }
 
 function handleImport(e) {
+  if (!canImport()) { toast('Bạn không có quyền import dữ liệu.', 'error'); e.target.value = ''; return; }
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = async ev => {
