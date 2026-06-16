@@ -147,7 +147,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 **Partial resolution 2026-06-15 (Session 20)**: `verify_case_pipeline.mjs` — **22/22 PASS**. +TEST05b (kanban toggle 14 cols), +TEST08b (preset bar 4 tabs). Rewritten TEST05/07/12/13/14/16/17 từ .cp-card → #cpTbody tr để phù hợp table-primary design.
 
-**Committed suites**: `verify_initiative_v2.mjs` (37 — ⚠️ failing, see TD-033), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (46), `verify_case_pipeline.mjs` (22) — total **133 checks**.
+**Committed suites**: `verify_initiative_v2.mjs` (37 — ⚠️ failing, see TD-033), `verify_ms_tasks.mjs` (14), `um_test.mjs` (14), `verify_bld_queue.mjs` (46), `verify_case_pipeline.mjs` (22), `verify_filter_cascade.mjs` (23), `verify_import_rbac.mjs` (15), `verify_modal_layout.mjs` (9) — total **180 checks**.
 
 **Remaining gap**: No CI integration. No unit tests for pure functions. Import paths in test files are machine-specific (Windows vs Linux `/opt/node22/...`).
 
@@ -327,13 +327,9 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
-## TD-030: User Management Has No Pagination / Search
-**Rating**: ⚪ LOW
-**Added**: 2026-06-10 (Session 13)
+## ~~TD-030: User Management Has No Pagination / Search~~ ✅ RESOLVED 2026-06-15
 
-**Issue**: `userList()` returns all rows; `_umRender()` renders full table with no pagination or search filter. Acceptable at current scale (~10 users). Would degrade at 100+ users.
-
-**Fix** (if needed): Add client-side search input filtering `_umUsers` by Username/Display_Name. Pagination not needed until team grows significantly.
+**Resolution (Session 22, commit `2a65710`)**: `user-management.js` now has: search (username/name/email, debounce 150ms), filter Team/Role/Status, filter chips với clear, sort 5 cols, pagination 15/page với count info. TD-030 fully addressed.
 
 ---
 
@@ -366,7 +362,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-15 (Session 21 — TD-006/TD-015 partially resolved via User_Master; TD-012 unchanged at 133 checks)
+**Last updated**: 2026-06-16 (Session 23 — TD-030 resolved S22; TD-012 updated to 180 checks; +3 new test suites)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -381,7 +377,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 5 committed suites: 37+14+14+46+22=133 (initiative_v2 failing — TD-033); no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 8 committed suites: 37+14+14+46+22+23+15+9=180 (initiative_v2 failing — TD-033); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ~~⚪~~ | ~~Hardcoded default PIC~~ | Tiny | ✅ **Resolved S21** — fPicAcc/fPicRes now populated from User_Master; no hardcoded 'Tuantt4' default |
@@ -406,7 +402,7 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | ~~TD-028~~ | ~~🔴~~ | ~~TEMP debug-auth endpoint~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
 | ~~TD-029~~ | ~~🟡~~ | ~~TEMP [DBG] token log in api.js~~ | Tiny | ✅ **Resolved 2026-06-08** — commit `1c828fc` |
 | AUTH-05 | 🟢 | KNOWN_ROLES hardcoded — role mismatch silently returns AUTH_REQUIRED | Small | Open |
-| TD-030 | ⚪ | User Management table has no search/pagination | Tiny | Open — acceptable at current scale |
+| ~~TD-030~~ | ~~⚪~~ | ~~User Management table has no search/pagination~~ | Tiny | ✅ **Resolved S22** — search/filter/sort/pagination added |
 | TD-031 | 🟢 | Loose-link detection assumes `PARENT-Mn` milestone ID pattern | Tiny | Open — low risk |
 | TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
 | TD-033 | 🟢 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | Small | Open — copy pattern verify_bld_queue |

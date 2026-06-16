@@ -1,19 +1,19 @@
 # PROJECT STATE
-**As of**: 2026-06-15 (Session 22 — User Management search/filter/sort/pagination)
+**As of**: 2026-06-16 (Session 23 — Filter cascade, Import RBAC, Modal grid fix)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `2a65710` — S22 User Management enhanced LIVE
+**Remote HEAD (main)**: `41f4018` — PR #27 merge — tất cả S23 LIVE (filter cascade + RBAC + modal fix)
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
 
-## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19)
+## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19, XÁC NHẬN LẠI S23)
 
 | Branch | Mục đích | Ai được push? |
 |---|---|---|
-| `main` | Production + development — push trực tiếp | Developer / AI |
+| `main` | Production + development — push trực tiếp | AI / Developer |
 | `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
 
-**⚠️ Không dùng `master` nữa kể từ S19.**
+**⚠️ Push thẳng lên `main`. `master` đã bị xóa sau PR #27 (S23).**
 
 ---
 
@@ -35,10 +35,16 @@
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S21: +TEAM_LIST (8 teams: BL1/BL2/CV1/CV2/PTKD MB/PTKD MN/QLDM/Số — offline fallback) |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL |
-| `assets/css/case-pipeline.css` | ~370 | ✅ S20: +view toggle, stage chips, RAG dots, row-overdue, sort icons |
-| `assets/js/views/case-pipeline.js` | ~630 | ✅ S21: +openCaseModal uses _populateTeamSelect/_populateUserSelect; +onCaseTeamChange() |
-| `assets/js/views/initiative-tracker.js` | ~340 | ✅ S21: initFAcc input→select; _initOpenModal() populate via _populateUserSelect (all users, no team filter) |
+| `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
+| `assets/css/case-pipeline.css` | ~375 | ✅ S23: .cp-modal-grid → minmax(0,1fr) minmax(0,1fr); S20: +view toggle, stage chips, RAG dots, row-overdue, sort icons |
+| `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
+| `assets/css/auth.css` | ~150 | ✅ S23: +body[data-role="User"] .lead-only { display:none !important } |
+| `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
+| `assets/js/views/tasks.js` | ~400 | ✅ S23: +_populateFilterPic(team), +onFilterTeamChange(); cascades PIC filter từ Team filter |
+| `assets/js/views/case-pipeline.js` | ~680 | ✅ S23: +_cpSyncFilterPic(), +cpFilterTeamChange(), +_cpFilterPic/_cpFilterDvkd state, DVKD column, importCasesFromExcel canImport() guard; S21: +openCaseModal helpers |
+| `assets/js/views/initiative-tracker.js` | ~365 | ✅ S22b: repair milestone-to-parent linking; S21: initFAcc input→select |
 | `assets/js/api.js` | ~350 | ✅ S21: +_appUsers[], loadAppUsers(), getAppTeams(), getUsersByTeam(), _populateTeamSelect(), _populateUserSelect() — User_Master driven dropdowns with offline fallback |
+| `assets/js/app.js` | ~330 | ✅ S23: handleImport() canImport() guard; S21: +loadAppUsers() non-blocking |
 | `assets/js/initiatives.js` | ~170 | ✅ S20: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~325 | ✅ S21: +loadAppUsers() non-blocking on startup (after autoConnectDB) |
@@ -52,6 +58,11 @@
 | Feature | Works? | Notes |
 |---|---|---|
 | **Case Pipeline (Table + Kanban)** | ✅ | S20: Table-primary (paginated, sortable, 4 preset tabs, filter bar+chips, filter search); Kanban toggle secondary. S19: GAS deployed 2026-06-15 |
+| **Case Pipeline DVKD column + filter** | ✅ | S23: Cột ĐVKD thêm vào bảng; filter ĐVKD dropdown trong filter bar; cascade cpFilterPic từ Team |
+| **Task filter PIC cascade** | ✅ | S23: filterTeam → filterPic cascade via _populateFilterPic(); offline fallback từ db.tasks |
+| **Import Excel RBAC** | ✅ | S23: Import button ẩn với User role (lead-only CSS); canImport() JS guard trong handleImport() và importCasesFromExcel() |
+| **Modal 2-column layout** | ✅ | S23: minmax(0,1fr) fix — cả 3 modal grids (Task/Case/Initiative) equal-width columns |
+| **Pre-fill Team/PIC từ logged-in user** | ✅ | S22b: Add modal (Task/Case/Initiative) tự pre-fill Team + PIC Accountable từ user hiện tại |
 | **Task/Case/Initiative Team+PIC dropdowns** | ✅ | S21: Driven by User_Master (GAS user-list); cascaded Team→PIC; offline fallback to TEAM_LIST + currentVal |
 | **Case CRUD** | ✅ | Add/Edit/Delete với validation; auto-gen CP-XXX ID; modal |
 | **Case Excel Import/Export** | ✅ | 20 cột; import merge by ID; export với column widths |
@@ -108,12 +119,15 @@ backend/
   SheetService.gs, AuditService.gs, KpiSheetService.gs,
   InitiativeService.gs, UserService.gs, AiService.gs, GAS.GS
   CasePipelineService.gs ← NEW S19 (deployed 2026-06-15)
-verify_case_pipeline.mjs ← S20 — 22/22 PASS (table-primary, +TEST05b/08b)
-verify_bld_queue.mjs     ← 46/46 PASS (no regression)
-verify_ms_tasks.mjs      ← 14/14 PASS (no regression)
-verify_kpi_views.mjs     ← 3/3 PASS (S7)
-um_test.mjs              ← 14/14 PASS (S13)
-debug_login.mjs          ← S18 login diagnostics
+verify_case_pipeline.mjs  ← S20 — 22/22 PASS
+verify_bld_queue.mjs      ← 46/46 PASS
+verify_ms_tasks.mjs       ← 14/14 PASS
+verify_filter_cascade.mjs ← S23 NEW — 23/23 PASS (Task PIC cascade + Case DVKD/PIC filter)
+verify_import_rbac.mjs    ← S23 NEW — 15/15 PASS (3 roles × 5 assertions)
+verify_modal_layout.mjs   ← S23 NEW — 9/9 PASS (3 modal grids, 0.0px column diff)
+verify_kpi_views.mjs      ← 3/3 PASS (S7)
+um_test.mjs               ← 14/14 PASS (S13)
+debug_login.mjs           ← S18 login diagnostics
 ```
 
 ---
@@ -147,7 +161,7 @@ debug_login.mjs          ← S18 login diagnostics
 |---|---|---|---|
 | **Testing (local)** | `http://localhost:3030` | `main` | ✅ Dùng tạm |
 | **Testing (Netlify)** | https://test-shtd.netlify.app | — | ❌ **Hết credit** |
-| **Production** | GitHub Pages URL | `main` | ✅ Live (`c60e74f` — S19 Case Pipeline + GAS deployed); **S20 local chưa push** |
+| **Production** | GitHub Pages URL | `main` | ✅ Live (`41f4018` — S23 tất cả features merged via PR #27) |
 
 ---
 

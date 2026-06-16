@@ -1,18 +1,18 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-15 (Session 21 — Team/PIC User_Master cascade dropdowns)
-**Context**: `origin/main` @ `47b9316` — S21 LIVE (S20 Table-primary + S21 User_Master dropdowns deployed).
+**Prepared**: 2026-06-16 (Session 23 — Filter cascade, Import RBAC, Modal grid fix)
+**Context**: `origin/main` @ `dfac565`; `origin/master` @ `6ad6c32` (modal fix pending PO merge).
 
 ---
 
-## NGUYÊN TẮC BRANCH (ĐÃ THAY ĐỔI TỪ S19)
+## NGUYÊN TẮC BRANCH (ĐÃ THAY ĐỔI TỪ S19, XÁC NHẬN LẠI S23)
 
 ```
 main   →  push trực tiếp (Developer / AI) — Production + development
 fix/*  →  hotfix isolate nếu cần (tùy chọn)
-master →  KHÔNG DÙNG NỮA kể từ S19
+master →  ĐÃ XÓA sau PR #27 (S23)
 ```
 
-**AI/Claude push thẳng lên `main`. Không cần PR workflow nữa.**
+**AI/Claude push thẳng lên `main`.**
 
 ---
 
@@ -53,22 +53,39 @@ master →  KHÔNG DÙNG NỮA kể từ S19
 - [x] verify_case_pipeline.mjs: Fix TEST12 .fill()→.selectOption() cho cpfTeam — 22/22 PASS
 - [x] verify_bld_queue.mjs: 46/46 PASS (no regression); verify_ms_tasks.mjs: 14/14 PASS
 
+## ✅ COMPLETED S22b (undocumented — commits between S22 và S23 trên main)
+
+- [x] docs: update S22 ai_context handover (`6f1c23b`)
+- [x] fix(user-management): constrain table-wrap height so only rows scroll (`b134d54`)
+- [x] feat: pre-fill Team/PIC from logged-in user on Add modal — Task/Case/Initiative (`5323b75`)
+- [x] rebrand: org name 'Số Hóa Tín Dụng / Khối KHDN' → 'Trung tâm SP&GPTD' (`691ba9b`)
+- [x] fix(initiatives): repair milestone-to-parent linking when sheet has no header row (`ef40075`)
+
+## ✅ COMPLETED S23
+
+- [x] Task filter: PIC cascade từ Team — `_populateFilterPic(team)`, `onFilterTeamChange()` trong tasks.js (`b3262eb`)
+- [x] Case Pipeline filter: PIC cascade từ Team — `_cpSyncFilterPic()`, `cpFilterTeamChange()` (`b3262eb`)
+- [x] Case Pipeline: DVKD column trong bảng + DVKD filter dropdown (`b3262eb`)
+- [x] Import RBAC: `lead-only` CSS class + `canImport()` JS guard — restrict import tới Admin+Teamlead (`dfac565`)
+- [x] Modal grid fix: `minmax(0,1fr)` trong forms.css + case-pipeline.css + initiative.css (`6ad6c32` — master only, pending merge)
+- [x] Tests: verify_filter_cascade.mjs 23/23, verify_import_rbac.mjs 15/15, verify_modal_layout.mjs 9/9
+
 ---
 
-## 🔴 PRIORITY 1 — Smoke test live: User_Master dropdowns + Case Pipeline (S20+S21)
+## 🔴 PRIORITY 1 — Smoke test live: S23 features + User_Master dropdowns + Case Pipeline
 
 | Feature | Check |
 |---|---|
+| **Task filter — PIC cascade** | Chọn Team trong filter bar → filterPic dropdown update đúng users |
+| **Case filter — PIC cascade** | Chọn Team → cpFilterPic update; DVKD column hiển thị trong bảng; filter DVKD hoạt động |
+| **Import RBAC** | Login User → Import button ẩn; login Teamlead/Admin → visible; JS guard block khi gọi trực tiếp |
+| **Modal layout** | Mở Edit modal Task/Case/Initiative → 2 cột đều nhau, không bị squeeze |
+| **Pre-fill Add modal** | Mở Thêm Task/Case/Initiative → Team và PIC pre-fill từ logged-in user |
 | **Task modal — Team dropdown** | Mở Thêm/Sửa task → fTeam có options từ User_Master (không rỗng) |
 | **Task modal — PIC cascade** | Chọn team → fPicAcc/fPicRes lọc đúng users của team đó |
 | **Case modal — Team+PIC** | Mở Thêm/Sửa case → cpfTeam/cpfPic hoạt động giống task modal |
-| **Initiative modal — Accountable** | Mở modal → initFAcc có options (tất cả active users) |
 | Case Pipeline load | Mở view → Table view là default, hiển thị đúng dữ liệu từ Sheet |
 | Preset tabs | Click từng tab Đang xử lý / Cần BLĐ / Quá hạn / Tất cả → count đúng |
-| Filter bar | Lọc Stage/Team/Loại hình/RAG + text search → table update |
-| Kanban toggle | Click "Kanban" → board 14 cột; click "Danh sách" → back to table |
-| Thêm case | Điền form → save → row xuất hiện trong table + ghi vào Sheet |
-| Sửa case | Click row → modal pre-fill → save → cập nhật trên table |
 | Initiative CRUD | Thêm/sửa/xóa → syncDot syncing→connected, showLoading ẩn đúng |
 | BLD Queue | Case canBLD=Y xuất hiện với badge [CASE]; approve → yKienBLD lưu vào Sheet |
 

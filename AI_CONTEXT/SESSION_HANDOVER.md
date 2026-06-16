@@ -1,22 +1,23 @@
 # SESSION HANDOVER
-**Date**: 2026-06-15 (Session 22 — User Management: search/filter/sort/pagination)
+**Date**: 2026-06-16 (Session 23 — Filter cascade, Import RBAC, Modal grid fix)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **Pushed S20**: `6bf7a75` — Case Pipeline UI redesign (Table-primary) + Initiative sync standardization
 **Pushed S21**: `47b9316` — Team/PIC User_Master integration
 **Pushed S22**: `2a65710` — User Management search/filter/sort/pagination (TD-030)
-**origin/main HEAD**: `2a65710` ✅
+**Pushed S23 (→ main via PR #27)**: `b3262eb` (filter cascade) → `dfac565` (RBAC) → `6ad6c32` (modal fix)
+**origin/main HEAD**: `41f4018` ✅ (PR #27 merge — tất cả S23 commits live)
 
 ---
 
-## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19)
+## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19, XÁC NHẬN LẠI S23)
 
 | Branch | Mục đích | Ai được push? |
 |---|---|---|
-| `main` | Production + development — push trực tiếp | Developer / AI |
+| `main` | Production + development — push trực tiếp | AI / Developer |
 | `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
 
-**⚠️ Không dùng `master` nữa kể từ S19.**
+**AI/Claude push thẳng lên `main`. `master` đã bị xóa sau S23 (PO đã merge PR #27 xong xóa branch).**
 
 ---
 
@@ -107,6 +108,71 @@ syncInitiativeAction(): showLoading + syncDot syncing/connected + GAS + hideLoad
 
 ---
 
+## Tasks Completed (S22b — undocumented commits between S22 and S23)
+
+These commits appeared on `origin/main` but were NOT in the S22 handover — likely from a session between S22 and S23:
+
+| Commit | Task | Files |
+|---|---|---|
+| `6f1c23b` | docs(ai_context): update S22 handover | `ai_context/SESSION_HANDOVER.md` etc. |
+| `b134d54` | fix(user-management): constrain table-wrap height so only rows scroll | `assets/js/views/user-management.js` |
+| `5323b75` | feat: pre-fill Team/PIC from logged-in user on Add modal (Task/Case/Initiative) | `assets/js/crud.js`, `case-pipeline.js`, `initiative-tracker.js` |
+| `691ba9b` | rebrand: rename org from 'Số Hóa Tín Dụng / Khối KHDN' to 'Trung tâm SP&GPTD' | `index.html` |
+| `ef40075` | fix(initiatives): repair milestone-to-parent linking when sheet has no header row | `assets/js/views/initiative-tracker.js` |
+
+---
+
+## Tasks Completed (S23 — commits `b3262eb`, `dfac565`, `6ad6c32` on master)
+
+| # | Task | Commit | Files | Status |
+|---|---|---|---|---|
+| S23-T3 | Task filter: PIC cascade từ Team; Case Pipeline: PIC filter cascade + DVKD column + DVKD filter | `b3262eb` | `tasks.js`, `case-pipeline.js`, `index.html` | ✅ on main |
+| S23-T4 | Import RBAC: restrict Excel import tới Admin + Teamlead (lead-only CSS + canImport() JS guard) | `dfac565` | `auth.css`, `auth.js`, `app.js`, `case-pipeline.js`, `index.html` | ✅ on main |
+| S23-T5 | Modal grid layout bug: right column bị squeeze — fix `1fr 1fr` → `minmax(0,1fr) minmax(0,1fr)` | `6ad6c32` | `forms.css`, `case-pipeline.css`, `initiative.css`, `verify_modal_layout.mjs` | ✅ on master (pending merge to main) |
+
+---
+
+## Architecture: S23 Changes
+
+### Filter Cascade (S23-T3)
+```
+tasks.js:
+  onFilterTeamChange() → _populateFilterPic(team)
+    - uses getUsersByTeam() từ _appUsers[] nếu online
+    - fallback: unique picRes từ db.tasks khi offline
+
+case-pipeline.js:
+  cpFilterTeamChange() → _cpSyncFilterPic(team)
+    - cùng pattern: getUsersByTeam() → fallback từ case data
+  DVKD column: _cpRenderTable() thêm cột dvkd sau PIC
+  State vars: _cpFilterPic, _cpFilterDvkd
+
+auth.js:
+  canImport() → u.role === 'Admin' || u.role === 'Teamlead'
+
+auth.css:
+  body[data-role="User"] .lead-only { display: none !important; }
+  (cạnh .admin-only đã có — hai lớp RBAC)
+```
+
+### Modal Grid Fix (S23-T5)
+```
+Root cause: `grid-template-columns: 1fr 1fr` = `minmax(auto, 1fr) minmax(auto, 1fr)`
+  → auto minimum cho phép cột trái rộng hơn khi có button với white-space:nowrap
+  → cột phải bị squeeze
+
+Fix: `minmax(0, 1fr) minmax(0, 1fr)` + .form-group { min-width:0 } + .form-control { width:100%; min-width:0 }
+
+Grids fixed:
+  forms.css         → .form-grid (Task modal)
+  case-pipeline.css → .cp-modal-grid (Case modal)
+  initiative.css    → .init-modal-grid (Initiative modal)
+
+Test: verify_modal_layout.mjs — 9/9 PASS (diff=0.0px trên cả 3 modal)
+```
+
+---
+
 ## Tasks Completed (S22 — commit `2a65710`)
 
 | # | Task | File(s) | Status |
@@ -121,6 +187,7 @@ syncInitiativeAction(): showLoading + syncDot syncing/connected + GAS + hideLoad
 |---|---|
 | Netlify hết credit | ❌ Dùng local Playwright / GitHub Pages |
 | AI Chat GAS AiService.gs + GEMINI_API_KEY | ⚠️ Unconfirmed từ S12 |
+| ~~Modal fix chưa merge sang main~~ | ✅ PR #27 merged — `41f4018` live |
 
 ---
 
@@ -131,6 +198,8 @@ syncInitiativeAction(): showLoading + syncDot syncing/connected + GAS + hideLoad
 | Team/PIC modal fields đổi từ input→select | 🟡 MEDIUM | fPicAcc từ text input → select. Task submit đọc .value vẫn đúng. Nếu _appUsers empty (GAS down) và không có currentVal → fPicAcc select rỗng → form submit sẽ fail required validation. Cần smoke test khi GAS online. |
 | Initiative sync flow changed (S20) | 🟡 MEDIUM | syncInitiativeAdd/Edit/Delete pattern đổi. Cần smoke test initiative CRUD trên live. |
 | AI Chat chưa smoke-test live | 🟡 MEDIUM | AiService.gs + GEMINI_API_KEY chưa xác nhận từ S12. |
+| Pre-fill Team/PIC từ logged-in user (S22b) | 🟡 MEDIUM | Nếu logged-in user team không trong TEAM_LIST hoặc không match _appUsers, modal có thể mở với giá trị rỗng. |
+| DVKD column colspan (S23-T3) | 🟡 LOW | Empty state colspan trong Case Pipeline table tăng từ 10→11. Nếu có test nào check colspan cứng, cần cập nhật. |
 
 ---
 
@@ -139,18 +208,22 @@ syncInitiativeAction(): showLoading + syncDot syncing/connected + GAS + hideLoad
 ```bash
 cd "D:\Công việc\Vibecode\SHTD-Dashboard"
 npx http-server . -p 3030 --silent &
-node verify_case_pipeline.mjs   # 22/22 PASS (S21)
-node verify_bld_queue.mjs       # 46/46 PASS (no regression)
-node verify_ms_tasks.mjs        # 14/14 PASS (no regression)
+node verify_case_pipeline.mjs    # 22/22 PASS (S21)
+node verify_bld_queue.mjs        # 46/46 PASS
+node verify_ms_tasks.mjs         # 14/14 PASS
+node verify_filter_cascade.mjs   # 23/23 PASS (NEW S23)
+node verify_import_rbac.mjs      # 15/15 PASS (NEW S23)
+node verify_modal_layout.mjs     # 9/9 PASS (NEW S23)
 ```
 
 ---
 
 ## Next Steps
 
-1. **Smoke test live — Task modal**: Mở Add/Edit task → Team dropdown có options từ User_Master → chọn team → PIC Accountable/Responsible lọc đúng users.
-2. **Smoke test live — Case Pipeline**: Team + PIC dropdown trên Case modal; table-primary view; preset tabs; filter.
-3. **Smoke test live — Initiative**: Accountable dropdown có options từ User_Master.
-4. **Smoke test — Initiative CRUD**: syncInitiativeAction() → syncDot animation + toast feedback đúng.
-5. Verify AI Chat trên live (tồn từ S12).
-6. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
+1. **Smoke test live — Task filter**: Chọn Team → filterPic update đúng users.
+3. **Smoke test live — Case Pipeline filter**: Team → cpFilterPic cascade; DVKD filter; DVKD column hiển thị.
+4. **Smoke test live — Import RBAC**: Login với role User → Import button ẩn; role Admin/Teamlead → visible.
+5. **Smoke test live — Modal layout**: Mở Task/Case/Initiative edit modal → 2 cột đều nhau.
+6. **Smoke test live — Task/Case modal Team+PIC**: Dropdown có options, cascade đúng.
+7. Verify AI Chat trên live (tồn từ S12).
+8. Fix `verify_initiative_v2.mjs` auth inject (TD-033).
