@@ -1,19 +1,19 @@
 # PROJECT STATE
-**As of**: 2026-06-16 (Session 23b — Task local-only write refactor)
+**As of**: 2026-06-16 (Session 24 — User dropdown audit, BLD gate, task popups, picRes case fix)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `65388ae` — S23b Task CRUD local-only write (no GAS); only Excel import writes GAS
+**Remote HEAD (main)**: `edc6a26` — fix(filter): picRes case mismatch resolved (PA1 + PA2)
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
 
-## Branch Strategy (ĐÃ THAY ĐỔI TỪ S19, XÁC NHẬN LẠI S23)
+## Branch Strategy (CONFIRMED S24 — master xóa hoàn toàn)
 
 | Branch | Mục đích | Ai được push? |
 |---|---|---|
-| `main` | Production + development — push trực tiếp | AI / Developer |
+| `main` | Production + Development — push trực tiếp | AI / Developer |
 | `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
 
-**⚠️ Push thẳng lên `main`. `master` đã bị xóa sau PR #27 (S23).**
+**`master` đã xóa cả local lẫn remote từ 2026-06-16 (S24). Không tạo lại.**
 
 ---
 
@@ -24,7 +24,7 @@
 | `index.html` | ~1220 | ✅ S20: #view-case-pipeline restructure — card wrapper, toolbar+view toggle, preset bar, filter bar, table wrap, board wrap |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
-| `backend/Code.gs` | ~170 | ✅ S19: thêm routes `case-pipeline-read`, `case-pipeline-write` |
+| `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
 | `backend/UserService.gs` | ~130 | ✅ NEW S13 — deployed |
 | `backend/Config.gs` | 6 | ✅ S18: comment A1:X |
 | `backend/AuthService.gs` | ~165 | ✅ deployed |
@@ -36,14 +36,17 @@
 | `assets/js/constants.js` | ~65 | ✅ S21: +TEAM_LIST (8 teams: BL1/BL2/CV1/CV2/PTKD MB/PTKD MN/QLDM/Số — offline fallback) |
 | `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
-| `assets/css/case-pipeline.css` | ~375 | ✅ S23: .cp-modal-grid → minmax(0,1fr) minmax(0,1fr); S20: +view toggle, stage chips, RAG dots, row-overdue, sort icons |
+| `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
 | `assets/css/auth.css` | ~150 | ✅ S23: +body[data-role="User"] .lead-only { display:none !important } |
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
-| `assets/js/views/tasks.js` | ~400 | ✅ S23: +_populateFilterPic(team), +onFilterTeamChange(); cascades PIC filter từ Team filter |
-| `assets/js/views/case-pipeline.js` | ~680 | ✅ S23: +_cpSyncFilterPic(), +cpFilterTeamChange(), +_cpFilterPic/_cpFilterDvkd state, DVKD column, importCasesFromExcel canImport() guard; S21: +openCaseModal helpers |
+| `assets/js/views/tasks.js` | ~400 | ✅ S24: filter picRes so sánh `.toLowerCase()` (PA1 picRes case fix); S23: +_populateFilterPic, +onFilterTeamChange |
+| `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
+| `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
 | `assets/js/views/initiative-tracker.js` | ~365 | ✅ S22b: repair milestone-to-parent linking; S21: initFAcc input→select |
-| `assets/js/api.js` | ~365 | ✅ S23b: +localAction() — local-only task mutation (no GAS); S21: +_appUsers[], loadAppUsers(), helpers |
+| `assets/js/api.js` | ~375 | ✅ S24: gọi _resolvePickerCase() sau loadAppUsers() (PA2); S23b: +localAction(); S21: +_appUsers[], loadAppUsers(), helpers |
+| `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
+| `assets/js/ui/navigation.js` | ~125 | ✅ S24: +closeCaseViewPopup() trong Escape handler; S19: G+C shortcut, renderCasePipeline dispatch |
 | `assets/js/crud.js` | ~420 | ✅ S23b: saveTask()/deleteTask() → localAction() (no GAS); S21: User_Master dropdowns |
 | `assets/js/bulk.js` | ~42 | ✅ S23b: bulkSetRag/State/Delete → localAction(); fixed count-before-clear bug |
 | `assets/js/views/bld-queue.js` | ~390 | ✅ S23b: task BLD approval → localAction(); Case BLD still syncCaseAction |
@@ -60,9 +63,13 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
-| **Case Pipeline (Table + Kanban)** | ✅ | S20: Table-primary (paginated, sortable, 4 preset tabs, filter bar+chips, filter search); Kanban toggle secondary. S19: GAS deployed 2026-06-15 |
+| **Case Pipeline (Table + Kanban)** | ✅ | S24: +read-only view popup (cpViewOverlay) + Edit btn cho Admin/Teamlead; S20: Table-primary; S19: GAS deployed |
+| **Case Pipeline view popup** | ✅ | S24: click row/card → cpViewOverlay (read-only); Edit btn → cpModal (canImport() only) |
 | **Case Pipeline DVKD column + filter** | ✅ | S23: Cột ĐVKD thêm vào bảng; filter ĐVKD dropdown trong filter bar; cascade cpFilterPic từ Team |
-| **Task filter PIC cascade** | ✅ | S23: filterTeam → filterPic cascade via _populateFilterPic(); offline fallback từ db.tasks |
+| **Task filter PIC cascade** | ✅ | S23: cascade; S24: picRes case-insensitive compare + _resolvePickerCase() canonical mapping |
+| **Display_Name (Username) dropdowns — tất cả roles** | ✅ | S24: user-list không còn ADMIN_ONLY → non-Admin/Teamlead cũng load _appUsers → dropdowns nhất quán |
+| **BLD Queue role gate** | ✅ | S24: Phê duyệt/Từ chối/Yêu cầu bổ sung ẩn với non-Admin; Xem đầy đủ luôn hiện |
+| **Performance task popup** | ✅ | S24: click row → openPerfTaskPopup(key) → detailOverlay mở với tasks lọc theo tab |
 | **Import Excel RBAC** | ✅ | S23: Import button ẩn với User role (lead-only CSS); canImport() JS guard trong handleImport() và importCasesFromExcel() |
 | **Modal 2-column layout** | ✅ | S23: minmax(0,1fr) fix — cả 3 modal grids (Task/Case/Initiative) equal-width columns |
 | **Pre-fill Team/PIC từ logged-in user** | ✅ | S22b: Add modal (Task/Case/Initiative) tự pre-fill Team + PIC Accountable từ user hiện tại |

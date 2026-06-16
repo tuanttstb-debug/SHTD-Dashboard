@@ -1,4 +1,147 @@
 # SESSION HANDOVER
+**Date**: 2026-06-16 (Session 24 — User dropdown audit, BLD gate, task popups, picRes case fix)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**Pushed S24-a**: `a58474e` — feat: user dropdowns, BLD role gate, task view popups (Performance + Case Pipeline)
+**Pushed S24-b**: `edc6a26` — fix(filter): resolve picRes case mismatch between DB and User Master
+**origin/main HEAD**: `edc6a26` ✅
+
+---
+
+## Branch Strategy (THAY ĐỔI TỪ S24 — push thẳng lên main)
+
+| Branch | Mục đích | Ai được push? |
+|---|---|---|
+| `main` | Production + Development — push trực tiếp | AI / Developer |
+| `fix/*` | Hotfix isolate nếu cần (tùy chọn) | AI / Developer |
+
+**`master` đã xóa hoàn toàn** — local và remote — kể từ S24 (2026-06-16). Không tạo lại.
+
+---
+
+## Tasks Completed (S24 — commits `a58474e`, `edc6a26`)
+
+| # | Task | Files | Commit | Status |
+|---|---|---|---|---|
+| S24-T1 | `user-list` removed from `ADMIN_ONLY` trong Code.gs → tất cả roles load được `_appUsers` → Display_Name (Username) hiển thị nhất quán | `backend/Code.gs` | `a58474e` | ✅ |
+| S24-T2 | BLD Queue: ẩn Phê duyệt / Từ chối / Yêu cầu bổ sung với non-Admin; Xem đầy đủ vẫn hiện với tất cả | `assets/js/views/bld-queue.js` | `a58474e` | ✅ |
+| S24-T3 | Performance view: click row → `openPerfTaskPopup(key)` → `detailOverlay` mở với task list lọc theo tab hiện tại (initiative/picRes/team) | `assets/js/views/performance.js` | `a58474e` | ✅ |
+| S24-T4 | Case Pipeline: click row/card → `openCaseViewPopup(id)` → `cpViewOverlay` read-only popup; Edit btn (canImport()) → `cpViewOpenEdit()` → `cpModal` | `assets/js/views/case-pipeline.js`, `assets/css/case-pipeline.css`, `index.html`, `assets/js/ui/navigation.js` | `a58474e` | ✅ |
+| S24-T5 | picRes case fix PA1: filter so sánh `.toLowerCase()` — `dunglq1` match `DungLQ1` | `assets/js/views/tasks.js` | `edc6a26` | ✅ |
+| S24-T6 | picRes case fix PA2: `_resolvePickerCase()` trong `parsers.js` → map `t.picRes`/`t.picAcc` về canonical Username sau mỗi parse; gọi lại sau `loadAppUsers()` trong `api.js` | `assets/js/parsers.js`, `assets/js/api.js` | `edc6a26` | ✅ |
+| S24-T7 | Branch cleanup: xóa local + remote `master`; memory + ai_context cập nhật push thẳng lên `main` | — | — | ✅ |
+
+---
+
+## Architecture: S24 Changes
+
+### BLD Queue Role Gate (S24-T2)
+```js
+// bld-queue.js — cả _bldBuildCaseHTML() và _bldBuildItemHTML()
+<div class="bld-item-actions">
+  ${isAdmin() ? `
+    <button class="btn btn-sm btn-success" ...>Phê duyệt</button>
+    <button class="btn btn-sm btn-danger"  ...>Từ chối</button>
+    <button class="btn btn-sm btn-secondary" ...>Yêu cầu bổ sung</button>
+  ` : ''}
+  <button class="bld-ghost-link" ...>Xem đầy đủ</button>  ← luôn hiển thị
+</div>
+```
+
+### Performance Popup (S24-T3)
+```
+openPerfTaskPopup(key):
+  - Lọc db.tasks theo perfTab ('initiative'|'picRes'|'team') và key
+  - Set detailTitle + innerHTML detailTbody
+  - classList.add('open') trên #detailOverlay (reuse existing modal)
+  - Mỗi row trong popup có onclick="editTask(...)" để mở edit modal
+```
+
+### Case Pipeline View Popup (S24-T4)
+```
+HTML: #cpViewOverlay (overlay div, display:none/flex)
+  → .modal (680px max-width)
+    → #cpViewTitle, #cpViewSubtitle
+    → #cpViewBody (read-only detail grid — .cp-view-grid CSS)
+    → #cpViewEditBtn (inline-flex nếu canImport(), else none)
+
+Flow:
+  click row/card → cpOpenDetail(id) → openCaseViewPopup(id)
+  openCaseViewPopup: populate title/subtitle/body, show/hide editBtn
+  cpViewOverlay: display='flex'
+
+  Edit btn → cpViewOpenEdit():
+    const id = _cpViewId  ← capture TRƯỚC closeCaseViewPopup()
+    closeCaseViewPopup()
+    openCaseModal(id)
+
+  ESC → navigation.js Escape handler: + closeCaseViewPopup()
+
+State: let _cpViewId = null (global trong case-pipeline.js)
+```
+
+### picRes Case Fix (S24-T5+T6)
+```
+Root cause:
+  DB lưu 'dunglq1' → picNorm() → 'Dunglq1'
+  _appUsers.Username = 'DungLQ1'
+  Dropdown value = 'DungLQ1'
+  Filter: 'Dunglq1' !== 'DungLQ1' → FAIL
+
+PA1 (tasks.js:58):
+  (t.picRes||'').toLowerCase() !== fPic.toLowerCase()  ← immediate fix
+
+PA2 (parsers.js):
+  _resolvePickerCase():
+    lookup = Map(_appUsers → lowercase → canonical)
+    db.tasks.forEach: t.picRes = canonical || t.picRes
+                      t.picAcc = canonical || t.picAcc
+  Gọi tại: cuối _parseArrayIntoDb() + sau loadAppUsers() trong api.js
+  Race condition mitigation: gọi cả 2 nơi → whichever loads last wins
+
+Sau fix: 'dunglq1' → picNorm → 'Dunglq1' → _resolvePickerCase → 'DungLQ1' ✅
+```
+
+---
+
+## Decisions Made (S24)
+
+1. **push thẳng lên `main`**: `master` xóa hoàn toàn từ S24. Mọi commit push thẳng `origin/main`.
+2. **cpViewOverlay read-only first**: Case Pipeline popup là read-only preview; Edit btn chỉ hiện với `canImport()` (Admin/Teamlead). Không mở thẳng edit modal khi click card.
+3. **`_cpViewId` capture trước close**: `cpViewOpenEdit()` phải lấy `const id = _cpViewId` TRƯỚC khi gọi `closeCaseViewPopup()` vì close sẽ set `_cpViewId = null`.
+4. **picRes PA1 + PA2**: PA1 = safety net ngay lập tức; PA2 = fix gốc rễ. Cả hai cùng tồn tại — PA2 đảm bảo data đúng cho performance/bld-queue (không chỉ filter tasks).
+5. **`user-list` không còn ADMIN_ONLY**: Tất cả authenticated users được phép gọi `user-list` — cần để populate Display_Name dropdown nhất quán.
+
+---
+
+## Playwright Test (S24)
+```
+File: C:\Users\LENOVO\pw_test\test3.js
+Run:  cd C:\Users\LENOVO\pw_test && node test3.js
+
+PASS — 6/6 checks:
+  [1] _appUsers loaded: PASS (3 users)
+  [1] filterPic format: PASS
+  [1] modal fPicRes format: PASS
+  [2] BLD role gate: PASS (Admin 2 approve btns; non-Admin 0 approve btns)
+  [3a] Perf popup: PASS (open:true, title đúng, 2 rows)
+  [3b] CP popup: PASS (display:flex, title đúng, editBtn:inline-flex for Admin)
+```
+
+---
+
+## Regression Risks (S24)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **`_resolvePickerCase()` race condition** | 🟡 MEDIUM | Nếu `_appUsers` load rất chậm (GAS slow) và user filter ngay khi page load → PA2 chưa kịp chạy. PA1 vẫn cover vì so sánh lowercase. |
+| **picRes data đã cache** | 🟡 MEDIUM | Tasks trong `localStorage['shtd_v2']` từ trước S24 có `picRes='Dunglq1'` (picNorm format). Sau S24, `_resolvePickerCase()` sẽ fix khi `_appUsers` load. Nếu user offline → PA1 vẫn hoạt động qua lowercase compare. |
+| **BLD popup với non-Admin** | ⚪ LOW | `isAdmin()` check inline trong template string — nếu `isAdmin` undefined tại render time → toàn bộ button block bị throw. Cần đảm bảo `auth.js` load trước `bld-queue.js`. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER
+# SESSION HANDOVER
 **Date**: 2026-06-16 (Session 23b — Task local-only write refactor)
 **Model**: Claude Sonnet 4.6 (Fable 5 harness)
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

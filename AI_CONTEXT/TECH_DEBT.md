@@ -383,8 +383,38 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
+## TD-035: `picNorm()` Không Produce Canonical Username — Partial Workaround
+**Rating**: 🟢 MEDIUM
+**Added**: 2026-06-16 (Session 24)
+
+**Issue**: `picNorm(n)` chỉ capitalize chữ đầu và lowercase phần còn lại: `'DungLQ1' → 'Dunglq1'`. Đây không phải canonical username — mất thông tin case ở giữa (`LQ1`). Kết quả là `t.picRes` sau parse không match `u.Username` từ `_appUsers`.
+
+**Mitigation đã có (S24)**:
+- PA1: filter comparison `.toLowerCase()` — tasks.js:58
+- PA2: `_resolvePickerCase()` resolve picRes/picAcc về canonical sau parse và sau loadAppUsers
+
+**Remaining gap**: 
+- `picNorm()` vẫn được dùng khi **save** task từ form (`crud.js:193`): `picRes: picNorm(document.getElementById('fPicRes').value)` — nếu user select dropdown value là `'DungLQ1'`, sau `picNorm` thành `'Dunglq1'`, nhưng `_resolvePickerCase()` sau `localAction()` sẽ fix lại. OK vì `_resolvePickerCase()` gọi trong `renderAll()` → không, thực ra không gọi trong `renderAll()`. Chỉ gọi sau parse và sau loadAppUsers. Nên task mới tạo/edit có picRes='Dunglq1' sẽ ở lại trạng thái đó cho đến lần reload tiếp theo.
+- `report.js` và `taskToRow()` dùng `t.picRes` trực tiếp — nếu picRes='Dunglq1' thì Sheet cũng nhận 'Dunglq1' khi import.
+
+**Fix proper**: Thay `picNorm()` bằng lookup từ `_appUsers` khi save:
+```js
+// crud.js:193
+picRes: _resolveOneUser(document.getElementById('fPicRes').value),
+
+function _resolveOneUser(raw) {
+  if (!raw || !_appUsers?.length) return raw;
+  const canon = _appUsers.find(u => u.Username.toLowerCase() === raw.toLowerCase());
+  return canon ? canon.Username : raw;
+}
+```
+
+**Priority**: Thấp vì PA1+PA2 cover read-path; chỉ ảnh hưởng write-path khi import lại Sheet.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-16 (Session 23b — +TD-034 task data loss risk; TD-012 unchanged at 180 checks)
+**Last updated**: 2026-06-16 (Session 24 — +TD-035 picNorm canonical gap; TD-034 unchanged)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -429,4 +459,5 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 | TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
 | TD-033 | 🟢 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | Small | Open — copy pattern verify_bld_queue |
 | TD-034 | 🔴 | Task data loss risk — CRUD/BLD local-only, no GAS write | Small | Open — cần UX warning hoặc auto-export trigger. User phải export Excel thủ công để đồng bộ Sheet. |
+| TD-035 | 🟢 | `picNorm()` không produce canonical username — partial workaround S24 (PA1+PA2 cover read-path; write-path still saves picNorm format) | Small | Open — fix proper: lookup từ _appUsers khi save trong crud.js |
 | ~~SCHEMA-01~~ | ~~🟡~~ | ~~Mixed-version clients cột X lệch/stale~~ | — | ✅ **Resolved 2026-06-15** — S18+S19 merged to main, master abandoned |

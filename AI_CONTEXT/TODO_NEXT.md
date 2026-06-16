@@ -1,18 +1,18 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-16 (Session 23b — Task local-only write refactor)
-**Context**: `origin/main` @ `65388ae` — Task CRUD local-only; Excel import is sole GAS write path for tasks.
+**Prepared**: 2026-06-16 (Session 24 — User dropdown audit, BLD gate, task popups, picRes case fix)
+**Context**: `origin/main` @ `edc6a26` — picRes case fix (PA1+PA2); S24 features on main.
 
 ---
 
-## NGUYÊN TẮC BRANCH (ĐÃ THAY ĐỔI TỪ S19, XÁC NHẬN LẠI S23)
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
 
 ```
 main   →  push trực tiếp (Developer / AI) — Production + development
 fix/*  →  hotfix isolate nếu cần (tùy chọn)
-master →  ĐÃ XÓA sau PR #27 (S23)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
-**AI/Claude push thẳng lên `main`.**
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
 
@@ -74,6 +74,20 @@ master →  ĐÃ XÓA sau PR #27 (S23)
 ## ✅ COMPLETED S23b
 
 - [x] refactor(sync): Task CRUD/bulk/BLD-approval → `localAction()` (local only, no GAS write) (`65388ae`)
+
+## ✅ COMPLETED S24
+
+- [x] Code.gs: xóa `user-list` khỏi `ADMIN_ONLY` → tất cả roles load `_appUsers` (`a58474e`)
+- [x] bld-queue.js: `${isAdmin() ? '...' : ''}` gate trên Phê duyệt/Từ chối/Yêu cầu bổ sung — cả `_bldBuildCaseHTML` + `_bldBuildItemHTML` (`a58474e`)
+- [x] performance.js: +`openPerfTaskPopup(key)` — click row → detailOverlay với filtered tasks (`a58474e`)
+- [x] case-pipeline.js: +`openCaseViewPopup(id)`, `closeCaseViewPopup()`, `cpViewOpenEdit()`, `_cpViewId`; `cpOpenDetail()` → popup (`a58474e`)
+- [x] index.html: +`#cpViewOverlay` HTML (read-only case detail modal) (`a58474e`)
+- [x] case-pipeline.css: +`.cp-view-grid` CSS layout cho popup (`a58474e`)
+- [x] navigation.js: +`closeCaseViewPopup()` trong Escape handler (`a58474e`)
+- [x] tasks.js: picRes filter case-insensitive `.toLowerCase()` — PA1 (`edc6a26`)
+- [x] parsers.js: +`_resolvePickerCase()` — canonical Username resolve; gọi cuối `_parseArrayIntoDb()` — PA2 (`edc6a26`)
+- [x] api.js: gọi `_resolvePickerCase()` sau `loadAppUsers()` — handle cache-before-users race — PA2 (`edc6a26`)
+- [x] Branch cleanup: local + remote `master` đã xóa; push thẳng `main` từ nay
   - `api.js`: +`localAction()` function
   - `crud.js`: saveTask(), deleteTask() use localAction
   - `bulk.js`: bulkSetRag(), bulkSetState(), bulkDelete() use localAction; fixed count-before-clear bug
@@ -82,7 +96,20 @@ master →  ĐÃ XÓA sau PR #27 (S23)
 
 ---
 
-## 🔴 PRIORITY 0 — UX: Thông báo user về workflow mới (Task local-only)
+## 🔴 PRIORITY 0 — Smoke test live: S24 features
+
+| Feature | Check |
+|---|---|
+| **Display_Name (Username) dropdowns — non-Admin** | Login với role User/Teamlead → mở Task modal → fPicRes có format "Tên (username)" |
+| **BLD Queue role gate** | Login non-Admin → BLD Queue → Phê duyệt/Từ chối/Yêu cầu bổ sung ẩn; Xem đầy đủ vẫn hiện |
+| **Performance popup** | Mở Performance → click row → detailOverlay mở với task list đúng tab |
+| **Case Pipeline view popup** | Click row → cpViewOverlay mở đúng data; Edit btn hiện với Admin/Teamlead; ESC đóng |
+| **picRes filter** | Chọn PIC DungLQ1 trong filterPic → filter đúng tasks dù DB lưu dunglq1 |
+| **GAS deploy confirm** | Xác nhận GAS đã deploy với user-list không còn ADMIN_ONLY |
+
+---
+
+## 🔴 PRIORITY 1 — UX: Thông báo user về workflow mới (Task local-only)
 
 Task CRUD giờ chỉ lưu localStorage. User cần biết để không bị mất dữ liệu:
 
@@ -93,7 +120,7 @@ Task CRUD giờ chỉ lưu localStorage. User cần biết để không bị m�
 
 ---
 
-## 🔴 PRIORITY 1 — Smoke test live: S23 + S23b features
+## 🟡 PRIORITY 2 — Smoke test live: S23 + S23b features
 
 | Feature | Check |
 |---|---|
