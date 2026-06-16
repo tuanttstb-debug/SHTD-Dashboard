@@ -1,10 +1,11 @@
 /* ===== FORM ===== */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
 .form-group.full{grid-column:1/-1;}
 .form-label{font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;}
 .form-label .req{color:var(--danger);margin-left:2px;}
 .form-control{
+  width:100%;min-width:0;
   padding:10px 12px;border:1.5px solid var(--border);
   border-radius:var(--radius-sm);font-size:13px;
   background:var(--surface);color:var(--text);

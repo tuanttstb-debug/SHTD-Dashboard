@@ -347,7 +347,7 @@ th { cursor: pointer; user-select: none; }
 /* ─── Case CRUD Modal overrides ─── */
 .cp-modal-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
   gap: 0 18px;
 }
 @media (max-width: 600px) {
