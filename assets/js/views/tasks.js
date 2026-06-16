@@ -88,6 +88,7 @@ function renderFilterChips() {
 function clearFilter(id) {
   const el = document.getElementById(id);
   if (el) el.value = '';
+  if (id === 'filterTeam') { _populateFilterPic(''); }
   currentPage = 1;
   renderTaskTable();
   renderFilterChips();
@@ -98,9 +99,39 @@ function clearFilters() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  _populateFilterPic('');
   currentPage = 1;
   renderTaskTable();
   renderFilterChips();
+}
+
+/* Populate filterPic based on team selection (User_Master or task data fallback) */
+function _populateFilterPic(team) {
+  const sel = document.getElementById('filterPic');
+  if (!sel) return;
+  const prev = sel.value;
+  let opts;
+  if (typeof getUsersByTeam === 'function' && typeof _appUsers !== 'undefined' && _appUsers.length) {
+    opts = getUsersByTeam(team || '').map(u => ({
+      value: u.Username,
+      label: u.Display_Name ? `${esc(u.Display_Name)} (${esc(u.Username)})` : esc(u.Username)
+    }));
+  } else {
+    const tasks = team ? db.tasks.filter(t => t.team === team) : db.tasks;
+    const pics  = [...new Set(tasks.map(t => t.picRes).filter(Boolean))].sort();
+    opts = pics.map(p => ({ value: p, label: p }));
+  }
+  sel.innerHTML = '<option value="">Tất cả</option>'
+    + opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+}
+
+/* Called when Team filter changes — cascade-resets PIC then re-filters */
+function onFilterTeamChange() {
+  const picSel = document.getElementById('filterPic');
+  if (picSel) picSel.value = '';
+  _populateFilterPic(document.getElementById('filterTeam')?.value || '');
+  onFilterChange();
 }
 
 function onFilterChange() {
@@ -122,6 +153,7 @@ function sortBy(key) {
 function renderTaskTable() {
   _initPresetUI();
   updatePresetCounts();
+  _populateFilterPic(document.getElementById('filterTeam')?.value || '');
   const tbody = document.getElementById('taskTbody');
   let tasks = getFiltered().sort((a,b) => {
     let va = a[sort.key]||'', vb = b[sort.key]||'';

@@ -9,6 +9,8 @@ let _cpFilterTeam  = '';
 let _cpFilterRag   = '';
 let _cpFilterLoai  = '';
 let _cpFilterStage = '';
+let _cpFilterPic   = '';
+let _cpFilterDvkd  = '';
 let _cpEditId      = null;
 
 const CP_PAGE_SIZE = 20;
@@ -116,10 +118,12 @@ function _cpGetFiltered() {
   }
 
   return cases.filter(c => {
-    if (_cpFilterTeam  && c.team     !== _cpFilterTeam)  return false;
-    if (_cpFilterLoai  && c.loaiHinh !== _cpFilterLoai)  return false;
-    if (_cpFilterStage && c.stage    !== _cpFilterStage) return false;
-    if (_cpFilterRag && _cpCalcRagLabel(c) !== _cpFilterRag) return false;
+    if (_cpFilterTeam  && c.team              !== _cpFilterTeam)           return false;
+    if (_cpFilterLoai  && c.loaiHinh          !== _cpFilterLoai)           return false;
+    if (_cpFilterStage && c.stage             !== _cpFilterStage)          return false;
+    if (_cpFilterRag   && _cpCalcRagLabel(c)  !== _cpFilterRag)            return false;
+    if (_cpFilterPic   && c.pic               !== _cpFilterPic)            return false;
+    if (_cpFilterDvkd  && c.dvkd              !== _cpFilterDvkd)           return false;
     return true;
   });
 }
@@ -127,12 +131,44 @@ function _cpGetFiltered() {
 /* ── keep _cpApplyFilters for legacy board path ── */
 function _cpApplyFilters(cases) {
   return cases.filter(c => {
-    if (_cpFilterTeam  && c.team     !== _cpFilterTeam)  return false;
-    if (_cpFilterLoai  && c.loaiHinh !== _cpFilterLoai)  return false;
-    if (_cpFilterStage && c.stage    !== _cpFilterStage) return false;
-    if (_cpFilterRag && _cpCalcRagLabel(c) !== _cpFilterRag) return false;
+    if (_cpFilterTeam  && c.team              !== _cpFilterTeam)           return false;
+    if (_cpFilterLoai  && c.loaiHinh          !== _cpFilterLoai)           return false;
+    if (_cpFilterStage && c.stage             !== _cpFilterStage)          return false;
+    if (_cpFilterRag   && _cpCalcRagLabel(c)  !== _cpFilterRag)            return false;
+    if (_cpFilterPic   && c.pic               !== _cpFilterPic)            return false;
+    if (_cpFilterDvkd  && c.dvkd              !== _cpFilterDvkd)           return false;
     return true;
   });
+}
+
+/* Populate cpFilterPic based on selected team (User_Master or case data fallback) */
+function _cpSyncFilterPic(team) {
+  const sel = document.getElementById('cpFilterPic');
+  if (!sel) return;
+  const prev = sel.value;
+  let opts;
+  if (typeof getUsersByTeam === 'function' && typeof _appUsers !== 'undefined' && _appUsers.length) {
+    opts = getUsersByTeam(team || '').map(u => ({
+      value: u.Username,
+      label: u.Display_Name ? `${esc(u.Display_Name)} (${esc(u.Username)})` : esc(u.Username)
+    }));
+  } else {
+    const cases = team ? (dbCases || []).filter(c => c.team === team) : (dbCases || []);
+    const pics  = [...new Set(cases.map(c => c.pic).filter(Boolean))].sort();
+    opts = pics.map(p => ({ value: p, label: p }));
+  }
+  sel.innerHTML = '<option value="">Tất cả</option>'
+    + opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+  if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+  else sel.value = '';
+}
+
+/* Called when Team filter changes — cascade-resets PIC then re-filters */
+function cpFilterTeamChange() {
+  const picSel = document.getElementById('cpFilterPic');
+  if (picSel) picSel.value = '';
+  _cpSyncFilterPic((document.getElementById('cpFilterTeam') || {}).value || '');
+  cpFilterChange();
 }
 
 function cpFilterChange() {
@@ -140,6 +176,8 @@ function cpFilterChange() {
   _cpFilterLoai  = (document.getElementById('cpFilterLoai')  || {}).value || '';
   _cpFilterStage = (document.getElementById('cpFilterStage') || {}).value || '';
   _cpFilterRag   = (document.getElementById('cpFilterRag')   || {}).value || '';
+  _cpFilterPic   = (document.getElementById('cpFilterPic')   || {}).value || '';
+  _cpFilterDvkd  = (document.getElementById('cpFilterDvkd')  || {}).value || '';
   _cpSearch      = (document.getElementById('cpSearch')      || {}).value || '';
   _cpPage = 1;
   _cpRenderSummary();
@@ -164,8 +202,10 @@ function renderCpFilterChips() {
   const labels = {
     cpFilterStage: v => `Stage: ${v}`,
     cpFilterTeam:  v => `Team: ${v}`,
+    cpFilterPic:   v => `PIC: ${v}`,
     cpFilterLoai:  v => `Loại: ${v}`,
     cpFilterRag:   v => `RAG: ${v}`,
+    cpFilterDvkd:  v => `ĐVKD: ${v}`,
     cpSearch:      v => `Tìm: "${v}"`,
   };
   const chips = [];
@@ -180,14 +220,16 @@ function renderCpFilterChips() {
 function clearCpFilter(id) {
   const el = document.getElementById(id);
   if (el) el.value = '';
+  if (id === 'cpFilterTeam') { _cpSyncFilterPic(''); }
   cpFilterChange();
 }
 
 function clearCpFilters() {
-  ['cpFilterTeam','cpFilterLoai','cpFilterStage','cpFilterRag','cpSearch'].forEach(id => {
+  ['cpFilterTeam','cpFilterLoai','cpFilterStage','cpFilterRag','cpFilterPic','cpFilterDvkd','cpSearch'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  _cpSyncFilterPic('');
   cpFilterChange();
 }
 
@@ -195,9 +237,10 @@ function clearCpFilters() {
    FILTER POPULATE
 ────────────────────────────────────────── */
 function _cpPopulateFilters() {
-  const cases   = dbCases || [];
-  const teamSel = document.getElementById('cpFilterTeam');
+  const cases    = dbCases || [];
+  const teamSel  = document.getElementById('cpFilterTeam');
   const stageSel = document.getElementById('cpFilterStage');
+  const dvkdSel  = document.getElementById('cpFilterDvkd');
 
   if (teamSel) {
     const teams = [...new Set(cases.map(c => c.team).filter(Boolean))].sort();
@@ -215,6 +258,18 @@ function _cpPopulateFilters() {
     stageSel.value = CASE_STAGES.includes(prev) ? prev : '';
     _cpFilterStage = stageSel.value;
   }
+
+  if (dvkdSel) {
+    const dvkds = [...new Set(cases.map(c => c.dvkd).filter(Boolean))].sort();
+    const prev  = dvkdSel.value;
+    dvkdSel.innerHTML = '<option value="">Tất cả</option>' +
+      dvkds.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+    dvkdSel.value = dvkds.includes(prev) ? prev : '';
+    _cpFilterDvkd = dvkdSel.value;
+  }
+
+  // Sync PIC dropdown based on current team selection
+  _cpSyncFilterPic(_cpFilterTeam);
 }
 
 /* ──────────────────────────────────────────
@@ -281,7 +336,7 @@ function _cpRenderTable() {
   if (!tbody) return;
 
   if (!paged.length) {
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-3);">
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--text-3);">
       <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
       Không có case nào. Thử thay đổi bộ lọc hoặc thêm mới.
     </td></tr>`;
@@ -306,6 +361,7 @@ function _cpRenderTable() {
         <td><span class="cp-stage-chip group-${grp}">${esc(c.stage || '–')}</span></td>
         <td>${esc(c.team || '–')}</td>
         <td style="white-space:nowrap;">${esc(c.pic || '–')}</td>
+        <td style="white-space:nowrap;font-size:11px;color:var(--text-2);">${esc(c.dvkd || '–')}</td>
         <td style="font-weight:700;color:var(--primary);font-family:var(--mono);white-space:nowrap;">${val}</td>
         <td ${rc === 'red' ? 'class="text-danger-bold"' : ''} style="white-space:nowrap;">${fmtDate(c.deadline) || '–'}</td>
         <td style="text-align:center;"><span class="cp-rag-dot ${rc}"></span></td>

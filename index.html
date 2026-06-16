@@ -539,7 +539,19 @@
           </div>
           <div class="filter-group">
             <div class="filter-label">Team</div>
-            <select id="cpFilterTeam" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterTeam" class="form-control" onchange="cpFilterTeamChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">PIC</div>
+            <select id="cpFilterPic" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">ĐVKD</div>
+            <select id="cpFilterDvkd" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
             </select>
           </div>
@@ -580,6 +592,7 @@
                   <th onclick="cpSortBy('stage')">Stage <span class="sort-icon">↕</span></th>
                   <th onclick="cpSortBy('team')" style="width:80px;">Team <span class="sort-icon">↕</span></th>
                   <th onclick="cpSortBy('pic')" style="width:110px;">PIC <span class="sort-icon">↕</span></th>
+                  <th onclick="cpSortBy('dvkd')" style="width:80px;">ĐVKD <span class="sort-icon">↕</span></th>
                   <th onclick="cpSortBy('giaTriTy')" style="width:100px;">Giá trị <span class="sort-icon">↕</span></th>
                   <th onclick="cpSortBy('deadline')" style="width:100px;">Deadline <span class="sort-icon">↕</span></th>
                   <th style="width:60px;">RAG</th>
@@ -667,7 +680,7 @@
           </div>
           <div class="filter-group">
             <div class="filter-label">Team</div>
-            <select id="filterTeam" class="form-control" onchange="onFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="filterTeam" class="form-control" onchange="onFilterTeamChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
               <option>Số</option><option>CV1</option><option>CV2</option>
               <option>BL1</option><option>BL2</option>
