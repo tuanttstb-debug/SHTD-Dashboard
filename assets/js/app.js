@@ -75,10 +75,9 @@ function updateNavBadges() {
 
 function updateFilterDropdowns() {
   const fiEl = document.getElementById('filterInit');
-  const fpEl = document.getElementById('filterPic');
   const gi = document.getElementById('ganttFilterInit');
   if (!fiEl) return;
-  const curI = fiEl.value, curP = fpEl.value;
+  const curI = fiEl.value;
 
   let initMap = new Map();
   db.initiatives.forEach(i => { if (i.id !== 'BAU' && !i.parentId) initMap.set(i.id, `${i.id} – ${i.name}`); });
@@ -90,10 +89,7 @@ function updateFilterDropdowns() {
   if (gi) gi.innerHTML = iOpts;
   if (curI) fiEl.value = curI;
 
-  let pics = new Set(DEFAULT_PICS);
-  db.tasks.forEach(t => { if (t.picRes) pics.add(picNorm(t.picRes)); });
-  fpEl.innerHTML = '<option value="">Tất cả</option>' + [...pics].map(p=>`<option value="${p}">${p}</option>`).join('');
-  if (curP) fpEl.value = curP;
+  // filterPic managed exclusively by _populateFilterPic() in renderTaskTable() (Username format, value-preserving)
 
   const fTuanBCEl = document.getElementById('filterTuanBC');
   if (fTuanBCEl) {
