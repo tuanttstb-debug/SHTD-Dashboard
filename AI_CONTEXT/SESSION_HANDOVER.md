@@ -1,9 +1,102 @@
 # SESSION HANDOVER
-**Date**: 2026-06-17 (Session 26 — filterPic preserve after task save/add)
+**Date**: 2026-06-17 (Session 27 — Milestone auto-gen ID + Add Task from Milestone)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed S26**: `7dbabce` — fix(filter): preserve filterPic after task save/add
-**origin/main HEAD**: `7dbabce` ✅
+**Pushed S27**: `104b81c` — feat(initiative): auto-gen milestone ID + add task from milestone
+**origin/main HEAD**: `104b81c` ✅
+
+---
+
+## Tasks Completed (S27 — commit `104b81c`)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S27-T1 | Auto-gen Milestone ID khi thêm mới: `{parentId}-M{nextNum}` (e.g. `INIT-001-M3`); pre-fill Category từ initiative cha | `initiative-tracker.js` | ✅ |
+| S27-T2 | "+ Task" button trên mỗi milestone row → mở task modal pre-filled (initiative, milestone, category, PIC, team, auto-gen ID) | `initiative-tracker.js` | ✅ |
+| S27-T3 | "+ Thêm Task" trong empty-state của milestone task panel | `initiative-tracker.js` | ✅ |
+| S27-T4 | Test: `verify_milestone_task.mjs` 23/23 PASS | `verify_milestone_task.mjs` | ✅ |
+
+### Architecture: S27 Changes
+
+**`_initNextMsNum(parentId)`** (new helper):
+```js
+// Tìm max số thứ tự từ các milestone có ID dạng {parentId}-M{n}
+const nums = db.initiatives.filter(i => i.parentId === parentId)
+  .map(i => { const m = (i.id||'').match(/-M(\d+)$/i); return m ? parseInt(m[1]) : 0; });
+return nums.length ? Math.max(...nums) + 1 : 1;
+```
+
+**`_initOpenMilestone(parentId)`** (updated):
+```js
+// BEFORE: chỉ set initFParent
+// AFTER: auto-gen ID + pre-fill category từ parent initiative
+_initOpenModal(null);
+const nextNum = _initNextMsNum(parentId);
+setTimeout(() => {
+  selParent.value = parentId;
+  idEl.value = `${parentId}-M${nextNum}`;       // e.g. "INIT-001-M3"
+  if (parent.category) catEl.value = parent.category;  // kế thừa category
+}, 0);
+```
+
+**`openTaskModalForMilestone(msId, iniId)`** (new function):
+```js
+openTaskModal(null);          // reset + default fill (reuse existing logic)
+fiEl.value = iniId;           // set initiative
+_populateMilestoneSelect(msId); // rebuild ms select → select msId
+fCat.value = ini.category;    // category from initiative
+// PIC: accUser → team → _populateTeamSelect + _populateUserSelect
+_populateTeamSelect('fTeam', accTeam);
+_populateUserSelect('fPicAcc', accTeam, ini.accountable); // Teamlead
+_populateUserSelect('fPicRes', accTeam, curUser);          // executor = current user
+autoGenId();                  // gen {iniId}-M{n}-001, 002, ...
+modalSubtitle = `Initiative: ${iniId} · Milestone: M{n}`;
+```
+
+**`_initBuildMilestoneList()`** — per-milestone row thêm button:
+```html
+<button onclick="openTaskModalForMilestone('${ms.id}','${parentId}')"
+  title="Thêm task vào milestone này">
+  <i class="fa-solid fa-plus"></i> Task
+</button>
+```
+
+**`_initBuildMsTaskList()`** — empty-state thêm button:
+```html
+Chưa có task nào...
+<button onclick="openTaskModalForMilestone('${ms.id}','${parentInitId}')">
+  <i class="fa-solid fa-plus"></i> Thêm Task
+</button>
+```
+
+### Regression (S27)
+```
+verify_milestone_task.mjs:   23/23 PASS ✅ NEW
+verify_task_init_popup.mjs:  28/28 PASS ✅ (no regression)
+```
+
+---
+
+## Decisions Made (S27)
+
+1. **`openTaskModal(null)` first, then override**: Reuse existing reset/default logic thay vì duplicate. Override chỉ các fields cần thiết (fInit, fMs, fCat, fTeam, fPicAcc, fPicRes).
+2. **`fPicRes` = current user, `fPicAcc` = initiative accountable**: Accountable là Teamlead chịu trách nhiệm; PicRes là người thực thi (thường là người đang nhập task).
+3. **`_initNextMsNum` chỉ tính ID dạng `-M{n}`**: Ignore milestone IDs không match pattern (custom IDs) để tránh false maxima.
+4. **Category: task form `fCat` vs initiative `initFCat`**: Cả hai đều có options Vietnamese (e.g. `Số hóa`). Data trong DB phải dùng giá trị match với select options — đây là điều kiện hiển thị đúng.
+
+---
+
+## Regression Risks (S27)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **Category mismatch DB vs select options** | ⚪ LOW | Nếu initiative.category lưu string không match bất kỳ `<option>` nào trong task `fCat` (e.g. custom text, typo), `fCat` sẽ silently không set được. User thấy category rỗng → phải tự chọn lại. Không block workflow. |
+| **`fPicRes` override khi accTeam không tìm được** | ⚪ LOW | Nếu `_appUsers` chưa load (GAS slow) → `accUser` = undefined → `accTeam = ''` → không gọi `_populateTeamSelect` → team + PIC giữ nguyên default từ current user. Graceful fallback. |
+| **verify_case_pipeline TEST13/14** | 🟡 MEDIUM | Pre-existing từ S24 — cần update test check cpViewOverlay. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S26)
 
 ---
 

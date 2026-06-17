@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-17 (Session 26 — filterPic preserve after task save/add)
+**As of**: 2026-06-17 (Session 27 — Milestone auto-gen ID + Add Task from Milestone)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `7dbabce` — fix(filter): preserve filterPic after task save/add
+**Remote HEAD (main)**: `104b81c` — feat(initiative): auto-gen milestone ID + add task from milestone
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -43,7 +43,7 @@
 | `assets/js/views/tasks.js` | ~400 | ✅ S24: filter picRes so sánh `.toLowerCase()` (PA1 picRes case fix); S23: +_populateFilterPic, +onFilterTeamChange |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
-| `assets/js/views/initiative-tracker.js` | ~365 | ✅ S22b: repair milestone-to-parent linking; S21: initFAcc input→select |
+| `assets/js/views/initiative-tracker.js` | ~760 | ✅ S27: +_initNextMsNum(), _initOpenMilestone() auto-gen ID+category, openTaskModalForMilestone(), "+ Task" btn per milestone row, "+ Thêm Task" in empty state; S25: view popups; S22b: repair milestone-to-parent linking |
 | `assets/js/api.js` | ~375 | ✅ S24: gọi _resolvePickerCase() sau loadAppUsers() (PA2); S23b: +localAction(); S21: +_appUsers[], loadAppUsers(), helpers |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
 | `assets/js/ui/navigation.js` | ~125 | ✅ S24: +closeCaseViewPopup() trong Escape handler; S19: G+C shortcut, renderCasePipeline dispatch |
@@ -63,6 +63,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **Milestone auto-gen ID + Add Task** | ✅ | S27: "Thêm Milestone" tự gen ID `{parentId}-M{n}` + pre-fill category; "+ Task" btn trên mỗi milestone → task modal pre-filled (initiative, milestone, category, PIC, team, auto-gen ID) |
 | **Task view popup** | ✅ | S25: click row → taskViewOverlay (read-only); Chỉnh sửa → edit modal; sau save → popup re-opens |
 | **Initiative view popup** | ✅ | S25: click card header → initViewOverlay (read-only); Chỉnh sửa → _initOpenModal; sau save → popup re-opens |
 | **Return-to-popup sau save** | ✅ | S25: _taskEditReturnId / _initEditReturnId pattern; cancel (ESC/Hủy) không re-open |

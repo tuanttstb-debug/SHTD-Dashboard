@@ -414,7 +414,7 @@ function _resolveOneUser(raw) {
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-17 (Session 26 — TD-035 partial: updateFilterDropdowns filterPic conflict fixed; TD-034 unchanged)
+**Last updated**: 2026-06-17 (Session 27 — no new debt; verify_milestone_task.mjs added, total 203 checks)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -429,7 +429,7 @@ function _resolveOneUser(raw) {
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 8 committed suites: 37+14+14+46+22+23+15+9=180 (initiative_v2 failing — TD-033); no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 9 committed suites: 37+14+14+46+22+23+15+9+23=203 (initiative_v2 failing — TD-033); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ~~⚪~~ | ~~Hardcoded default PIC~~ | Tiny | ✅ **Resolved S21** — fPicAcc/fPicRes now populated from User_Master; no hardcoded 'Tuantt4' default |

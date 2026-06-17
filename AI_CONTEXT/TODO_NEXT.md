@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-17 (Session 26 — filterPic preserve after task save/add)
-**Context**: `origin/main` @ `7dbabce` — filter state preserved through task save/add.
+**Prepared**: 2026-06-17 (Session 27 — Milestone auto-gen ID + Add Task from Milestone)
+**Context**: `origin/main` @ `104b81c` — milestone ID auto-gen + task-from-milestone UX.
 
 ---
 
@@ -13,6 +13,18 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S27
+
+- [x] `_initOpenMilestone()`: auto-gen ID = `{parentId}-M{nextNum}`, pre-fill Category từ parent initiative
+- [x] `_initNextMsNum(parentId)`: tính số thứ tự milestone tiếp theo (max existing `-M{n}` + 1)
+- [x] `openTaskModalForMilestone(msId, iniId)`: mở task modal pre-filled initiative, milestone, category, PIC Accountable (từ ini.accountable), team (từ _appUsers), auto-gen task ID
+- [x] "+ Task" button trên mỗi milestone row trong `_initBuildMilestoneList()`
+- [x] "+ Thêm Task" trong empty-state của milestone task panel (`_initBuildMsTaskList()`)
+- [x] Test: `verify_milestone_task.mjs` 23/23 PASS; `verify_task_init_popup.mjs` 28/28 PASS (no regression)
+- [x] Commit `104b81c`, push `origin/main`
 
 ---
 
@@ -118,17 +130,18 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Smoke test live: S25 + S26 features
+## 🔴 PRIORITY 0 — Smoke test live: S25 + S26 + S27 features
 
 | Feature | Check |
 |---|---|
+| **Milestone auto-gen ID** | Mở Initiative Tracker → bấm "Thêm Milestone" → ID tự điền dạng `{iniId}-M{n}` → Category pre-filled từ initiative cha |
+| **Add Task from Milestone** | Bấm "+ Task" trên milestone row → task modal mở → fInit, fMs, fCat, fPicAcc pre-filled đúng; task ID tự gen theo pattern `{iniId}-M{n}-001` |
+| **Add Task from empty milestone panel** | Mở task panel của milestone chưa có task → bấm "+ Thêm Task" → modal pre-filled đúng |
 | **Task view popup** | Click task row → taskViewOverlay hiện đúng data; Chỉnh sửa → edit modal; ESC đóng |
 | **Initiative view popup** | Click card header → initViewOverlay hiện đúng data; Chỉnh sửa → initiative modal; ESC đóng |
 | **Return-to-popup sau save** | Edit task từ view popup → save → popup re-opens với data mới |
-| **Filter preserved after save** | Chọn filter PIC (S26 fix) → edit/add task → save → filter PIC còn nguyên trong dropdown |
+| **Filter preserved after save** | Chọn filter PIC → edit/add task → save → filter PIC còn nguyên trong dropdown |
 | **Display_Name (Username) dropdowns — non-Admin** | Login với role User/Teamlead → mở Task modal → fPicRes có format "Tên (username)" |
-| **BLD Queue role gate** | Login non-Admin → BLD Queue → Phê duyệt/Từ chối/Yêu cầu bổ sung ẩn; Xem đầy đủ vẫn hiện |
-| **Case Pipeline view popup** | Click row → cpViewOverlay mở đúng data; Edit btn hiện với Admin/Teamlead; ESC đóng |
 | **GAS deploy confirm** | Xác nhận GAS đã deploy với user-list không còn ADMIN_ONLY |
 
 ---
