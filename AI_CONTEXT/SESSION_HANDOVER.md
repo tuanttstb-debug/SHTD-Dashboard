@@ -1,10 +1,153 @@
 # SESSION HANDOVER
-**Date**: 2026-06-16 (Session 24 — User dropdown audit, BLD gate, task popups, picRes case fix)
+**Date**: 2026-06-17 (Session 25 — Task view popup, Initiative view popup, return-to-popup after save)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed S24-a**: `a58474e` — feat: user dropdowns, BLD role gate, task view popups (Performance + Case Pipeline)
-**Pushed S24-b**: `edc6a26` — fix(filter): resolve picRes case mismatch between DB and User Master
-**origin/main HEAD**: `edc6a26` ✅
+**Pushed S25**: `61108da` — feat: task & initiative read-only view popups + return-to-popup after save
+**origin/main HEAD**: `61108da` ✅
+
+---
+
+## Tasks Completed (S25 — commit `61108da`)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S25-T1 | Task view popup: `rowClick()` → `openTaskViewPopup(id)` — read-only overlay với full task details, chips, grid | `tasks.js`, `index.html` | ✅ |
+| S25-T2 | Task view popup: "Chỉnh sửa" → `taskViewOpenEdit()` → ghi nhớ `_taskEditReturnId` → đóng popup → mở edit modal | `tasks.js` | ✅ |
+| S25-T3 | Return-to-popup: `handleSubmit()` re-open task view popup sau save (dùng `task.id` mới); `closeTaskModal()` reset `_taskEditReturnId` khi cancel | `crud.js` | ✅ |
+| S25-T4 | Initiative view popup: card header `onclick="openInitViewPopup()"` với `cursor:pointer`; `stopPropagation` trên `.init-card-actions` | `initiative-tracker.js` | ✅ |
+| S25-T5 | Initiative view popup: "Chỉnh sửa" → `initViewOpenEdit()` → `_initEditReturnId` → close popup → `_initOpenModal()`; `_initSave()` re-open popup sau save | `initiative-tracker.js` | ✅ |
+| S25-T6 | Task rows trong milestone list & linked task list → `openTaskViewPopup()` thay vì `editTask()` | `initiative-tracker.js` | ✅ |
+| S25-T7 | ESC handler: thêm `closeTaskViewPopup()`, `closeInitViewPopup()`, `_initCloseModal()` | `navigation.js` | ✅ |
+| S25-T8 | `#taskViewOverlay` + `#initViewOverlay` HTML (global overlays, reuse `.cp-view-*` CSS) | `index.html` | ✅ |
+| S25-T9 | Test: `verify_task_init_popup.mjs` — 28/28 PASS | `verify_task_init_popup.mjs` | ✅ |
+
+---
+
+## Architecture: S25 Changes
+
+### Task View Popup (S25-T1 to T3)
+```
+Flow:
+  tasks.js rowClick(e, id) → openTaskViewPopup(id)
+    - populate #taskViewTitle, #taskViewSubtitle, #taskViewBody
+    - chips: state, RAG, category, type, canBLD, highlight, overdue
+    - grid (cp-view-grid): initiative, milestone, team, PICs, dates, progress, tuanBC
+    - sections: result, nextPlan, vuongMac, noiDungBLD, yKienBLD
+    - show #taskViewOverlay (display:flex)
+
+  "Chỉnh sửa" btn → taskViewOpenEdit():
+    _taskEditReturnId = _taskViewId  ← capture trước close
+    closeTaskViewPopup()             ← _taskViewId = null
+    editTask(id)                     → openTaskModal(task)
+
+  handleSubmit() sau save:
+    const shouldReturn = !!_taskEditReturnId  ← capture trước closeTaskModal
+    closeTaskModal()                          ← reset _taskEditReturnId = null
+    if (shouldReturn) openTaskViewPopup(task.id)  ← dùng task.id mới (edge case ID change)
+
+  closeTaskModal() → _taskEditReturnId = null (cancel = no re-open)
+  ESC → closeTaskViewPopup()
+```
+
+### Initiative View Popup (S25-T4 to T6)
+```
+Flow:
+  init-card-header onclick="openInitViewPopup(ini.id)"  cursor:pointer
+  .init-card-actions onclick="event.stopPropagation()"   ← prevent bubble
+
+  openInitViewPopup(id):
+    - populate #initViewTitle, #initViewSubtitle, #initViewBody
+    - chips: status, category, milestone badge (nếu có parentId)
+    - grid (cp-view-grid): accountable, dates, pct, milestones count, tasks count, docLink
+    - sections: kpiTarget, notes
+    - show #initViewOverlay (display:flex)
+
+  "Chỉnh sửa" btn → initViewOpenEdit():
+    _initEditReturnId = _initViewId
+    closeInitViewPopup()
+    _initOpenModal(id)
+
+  _initSave() sau save:
+    _shouldReturnToView = !!_initEditReturnId  ← trước _initCloseModal
+    _initCloseModal()                          ← reset _initEditReturnId = null
+    renderInitiativeTracker()
+    if (_shouldReturnToView) openInitViewPopup(ini.id)
+
+  _initCloseModal() → _initEditReturnId = null (cancel = no re-open)
+  ESC → closeInitViewPopup() + _initCloseModal()
+```
+
+### Task Rows trong Initiative Tracker
+```
+TRƯỚC: onclick="editTask('${t.id}')"
+SAU:   onclick="openTaskViewPopup('${t.id}')"
+Áp dụng cho: _initBuildMsTaskList() và _initBuildTaskList()
+```
+
+### CSS Reuse
+```
+Không thêm CSS mới — reuse từ case-pipeline.css:
+  .cp-view-grid, .cp-view-row, .cp-view-label, .cp-view-val
+  .cp-view-section, .cp-view-section-title, .cp-view-text
+```
+
+---
+
+## Decisions Made (S25)
+
+1. **task.id cho return-to-popup**: `handleSubmit()` dùng `task.id` (ID sau save) thay vì `_taskEditReturnId` (ID trước edit) → handle edge case user đổi Task ID.
+2. **_taskEditReturnId reset trong closeTaskModal()**: Đảm bảo ESC / Hủy từ edit modal không re-open popup.
+3. **_initCloseModal trong ESC handler**: Fix bug `initModalOverlay` chưa được đóng bởi ESC trước S25.
+4. **CSS reuse `.cp-view-*`**: Không tạo CSS mới cho task/initiative view popup — consistent với Case Pipeline popup đã có.
+5. **`_initBuildTaskList` task rows**: Dùng `openTaskViewPopup` (không còn `editTask`) → mở task view popup thay vì edit modal trực tiếp.
+
+---
+
+## Playwright Test (S25)
+```
+File: verify_task_init_popup.mjs (new)
+Run:  node verify_task_init_popup.mjs (port 9989, tự tạo server)
+
+PASS 28/28:
+  T1:  overlay HTML exists (taskViewOverlay + initViewOverlay)
+  T2:  Tasks: click row → popup opens (title, subtitle, body)
+  T3:  Popup body has state chip + RAG badge
+  T4:  Close via Đóng button
+  T5:  ESC closes task popup
+  T6:  Chỉnh sửa → edit modal opens, popup closes
+  T7:  ESC from edit modal → popup NOT re-opened (cancel path)
+  T8:  Initiative Tracker: card header click → init popup opens
+  T9:  ESC closes init popup
+  T10: Action btn stopPropagation (no init popup)
+  T11: Init popup Chỉnh sửa → initiative edit modal opens
+  T12: Initiative linked task row click → task popup opens
+  T13: No JS console errors
+```
+
+---
+
+## Regression (S25)
+```
+verify_bld_queue.mjs:         46/46 PASS ✅
+verify_ms_tasks.mjs:          14/14 PASS ✅
+verify_filter_cascade.mjs:    23/23 PASS ✅
+verify_import_rbac.mjs:       15/15 PASS ✅
+verify_case_pipeline.mjs:     20/22 PASS (TEST13/14 pre-existing fail từ S24)
+verify_task_init_popup.mjs:   28/28 PASS ✅ NEW
+```
+
+---
+
+## Regression Risks (S25)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **verify_case_pipeline TEST13/14** | 🟡 MEDIUM | Pre-existing từ S24: test expect click row → edit modal, nhưng S24 đã đổi sang view popup. Cần update test để check cpViewOverlay thay vì cpModal. |
+| **openTaskViewPopup từ nhiều context** | ⚪ LOW | Có thể gọi từ tasks.js, initiative-tracker.js, performance.js. Tất cả đều hoạt động đúng — popup sẽ luôn mở đúng task. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER
 
 ---
 

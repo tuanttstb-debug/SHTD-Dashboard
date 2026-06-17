@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-16 (Session 24 — User dropdown audit, BLD gate, task popups, picRes case fix)
+**As of**: 2026-06-17 (Session 25 — Task view popup, Initiative view popup, return-to-popup)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `edc6a26` — fix(filter): picRes case mismatch resolved (PA1 + PA2)
+**Remote HEAD (main)**: `61108da` — feat: task & initiative read-only view popups + return-to-popup after save
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -63,6 +63,9 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **Task view popup** | ✅ | S25: click row → taskViewOverlay (read-only); Chỉnh sửa → edit modal; sau save → popup re-opens |
+| **Initiative view popup** | ✅ | S25: click card header → initViewOverlay (read-only); Chỉnh sửa → _initOpenModal; sau save → popup re-opens |
+| **Return-to-popup sau save** | ✅ | S25: _taskEditReturnId / _initEditReturnId pattern; cancel (ESC/Hủy) không re-open |
 | **Case Pipeline (Table + Kanban)** | ✅ | S24: +read-only view popup (cpViewOverlay) + Edit btn cho Admin/Teamlead; S20: Table-primary; S19: GAS deployed |
 | **Case Pipeline view popup** | ✅ | S24: click row/card → cpViewOverlay (read-only); Edit btn → cpModal (canImport() only) |
 | **Case Pipeline DVKD column + filter** | ✅ | S23: Cột ĐVKD thêm vào bảng; filter ĐVKD dropdown trong filter bar; cascade cpFilterPic từ Team |

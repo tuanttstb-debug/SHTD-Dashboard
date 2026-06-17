@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-16 (Session 24 — User dropdown audit, BLD gate, task popups, picRes case fix)
-**Context**: `origin/main` @ `edc6a26` — picRes case fix (PA1+PA2); S24 features on main.
+**Prepared**: 2026-06-17 (Session 25 — Task view popup, Initiative view popup, return-to-popup after save)
+**Context**: `origin/main` @ `61108da` — task & initiative read-only view popups, return-to-popup UX.
 
 ---
 
@@ -15,6 +15,19 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
+
+## ✅ COMPLETED S25
+
+- [x] Task view popup: `rowClick()` → `openTaskViewPopup(id)` — read-only overlay, full task details, chips, grid, sections
+- [x] Task view popup: "Chỉnh sửa" → `taskViewOpenEdit()` → ghi nhớ `_taskEditReturnId` → open edit modal
+- [x] Return-to-popup: `handleSubmit()` re-open task view popup sau save; cancel clears `_taskEditReturnId`
+- [x] Initiative view popup: card header click → `openInitViewPopup()` (cursor:pointer); stopPropagation trên actions
+- [x] Initiative view popup: "Chỉnh sửa" → `initViewOpenEdit()` → `_initEditReturnId` → `_initOpenModal()`
+- [x] `_initSave()`: re-open init popup sau save nếu `_initEditReturnId` set
+- [x] Task rows trong milestone/linked-task list → `openTaskViewPopup()` (không còn `editTask()`)
+- [x] ESC handler: thêm `closeTaskViewPopup()`, `closeInitViewPopup()`, `_initCloseModal()`
+- [x] `#taskViewOverlay` + `#initViewOverlay` HTML (reuse `.cp-view-*` CSS)
+- [x] Test: `verify_task_init_popup.mjs` 28/28 PASS; all regression tests pass
 
 ## ✅ COMPLETED S19
 
