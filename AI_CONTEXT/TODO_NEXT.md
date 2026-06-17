@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-17 (Session 25 — Task view popup, Initiative view popup, return-to-popup after save)
-**Context**: `origin/main` @ `61108da` — task & initiative read-only view popups, return-to-popup UX.
+**Prepared**: 2026-06-17 (Session 26 — filterPic preserve after task save/add)
+**Context**: `origin/main` @ `7dbabce` — filter state preserved through task save/add.
 
 ---
 
@@ -13,6 +13,15 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S26
+
+- [x] Fix: `updateFilterDropdowns()` không còn rebuild `filterPic` — tránh format conflict (picNorm vs Username) gây mất filter sau save
+- [x] `_populateFilterPic()` trong `renderTaskTable()` là owner duy nhất của `filterPic` dropdown
+- [x] Test: `verify_task_init_popup.mjs` 28/28 PASS (no regression)
+- [x] Commit `7dbabce`, push `origin/main`
 
 ---
 
@@ -109,15 +118,17 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Smoke test live: S24 features
+## 🔴 PRIORITY 0 — Smoke test live: S25 + S26 features
 
 | Feature | Check |
 |---|---|
+| **Task view popup** | Click task row → taskViewOverlay hiện đúng data; Chỉnh sửa → edit modal; ESC đóng |
+| **Initiative view popup** | Click card header → initViewOverlay hiện đúng data; Chỉnh sửa → initiative modal; ESC đóng |
+| **Return-to-popup sau save** | Edit task từ view popup → save → popup re-opens với data mới |
+| **Filter preserved after save** | Chọn filter PIC (S26 fix) → edit/add task → save → filter PIC còn nguyên trong dropdown |
 | **Display_Name (Username) dropdowns — non-Admin** | Login với role User/Teamlead → mở Task modal → fPicRes có format "Tên (username)" |
 | **BLD Queue role gate** | Login non-Admin → BLD Queue → Phê duyệt/Từ chối/Yêu cầu bổ sung ẩn; Xem đầy đủ vẫn hiện |
-| **Performance popup** | Mở Performance → click row → detailOverlay mở với task list đúng tab |
 | **Case Pipeline view popup** | Click row → cpViewOverlay mở đúng data; Edit btn hiện với Admin/Teamlead; ESC đóng |
-| **picRes filter** | Chọn PIC DungLQ1 trong filterPic → filter đúng tasks dù DB lưu dunglq1 |
 | **GAS deploy confirm** | Xác nhận GAS đã deploy với user-list không còn ADMIN_ONLY |
 
 ---

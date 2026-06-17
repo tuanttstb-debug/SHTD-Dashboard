@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-17 (Session 25 — Task view popup, Initiative view popup, return-to-popup)
+**As of**: 2026-06-17 (Session 26 — filterPic preserve after task save/add)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `61108da` — feat: task & initiative read-only view popups + return-to-popup after save
+**Remote HEAD (main)**: `7dbabce` — fix(filter): preserve filterPic after task save/add
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -50,7 +50,7 @@
 | `assets/js/crud.js` | ~420 | ✅ S23b: saveTask()/deleteTask() → localAction() (no GAS); S21: User_Master dropdowns |
 | `assets/js/bulk.js` | ~42 | ✅ S23b: bulkSetRag/State/Delete → localAction(); fixed count-before-clear bug |
 | `assets/js/views/bld-queue.js` | ~390 | ✅ S23b: task BLD approval → localAction(); Case BLD still syncCaseAction |
-| `assets/js/app.js` | ~330 | ✅ S23: handleImport() canImport() guard + retains syncAction (sole GAS write path for tasks) |
+| `assets/js/app.js` | ~328 | ✅ S26: remove filterPic rebuild from updateFilterDropdowns(); S23: handleImport() canImport() guard + retains syncAction (sole GAS write path for tasks) |
 | `assets/js/initiatives.js` | ~170 | ✅ S20: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~325 | ✅ S21: +loadAppUsers() non-blocking on startup (after autoConnectDB) |
@@ -69,6 +69,7 @@
 | **Case Pipeline (Table + Kanban)** | ✅ | S24: +read-only view popup (cpViewOverlay) + Edit btn cho Admin/Teamlead; S20: Table-primary; S19: GAS deployed |
 | **Case Pipeline view popup** | ✅ | S24: click row/card → cpViewOverlay (read-only); Edit btn → cpModal (canImport() only) |
 | **Case Pipeline DVKD column + filter** | ✅ | S23: Cột ĐVKD thêm vào bảng; filter ĐVKD dropdown trong filter bar; cascade cpFilterPic từ Team |
+| **Task filter PIC preserve after save** | ✅ | S26: remove filterPic rebuild from updateFilterDropdowns(); _populateFilterPic() owns filterPic exclusively — value preserved through localAction() |
 | **Task filter PIC cascade** | ✅ | S23: cascade; S24: picRes case-insensitive compare + _resolvePickerCase() canonical mapping |
 | **Display_Name (Username) dropdowns — tất cả roles** | ✅ | S24: user-list không còn ADMIN_ONLY → non-Admin/Teamlead cũng load _appUsers → dropdowns nhất quán |
 | **BLD Queue role gate** | ✅ | S24: Phê duyệt/Từ chối/Yêu cầu bổ sung ẩn với non-Admin; Xem đầy đủ luôn hiện |

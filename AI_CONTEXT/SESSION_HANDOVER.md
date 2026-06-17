@@ -1,9 +1,71 @@
 # SESSION HANDOVER
-**Date**: 2026-06-17 (Session 25 — Task view popup, Initiative view popup, return-to-popup after save)
+**Date**: 2026-06-17 (Session 26 — filterPic preserve after task save/add)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**Pushed S25**: `61108da` — feat: task & initiative read-only view popups + return-to-popup after save
-**origin/main HEAD**: `61108da` ✅
+**Pushed S26**: `7dbabce` — fix(filter): preserve filterPic after task save/add
+**origin/main HEAD**: `7dbabce` ✅
+
+---
+
+## Tasks Completed (S26 — commit `7dbabce`)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S26-T1 | Fix filter clearing bug: `updateFilterDropdowns()` no longer rebuilds `filterPic` dropdown; `_populateFilterPic()` in `renderTaskTable()` owns it exclusively | `assets/js/app.js` | ✅ |
+
+### Root Cause (S26-T1)
+```
+BEFORE:
+  localAction() → renderAll() → updateFilterDropdowns()
+    → fpEl.innerHTML = picNorm-format options ("Dunglq1")
+    → fpEl.value = curP ("DungLQ1")  ← not found in picNorm options → reset to ""
+  renderAll() → renderTaskTable() → _populateFilterPic()
+    → prev = sel.value = ""          ← already cleared by updateFilterDropdowns
+    → rebuild Username-format options
+    → if (prev && ...) sel.value = prev  ← prev="" → no restore → filter gone
+
+AFTER:
+  updateFilterDropdowns() does NOT touch filterPic at all
+  _populateFilterPic() captures prev before rebuild → rebuilds → restores → ✅
+```
+
+### Fix (S26-T1) — app.js `updateFilterDropdowns()`
+```diff
+-  const fpEl = document.getElementById('filterPic');
+-  const curI = fiEl.value, curP = fpEl.value;
++  const curI = fiEl.value;
+   // ... rebuild filterInit ...
+-  let pics = new Set(DEFAULT_PICS);
+-  db.tasks.forEach(t => { if (t.picRes) pics.add(picNorm(t.picRes)); });
+-  fpEl.innerHTML = '<option value="">...' + ...
+-  if (curP) fpEl.value = curP;
++  // filterPic managed exclusively by _populateFilterPic() in renderTaskTable()
+```
+
+### Regression (S26)
+```
+verify_task_init_popup.mjs:  28/28 PASS ✅ (no regression from S25 popup features)
+```
+
+---
+
+## Decisions Made (S26)
+
+1. **Remove filterPic from `updateFilterDropdowns()`**: Không fix format conflict — loại bỏ hẳn phần rebuild để tránh double-rebuild với hai format khác nhau. `_populateFilterPic()` đã đủ xử lý đúng (Username format, prev-restore).
+2. **Không cần fix các filter khác**: `filterInit`, `filterTuanBC` trong `updateFilterDropdowns()` dùng ID format nhất quán → preserve đúng. `filterTeam`, `filterState`, `filterRag`, `filterId` không bị rebuild trong `renderAll()` → luôn giữ nguyên.
+
+---
+
+## Regression Risks (S26)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **filterPic khi `_appUsers` chưa load** | ⚪ LOW | Nếu `loadAppUsers()` chưa xong khi user đầu tiên thay đổi filter, `_populateFilterPic()` dùng fallback từ `db.tasks` (picRes trực tiếp). Giá trị được preserve nhưng format khác. Resolve khi `_appUsers` load xong + user đổi filter lại. |
+| **verify_case_pipeline TEST13/14** | 🟡 MEDIUM | Pre-existing từ S24: test check click row → edit modal nhưng S24 đổi sang view popup. Cần update test. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S25)
 
 ---
 

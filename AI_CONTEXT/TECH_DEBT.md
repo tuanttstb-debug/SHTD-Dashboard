@@ -414,7 +414,7 @@ function _resolveOneUser(raw) {
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-16 (Session 24 — +TD-035 picNorm canonical gap; TD-034 unchanged)
+**Last updated**: 2026-06-17 (Session 26 — TD-035 partial: updateFilterDropdowns filterPic conflict fixed; TD-034 unchanged)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -459,5 +459,5 @@ function _resolveOneUser(raw) {
 | TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
 | TD-033 | 🟢 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | Small | Open — copy pattern verify_bld_queue |
 | TD-034 | 🔴 | Task data loss risk — CRUD/BLD local-only, no GAS write | Small | Open — cần UX warning hoặc auto-export trigger. User phải export Excel thủ công để đồng bộ Sheet. |
-| TD-035 | 🟢 | `picNorm()` không produce canonical username — partial workaround S24 (PA1+PA2 cover read-path; write-path still saves picNorm format) | Small | Open — fix proper: lookup từ _appUsers khi save trong crud.js |
+| TD-035 | 🟢 | `picNorm()` không produce canonical username — S26: removed filterPic rebuild từ updateFilterDropdowns() (conflict resolved); write-path crud.js still saves picNorm format | Small | Partial — fix proper: lookup từ _appUsers khi save trong crud.js |
 | ~~SCHEMA-01~~ | ~~🟡~~ | ~~Mixed-version clients cột X lệch/stale~~ | — | ✅ **Resolved 2026-06-15** — S18+S19 merged to main, master abandoned |
