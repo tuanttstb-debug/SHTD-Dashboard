@@ -127,7 +127,7 @@ function _initBuildCard(ini) {
 
   return `
   <div class="init-card status-${statusKey}" id="init-card-${ini.id}">
-    <div class="init-card-header">
+    <div class="init-card-header" onclick="openInitViewPopup('${_esc(ini.id)}')" style="cursor:pointer;" title="Xem chi tiết">
       <span class="init-card-id">${_esc(ini.id)}</span>
       <span class="init-card-name" title="${_esc(ini.name)}">${_esc(ini.name)}</span>
       <div class="init-card-meta">
@@ -140,7 +140,7 @@ function _initBuildCard(ini) {
         ${ini.deadline ? `<span style="font-size:12px;color:var(--text-3);"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ini.deadline)}</span>` : ''}
         ${ini.category ? `<span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:99px;font-weight:600;">${_esc(ini.category)}</span>` : ''}
       </div>
-      <div class="init-card-actions">
+      <div class="init-card-actions" onclick="event.stopPropagation()">
         <button class="btn btn-ghost btn-sm" onclick="_initOpenModal('${_esc(ini.id)}')" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
         <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="_initDelete('${_esc(ini.id)}')" title="Xóa"><i class="fa-solid fa-trash"></i></button>
       </div>
@@ -235,7 +235,7 @@ function _initBuildMsTaskList(ms, parentInitId) {
     } else {
       alignBadge = `<span class="init-align-badge ok">✓ Phù hợp</span>`;
     }
-    return `<tr onclick="editTask('${_esc(t.id)}')" title="Mở task ${_esc(t.id)}">
+    return `<tr onclick="openTaskViewPopup('${_esc(t.id)}')" title="Xem task ${_esc(t.id)}">
       <td><span class="init-task-id">${_esc(t.id)}</span></td>
       <td><span class="init-task-name" title="${_esc(t.name)}">${_esc(t.name)}</span></td>
       <td>${stateChip(t.state)}</td>
@@ -297,7 +297,7 @@ function _initBuildTaskList(initiativeId, tasks) {
     return `<div style="font-size:12px;color:var(--text-3);padding:14px 18px;">Không có task nào liên kết với initiative này.</div>`;
   }
   const rows = tasks.map(t => `
-    <tr onclick="editTask('${t.id}')" title="Mở task ${t.id}">
+    <tr onclick="openTaskViewPopup('${t.id}')" title="Xem task ${t.id}">
       <td><span class="init-task-id">${_esc(t.id)}</span></td>
       <td><span class="init-task-name" title="${_esc(t.name)}">${_esc(t.name)}</span></td>
       <td>${t.milestone ? `<span style="font-size:11px;background:var(--primary-xlight);color:var(--primary);padding:2px 6px;border-radius:3px;font-weight:700;">${_esc(t.milestone)}</span>` : '<span style="color:var(--text-4);">–</span>'}</td>
@@ -501,6 +501,7 @@ function _initOpenMilestone(parentId) {
 function _initCloseModal() {
   const overlay = document.getElementById('initModalOverlay');
   if (overlay) overlay.style.display = 'none';
+  _initEditReturnId = null;
 }
 
 function _initSave() {
@@ -551,10 +552,10 @@ function _initSave() {
     type:              parentId ? 'milestone' : 'initiative',
   };
 
+  const _shouldReturnToView = !!_initEditReturnId;
   _initCloseModal();
 
   if (origId) {
-    // If ID changed, remove old then add new
     if (origId !== newId) {
       db.initiatives = db.initiatives.filter(x => x.id !== origId);
       syncInitiativeAdd(ini);
@@ -567,6 +568,7 @@ function _initSave() {
     toast('Đã thêm initiative!', 'success');
   }
   renderInitiativeTracker();
+  if (_shouldReturnToView) openInitViewPopup(ini.id);
 }
 
 async function _initDelete(id) {
@@ -604,6 +606,70 @@ function _initStatusIcon(status) {
   if (s === 'blocked') return '<i class="fa-solid fa-ban"></i>';
   if (s === 'paused')  return '<i class="fa-solid fa-pause-circle"></i>';
   return '<i class="fa-solid fa-play-circle"></i>';
+}
+
+/* ── Initiative View Popup ── */
+let _initViewId = null;
+let _initEditReturnId = null;
+
+function openInitViewPopup(id) {
+  const ini = (db.initiatives || []).find(x => x.id === id);
+  if (!ini) return;
+  _initViewId = id;
+
+  const statusKey = (ini.status || 'active').toLowerCase();
+  const isMilestone = !!(ini.parentId);
+
+  document.getElementById('initViewTitle').textContent = ini.name || ini.id;
+  document.getElementById('initViewSubtitle').textContent =
+    `ID: ${ini.id}${isMilestone ? '  ·  Milestone của ' + ini.parentId : ''}${ini.category ? '  ·  ' + ini.category : ''}`;
+
+  const row = (icon, label, val) => val
+    ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-${icon}"></i>${label}</span><span class="cp-view-val">${val}</span></div>`
+    : '';
+
+  const section = (icon, label, val) => val
+    ? `<div class="cp-view-section"><div class="cp-view-section-title"><i class="fa-solid fa-${icon}"></i>${label}</div><div class="cp-view-text">${_esc(val)}</div></div>`
+    : '';
+
+  const linkedTasks = (db.tasks || []).filter(t => t.initiative === id);
+  const milestones  = (db.initiatives || []).filter(i => i.parentId === id && i.type === 'milestone');
+
+  document.getElementById('initViewBody').innerHTML = `
+    <div style="padding:0 4px 8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        <span class="init-status-chip ${statusKey}">${_initStatusIcon(ini.status)} ${_esc(ini.status||'Active')}</span>
+        ${ini.category ? `<span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 8px;border-radius:99px;font-weight:600;">${_esc(ini.category)}</span>` : ''}
+        ${isMilestone ? `<span style="font-size:11px;background:var(--primary-xlight);color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:600;">Milestone</span>` : ''}
+      </div>
+      <div class="cp-view-grid">
+        ${row('user-check', 'Accountable', _esc(ini.accountable || ''))}
+        ${row('calendar-plus', 'Bắt đầu', _esc(ini.startDate || ''))}
+        ${row('calendar-xmark', 'Deadline', _esc(ini.deadline || ''))}
+        ${row('percent', '% Hoàn thành', ini.pct !== undefined ? ini.pct + '%' : '')}
+        ${!isMilestone && milestones.length ? row('list-ol', 'Milestones', milestones.length + ' milestone') : ''}
+        ${!isMilestone && linkedTasks.length ? row('list-check', 'Tasks liên kết', linkedTasks.length + ' task') : ''}
+        ${ini.milestoneTracking ? row('flag', 'Milestone đang track', _esc(ini.milestoneTracking)) : ''}
+        ${ini.milestoneDeadline ? row('clock', 'Deadline Milestone', _esc(ini.milestoneDeadline)) : ''}
+        ${ini.docLink ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-link"></i>Tài liệu</span><span class="cp-view-val"><a href="${_esc(ini.docLink)}" target="_blank" rel="noopener" style="color:var(--primary);">Mở link</a></span></div>` : ''}
+      </div>
+      ${section('bullseye', 'Mục tiêu / KPI đầu ra', ini.kpiTarget)}
+      ${section('note-sticky', 'Ghi chú', ini.notes)}
+    </div>`;
+
+  document.getElementById('initViewOverlay').style.display = 'flex';
+}
+
+function closeInitViewPopup() {
+  document.getElementById('initViewOverlay').style.display = 'none';
+  _initViewId = null;
+}
+
+function initViewOpenEdit() {
+  const id = _initViewId;
+  _initEditReturnId = id;
+  closeInitViewPopup();
+  if (id) _initOpenModal(id);
 }
 
 function _initParseDate(str) {

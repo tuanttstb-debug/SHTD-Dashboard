@@ -161,6 +161,7 @@ function populatePicDropdown(selected) {
 
 function closeTaskModal() {
   document.getElementById('taskOverlay').classList.remove('open');
+  _taskEditReturnId = null;
 }
 
 function editTask(id) {
@@ -216,7 +217,9 @@ async function handleSubmit(e) {
     const idx = db.tasks.findIndex(x => x.id === lookupId);
     if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
   });
+  const shouldReturn = !!_taskEditReturnId;
   closeTaskModal();
+  if (shouldReturn) openTaskViewPopup(task.id);
   toast(`Đã lưu task <strong>${task.id}</strong>!`, 'success');
 }
 

@@ -205,9 +205,79 @@ function renderTaskTable() {
   updateBulkBar();
 }
 
+let _taskViewId = null;
+let _taskEditReturnId = null;
+
 function rowClick(e, id) {
   if (e.target.type === 'checkbox') return;
-  editTask(id);
+  openTaskViewPopup(id);
+}
+
+function openTaskViewPopup(id) {
+  const t = db.tasks.find(x => x.id === id);
+  if (!t) return;
+  _taskViewId = id;
+
+  document.getElementById('taskViewTitle').textContent = t.name || t.id;
+  document.getElementById('taskViewSubtitle').textContent = `ID: ${t.id}  ·  ${t.initiative || 'BAU'}  ·  ${t.team || ''}`;
+
+  const ov = isOverdue(t.endDate, t.progress);
+  const ragMap = { Green:'badge-green', Amber:'badge-amber', Red:'badge-red' };
+  const ragCls = ragMap[t.status] || 'badge-gray';
+
+  const row = (icon, label, val) => val
+    ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-${icon}"></i>${label}</span><span class="cp-view-val">${val}</span></div>`
+    : '';
+
+  const section = (icon, label, val) => val
+    ? `<div class="cp-view-section"><div class="cp-view-section-title"><i class="fa-solid fa-${icon}"></i>${label}</div><div class="cp-view-text">${esc(val)}</div></div>`
+    : '';
+
+  document.getElementById('taskViewBody').innerHTML = `
+    <div style="padding:0 4px 8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+        ${stateChip(t.state)}
+        <span class="badge ${ragCls}">${esc(t.status || '–')}</span>
+        ${t.category ? `<span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 8px;border-radius:99px;font-weight:600;">${esc(t.category)}</span>` : ''}
+        ${t.type && t.type !== 'Task' ? `<span style="font-size:11px;background:var(--primary-xlight);color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:600;">${esc(t.type)}</span>` : ''}
+        ${t.canBLD === 'Y' ? `<span style="font-size:11px;background:#fff3cd;color:#856404;padding:2px 8px;border-radius:99px;font-weight:600;">Cần BLĐ</span>` : ''}
+        ${t.highlight === 'Y' ? `<span style="font-size:11px;background:#d4edda;color:#155724;padding:2px 8px;border-radius:99px;font-weight:600;">★ Highlight</span>` : ''}
+        ${ov ? `<span style="font-size:11px;background:var(--danger-bg,#fce8e8);color:var(--danger);padding:2px 8px;border-radius:99px;font-weight:600;">Quá hạn</span>` : ''}
+      </div>
+      <div class="cp-view-grid">
+        ${row('diagram-project', 'Initiative', esc(t.initiative || 'BAU'))}
+        ${row('list-ol', 'Milestone', esc(t.milestone || ''))}
+        ${row('users', 'Team', esc(t.team || ''))}
+        ${t.teamPhoiHop ? row('handshake', 'Team phối hợp', esc(t.teamPhoiHop)) : ''}
+        ${row('user-check', 'PIC Accountable', esc(t.picAcc || ''))}
+        ${row('user', 'PIC Responsible', esc(t.picRes || ''))}
+        ${t.picSupport ? row('user-plus', 'PIC Support', esc(t.picSupport)) : ''}
+        ${row('calendar-plus', 'Bắt đầu', fmtDate(t.startDate))}
+        ${row('calendar-xmark', 'Deadline', `<span${ov ? ' style="color:var(--danger);font-weight:700;"' : ''}>${fmtDate(t.endDate)}</span>`)}
+        ${row('percent', 'Tiến độ', `${t.progress || 0}%`)}
+        ${row('newspaper', 'Tuần BC', esc(t.tuanBC || ''))}
+        ${t.crossTeam === 'Y' ? row('arrow-right-arrow-left', 'Cross-team', 'Có') : ''}
+      </div>
+      ${section('flag-checkered', 'Kết quả', t.result)}
+      ${section('arrow-right', 'Kế hoạch tiếp theo', t.nextPlan)}
+      ${section('triangle-exclamation', 'Vướng mắc', t.vuongMac)}
+      ${t.noiDungBLD ? section('comment', 'Nội dung xin ý kiến BLĐ', t.noiDungBLD) : ''}
+      ${t.yKienBLD ? `<div class="cp-view-section" style="background:var(--info-bg);border-left:3px solid var(--info);"><div class="cp-view-section-title" style="color:var(--info);"><i class="fa-solid fa-comment-dots"></i>Ý kiến Ban lãnh đạo</div><div class="cp-view-text">${esc(t.yKienBLD)}</div></div>` : ''}
+    </div>`;
+
+  document.getElementById('taskViewOverlay').style.display = 'flex';
+}
+
+function closeTaskViewPopup() {
+  document.getElementById('taskViewOverlay').style.display = 'none';
+  _taskViewId = null;
+}
+
+function taskViewOpenEdit() {
+  const id = _taskViewId;
+  _taskEditReturnId = id;
+  closeTaskViewPopup();
+  if (id) editTask(id);
 }
 
 function renderPagination(totalPages) {

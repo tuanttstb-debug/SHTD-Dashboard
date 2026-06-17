@@ -1248,6 +1248,46 @@
   </div>
 </div>
 
+<!-- ===== TASK VIEW POPUP ===== -->
+<div class="overlay" id="taskViewOverlay" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:700px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div style="min-width:0;flex:1;">
+        <div class="modal-title" id="taskViewTitle">Chi tiết Task</div>
+        <div class="modal-subtitle" id="taskViewSubtitle"></div>
+      </div>
+      <div class="modal-close" onclick="closeTaskViewPopup()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="modal-body" id="taskViewBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeTaskViewPopup()">Đóng</button>
+      <button class="btn btn-primary" onclick="taskViewOpenEdit()">
+        <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INITIATIVE VIEW POPUP ===== -->
+<div class="overlay" id="initViewOverlay" style="display:none;align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div style="min-width:0;flex:1;">
+        <div class="modal-title" id="initViewTitle">Chi tiết Initiative</div>
+        <div class="modal-subtitle" id="initViewSubtitle"></div>
+      </div>
+      <div class="modal-close" onclick="closeInitViewPopup()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="modal-body" id="initViewBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeInitViewPopup()">Đóng</button>
+      <button class="btn btn-primary" onclick="initViewOpenEdit()">
+        <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== CASE VIEW POPUP ===== -->
 <div class="overlay" id="cpViewOverlay" style="display:none;align-items:center;justify-content:center;">
   <div class="modal" style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
