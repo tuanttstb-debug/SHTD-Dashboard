@@ -190,7 +190,8 @@ function _initBuildMilestoneList(parentId, milestones) {
         </div>
         ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ms.deadline)}</span>` : ''}
         <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
-        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa milestone"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> Task</button>
         <button class="init-ms-task-btn${btnExtra}" id="ms-task-btn-${_esc(ms.id)}" onclick="_initToggleMsTaskPanel('${_esc(ms.id)}')">
           <i class="fa-solid fa-list-check"></i> ${msTasks.length} task
           <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i>
@@ -202,7 +203,9 @@ function _initBuildMilestoneList(parentId, milestones) {
     </div>`;
   }).join('');
 
-  return rows + `<div style="margin-top:8px;padding-left:4px;"><button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button></div>`;
+  return rows + `<div style="margin-top:8px;padding-left:4px;display:flex;gap:8px;">
+    <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button>
+  </div>`;
 }
 
 /* ── tasks belonging to a milestone (exact ID + short-label fallback) ── */
@@ -217,7 +220,10 @@ function _initGetMsTasks(ms, parentInitId) {
 function _initBuildMsTaskList(ms, parentInitId) {
   const tasks = _initGetMsTasks(ms, parentInitId);
   if (!tasks.length) {
-    return `<div style="font-size:12px;color:var(--text-3);padding:10px 4px;">Không có task nào liên kết với milestone này.</div>`;
+    return `<div style="font-size:12px;color:var(--text-3);padding:10px 4px;display:flex;align-items:center;gap:10px;">
+      <span>Chưa có task nào liên kết với milestone này.</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentInitId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> Thêm Task</button>
+    </div>`;
   }
   const rows = tasks.map(t => {
     const isExact    = t.milestone === ms.id;
@@ -490,11 +496,26 @@ function _initOpenModal(id) {
   overlay.style.display = 'flex';
 }
 
+function _initNextMsNum(parentId) {
+  const nums = (db.initiatives || [])
+    .filter(i => i.parentId === parentId)
+    .map(i => { const m = (i.id || '').match(/-M(\d+)$/i); return m ? parseInt(m[1]) : 0; });
+  return nums.length ? Math.max(...nums) + 1 : 1;
+}
+
 function _initOpenMilestone(parentId) {
   _initOpenModal(null);
+  const parent  = (db.initiatives || []).find(x => x.id === parentId);
+  const nextNum = _initNextMsNum(parentId);
   setTimeout(() => {
-    const sel = document.getElementById('initFParent');
-    if (sel) sel.value = parentId;
+    const selParent = document.getElementById('initFParent');
+    if (selParent) selParent.value = parentId;
+    const idEl = document.getElementById('initFId');
+    if (idEl) idEl.value = `${parentId}-M${nextNum}`;
+    if (parent && parent.category) {
+      const catEl = document.getElementById('initFCat');
+      if (catEl) catEl.value = parent.category;
+    }
   }, 0);
 }
 
@@ -670,6 +691,52 @@ function initViewOpenEdit() {
   _initEditReturnId = id;
   closeInitViewPopup();
   if (id) _initOpenModal(id);
+}
+
+/* ── open task-add modal pre-filled for a specific milestone ── */
+function openTaskModalForMilestone(msId, iniId) {
+  // Open in add mode — handles reset, default user pre-fill, updateFilterDropdowns
+  openTaskModal(null);
+
+  const ini = (db.initiatives || []).find(x => x.id === iniId);
+
+  // Set initiative (fInit already has all options from updateFilterDropdowns inside openTaskModal)
+  const fiEl = document.getElementById('fInit');
+  if (fiEl) fiEl.value = iniId;
+
+  // Rebuild milestone select for this initiative, then select msId
+  _populateMilestoneSelect(msId);
+
+  // Category from parent initiative
+  const cat = (ini && ini.category) || '';
+  if (cat) {
+    const catEl = document.getElementById('fCat');
+    if (catEl) catEl.value = cat;
+  }
+
+  // PIC Accountable from initiative; derive team from _appUsers
+  if (ini && ini.accountable) {
+    const users   = (typeof _appUsers !== 'undefined') ? _appUsers : [];
+    const accUser = users.find(u => u.Username === ini.accountable);
+    const accTeam = (accUser && accUser.Team) || '';
+    const _cu     = getCurrentUser();
+    const curUser = (_cu && _cu.username) || '';
+    if (accTeam) {
+      _populateTeamSelect('fTeam', accTeam);
+      _populateUserSelect('fPicAcc', accTeam, ini.accountable);
+      _populateUserSelect('fPicRes', accTeam, curUser);
+    } else {
+      _populateUserSelect('fPicAcc', '', ini.accountable);
+    }
+  }
+
+  // Re-gen task ID with correct initiative + milestone context
+  autoGenId();
+
+  // Update subtitle so user knows the context
+  const msLabel = _msShortLabel(msId);
+  const subEl = document.getElementById('modalSubtitle');
+  if (subEl) subEl.textContent = `Initiative: ${iniId}  ·  Milestone: ${msLabel}`;
 }
 
 function _initParseDate(str) {
