@@ -1,5 +1,5 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-17 (Session 27 — Milestone auto-gen ID + Add Task from Milestone)
+**Prepared**: 2026-06-18 (Session 28 — Context update + tài liệu hướng dẫn)
 **Context**: `origin/main` @ `104b81c` — milestone ID auto-gen + task-from-milestone UX.
 
 ---
@@ -13,6 +13,14 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S28
+
+- [x] Commit tài liệu HDSD: `USER_MANUAL.md`, `HDSD/` (10 screenshots), `SYSTEM_UNDERSTANDING_REPORT.md` — từ untracked 2026-06-16
+- [x] Commit reference + utility files: `TPBank_KPI_Dashboard_v2.1.html`, `generate_docx.py`, `screenshot_hdsd.mjs`, `um_test.mjs`, `verify_ms_tasks.png`
+- [x] Cập nhật AI_CONTEXT handover + memory files cho cả hai project
 
 ---
 

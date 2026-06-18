@@ -1,4 +1,35 @@
 # SESSION HANDOVER
+**Date**: 2026-06-18 (Session 28 — Context update + tài liệu hướng dẫn)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**Last feature commit (S27)**: `104b81c` — feat(initiative): auto-gen milestone ID + add task from milestone
+**origin/main HEAD (pre-S28)**: `104b81c` ✅
+
+---
+
+## Tasks Completed (S28 — docs only, no code changes)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S28-T1 | Commit tài liệu HDSD: `USER_MANUAL.md` (56KB), `HDSD/` (10 screenshots), `SYSTEM_UNDERSTANDING_REPORT.md` (33KB) | Documentation | ✅ |
+| S28-T2 | Commit reference + utility files: `TPBank_KPI_Dashboard_v2.1.html`, `generate_docx.py`, `screenshot_hdsd.mjs`, `um_test.mjs`, `verify_ms_tasks.png` | Utils/Reference | ✅ |
+| S28-T3 | Cập nhật AI_CONTEXT handover + memory files cho cả hai project | `AI_CONTEXT/` | ✅ |
+
+**Không có thay đổi code trong session này.**
+
+---
+
+## Regression (S28)
+
+Không có thay đổi code → không cần chạy regression test.
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S27)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-17 (Session 27 — Milestone auto-gen ID + Add Task from Milestone)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
