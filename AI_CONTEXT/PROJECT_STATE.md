@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-06-18 (Session 28 — Context update + tài liệu hướng dẫn)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `104b81c` — feat(initiative): auto-gen milestone ID + add task from milestone
+**Remote HEAD (main)**: `50e31f1` — docs: session 28 handover — user manual, HDSD screenshots, context update
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---

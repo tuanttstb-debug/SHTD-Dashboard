@@ -3,7 +3,8 @@
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **Last feature commit (S27)**: `104b81c` — feat(initiative): auto-gen milestone ID + add task from milestone
-**origin/main HEAD (pre-S28)**: `104b81c` ✅
+**Pushed S28 (docs)**: `50e31f1` — docs: session 28 handover — user manual, HDSD screenshots, context update
+**origin/main HEAD**: `50e31f1` ✅
 
 ---
 
