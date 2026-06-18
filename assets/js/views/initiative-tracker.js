@@ -525,7 +525,7 @@ function _initCloseModal() {
   _initEditReturnId = null;
 }
 
-function _initSave() {
+async function _initSave() {
   const origId = document.getElementById('initOrigId').value;
   const newId  = (document.getElementById('initFId').value || '').trim();
   const name   = (document.getElementById('initFName').value || '').trim();
@@ -579,13 +579,13 @@ function _initSave() {
   if (origId) {
     if (origId !== newId) {
       db.initiatives = db.initiatives.filter(x => x.id !== origId);
-      syncInitiativeAdd(ini);
+      await syncInitiativeAdd(ini);
     } else {
-      syncInitiativeEdit(ini);
+      await syncInitiativeEdit(ini);
     }
     toast('Đã cập nhật initiative!', 'success');
   } else {
-    syncInitiativeAdd(ini);
+    await syncInitiativeAdd(ini);
     toast('Đã thêm initiative!', 'success');
   }
   renderInitiativeTracker();

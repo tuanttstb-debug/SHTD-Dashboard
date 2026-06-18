@@ -179,14 +179,14 @@ async function syncInitiativeAction(mutateFn) {
 
 /* ── CRUD helpers ── */
 function syncInitiativeAdd(ini) {
-  syncInitiativeAction(() => {
+  return syncInitiativeAction(() => {
     db.initiatives.push(ini);
     persist();
   });
 }
 
 function syncInitiativeEdit(ini) {
-  syncInitiativeAction(() => {
+  return syncInitiativeAction(() => {
     const idx = db.initiatives.findIndex(x => x.id === ini.id);
     if (idx === -1) return;
     db.initiatives[idx] = ini;

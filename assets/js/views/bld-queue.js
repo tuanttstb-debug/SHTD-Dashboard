@@ -370,7 +370,7 @@ async function bldSubmitAction() {
         if (type !== 'info') c.canBLD = 'N';
       });
     } else {
-      success = localAction(() => {
+      success = await syncAction(() => {
         const t = db.tasks.find(r => r.id === taskId);
         if (!t) return;
         const prev = (t.yKienBLD || '').trim();

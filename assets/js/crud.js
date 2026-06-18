@@ -211,12 +211,13 @@ async function handleSubmit(e) {
     `<strong>${task.id}</strong> – ${task.name}<br><small style="color:var(--text-3);">Deadline: ${fmtDate(task.endDate)} · PIC: ${task.picRes} · ${task.state}</small>`,
     'info', 'Lưu');
   if (!ok) return;
-  localAction(() => {
+  const synced = await syncAction(() => {
     const origId = document.getElementById('origId').value;
     const lookupId = (origId && origId !== task.id) ? origId : task.id;
     const idx = db.tasks.findIndex(x => x.id === lookupId);
     if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
   });
+  if (!synced) return;
   const shouldReturn = !!_taskEditReturnId;
   closeTaskModal();
   if (shouldReturn) openTaskViewPopup(task.id);
@@ -228,7 +229,8 @@ async function deleteTask() {
   if (!id) return;
   const ok = await uiConfirm('Xóa Task', `Bạn có chắc chắn muốn xóa task <strong>${id}</strong>? Hành động này không thể hoàn tác.`, 'danger', 'Xóa');
   if (!ok) return;
-  localAction(() => { db.tasks = db.tasks.filter(t => t.id !== id); });
+  const synced = await syncAction(() => { db.tasks = db.tasks.filter(t => t.id !== id); });
+  if (!synced) return;
   closeTaskModal();
   toast(`Đã xóa task ${id}.`, 'info');
 }

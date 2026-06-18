@@ -22,7 +22,8 @@ function updateBulkBar() {
 async function bulkSetRag(rag) {
   const ok = await uiConfirm('Cập nhật RAG', `Đặt RAG = <strong>${rag}</strong> cho <strong>${selectedIds.size}</strong> task đã chọn?`, 'info', 'Cập nhật');
   if (!ok) return;
-  localAction(() => { selectedIds.forEach(id => { const t = db.tasks.find(x=>x.id===id); if(t) t.status = rag; }); });
+  const synced = await syncAction(() => { selectedIds.forEach(id => { const t = db.tasks.find(x=>x.id===id); if(t) t.status = rag; }); });
+  if (!synced) return;
   selectedIds.clear(); renderAll(); toast(`Đã cập nhật RAG → ${rag}`, 'success');
 }
 
@@ -30,7 +31,8 @@ async function bulkSetState(state) {
   const ok = await uiConfirm('Cập nhật trạng thái', `Đánh dấu <strong>${selectedIds.size}</strong> task là <strong>${state}</strong> (progress = 100%)?`, 'info', 'Cập nhật');
   if (!ok) return;
   const count = selectedIds.size;
-  localAction(() => { selectedIds.forEach(id => { const t = db.tasks.find(x=>x.id===id); if(t) { t.state=state; if(state==='Hoàn thành') t.progress=100; } }); });
+  const synced = await syncAction(() => { selectedIds.forEach(id => { const t = db.tasks.find(x=>x.id===id); if(t) { t.state=state; if(state==='Hoàn thành') t.progress=100; } }); });
+  if (!synced) return;
   selectedIds.clear(); renderAll(); toast(`Đã cập nhật ${count} task.`, 'success');
 }
 
@@ -38,6 +40,7 @@ async function bulkDelete() {
   const ok = await uiConfirm('Xóa task', `Bạn sắp xóa <strong>${selectedIds.size} task</strong>. Hành động này không thể hoàn tác!`, 'danger', 'Xóa');
   if (!ok) return;
   const count = selectedIds.size;
-  localAction(() => { db.tasks = db.tasks.filter(t => !selectedIds.has(t.id)); });
+  const synced = await syncAction(() => { db.tasks = db.tasks.filter(t => !selectedIds.has(t.id)); });
+  if (!synced) return;
   selectedIds.clear(); renderAll(); toast(`Đã xóa ${count} task.`, 'success');
 }
