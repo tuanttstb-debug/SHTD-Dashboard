@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-18 (Session 28 — Context update + tài liệu hướng dẫn)
+**As of**: 2026-06-18 (Session 29 — Fix GAS sync for task CRUD / bulk / BLD / initiative)
 **Version in index.html**: v6.2
-**Remote HEAD (main)**: `50e31f1` — docs: session 28 handover — user manual, HDSD screenshots, context update
+**Remote HEAD (main)**: `2986e51` — fix: task/bulk/bld/initiative operations now sync to GAS instead of local-only
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 
 ---
@@ -43,15 +43,15 @@
 | `assets/js/views/tasks.js` | ~400 | ✅ S24: filter picRes so sánh `.toLowerCase()` (PA1 picRes case fix); S23: +_populateFilterPic, +onFilterTeamChange |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
-| `assets/js/views/initiative-tracker.js` | ~760 | ✅ S27: +_initNextMsNum(), _initOpenMilestone() auto-gen ID+category, openTaskModalForMilestone(), "+ Task" btn per milestone row, "+ Thêm Task" in empty state; S25: view popups; S22b: repair milestone-to-parent linking |
+| `assets/js/views/initiative-tracker.js` | ~760 | ✅ S29: `_initSave` → async, thêm await trước syncInitiativeAdd/Edit; S27: auto-gen milestone ID + add task from milestone; S25: view popups |
 | `assets/js/api.js` | ~375 | ✅ S24: gọi _resolvePickerCase() sau loadAppUsers() (PA2); S23b: +localAction(); S21: +_appUsers[], loadAppUsers(), helpers |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
 | `assets/js/ui/navigation.js` | ~125 | ✅ S24: +closeCaseViewPopup() trong Escape handler; S19: G+C shortcut, renderCasePipeline dispatch |
-| `assets/js/crud.js` | ~420 | ✅ S23b: saveTask()/deleteTask() → localAction() (no GAS); S21: User_Master dropdowns |
-| `assets/js/bulk.js` | ~42 | ✅ S23b: bulkSetRag/State/Delete → localAction(); fixed count-before-clear bug |
-| `assets/js/views/bld-queue.js` | ~390 | ✅ S23b: task BLD approval → localAction(); Case BLD still syncCaseAction |
-| `assets/js/app.js` | ~328 | ✅ S26: remove filterPic rebuild from updateFilterDropdowns(); S23: handleImport() canImport() guard + retains syncAction (sole GAS write path for tasks) |
-| `assets/js/initiatives.js` | ~170 | ✅ S20: syncInitiativeAction() (Task Manager gold standard), syncInitiativeAdd/Edit/Delete dùng pattern mới |
+| `assets/js/crud.js` | ~420 | ✅ S29: handleSubmit/deleteTask → `await syncAction()` (GAS sync restored); S21: User_Master dropdowns |
+| `assets/js/bulk.js` | ~47 | ✅ S29: bulkSetRag/State/Delete → `await syncAction()`; fixed duplicate `const ok` → `const synced` |
+| `assets/js/views/bld-queue.js` | ~390 | ✅ S29: task BLD approval → `await syncAction()`; Case BLD still syncCaseAction |
+| `assets/js/app.js` | ~328 | ✅ S26: remove filterPic rebuild from updateFilterDropdowns(); S23: handleImport() canImport() guard |
+| `assets/js/initiatives.js` | ~170 | ✅ S29: syncInitiativeAdd/Edit thêm `return` → expose promise; S20: syncInitiativeAction() gold standard |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~325 | ✅ S21: +loadAppUsers() non-blocking on startup (after autoConnectDB) |
 | `assets/js/crud.js` | ~420 | ✅ S21: openTaskModal() uses _populateTeamSelect/_populateUserSelect; +onTaskTeamChange() (re-filter both PICs + autoGenId) |
@@ -87,7 +87,7 @@
 | **Executive Summary** | ✅ | S15 |
 | Dashboard KPIs | ✅ | |
 | Task list + filters + presets | ✅ | |
-| Task CRUD (local-only write) | ✅ | S23b: Add/Edit/Delete/Bulk → localStorage only. GAS write chỉ qua Excel import. |
+| Task CRUD (GAS sync) | ✅ | S29: Add/Edit/Delete/Bulk/BLD approval → `syncAction()` (read-merge-write to GAS). S23b local-only đã bị REVERT. |
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
@@ -140,6 +140,7 @@ verify_ms_tasks.mjs       ← 14/14 PASS
 verify_filter_cascade.mjs ← S23 NEW — 23/23 PASS (Task PIC cascade + Case DVKD/PIC filter)
 verify_import_rbac.mjs    ← S23 NEW — 15/15 PASS (3 roles × 5 assertions)
 verify_modal_layout.mjs   ← S23 NEW — 9/9 PASS (3 modal grids, 0.0px column diff)
+verify_sync_fix.mjs       ← S29 NEW — 24/24 PASS (GAS sync: task save/delete/bulk/BLD/initiative)
 verify_kpi_views.mjs      ← 3/3 PASS (S7)
 um_test.mjs               ← 14/14 PASS (S13)
 debug_login.mjs           ← S18 login diagnostics

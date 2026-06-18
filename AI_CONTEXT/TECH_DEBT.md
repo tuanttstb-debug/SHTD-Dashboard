@@ -355,25 +355,9 @@ Both implementations have subtle differences (e.g., `dd-mmm-yy` handling in impo
 
 ---
 
-## TD-034: Task Data Loss Risk — Local-Only Write Without User Warning
-**Rating**: 🔴 CRITICAL
-**Added**: 2026-06-16 (Session 23b)
+## ~~TD-034: Task Data Loss Risk — Local-Only Write Without User Warning~~ ✅ RESOLVED 2026-06-18
 
-**Issue**: `saveTask()`, `deleteTask()`, `bulkSetRag/State/Delete()`, and task BLD approval now use `localAction()` — they only persist to `localStorage['shtd_v2']` and never write to Google Sheets. The only path that writes task data to GAS is `handleImport()` (Excel import).
-
-**Impact**:
-- User edits a task → closes tab or clears browser cache → edits are permanently lost.
-- Task BLD approval (`yKienBLD`) is recorded locally but never reaches the Sheet — reports pulling from Sheet will not show the approval.
-- No visual indicator distinguishes "saved to Sheet" from "saved locally only".
-- Multi-device users: changes on Device A are invisible on Device B until export+re-import.
-
-**Mitigation needed** (choose one or combine):
-1. **Toast/banner**: "Đã lưu cục bộ. Export Excel để đồng bộ lên Google Sheets." on every save.
-2. **Auto-export prompt**: After N saves, prompt user to export.
-3. **Restore GAS write for task CRUD** (reverses S23b decision) — if PO decides the risk outweighs the cost.
-4. **Direct write endpoint**: Add a lightweight GAS `task-patch` action that accepts a single task delta (no full-sheet read-write cycle) — avoids the stale-cache merge problem while keeping Sheet current.
-
-**Fix priority**: Discuss with PO before next session. Option 4 (task-patch endpoint) is recommended long-term.
+**Resolution (Session 29, commit `2986e51`)**: S23b local-only decision đã bị revert. Task CRUD (`saveTask`, `deleteTask`, `bulkSetRag/State/Delete`) và task BLD approval đều gọi `await syncAction()` — read-merge-write đến GAS. Toast chỉ hiện sau khi GAS xác nhận. `localAction()` không còn được gọi từ bất kỳ đâu (dead code).
 
 ---
 
@@ -413,8 +397,18 @@ function _resolveOneUser(raw) {
 
 ---
 
+## TD-036: `localAction()` Dead Code in api.js
+**Rating**: ⚪ LOW
+**Added**: 2026-06-18 (Session 29)
+
+**Issue**: `localAction()` trong `api.js` không còn caller nào sau S29 revert. Khai báo còn đó nhưng không được gọi.
+
+**Fix**: Xóa hàm sau khi xác nhận `grep -r "localAction" assets/js/` cho ra 0 caller.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-17 (Session 27 — no new debt; verify_milestone_task.mjs added, total 203 checks)
+**Last updated**: 2026-06-18 (Session 29 — TD-034 resolved; TD-036 added)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -458,6 +452,7 @@ function _resolveOneUser(raw) {
 | TD-031 | 🟢 | Loose-link detection assumes `PARENT-Mn` milestone ID pattern | Tiny | Open — low risk |
 | TD-032 | ⚪ | BAU task ID format changed `Số001` → `Số-001`; clone of old tasks gets gap in sequence | Tiny | Open — one-time migration or accept gap |
 | TD-033 | 🟢 | `verify_initiative_v2.mjs` không inject auth → fail local (pre-existing) | Small | Open — copy pattern verify_bld_queue |
-| TD-034 | 🔴 | Task data loss risk — CRUD/BLD local-only, no GAS write | Small | Open — cần UX warning hoặc auto-export trigger. User phải export Excel thủ công để đồng bộ Sheet. |
+| ~~TD-034~~ | ~~🔴~~ | ~~Task data loss risk — CRUD/BLD local-only, no GAS write~~ | Small | ✅ **Resolved 2026-06-18** — S29 commit `2986e51`: syncAction() restored for all task ops |
+| TD-036 | ⚪ | `localAction()` dead code in api.js — no callers after S29 | Tiny | Open — xóa sau xác nhận grep |
 | TD-035 | 🟢 | `picNorm()` không produce canonical username — S26: removed filterPic rebuild từ updateFilterDropdowns() (conflict resolved); write-path crud.js still saves picNorm format | Small | Partial — fix proper: lookup từ _appUsers khi save trong crud.js |
 | ~~SCHEMA-01~~ | ~~🟡~~ | ~~Mixed-version clients cột X lệch/stale~~ | — | ✅ **Resolved 2026-06-15** — S18+S19 merged to main, master abandoned |

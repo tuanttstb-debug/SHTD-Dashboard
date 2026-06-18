@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-18 (Session 28 — Context update + tài liệu hướng dẫn)
-**Context**: `origin/main` @ `104b81c` — milestone ID auto-gen + task-from-milestone UX.
+**Prepared**: 2026-06-18 (Session 29 — Fix GAS sync for task CRUD / bulk / BLD / initiative)
+**Context**: `origin/main` @ `2986e51` — GAS sync restored for all task/bulk/BLD/initiative operations.
 
 ---
 
@@ -13,6 +13,20 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S29
+
+- [x] Audit 8 điểm dùng `localAction()` → save success nhưng không ghi GAS (S23b regression)
+- [x] `crud.js`: `handleSubmit` + `deleteTask` → `await syncAction()`
+- [x] `bulk.js`: `bulkSetRag/State/Delete` → `await syncAction()`; rename `const synced` tránh duplicate declaration
+- [x] `bld-queue.js`: task BLD approval → `await syncAction()` (parity với case BLD)
+- [x] `initiatives.js`: `syncInitiativeAdd/Edit` thêm `return` để expose promise
+- [x] `initiative-tracker.js`: `_initSave` → `async`, thêm `await` trước sync calls, toast sau sync
+- [x] `verify_sync_fix.mjs`: 24/24 PASS — GAS calls verified runtime cho tất cả 8 features
+- [x] Commit `2986e51`, push `origin/main`
+- [x] TD-034 (CRITICAL data loss) → RESOLVED
 
 ---
 
@@ -138,10 +152,15 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Smoke test live: S25 + S26 + S27 features
+## 🔴 PRIORITY 0 — Smoke test live: S29 + S25–S27 features
 
 | Feature | Check |
 |---|---|
+| **Task save → GAS** | Edit task → Lưu → syncDot hiện "syncing" rồi "connected"; reload page → data vẫn đúng trên Sheet |
+| **Task delete → GAS** | Xóa task → Sheet mất task đó ngay (không cần import) |
+| **Bulk ops → GAS** | Chọn 2+ tasks → bulk RAG/State/Delete → Sheet cập nhật |
+| **BLD approve task → GAS** | BLD approve task → yKienBLD lên Sheet (parity với Case BLD) |
+| **Initiative save → GAS** | Thêm/sửa initiative → syncDot syncing→connected; Sheet cập nhật |
 | **Milestone auto-gen ID** | Mở Initiative Tracker → bấm "Thêm Milestone" → ID tự điền dạng `{iniId}-M{n}` → Category pre-filled từ initiative cha |
 | **Add Task from Milestone** | Bấm "+ Task" trên milestone row → task modal mở → fInit, fMs, fCat, fPicAcc pre-filled đúng; task ID tự gen theo pattern `{iniId}-M{n}-001` |
 | **Add Task from empty milestone panel** | Mở task panel của milestone chưa có task → bấm "+ Thêm Task" → modal pre-filled đúng |
@@ -154,31 +173,22 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 1 — UX: Thông báo user về workflow mới (Task local-only)
-
-Task CRUD giờ chỉ lưu localStorage. User cần biết để không bị mất dữ liệu:
-
-**Cân nhắc thêm:**
-- Toast khi save/delete task: "Đã lưu cục bộ. Dùng Export → Import để đồng bộ lên Google Sheets."
-- Banner trong Task view: "⚠️ Thay đổi task chỉ lưu trên thiết bị này. Export Excel thường xuyên."
-- Hoặc auto-export trigger sau mỗi bulk import thành công
-
----
-
-## 🟡 PRIORITY 2 — Smoke test live: S23 + S23b features
+## 🟡 PRIORITY 1 — Smoke test live: S23 features (cascade filter, RBAC, modal)
 
 | Feature | Check |
 |---|---|
-| **Task save — local only** | Edit task → save → reload page → task vẫn trong localStorage; Sheet KHÔNG cập nhật |
-| **Task import → GAS** | Import Excel → confirm → Sheet cập nhật (syncAction chạy) |
 | **Task filter — PIC cascade** | Chọn Team trong filter bar → filterPic dropdown update đúng users |
 | **Case filter — PIC cascade** | Chọn Team → cpFilterPic update; DVKD column hiển thị; filter DVKD hoạt động |
 | **Import RBAC** | Login User → Import button ẩn; login Teamlead/Admin → visible |
 | **Modal layout** | Mở Edit modal Task/Case/Initiative → 2 cột đều nhau, không bị squeeze |
-| **Task BLD approval** | BLD approve task → yKienBLD cập nhật local; Sheet KHÔNG cập nhật ngay |
 | **Case BLD approval** | BLD approve case → yKienBLD lưu vào Sheet ngay (syncCaseAction) |
 | Case Pipeline load | Mở view → Table view là default, hiển thị đúng dữ liệu từ Sheet |
-| Initiative CRUD | Thêm/sửa/xóa → syncDot syncing→connected, showLoading ẩn đúng |
+
+---
+
+## 🟡 PRIORITY 1b — Dọn dead code: `localAction()`
+
+`localAction()` trong `api.js` không còn caller nào sau S29. Có thể xóa hoặc giữ làm utility nếu cần trong tương lai. Kiểm tra trước khi xóa: `grep -r "localAction" assets/js/` phải ra 0 kết quả ngoài khai báo.
 
 ---
 

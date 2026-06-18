@@ -1,4 +1,85 @@
 # SESSION HANDOVER
+**Date**: 2026-06-18 (Session 29 — Fix GAS sync for task CRUD / bulk / BLD / initiative)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**Pushed S29**: `2986e51` — fix: task/bulk/bld/initiative operations now sync to GAS instead of local-only
+**origin/main HEAD**: `2986e51` ✅
+
+---
+
+## Tasks Completed (S29)
+
+| # | Task | Files | Status |
+|---|---|----|---|
+| S29-T1 | Audit + root-cause: 8 điểm dùng `localAction()` → toast success mà không ghi GAS | — | ✅ |
+| S29-T2 | `crud.js`: `handleSubmit` + `deleteTask` → `await syncAction()` | `crud.js` | ✅ |
+| S29-T3 | `bulk.js`: `bulkSetRag/State/Delete` → `await syncAction()` | `bulk.js` | ✅ |
+| S29-T4 | `bld-queue.js`: task BLD approval path → `await syncAction()` | `bld-queue.js` | ✅ |
+| S29-T5 | `initiatives.js`: `syncInitiativeAdd/Edit` thêm `return` → expose promise | `initiatives.js` | ✅ |
+| S29-T6 | `initiative-tracker.js`: `_initSave` → `async`, thêm `await` trước sync calls | `initiative-tracker.js` | ✅ |
+| S29-T7 | Bug fix phát hiện khi test: `const ok` khai báo hai lần trong cùng scope → rename thành `const synced` | `crud.js`, `bulk.js` | ✅ |
+| S29-T8 | Viết + pass `verify_sync_fix.mjs` — 24/24 PASS | `verify_sync_fix.mjs` | ✅ |
+
+### Architecture: S29 Changes
+
+**Root cause (S23b regression)**:
+```
+S23b (2026-06-16) đã thay syncAction → localAction cho task CRUD "vì PO yêu cầu".
+Kết quả: mọi save/delete/bulk/BLD-task chỉ lưu localStorage, không ghi GAS.
+UI vẫn báo "Đã lưu" → misleading, data loss khi clear cache.
+S29 reverses quyết định này.
+```
+
+**Pattern sau fix**:
+```
+handleSubmit / deleteTask / bulkSetRag / bulkSetState / bulkDelete / bldSubmitAction(task)
+  → await syncAction(mutateFn)
+      → mutateFn() [local mutate]
+      → gasPost({action:'read'}) [get server state]
+      → merge local + server
+      → gasPost({action:'write', values:[...]}) [write back]
+      → persist() + renderAll()
+  Toast chỉ hiện SAU khi GAS xác nhận ✅
+
+_initSave (initiatives):
+  → await syncInitiativeAdd/Edit(ini)
+      → return syncInitiativeAction(mutateFn) [đã return promise]
+      → gasPost({action:'initiative-write'}) ✅
+  Toast chỉ hiện SAU khi GAS xác nhận ✅
+```
+
+**`localAction()` hiện tại**: vẫn còn khai báo trong `api.js` nhưng không có caller nào — dead code.
+
+### Regression (S29)
+```
+verify_sync_fix.mjs:        24/24 PASS ✅ NEW — GAS calls verified cho 8 features
+```
+
+---
+
+## Decisions Made (S29)
+
+1. **Reverse S23b local-only decision**: Task CRUD đã được restore về sync GAS qua `syncAction()`. Lý do: user báo cáo bug nghiêm trọng — save success nhưng data không lên Sheet. TD-034 (CRITICAL) được giải quyết.
+2. **`syncAction()` cho tất cả task ops**: Read-merge-write pattern đảm bảo safe merge với server state. Heavier (2 GAS calls/op) nhưng đúng hơn.
+3. **Rename `const synced`** thay vì `let ok` để tránh làm mờ semantics — confirm result riêng biệt với uiConfirm result.
+
+---
+
+## Regression Risks (S29)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **syncAction heavier per op** | ⚪ LOW | Mỗi task save/delete/bulk giờ tốn 2 GAS calls (read + write). Trước S23b cũng như vậy — không phải regression so với S22. |
+| **`localAction()` dead code** | ⚪ LOW | Vẫn còn khai báo trong `api.js`. Không gây bug, nhưng nên dọn. |
+| **verify_case_pipeline TEST13/14** | 🟡 MEDIUM | Pre-existing từ S24 — chưa fix. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S28)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-18 (Session 28 — Context update + tài liệu hướng dẫn)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
