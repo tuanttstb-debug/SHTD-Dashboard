@@ -2,6 +2,7 @@
 
 let _cpViewMode = localStorage.getItem('cp_view') || 'table';
 let _cpPreset   = 'active';
+let _cpScope    = null; // null = uninit | 'mine' | 'all'
 let _cpPage     = 1;
 let _cpSort     = { key: 'id', dir: 'asc' };
 let _cpSearch   = '';
@@ -20,6 +21,13 @@ const CP_PAGE_SIZE = 20;
 ══════════════════════════════════════════ */
 function renderCasePipeline() {
   _cpPopulateFilters();
+
+  // Fallback: scope 'mine' + 0 results → auto-switch to 'all'
+  if (_getCpScope() === 'mine' && _cpGetFiltered().length === 0) {
+    _cpScope = 'all';
+    _updateCpScopeUI('all');
+  }
+
   _cpRenderSummary();
   updateCpPresetCounts();
   _cpInitViewToggle();
@@ -62,6 +70,27 @@ function cpToggleView(mode) {
   renderCasePipeline();
 }
 
+function _getCpScope() {
+  if (_cpScope === null) {
+    const u = getCurrentUser();
+    _cpScope = (u && u.role === 'Admin') ? 'all' : 'mine';
+    _updateCpScopeUI(_cpScope);
+  }
+  return _cpScope;
+}
+
+function _updateCpScopeUI(scope) {
+  document.getElementById('cpScopeMine')?.classList.toggle('active', scope === 'mine');
+  document.getElementById('cpScopeAll')?.classList.toggle('active', scope !== 'mine');
+}
+
+function setCpScope(scope) {
+  _cpScope = scope;
+  _updateCpScopeUI(scope);
+  _cpPage = 1;
+  renderCasePipeline();
+}
+
 /* ══════════════════════════════════════════
    PRESET
 ══════════════════════════════════════════ */
@@ -88,12 +117,15 @@ function _cpApplyPreset(cases) {
 }
 
 function updateCpPresetCounts() {
-  const all = dbCases || [];
+  const scope = _cpScope || 'all'; // safe: don't trigger lazy-init here
+  const base = (scope === 'mine')
+    ? (dbCases || []).filter(c => isCurrentUser(c.pic))
+    : (dbCases || []);
   const counts = {
-    active:  all.filter(c => { const g = CASE_STAGE_GROUP[c.stage] || 'active'; return g !== 'done' && g !== 'blocked'; }).length,
-    bld:     all.filter(c => c.canBLD === 'Y').length,
-    overdue: all.filter(c => _cpCalcRagLabel(c) === 'Đỏ').length,
-    all:     all.length,
+    active:  base.filter(c => { const g = CASE_STAGE_GROUP[c.stage] || 'active'; return g !== 'done' && g !== 'blocked'; }).length,
+    bld:     base.filter(c => c.canBLD === 'Y').length,
+    overdue: base.filter(c => _cpCalcRagLabel(c) === 'Đỏ').length,
+    all:     base.length,
   };
   Object.entries(counts).forEach(([key, n]) => {
     const el = document.getElementById(`cp-pcount-${key}`);
@@ -105,7 +137,12 @@ function updateCpPresetCounts() {
    FILTER + SEARCH (unified)
 ══════════════════════════════════════════ */
 function _cpGetFiltered() {
+  const scope = _getCpScope();
   let cases = _cpApplyPreset(dbCases || []);
+
+  if (scope === 'mine') {
+    cases = cases.filter(c => isCurrentUser(c.pic));
+  }
 
   const fSearch = (_cpSearch || '').trim().toLowerCase();
   if (fSearch) {

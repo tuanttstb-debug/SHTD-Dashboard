@@ -1,3 +1,27 @@
+let _taskScope = null; // null = uninit | 'mine' | 'all'
+
+function _getTaskScope() {
+  if (_taskScope === null) {
+    const u = getCurrentUser();
+    _taskScope = (u && u.role === 'Admin') ? 'all' : 'mine';
+    _updateTaskScopeUI(_taskScope);
+  }
+  return _taskScope;
+}
+
+function _updateTaskScopeUI(scope) {
+  document.getElementById('taskScopeMine')?.classList.toggle('active', scope === 'mine');
+  document.getElementById('taskScopeAll')?.classList.toggle('active', scope !== 'mine');
+}
+
+function setTaskScope(scope) {
+  _taskScope = scope;
+  _updateTaskScopeUI(scope);
+  currentPage = 1;
+  renderTaskTable();
+  renderFilterChips();
+}
+
 function _getThisWeekLabel() {
   const now = new Date();
   const jan4 = new Date(now.getFullYear(), 0, 4);
@@ -24,12 +48,15 @@ function setPreset(name) {
 
 function updatePresetCounts() {
   const wkLabel = _getThisWeekLabel();
-  const all = db.tasks;
+  const scope = _taskScope || 'all'; // safe: don't trigger lazy-init here
+  const base = (scope === 'mine')
+    ? db.tasks.filter(t => isCurrentUser(t.picRes) || isCurrentUser(t.picAcc))
+    : db.tasks;
   const counts = {
-    active:  all.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng').length,
-    week:    all.filter(t => (t.tuanBC||'').trim() === wkLabel).length,
-    overdue: all.filter(t => isOverdue(t.endDate, t.progress)).length,
-    all:     all.length,
+    active:  base.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng').length,
+    week:    base.filter(t => (t.tuanBC||'').trim() === wkLabel).length,
+    overdue: base.filter(t => isOverdue(t.endDate, t.progress)).length,
+    all:     base.length,
   };
   Object.entries(counts).forEach(([key, n]) => {
     const el = document.getElementById(`pcount-${key}`);
@@ -43,6 +70,7 @@ function _initPresetUI() {
 }
 
 function getFiltered() {
+  const scope   = _getTaskScope();
   const fId     = (document.getElementById('filterId')?.value||'').trim().toLowerCase();
   const fInit   = document.getElementById('filterInit')?.value||'';
   const fTeam   = document.getElementById('filterTeam')?.value||'';
@@ -51,7 +79,10 @@ function getFiltered() {
   const fRag    = document.getElementById('filterRag')?.value||'';
   const fTuanBC = document.getElementById('filterTuanBC')?.value||'';
   const thisWeekLabel = _getThisWeekLabel();
-  const byBar = db.tasks.filter(t => {
+  const base = (scope === 'mine')
+    ? db.tasks.filter(t => isCurrentUser(t.picRes) || isCurrentUser(t.picAcc))
+    : db.tasks;
+  const byBar = base.filter(t => {
     if (fId   && !(t.id||'').toLowerCase().includes(fId)) return false;
     if (fInit && t.initiative !== fInit) return false;
     if (fTeam && t.team !== fTeam) return false;
@@ -152,8 +183,15 @@ function sortBy(key) {
 
 function renderTaskTable() {
   _initPresetUI();
-  updatePresetCounts();
   _populateFilterPic(document.getElementById('filterTeam')?.value || '');
+
+  // Fallback: scope 'mine' + 0 results → auto-switch to 'all'
+  if (_getTaskScope() === 'mine' && getFiltered().length === 0) {
+    _taskScope = 'all';
+    _updateTaskScopeUI('all');
+  }
+  updatePresetCounts();
+
   const tbody = document.getElementById('taskTbody');
   let tasks = getFiltered().sort((a,b) => {
     let va = a[sort.key]||'', vb = b[sort.key]||'';

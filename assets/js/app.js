@@ -9,6 +9,11 @@ window.onload = async () => {
 };
 
 async function startApp() {
+  // Reset view scopes so each login re-initializes based on role
+  _taskScope = null;
+  _cpScope   = null;
+  _initScope = null;
+
   loadCache();
   loadCasesFromCache();
   setupListeners();

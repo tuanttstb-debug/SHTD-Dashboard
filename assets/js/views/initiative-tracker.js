@@ -3,24 +3,55 @@
 /* ── filter state ── */
 let _initFilterCat    = '';
 let _initFilterStatus = '';
+let _initScope        = null; // null = uninit | 'mine' | 'all'
+
+function _getInitScope() {
+  if (_initScope === null) {
+    const u = getCurrentUser();
+    _initScope = (u && u.role === 'Admin') ? 'all' : 'mine';
+  }
+  return _initScope;
+}
+
+function setInitScope(scope) {
+  _initScope = scope;
+  renderInitiativeTracker();
+}
 
 /* ── main render ── */
 function renderInitiativeTracker() {
   const root = document.getElementById('initiativeTrackerRoot');
   if (!root) return;
 
-  const roots = _initRealRoots();
+  const allRoots = _initRealRoots();
+
+  // Scope init + fallback: nếu 'mine' không có initiative nào → auto-switch 'all'
+  const scope = _getInitScope();
+  if (scope === 'mine') {
+    const myRoots = allRoots.filter(i => isCurrentUser(i.accountable));
+    if (myRoots.length === 0) _initScope = 'all';
+  }
+
+  const currentScope = _initScope; // read after possible fallback
 
   root.innerHTML = `
-    ${_initStatBar(roots)}
+    ${_initStatBar(allRoots)}
     <div class="toolbar" style="margin-bottom:16px;">
       <div class="toolbar-left">
         <div style="font-size:17px;font-weight:800;">Theo dõi Initiative</div>
         <div style="font-size:12px;color:var(--text-3);">
-          ${roots.length} initiative · ${(db.initiatives||[]).filter(i=>i.type==='milestone').length} milestone
+          ${allRoots.length} initiative · ${(db.initiatives||[]).filter(i=>i.type==='milestone').length} milestone
         </div>
       </div>
       <div class="toolbar-right">
+        <div class="scope-toggle">
+          <button class="scope-btn ${currentScope==='mine'?'active':''}" onclick="setInitScope('mine')">
+            <i class="fa-solid fa-user" style="margin-right:3px;"></i>Của tôi
+          </button>
+          <button class="scope-btn ${currentScope!=='mine'?'active':''}" onclick="setInitScope('all')">
+            Tất cả
+          </button>
+        </div>
         <select class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('cat',this.value)">
           <option value="">Tất cả Category</option>
           ${_initCategoryOptions()}
@@ -99,9 +130,11 @@ function _initStatBar(roots) {
 
 /* ── card list ── */
 function _initBuildCardList() {
+  const scope = _getInitScope();
   const roots = _initRealRoots().filter(i => {
     if (_initFilterCat    && i.category !== _initFilterCat)    return false;
     if (_initFilterStatus && i.status   !== _initFilterStatus) return false;
+    if (scope === 'mine' && !isCurrentUser(i.accountable))     return false;
     return true;
   });
 

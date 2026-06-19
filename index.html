@@ -523,6 +523,14 @@
             <span class="preset-icon">📋</span> Tất cả
             <span class="preset-count" id="cp-pcount-all"></span>
           </button>
+          <div class="scope-toggle" id="cpScopeToggle" style="margin-left:auto;align-self:center;">
+            <button class="scope-btn active" id="cpScopeMine" onclick="setCpScope('mine')">
+              <i class="fa-solid fa-user" style="margin-right:3px;"></i>Của tôi
+            </button>
+            <button class="scope-btn" id="cpScopeAll" onclick="setCpScope('all')">
+              Tất cả
+            </button>
+          </div>
         </div>
 
         <!-- Filter bar (Task Manager pattern) -->
@@ -664,6 +672,14 @@
             <span class="preset-icon">📋</span> Tất cả
             <span class="preset-count" id="pcount-all"></span>
           </button>
+          <div class="scope-toggle" id="taskScopeToggle" style="margin-left:auto;align-self:center;">
+            <button class="scope-btn active" id="taskScopeMine" onclick="setTaskScope('mine')">
+              <i class="fa-solid fa-user" style="margin-right:3px;"></i>Của tôi
+            </button>
+            <button class="scope-btn" id="taskScopeAll" onclick="setTaskScope('all')">
+              Tất cả
+            </button>
+          </div>
         </div>
 
         <!-- FILTER BAR -->

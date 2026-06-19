@@ -262,3 +262,17 @@
 
 /* ===== DETAIL MODAL ===== */
 .detail-modal{max-width:1100px;}
+
+/* ===== SCOPE TOGGLE (Của tôi / Tất cả) ===== */
+.scope-toggle{
+  display:inline-flex;border:1px solid var(--border);
+  border-radius:6px;overflow:hidden;flex-shrink:0;
+}
+.scope-btn{
+  padding:4px 12px;font-size:12px;font-weight:500;
+  border:none;background:transparent;cursor:pointer;
+  color:var(--text-2);transition:background .15s,color .15s;
+  white-space:nowrap;line-height:1.6;
+}
+.scope-btn.active{background:var(--primary);color:#fff;}
+.scope-btn:hover:not(.active){background:var(--surface2);color:var(--text);}
