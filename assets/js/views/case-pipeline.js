@@ -537,7 +537,7 @@ function openCaseModal(id) {
   fv('cpfGhiChu',     c ? c.ghiChu      : '');
 
   const delBtn = document.getElementById('cpModalDeleteBtn');
-  if (delBtn) delBtn.style.display = c ? 'inline-flex' : 'none';
+  if (delBtn) delBtn.style.display = (c && canImport()) ? 'inline-flex' : 'none';
 
   document.getElementById('cpModal').style.display = 'flex';
 }
@@ -600,6 +600,7 @@ function handleCaseSubmit() {
 
 async function deleteCaseItem() {
   if (!_cpEditId) return;
+  if (!canImport()) { toast('Bạn không có quyền xóa case.', 'error'); return; }
   const c = (dbCases || []).find(x => x.id === _cpEditId);
   const ok = await uiConfirm(
     'Xóa Case',
@@ -632,7 +633,7 @@ function openCaseViewPopup(id) {
   document.getElementById('cpViewSubtitle').textContent = `ID: ${c.id}  ·  ${c.tuanBC || ''}`;
 
   const editBtn = document.getElementById('cpViewEditBtn');
-  if (editBtn) editBtn.style.display = canImport() ? 'inline-flex' : 'none';
+  if (editBtn) editBtn.style.display = getCurrentUser() ? 'inline-flex' : 'none';
 
   const fmt = (label, val, icon) => val
     ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-${icon}"></i>${label}</span><span class="cp-view-val">${val}</span></div>`
