@@ -2,7 +2,7 @@
 // Edit this file when redeploying the GAS Web App.
 // Do NOT put application logic here.
 
-const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzzezX0qvu73U7EBrsj7VeBoPbzg6edLNt818-pzlle2Gx2xfB-NQuxJYfx3jGHRcc/exec';
+const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec';
 
 // Build version — tăng số này mỗi lần deploy để phát hiện browser cache stale
-const APP_VERSION = '6.2-atomic-20260619c';
+const APP_VERSION = '6.3-no-syncaction-20260619';
