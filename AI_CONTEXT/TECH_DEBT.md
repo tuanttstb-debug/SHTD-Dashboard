@@ -407,8 +407,38 @@ function _resolveOneUser(raw) {
 
 ---
 
+## TD-037: `syncAction` Caller Trace in api.js — Temporary Debug Code
+**Rating**: ⚪ LOW (temporary)
+**Added**: 2026-06-19 (Session 30)
+
+**Issue**: `syncAction()` in `api.js` logs `[syncAction] fired — caller: ...` on every call. Added for debugging — not for production.
+
+**Impact**: None functionally. Clutters browser console. If syncAction is called frequently (Excel import), log fires repeatedly.
+
+**Fix**: Remove line `console.warn('[syncAction] fired — caller:', ...)` from `api.js:244` after production verification complete.
+
+---
+
+## TD-038: Startup Diagnostic Console Log in app.js — Temporary Debug Code
+**Rating**: ⚪ LOW (temporary)
+**Added**: 2026-06-19 (Session 30)
+
+**Issue**: `startApp()` logs version + deleteTask source check on every login. Added to verify stale-cache issue was resolved.
+
+**Impact**: None functionally. Shows green console message on every login — acceptable for internal tool but not clean production code.
+
+**Fix**: Remove `console.info(...)` block from `app.js:18` after production verification complete (same cleanup pass as TD-037).
+
+---
+
+## ~~TD-037b: bulk.js syncAction causing task-write + N rows on every bulk op~~ ✅ RESOLVED 2026-06-19
+
+**Resolution (Session 30, commit `701fe7f`)**: `bulkSetRag`, `bulkSetState`, `bulkDelete` now use N × `_gasTaskUpsert`/`_gasTaskDelete` (atomic, optimistic-update, fire-and-forget). `syncAction()` completely removed from `bulk.js`. GAS Audit_Log now shows N entries of `task-upsert | ID` or `task-delete | ID`, never `task-write + N rows` from bulk ops.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-18 (Session 29 — TD-034 resolved; TD-036 added)
+**Last updated**: 2026-06-19 (Session 30 — bulk atomic writes; TD-037/038 added)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -456,3 +486,7 @@ function _resolveOneUser(raw) {
 | TD-036 | ⚪ | `localAction()` dead code in api.js — no callers after S29 | Tiny | Open — xóa sau xác nhận grep |
 | TD-035 | 🟢 | `picNorm()` không produce canonical username — S26: removed filterPic rebuild từ updateFilterDropdowns() (conflict resolved); write-path crud.js still saves picNorm format | Small | Partial — fix proper: lookup từ _appUsers khi save trong crud.js |
 | ~~SCHEMA-01~~ | ~~🟡~~ | ~~Mixed-version clients cột X lệch/stale~~ | — | ✅ **Resolved 2026-06-15** — S18+S19 merged to main, master abandoned |
+| TD-037 | ⚪ | `syncAction` caller trace log in `api.js:244` — temp debug code | Tiny | Open — xóa sau production verify |
+| TD-038 | ⚪ | Startup diagnostic console.info in `app.js:18` — temp debug code | Tiny | Open — xóa cùng pass với TD-037 |
+| ~~TD-037b~~ | ~~🟡~~ | ~~bulk.js syncAction → task-write + N rows on every bulk op~~ | Small | ✅ **Resolved 2026-06-19** — S30: bulk ops → N×atomic writes |
+| verify_sync_fix.mjs stale | 🟡 | S29 test expects bulk → syncAction; S30 bulk → atomic → tests FAIL | Small | Open — update T3–T5 hoặc deprecate |

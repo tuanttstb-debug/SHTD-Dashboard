@@ -1,4 +1,108 @@
 # SESSION HANDOVER
+**Date**: 2026-06-19 (Session 30 — Atomic writes for bulk ops + new GAS URL + debug trace)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `4fc6648` ✅
+
+---
+
+## Tasks Completed (S30)
+
+| # | Task | Files | Status |
+|---|---|----|---|
+| S30-T1 | Root cause: `syncAction` trong `bulk.js` → `task-write + N rows` khi bulk ops kể cả khi delete single task qua modal nếu có selectedIds tồn tại | — | ✅ |
+| S30-T2 | `bulk.js`: `bulkSetRag/State/Delete` → N × `_gasTaskUpsert`/`_gasTaskDelete` (atomic, optimistic-update, fire-and-forget) — xóa hoàn toàn `syncAction` khỏi bulk.js | `bulk.js` | ✅ |
+| S30-T3 | `config.js`: cập nhật `GS_WEBAPP_URL` → URL GAS mới deploy với đầy đủ action handlers (`task-upsert`, `task-delete`, `case-upsert`, `case-delete`, `initiative-upsert`) | `config.js` | ✅ |
+| S30-T4 | Debug tooling: APP_VERSION badge trong topbar breadcrumb; startup console log hiện version + cảnh báo nếu `deleteTask` dùng syncAction; `syncAction` log caller stack | `app.js`, `api.js`, `index.html`, `config.js` | ✅ |
+| S30-T5 | Cache-busting: tất cả 35 script tags → `?v=20260619d`; `APP_VERSION = '6.3-no-syncaction-20260619'` | `index.html`, `config.js` | ✅ |
+| S30-T6 | `verify_atomic_write.mjs`: thêm T8b (bulkSetRag → N×task-upsert, 0×write) + T8c (bulkDelete → N×task-delete, 0×write) — **41/41 PASS** | `verify_atomic_write.mjs` | ✅ |
+
+### Architecture: S30 Changes
+
+**Root cause** của `task-write + N rows` khi xóa single task:
+```
+selectedIds (global Set) persist trong bộ nhớ khi chuyển view.
+Nếu user có tasks đã check (bulk bar đang hiện), khi mở modal delete task,
+bulkSetRag / bulkSetState / bulkDelete có thể đã được trigger TRƯỚC hoặc
+SONG SONG với deleteTask() qua UI. syncAction() trong bulk.js → read→write full sheet.
+```
+
+**Pattern mới (bulk ops sau S30)**:
+```
+bulkSetRag(rag):
+  uiConfirm → toUpdate = [...selectedIds] → forEach t.status = rag
+  persist() → selectedIds.clear() → renderAll() → toast()
+  toUpdate.forEach(t => _gasTaskUpsert(t))   ← fire-and-forget, 1 call/task
+
+bulkDelete():
+  uiConfirm → toDelete = [...selectedIds] → db.tasks.filter(out)
+  persist() → selectedIds.clear() → renderAll() → toast()
+  toDelete.forEach(({id,name}) => _gasTaskDelete(id, name))  ← fire-and-forget
+
+Audit_Log sẽ thấy N entries 'task-upsert | ID' hoặc 'task-delete | ID', KHÔNG còn 'task-write + N rows'
+```
+
+**`syncAction()` call sites sau S30** (chỉ còn 1):
+- `app.js:188` — `handleImport()` (Excel import) — đây là expected behavior
+
+**GAS URL mới** (S30):
+```
+https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec
+```
+Backend này có đầy đủ handlers: `task-upsert`, `task-delete`, `case-upsert`, `case-delete`, `initiative-upsert`.
+
+### Commits S30
+```
+af66c54  fix: atomic per-row GAS writes — eliminate full 613-row rewrite on single task/case save
+5ae891c  fix: add cache-busting ?v=20260619 to all local JS script tags
+232c7f4  debug: add APP_VERSION badge to topbar + bump cache-bust to 20260619b
+9578fc8  debug: add syncAction caller trace + startup diagnostics for stale-cache detection
+701fe7f  fix: replace syncAction in bulk.js with per-row atomic writes + new GAS URL
+4fc6648  test: update verify_atomic_write — add T8b/T8c bulk atomic write coverage
+```
+
+### Regression (S30)
+```
+verify_atomic_write.mjs:  41/41 PASS ✅ (was 35/35 — +T8b/T8c bulk ops)
+```
+
+⚠️ **`verify_sync_fix.mjs` (S29, 24/24)** — có thể STALE sau S30. Tests T3–T5 kiểm tra bulk ops gọi `syncAction` → giờ bulk dùng atomic writes → những test đó sẽ FAIL. Cần review/update trước khi chạy.
+
+---
+
+## Decisions Made (S30)
+
+1. **Bulk ops → atomic writes** (không dùng read-merge-write): Chấp nhận không có server-side merge cho bulk ops. Justification: bulk ops là Admin action, thường chỉ 1 user tại một thời điểm; atomic per-row writes an toàn hơn cho concurrent single-row edits từ user khác.
+2. **`syncAction()` chỉ còn cho Excel import**: Excel import cần read-merge-write để không overwrite data từ user khác trong khi import chạy. Đây là trường hợp duy nhất còn hợp lệ.
+3. **Debug trace giữ nguyên tạm thời**: `[syncAction] fired — caller:` trace và startup console log giữ cho đến khi production verified ổn định. Xóa sau.
+4. **New GAS deployment**: URL cũ còn hoạt động (old actions vẫn valid) nhưng không có new handlers. User deploy new version và cung cấp URL mới.
+
+---
+
+## Blockers (S30)
+
+| Item | Status |
+|---|---|
+| Production verify | ⏳ Cần user test production sau CDN propagate: xóa task/bulk → GAS log phải hiện `task-delete \| ID \| Name` không còn `task-write + N rows` |
+| `verify_sync_fix.mjs` stale | ⚠️ Chưa update — bulk tests sẽ FAIL với code mới |
+
+---
+
+## Regression Risks (S30)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **verify_sync_fix.mjs stale** | 🟡 MEDIUM | S29 tạo test expect bulk → syncAction. Sau S30 bulk → atomic. Tests T3–T5 sẽ FAIL. Cần update hoặc deprecate file này |
+| **Bulk error handling thay đổi** | ⚪ LOW | Trước: 1 lỗi GAS → toàn bộ bulk fail (syncAction throw). Sau: mỗi task fail independent, hiện toast riêng. N lỗi = N toasts — có thể noisy với bulk lớn |
+| **selectedIds không clear khi GAS fail** | ⚪ LOW | Trước: syncAction fail → db.tasks rollback từ localStorage → selectedIds có thể stale. Sau: local state đã committed, selectedIds.clear() chạy trước GAS → không rollback nếu GAS fail. Acceptable: local delete confirmed, user thấy toast nếu GAS fail |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S29)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-18 (Session 29 — Fix GAS sync for task CRUD / bulk / BLD / initiative)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-06-18 (Session 29 — Fix GAS sync for task CRUD / bulk / BLD / initiative)
-**Version in index.html**: v6.2
-**Remote HEAD (main)**: `2986e51` — fix: task/bulk/bld/initiative operations now sync to GAS instead of local-only
+**As of**: 2026-06-19 (Session 30 — Atomic bulk writes + new GAS URL)
+**Version**: v6.3 (`APP_VERSION = '6.3-no-syncaction-20260619'`)
+**Remote HEAD (main)**: `4fc6648` — test: update verify_atomic_write — add T8b/T8c bulk atomic write coverage
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
+**GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
 ---
 
@@ -34,7 +35,7 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S21: +TEAM_LIST (8 teams: BL1/BL2/CV1/CV2/PTKD MB/PTKD MN/QLDM/Số — offline fallback) |
-| `assets/js/config.js` | 5 | ✅ GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S30: new GS_WEBAPP_URL + APP_VERSION = '6.3-no-syncaction-20260619' |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
 | `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
@@ -47,10 +48,11 @@
 | `assets/js/api.js` | ~375 | ✅ S24: gọi _resolvePickerCase() sau loadAppUsers() (PA2); S23b: +localAction(); S21: +_appUsers[], loadAppUsers(), helpers |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
 | `assets/js/ui/navigation.js` | ~125 | ✅ S24: +closeCaseViewPopup() trong Escape handler; S19: G+C shortcut, renderCasePipeline dispatch |
-| `assets/js/crud.js` | ~420 | ✅ S29: handleSubmit/deleteTask → `await syncAction()` (GAS sync restored); S21: User_Master dropdowns |
-| `assets/js/bulk.js` | ~47 | ✅ S29: bulkSetRag/State/Delete → `await syncAction()`; fixed duplicate `const ok` → `const synced` |
+| `assets/js/crud.js` | ~250 | ✅ S29: handleSubmit/deleteTask → `_gasTaskUpsert`/`_gasTaskDelete` (atomic); S21: User_Master dropdowns |
+| `assets/js/bulk.js` | ~47 | ✅ S30: bulkSetRag/State/Delete → N×`_gasTaskUpsert`/`_gasTaskDelete` (atomic, optimistic); NO syncAction |
 | `assets/js/views/bld-queue.js` | ~390 | ✅ S29: task BLD approval → `await syncAction()`; Case BLD still syncCaseAction |
-| `assets/js/app.js` | ~328 | ✅ S26: remove filterPic rebuild from updateFilterDropdowns(); S23: handleImport() canImport() guard |
+| `assets/js/app.js` | ~335 | ✅ S30: startup diagnostic console log (version + deleteTask check); S26: remove filterPic rebuild; S23: handleImport() canImport() guard |
+| `assets/js/api.js` | ~380 | ✅ S30: syncAction() logs caller stack on every call (debug trace, temporary); S29: atomic GAS write helpers (_gasTaskUpsert/_gasTaskDelete/_gasCaseUpsert/_gasCaseDelete); S24: _resolvePickerCase() |
 | `assets/js/initiatives.js` | ~170 | ✅ S29: syncInitiativeAdd/Edit thêm `return` → expose promise; S20: syncInitiativeAction() gold standard |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
 | `assets/js/app.js` | ~325 | ✅ S21: +loadAppUsers() non-blocking on startup (after autoConnectDB) |
@@ -87,7 +89,7 @@
 | **Executive Summary** | ✅ | S15 |
 | Dashboard KPIs | ✅ | |
 | Task list + filters + presets | ✅ | |
-| Task CRUD (GAS sync) | ✅ | S29: Add/Edit/Delete/Bulk/BLD approval → `syncAction()` (read-merge-write to GAS). S23b local-only đã bị REVERT. |
+| Task CRUD (GAS sync) | ✅ | S30: Single CRUD + Bulk → atomic per-row writes (`_gasTaskUpsert`/`_gasTaskDelete`). syncAction() chỉ còn cho Excel import. |
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
@@ -140,7 +142,8 @@ verify_ms_tasks.mjs       ← 14/14 PASS
 verify_filter_cascade.mjs ← S23 NEW — 23/23 PASS (Task PIC cascade + Case DVKD/PIC filter)
 verify_import_rbac.mjs    ← S23 NEW — 15/15 PASS (3 roles × 5 assertions)
 verify_modal_layout.mjs   ← S23 NEW — 9/9 PASS (3 modal grids, 0.0px column diff)
-verify_sync_fix.mjs       ← S29 NEW — 24/24 PASS (GAS sync: task save/delete/bulk/BLD/initiative)
+verify_sync_fix.mjs       ← S29 — 24/24 PASS ⚠️ STALE after S30: bulk tests expect syncAction, now atomic
+verify_atomic_write.mjs   ← S30 NEW — 41/41 PASS (single + bulk atomic: task-upsert/delete/case-upsert/delete)
 verify_kpi_views.mjs      ← 3/3 PASS (S7)
 um_test.mjs               ← 14/14 PASS (S13)
 debug_login.mjs           ← S18 login diagnostics
@@ -152,7 +155,7 @@ debug_login.mjs           ← S18 login diagnostics
 
 | Config | Value |
 |---|---|
-| `GS_WEBAPP_URL` | In `assets/js/config.js`; unchanged S19 |
+| `GS_WEBAPP_URL` | In `assets/js/config.js`; **updated S30** — new deployment với atomic action handlers |
 | Task backend | ✅ Deployed — 24 cột (S18) |
 | Case Pipeline backend | ✅ **Deployed** 2026-06-15 — Code.gs routes + CasePipelineService.gs live; GS_WEBAPP_URL không đổi |
 | `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |

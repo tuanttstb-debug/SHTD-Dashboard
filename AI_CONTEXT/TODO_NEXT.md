@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-18 (Session 29 — Fix GAS sync for task CRUD / bulk / BLD / initiative)
-**Context**: `origin/main` @ `2986e51` — GAS sync restored for all task/bulk/BLD/initiative operations.
+**Prepared**: 2026-06-19 (Session 30 — Atomic bulk writes + new GAS URL)
+**Context**: `origin/main` @ `4fc6648` — syncAction eliminated from bulk ops; only Excel import remains. New GAS URL active.
 
 ---
 
@@ -13,6 +13,20 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S30
+
+- [x] Root cause confirmed: `syncAction` in `bulk.js` → `task-write + N rows` (selectedIds persists across views)
+- [x] `bulk.js`: `bulkSetRag/State/Delete` → N × `_gasTaskUpsert`/`_gasTaskDelete` (atomic, optimistic-update) — NO syncAction
+- [x] `config.js`: new GAS URL (new deployment with `task-upsert`, `task-delete`, `case-upsert`, `case-delete`, `initiative-upsert` handlers)
+- [x] APP_VERSION badge in topbar breadcrumb (`v6.3-no-syncaction-20260619`)
+- [x] Startup console diagnostic: confirms version + whether deleteTask uses atomic or old syncAction
+- [x] `syncAction()` caller trace: logs stack whenever called (debug, temporary)
+- [x] Cache-bust all 35 script tags → `?v=20260619d`
+- [x] `verify_atomic_write.mjs`: added T8b + T8c — **41/41 PASS**
+- [x] Commit + push `4fc6648`, `origin/main` ✅
 
 ---
 
@@ -152,13 +166,37 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Smoke test live: S29 + S25–S27 features
+## 🔴 PRIORITY 0 — Verify production atomic writes (S30)
+
+| Check | Expected GAS Audit_Log |
+|---|---|
+| **Delete single task via modal** | `task-delete \| CV-xxx \| Task Name` — KHÔNG có `task-write + N rows` |
+| **Save/edit single task via modal** | `task-upsert \| CV-xxx \| Task Name` |
+| **Bulk RAG change** | N × `task-upsert \| ID` (1 per task) — KHÔNG có `task-write + N rows` |
+| **Bulk delete** | N × `task-delete \| ID` — KHÔNG có `task-write + N rows` |
+| **Excel import (expected)** | `task-write + N rows` — đây là ĐÚNG, chỉ path này còn dùng syncAction |
+| **Verify badge** | Topbar hiện `v6.3-no-syncaction-20260619` |
+| **Verify console** | `[SHTD] v6.3-... — deleteTask uses: ✅ _gasTaskDelete` |
+
+**Sau khi verify OK**: Xóa debug trace khỏi `api.js` (syncAction caller log) và startup diagnostic khỏi `app.js`.
+
+---
+
+## 🔴 PRIORITY 0b — Fix verify_sync_fix.mjs (stale after S30)
+
+`verify_sync_fix.mjs` (S29, 24/24) test bulk ops gọi `syncAction`. Sau S30 bulk dùng atomic → những tests sẽ FAIL. Options:
+- Update tests T3–T5 để expect `task-upsert`/`task-delete` thay vì `write`
+- Hoặc deprecate file (coverage đã có trong verify_atomic_write.mjs T8b/T8c)
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test live: S29 + S25–S27 features (còn hiệu lực)
 
 | Feature | Check |
 |---|---|
 | **Task save → GAS** | Edit task → Lưu → syncDot hiện "syncing" rồi "connected"; reload page → data vẫn đúng trên Sheet |
 | **Task delete → GAS** | Xóa task → Sheet mất task đó ngay (không cần import) |
-| **Bulk ops → GAS** | Chọn 2+ tasks → bulk RAG/State/Delete → Sheet cập nhật |
+| **Bulk ops → GAS** | Chọn 2+ tasks → bulk RAG/State/Delete → Sheet cập nhật (atomic per row) |
 | **BLD approve task → GAS** | BLD approve task → yKienBLD lên Sheet (parity với Case BLD) |
 | **Initiative save → GAS** | Thêm/sửa initiative → syncDot syncing→connected; Sheet cập nhật |
 | **Milestone auto-gen ID** | Mở Initiative Tracker → bấm "Thêm Milestone" → ID tự điền dạng `{iniId}-M{n}` → Category pre-filled từ initiative cha |
@@ -186,9 +224,11 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🟡 PRIORITY 1b — Dọn dead code: `localAction()`
+## 🟡 PRIORITY 1b — Dọn dead code: `localAction()` và debug trace
 
-`localAction()` trong `api.js` không còn caller nào sau S29. Có thể xóa hoặc giữ làm utility nếu cần trong tương lai. Kiểm tra trước khi xóa: `grep -r "localAction" assets/js/` phải ra 0 kết quả ngoài khai báo.
+1. **`localAction()`** trong `api.js` — không còn caller sau S29. Xác nhận: `grep -r "localAction" assets/js/` = 0 ngoài khai báo → xóa.
+2. **syncAction caller trace** trong `api.js:244` — debug log tạm thời, xóa khi production stable.
+3. **Startup diagnostic** trong `app.js:18` — debug log tạm thời, xóa khi production stable.
 
 ---
 
