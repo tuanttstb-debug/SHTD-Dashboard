@@ -335,14 +335,14 @@ console.log('\n[T7] UI delete case → case-delete (không case-pipeline-write f
 }
 
 /* ════════════════════════════════════════════════════
-   T8: Bulk write vẫn dùng action='write' (full sheet rewrite, không phải atomic)
+   T8: writeToHandle (Excel import path) vẫn dùng action='write'
 ════════════════════════════════════════════════════ */
-console.log('\n[T8] writeToHandle() → action=write (full rewrite, không phải task-upsert)');
+console.log('\n[T8] writeToHandle() (Excel import) → action=write (full rewrite)');
 {
   clearCalls();
   await resetState();
 
-  // writeToHandle() is the function bulk ops use → must call action='write' not atomic upsert
+  // writeToHandle() is used ONLY by Excel import — still sends action='write'
   await page.evaluate(async () => {
     await writeToHandle();
   });
@@ -351,10 +351,78 @@ console.log('\n[T8] writeToHandle() → action=write (full rewrite, không phả
   const writeAll   = gasCalls.filter(c => c?.action === 'write');
   const upsertAll  = gasCalls.filter(c => c?.action === 'task-upsert');
 
-  if (writeAll.length >= 1) PASS(`writeToHandle → action='write' (full rewrite): ${writeAll.length} lần`);
+  if (writeAll.length >= 1) PASS(`writeToHandle → action='write' (Excel import path): ${writeAll.length} lần`);
   else                      FAIL('writeToHandle không gọi write action (unexpected)');
-  if (upsertAll.length === 0) PASS('Bulk write không gọi task-upsert (atomic)');
-  else                        FAIL(`Bulk write gọi task-upsert ${upsertAll.length} lần (không mong đợi)`);
+  if (upsertAll.length === 0) PASS('writeToHandle không gọi task-upsert (đúng: chỉ Excel import dùng full write)');
+  else                        FAIL(`writeToHandle gọi task-upsert ${upsertAll.length} lần (không mong đợi)`);
+}
+
+/* ════════════════════════════════════════════════════
+   T8b: bulkSetRag → N×task-upsert, KHÔNG gọi write
+════════════════════════════════════════════════════ */
+console.log('\n[T8b] bulkSetRag → N×task-upsert, không gọi write (full rewrite)');
+{
+  clearCalls();
+  await resetState();
+
+  // Add both tasks to selectedIds
+  await page.evaluate(() => {
+    selectedIds.clear();
+    db.tasks.forEach(t => selectedIds.add(t.id));
+    updateBulkBar();
+  });
+
+  const bulkPromise = page.evaluate(async () => { await bulkSetRag('Red'); });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => resolveConfirm(true));
+  await bulkPromise.catch(() => {});
+  await page.waitForTimeout(600);
+
+  const writes  = gasCalls.filter(c => c?.action === 'write');
+  const upserts = gasCalls.filter(c => c?.action === 'task-upsert');
+
+  if (writes.length === 0)  PASS('bulkSetRag không gọi write (không full rewrite)');
+  else                      FAIL(`bulkSetRag vẫn gọi write ${writes.length} lần`);
+  if (upserts.length === 2) PASS(`bulkSetRag → 2×task-upsert (1 per task)`);
+  else                      FAIL(`bulkSetRag gọi task-upsert ${upserts.length} lần (expected 2)`);
+
+  const rag = await page.evaluate(() => db.tasks[0]?.status);
+  if (rag === 'Red') PASS('db.tasks[0].status = Red (local update OK)');
+  else               FAIL(`db.tasks[0].status = "${rag}" (expected Red)`);
+}
+
+/* ════════════════════════════════════════════════════
+   T8c: bulkDelete → N×task-delete, KHÔNG gọi write
+════════════════════════════════════════════════════ */
+console.log('\n[T8c] bulkDelete → N×task-delete, không gọi write (full rewrite)');
+{
+  clearCalls();
+  await resetState();
+
+  await page.evaluate(() => {
+    selectedIds.clear();
+    selectedIds.add('T-001');
+    selectedIds.add('T-002');
+    updateBulkBar();
+  });
+
+  const bulkPromise = page.evaluate(async () => { await bulkDelete(); });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => resolveConfirm(true));
+  await bulkPromise.catch(() => {});
+  await page.waitForTimeout(600);
+
+  const writes  = gasCalls.filter(c => c?.action === 'write');
+  const deletes = gasCalls.filter(c => c?.action === 'task-delete');
+
+  if (writes.length === 0)  PASS('bulkDelete không gọi write (không full rewrite)');
+  else                      FAIL(`bulkDelete vẫn gọi write ${writes.length} lần`);
+  if (deletes.length === 2) PASS(`bulkDelete → 2×task-delete (1 per task)`);
+  else                      FAIL(`bulkDelete gọi task-delete ${deletes.length} lần (expected 2)`);
+
+  const cnt = await page.evaluate(() => db.tasks.length);
+  if (cnt === 0) PASS('db.tasks rỗng sau bulkDelete local');
+  else           FAIL(`db.tasks.length = ${cnt} (expected 0)`);
 }
 
 /* ════════════════════════════════════════════════════
