@@ -22,10 +22,13 @@ const CP_PAGE_SIZE = 20;
 function renderCasePipeline() {
   _cpPopulateFilters();
 
-  // Fallback: scope 'mine' + 0 results → auto-switch to 'all'
-  if (_getCpScope() === 'mine' && _cpGetFiltered().length === 0) {
-    _cpScope = 'all';
-    _updateCpScopeUI('all');
+  // Fallback: scope 'mine' nhưng user không có case nào (check raw, không qua preset)
+  if (_getCpScope() === 'mine') {
+    const rawMine = (dbCases || []).filter(c => isCurrentUser(c.pic));
+    if (rawMine.length === 0) {
+      _cpScope = 'all';
+      _updateCpScopeUI('all');
+    }
   }
 
   _cpRenderSummary();
@@ -159,7 +162,7 @@ function _cpGetFiltered() {
     if (_cpFilterLoai  && c.loaiHinh          !== _cpFilterLoai)           return false;
     if (_cpFilterStage && c.stage             !== _cpFilterStage)          return false;
     if (_cpFilterRag   && _cpCalcRagLabel(c)  !== _cpFilterRag)            return false;
-    if (_cpFilterPic   && c.pic               !== _cpFilterPic)            return false;
+    if (_cpFilterPic   && (c.pic||'').toLowerCase() !== _cpFilterPic.toLowerCase()) return false;
     if (_cpFilterDvkd  && c.dvkd              !== _cpFilterDvkd)           return false;
     return true;
   });
@@ -172,7 +175,7 @@ function _cpApplyFilters(cases) {
     if (_cpFilterLoai  && c.loaiHinh          !== _cpFilterLoai)           return false;
     if (_cpFilterStage && c.stage             !== _cpFilterStage)          return false;
     if (_cpFilterRag   && _cpCalcRagLabel(c)  !== _cpFilterRag)            return false;
-    if (_cpFilterPic   && c.pic               !== _cpFilterPic)            return false;
+    if (_cpFilterPic   && (c.pic||'').toLowerCase() !== _cpFilterPic.toLowerCase()) return false;
     if (_cpFilterDvkd  && c.dvkd              !== _cpFilterDvkd)           return false;
     return true;
   });

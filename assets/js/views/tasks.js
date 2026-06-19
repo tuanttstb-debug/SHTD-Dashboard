@@ -86,7 +86,10 @@ function getFiltered() {
     if (fId   && !(t.id||'').toLowerCase().includes(fId)) return false;
     if (fInit && t.initiative !== fInit) return false;
     if (fTeam && t.team !== fTeam) return false;
-    if (fPic  && (t.picRes||'').toLowerCase() !== fPic.toLowerCase()) return false;
+    if (fPic) {
+      const fp = fPic.toLowerCase();
+      if ((t.picRes||'').toLowerCase() !== fp && (t.picAcc||'').toLowerCase() !== fp) return false;
+    }
     if (fSt   && t.state !== fSt) return false;
     if (fRag  && t.status !== fRag) return false;
     if (fTuanBC) {
@@ -149,7 +152,11 @@ function _populateFilterPic(team) {
     }));
   } else {
     const tasks = team ? db.tasks.filter(t => t.team === team) : db.tasks;
-    const pics  = [...new Set(tasks.map(t => t.picRes).filter(Boolean))].sort();
+    // Include both picRes and picAcc; normalize case to avoid duplicates
+    const rawPics = [...tasks.map(t => t.picRes), ...tasks.map(t => t.picAcc)].filter(Boolean);
+    const seen = new Map();
+    rawPics.forEach(p => { const k = p.toLowerCase(); if (!seen.has(k)) seen.set(k, p); });
+    const pics = [...seen.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     opts = pics.map(p => ({ value: p, label: p }));
   }
   sel.innerHTML = '<option value="">Tất cả</option>'
@@ -185,10 +192,13 @@ function renderTaskTable() {
   _initPresetUI();
   _populateFilterPic(document.getElementById('filterTeam')?.value || '');
 
-  // Fallback: scope 'mine' + 0 results → auto-switch to 'all'
-  if (_getTaskScope() === 'mine' && getFiltered().length === 0) {
-    _taskScope = 'all';
-    _updateTaskScopeUI('all');
+  // Fallback: scope 'mine' nhưng user không có task nào (check raw, không qua preset)
+  if (_getTaskScope() === 'mine') {
+    const rawMine = db.tasks.filter(t => isCurrentUser(t.picRes) || isCurrentUser(t.picAcc));
+    if (rawMine.length === 0) {
+      _taskScope = 'all';
+      _updateTaskScopeUI('all');
+    }
   }
   updatePresetCounts();
 

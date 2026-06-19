@@ -547,6 +547,143 @@ console.log('\n[T19] No JS errors across all 3 views');
   await browser.close();
 }
 
+/* ═══════════════════════════════════════════════════════════
+   T20: Bug fix — scope 'mine' KHÔNG fallback sang 'all' khi tasks
+        bị preset filter ra (user CÓ tasks nhưng preset='active'
+        lọc hết chúng ra vì tất cả đã Hoàn thành)
+═══════════════════════════════════════════════════════════ */
+console.log('\n[T20] Fallback không kích hoạt khi user có tasks nhưng preset lọc hết');
+{
+  // Tạo tasks: DungLQ1 có 2 tasks nhưng cả 2 đều 'Hoàn thành'
+  // Preset default là 'active' → lọc ra 'Hoàn thành' → getFiltered() = 0
+  // Bug cũ: fallback → 'all'. Fix mới: không fallback vì rawMine.length > 0
+  const tasksAllDone = [
+    { ...MOCK_TASKS[0], id:'T-D01', picRes:'DungLQ1', picAcc:'DungLQ1', state:'Hoàn thành' },
+    { ...MOCK_TASKS[1], id:'T-D02', picRes:'DungLQ1', picAcc:'DungLQ1', state:'Hoàn thành' },
+    { ...MOCK_TASKS[2], id:'T-D03', picRes:'OtherX',  picAcc:'OtherX',  state:'Đang thực hiện' },
+  ];
+  const browser = await chromium.launch({ headless: true });
+  const ctx = await browser.newContext();
+  await ctx.route('https://script.google.com/**', r => r.fulfill({ status: 500, body: 'mock' }));
+  const page = await ctx.newPage();
+  const jsErrors = [];
+  page.on('pageerror', e => { if (!/net::ERR_|Chart is not defined|500/.test(e.message)) jsErrors.push(e.message); });
+  await page.goto(BASE);
+  await page.waitForLoadState('domcontentloaded');
+  await page.evaluate(({ tasks, username }) => {
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'t', user:{ username, displayName:username, role:'User', team:'Số' }, exp: Date.now()+3600000 }));
+    localStorage.setItem('shtd_v2', JSON.stringify({ tasks, initiatives:[], cases:[], kpi:[], _serverTs:null }));
+    localStorage.setItem('shtd_preset', 'active'); // preset lọc Hoàn thành
+  }, { tasks: tasksAllDone, username: 'DungLQ1' });
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForFunction(() => { const el = document.getElementById('loadingOverlay'); return !el || el.style.display === 'none' || !el.classList.contains('visible'); }, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(200);
+  await navTo(page, 'tasks');
+
+  // Scope phải vẫn là 'mine' (không fallback sang 'all') vì rawMine có 2 tasks
+  const mineActive = await page.evaluate(() => document.getElementById('taskScopeMine')?.classList.contains('active'));
+  mineActive ? PASS('T20: scope vẫn là mine (không fallback) khi user có tasks nhưng preset lọc hết')
+             : FAIL('T20: scope bị fallback sai sang all khi tasks bị preset filter');
+
+  // Khi switch sang 'all', T-D03 (OtherX, active) hiển thị
+  await page.click('#taskScopeAll');
+  await page.waitForTimeout(200);
+  const allRows = await countTaskRows(page);
+  allRows === 1 ? PASS(`T20: scope all + preset active → 1 row (T-D03 active)`)
+               : FAIL(`T20: expected 1 active row in all scope, got ${allRows}`);
+
+  await browser.close();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   T21: Bug fix — filterPic check cả picAcc (không chỉ picRes)
+        Task T-002: picRes=DungLQ1, picAcc=TuanTT4
+        Khi filter PIC=TuanTT4, task này phải hiển thị
+═══════════════════════════════════════════════════════════ */
+console.log('\n[T21] filterPic khớp cả picAcc');
+{
+  const browser = await chromium.launch({ headless: true });
+  const ctx  = await makeCtx(browser);
+  const page = await loadPage(ctx, { role: 'Admin', username: 'TuanTT4' });
+  await navTo(page, 'tasks');
+
+  // T-002: picRes=DungLQ1, picAcc=TuanTT4 — khi filter PIC=TuanTT4 phải thấy
+  await page.evaluate(() => {
+    const sel = document.getElementById('filterPic');
+    if (sel) { sel.value = 'TuanTT4'; sel.dispatchEvent(new Event('change')); }
+  });
+  await page.waitForTimeout(300);
+
+  const rows = await countTaskRows(page);
+  // TuanTT4 là picRes/picAcc trên: T-001 (picRes+picAcc), T-002 (picAcc), T-003 (picRes) = 3 tasks
+  rows >= 2 ? PASS(`T21: filterPic=TuanTT4 hiện ${rows} tasks (bao gồm tasks với picAcc=TuanTT4)`)
+            : FAIL(`T21: filterPic=TuanTT4 chỉ hiện ${rows} task, bỏ sót picAcc tasks`);
+
+  // Verify T-002 (picRes=DungLQ1, picAcc=TuanTT4) xuất hiện
+  const hasT2 = await page.evaluate(() =>
+    [...document.querySelectorAll('#taskTbody td')].some(td => td.textContent.trim() === 'T-002')
+  );
+  hasT2 ? PASS('T21: T-002 (picAcc=TuanTT4) hiển thị khi filter PIC=TuanTT4')
+        : FAIL('T21: T-002 (picAcc=TuanTT4) bị ẩn khi filter PIC=TuanTT4 — bug picAcc chưa fix');
+
+  await browser.close();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   T22: Bug fix — CP filterPic case-insensitive
+        DB pic='tuantt4' (lowercase) vs filter value='TuanTT4'
+        (User_Master canonical case) → _cpGetFiltered() phải match
+═══════════════════════════════════════════════════════════ */
+console.log('\n[T22] CP filterPic case-insensitive');
+{
+  const casesLowerPic = [
+    { ...MOCK_CASES[0], id:'CP-L01', pic:'tuantt4' }, // lowercase in DB
+    { ...MOCK_CASES[1], id:'CP-L02', pic:'DungLQ1' },
+  ];
+  const browser = await chromium.launch({ headless: true });
+  const ctx = await browser.newContext();
+  await ctx.route('https://script.google.com/**', r => r.fulfill({ status: 500, body: 'mock' }));
+  const page = await ctx.newPage();
+  await page.goto(BASE);
+  await page.waitForLoadState('domcontentloaded');
+  await page.evaluate(({ cases, username }) => {
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'t', user:{ username, displayName:username, role:'Admin', team:'Số' }, exp: Date.now()+3600000 }));
+    localStorage.setItem('shtd_v2', JSON.stringify({ tasks:[], initiatives:[], cases, kpi:[], _serverTs:null }));
+  }, { cases: casesLowerPic, username: 'TuanTT4' });
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForFunction(() => { const el = document.getElementById('loadingOverlay'); return !el || el.style.display === 'none' || !el.classList.contains('visible'); }, { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(200);
+  await navTo(page, 'case-pipeline');
+
+  // Test _cpGetFiltered() trực tiếp: set _cpFilterPic='TuanTT4' (canonical case từ User_Master)
+  // pic trong DB là 'tuantt4' (lowercase) → phải match qua case-insensitive comparison
+  const filteredCount = await page.evaluate(() => {
+    // eslint-disable-next-line no-undef
+    _cpFilterPic = 'TuanTT4'; // simulates User_Master canonical case
+    const count = typeof _cpGetFiltered === 'function' ? _cpGetFiltered().length : -1;
+    _cpFilterPic = ''; // restore
+    return count;
+  });
+  filteredCount === 1
+    ? PASS(`T22: _cpGetFiltered() với _cpFilterPic='TuanTT4' khớp pic='tuantt4' → ${filteredCount} case`)
+    : FAIL(`T22: case-insensitive fail — expected 1, got ${filteredCount}`);
+
+  // Verify UPPERCASE cũng match
+  const filteredUpperCount = await page.evaluate(() => {
+    _cpFilterPic = 'TUANTT4'; // UPPERCASE
+    const count = typeof _cpGetFiltered === 'function' ? _cpGetFiltered().length : -1;
+    _cpFilterPic = '';
+    return count;
+  });
+  filteredUpperCount === 1
+    ? PASS(`T22: _cpGetFiltered() với _cpFilterPic='TUANTT4' khớp pic='tuantt4' → ${filteredUpperCount} case`)
+    : FAIL(`T22: UPPERCASE case-insensitive fail — expected 1, got ${filteredUpperCount}`);
+
+  await browser.close();
+}
+
 /* ── Summary ── */
 server.close();
 console.log(`\n${'═'.repeat(52)}`);
