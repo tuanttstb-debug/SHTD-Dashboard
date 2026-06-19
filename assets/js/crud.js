@@ -211,17 +211,22 @@ async function handleSubmit(e) {
     `<strong>${task.id}</strong> – ${task.name}<br><small style="color:var(--text-3);">Deadline: ${fmtDate(task.endDate)} · PIC: ${task.picRes} · ${task.state}</small>`,
     'info', 'Lưu');
   if (!ok) return;
-  const synced = await syncAction(() => {
-    const origId = document.getElementById('origId').value;
-    const lookupId = (origId && origId !== task.id) ? origId : task.id;
-    const idx = db.tasks.findIndex(x => x.id === lookupId);
-    if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
-  });
-  if (!synced) return;
+
+  // Optimistic update: mutate local db + persist immediately
+  const origId = document.getElementById('origId').value;
+  const lookupId = (origId && origId !== task.id) ? origId : task.id;
+  const idx = db.tasks.findIndex(x => x.id === lookupId);
+  if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
+  persist();
+
   const shouldReturn = !!_taskEditReturnId;
   closeTaskModal();
   if (shouldReturn) openTaskViewPopup(task.id);
   toast(`Đã lưu task <strong>${task.id}</strong>!`, 'success');
+  renderAll();
+
+  // Fire atomic GAS write in background (1 row, not all tasks)
+  _gasTaskUpsert(task, origId);
 }
 
 async function deleteTask() {
@@ -229,10 +234,18 @@ async function deleteTask() {
   if (!id) return;
   const ok = await uiConfirm('Xóa Task', `Bạn có chắc chắn muốn xóa task <strong>${id}</strong>? Hành động này không thể hoàn tác.`, 'danger', 'Xóa');
   if (!ok) return;
-  const synced = await syncAction(() => { db.tasks = db.tasks.filter(t => t.id !== id); });
-  if (!synced) return;
+
+  const taskDel = db.tasks.find(t => t.id === id);
+  // Optimistic update: remove locally + persist immediately
+  db.tasks = db.tasks.filter(t => t.id !== id);
+  persist();
+
   closeTaskModal();
   toast(`Đã xóa task ${id}.`, 'info');
+  renderAll();
+
+  // Fire atomic GAS delete in background (1 row, not all tasks)
+  _gasTaskDelete(id, taskDel?.name || '');
 }
 
 function cloneTask() {

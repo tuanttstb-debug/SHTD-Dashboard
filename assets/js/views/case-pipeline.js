@@ -583,19 +583,22 @@ function handleCaseSubmit() {
     yKienBLD:   _cpEditId ? ((dbCases || []).find(x => x.id === _cpEditId)?.yKienBLD || '') : '',
   };
 
-  closeCaseModal();
+  // Optimistic update: mutate local + persist immediately
+  if (_cpEditId) {
+    const idx = dbCases.findIndex(x => x.id === _cpEditId);
+    if (idx !== -1) dbCases[idx] = newCase;
+    else dbCases.push(newCase);
+  } else {
+    dbCases.push(newCase);
+  }
+  persistCases();
 
-  syncCaseAction(() => {
-    if (_cpEditId) {
-      const idx = dbCases.findIndex(x => x.id === _cpEditId);
-      if (idx !== -1) dbCases[idx] = newCase;
-      else dbCases.push(newCase);
-      toast('Đã cập nhật case.', 'success');
-    } else {
-      dbCases.push(newCase);
-      toast('Đã thêm case mới.', 'success');
-    }
-  });
+  closeCaseModal();
+  toast(_cpEditId ? 'Đã cập nhật case.' : 'Đã thêm case mới.', 'success');
+  renderCasePipeline();
+
+  // Fire atomic GAS write in background (1 row, not all cases)
+  _gasCaseUpsert(newCase);
 }
 
 async function deleteCaseItem() {
@@ -608,11 +611,19 @@ async function deleteCaseItem() {
     'danger', 'Xóa'
   );
   if (!ok) return;
+
+  const delId   = _cpEditId;
+  const delName = c?.caseName || '';
+  // Optimistic update: remove locally + persist immediately
+  dbCases = (dbCases || []).filter(x => x.id !== delId);
+  persistCases();
+
   closeCaseModal();
-  syncCaseAction(() => {
-    dbCases = dbCases.filter(x => x.id !== _cpEditId);
-    toast('Đã xóa case.', 'success');
-  });
+  toast('Đã xóa case.', 'success');
+  renderCasePipeline();
+
+  // Fire atomic GAS delete in background (1 row, not all cases)
+  _gasCaseDelete(delId, delName);
 }
 
 let _cpViewId = null;

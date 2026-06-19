@@ -74,3 +74,55 @@ function initiativeWrite(values) {
 
   SpreadsheetApp.flush();
 }
+
+/**
+ * Tìm row theo Initiative/Milestone ID (cột A) và update in-place.
+ * Nếu không tìm thấy → append row mới.
+ */
+function initiativeUpsertRow(rowValues, initId) {
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(INI_SHEET_NAME);
+  if (!sheet) throw new Error('Sheet không tìm thấy: ' + INI_SHEET_NAME);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) throw new Error('Initiative_Master trống, thiếu header row.');
+
+  var targetRow = -1;
+  if (lastRow > 1) {
+    var idCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < idCol.length; i++) {
+      if (String(idCol[i][0]).trim() === String(initId).trim()) {
+        targetRow = i + 2;
+        break;
+      }
+    }
+  }
+
+  if (targetRow !== -1) {
+    sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
+  } else {
+    sheet.getRange(lastRow + 1, 1, 1, rowValues.length).setValues([rowValues]);
+  }
+  SpreadsheetApp.flush();
+}
+
+/**
+ * Tìm row theo Initiative/Milestone ID (cột A) và xóa row đó.
+ */
+function initiativeDeleteRow(initId) {
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(INI_SHEET_NAME);
+  if (!sheet) return;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  var idCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  for (var i = 0; i < idCol.length; i++) {
+    if (String(idCol[i][0]).trim() === String(initId).trim()) {
+      sheet.deleteRow(i + 2);
+      SpreadsheetApp.flush();
+      return;
+    }
+  }
+}

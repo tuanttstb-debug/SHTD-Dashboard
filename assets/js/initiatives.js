@@ -177,21 +177,36 @@ async function syncInitiativeAction(mutateFn) {
   }
 }
 
+/* ── Atomic single-row GAS write for initiative/milestone ── */
+async function _gasInitiativeUpsert(ini) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'initiative-upsert', initId: ini.id, initName: ini.name, row: initiativeToRow(ini) });
+    if (json.status !== 'ok') throw new Error(json.error || 'initiative-upsert lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS không phản hồi — Initiative đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 5000);
+  }
+}
+
 /* ── CRUD helpers ── */
 function syncInitiativeAdd(ini) {
-  return syncInitiativeAction(() => {
-    db.initiatives.push(ini);
-    persist();
-  });
+  // Optimistic update: mutate local + persist, then fire atomic GAS write (1 row)
+  db.initiatives.push(ini);
+  persist();
+  return _gasInitiativeUpsert(ini);
 }
 
 function syncInitiativeEdit(ini) {
-  return syncInitiativeAction(() => {
-    const idx = db.initiatives.findIndex(x => x.id === ini.id);
-    if (idx === -1) return;
-    db.initiatives[idx] = ini;
-    persist();
-  });
+  // Optimistic update: mutate local + persist, then fire atomic GAS write (1 row)
+  const idx = db.initiatives.findIndex(x => x.id === ini.id);
+  if (idx === -1) return Promise.resolve();
+  db.initiatives[idx] = ini;
+  persist();
+  return _gasInitiativeUpsert(ini);
 }
 
 async function syncInitiativeDelete(id) {

@@ -360,28 +360,24 @@ async function bldSubmitAction() {
     : `[${markerMap[type]} ${actionLabel} ${dateStr}]`;
 
   try {
-    let success;
     if (source === 'case') {
-      success = await syncCaseAction(() => {
-        const c = dbCases.find(r => r.id === taskId);
-        if (!c) return;
-        const prev = (c.yKienBLD || '').trim();
-        c.yKienBLD = prev ? `${marker}\n${prev}` : marker;
-        if (type !== 'info') c.canBLD = 'N';
-      });
+      // Optimistic update: mutate + persist, then atomic GAS write (1 row)
+      const c = dbCases.find(r => r.id === taskId);
+      if (!c) return;
+      const prev = (c.yKienBLD || '').trim();
+      c.yKienBLD = prev ? `${marker}\n${prev}` : marker;
+      if (type !== 'info') c.canBLD = 'N';
+      persistCases();
+      _gasCaseUpsert(c);
     } else {
-      success = await syncAction(() => {
-        const t = db.tasks.find(r => r.id === taskId);
-        if (!t) return;
-        const prev = (t.yKienBLD || '').trim();
-        t.yKienBLD = prev ? `${marker}\n${prev}` : marker;
-        if (type !== 'info') t.canBLD = 'N';
-      });
-    }
-
-    if (!success) {
-      if (btn) { btn.disabled = false; btn.textContent = 'Thử lại'; }
-      return;
+      // Optimistic update: mutate + persist, then atomic GAS write (1 row)
+      const t = db.tasks.find(r => r.id === taskId);
+      if (!t) return;
+      const prev = (t.yKienBLD || '').trim();
+      t.yKienBLD = prev ? `${marker}\n${prev}` : marker;
+      if (type !== 'info') t.canBLD = 'N';
+      persist();
+      _gasTaskUpsert(t);
     }
 
     if (btn) btn.disabled = false;

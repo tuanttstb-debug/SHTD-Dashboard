@@ -327,7 +327,8 @@ async function _initFixLooseLink(taskId, fullMsId, msId) {
     }
   }
 
-  writeToHandle().catch(e => toast('⚠️ Sync lỗi: ' + e.message, 'warning', 5000));
+  // Atomic write: only update the 1 task row that changed (not all tasks)
+  _gasTaskUpsert(task);
 }
 
 /* ── linked task list (inside card) ── */

@@ -153,6 +153,48 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    // ── Atomic single-row writes (task / case / initiative) ──
+    if (action === 'task-upsert') {
+      if (!body.row || !Array.isArray(body.row) || !body.taskId) {
+        throw new Error('task-upsert: thiếu row hoặc taskId.');
+      }
+      sheetUpsertTask(body.row, body.taskId);
+      auditLog(tokenData, 'task-upsert', body.taskId + (body.taskName ? ' | ' + body.taskName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'task-delete') {
+      if (!body.taskId) throw new Error('task-delete: thiếu taskId.');
+      sheetDeleteTask(body.taskId);
+      auditLog(tokenData, 'task-delete', body.taskId + (body.taskName ? ' | ' + body.taskName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'case-upsert') {
+      if (!body.row || !Array.isArray(body.row) || !body.caseId) {
+        throw new Error('case-upsert: thiếu row hoặc caseId.');
+      }
+      caseUpsertRow(body.row, body.caseId);
+      auditLog(tokenData, 'case-upsert', body.caseId + (body.caseName ? ' | ' + body.caseName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'case-delete') {
+      if (!body.caseId) throw new Error('case-delete: thiếu caseId.');
+      caseDeleteRow(body.caseId);
+      auditLog(tokenData, 'case-delete', body.caseId + (body.caseName ? ' | ' + body.caseName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'initiative-upsert') {
+      if (!body.row || !Array.isArray(body.row) || !body.initId) {
+        throw new Error('initiative-upsert: thiếu row hoặc initId.');
+      }
+      initiativeUpsertRow(body.row, body.initId);
+      auditLog(tokenData, 'initiative-upsert', body.initId + (body.initName ? ' | ' + body.initName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

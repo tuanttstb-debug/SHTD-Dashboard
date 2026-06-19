@@ -354,6 +354,73 @@ async function syncAction(action) {
   }
 }
 /* ══════════════════════════════════════════
+   ATOMIC SINGLE-ROW GAS WRITES
+   Single task/case save → 1 GAS row write (not 613).
+   Caller mutates local db + persists + renders first (optimistic update),
+   then fires one of these helpers to sync that specific row to GAS.
+   Bulk import / bulk ops still use the full-rewrite actions.
+══════════════════════════════════════════ */
+
+async function _gasTaskUpsert(task, oldId) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    if (oldId && oldId !== task.id) {
+      await gasPost({ action: 'task-delete', taskId: oldId, taskName: task.name });
+    }
+    const json = await gasPost({ action: 'task-upsert', taskId: task.id, taskName: task.name, row: taskToRow(task) });
+    if (json.status !== 'ok') throw new Error(json.error || 'task-upsert lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS không phản hồi — task đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 5000);
+  }
+}
+
+async function _gasTaskDelete(taskId, taskName) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'task-delete', taskId, taskName: taskName || '' });
+    if (json.status !== 'ok') throw new Error(json.error || 'task-delete lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS không phản hồi — task đã xóa cục bộ. Nhớ đồng bộ khi online.', 'warning', 5000);
+  }
+}
+
+async function _gasCaseUpsert(c) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'case-upsert', caseId: c.id, caseName: c.caseName, row: caseToRow(c) });
+    if (json.status !== 'ok') throw new Error(json.error || 'case-upsert lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS không phản hồi — Case đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 5000);
+  }
+}
+
+async function _gasCaseDelete(caseId, caseName) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'case-delete', caseId, caseName: caseName || '' });
+    if (json.status !== 'ok') throw new Error(json.error || 'case-delete lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS không phản hồi — Case đã xóa cục bộ. Nhớ đồng bộ khi online.', 'warning', 5000);
+  }
+}
+
+/* ══════════════════════════════════════════
    USER MASTER — global cache for Team/PIC dropdowns
 ══════════════════════════════════════════ */
 let _appUsers = [];

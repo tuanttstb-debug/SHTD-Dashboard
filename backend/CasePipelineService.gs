@@ -66,3 +66,55 @@ function caseWrite(values) {
   sheet.getRange(1, 1, values.length, numCols).setValues(values);
   SpreadsheetApp.flush();
 }
+
+/**
+ * Tìm row theo Case ID (cột A) và update in-place.
+ * Nếu không tìm thấy → append row mới.
+ */
+function caseUpsertRow(rowValues, caseId) {
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(CASE_SHEET_NAME);
+  if (!sheet) throw new Error('Sheet không tìm thấy: ' + CASE_SHEET_NAME);
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) throw new Error('Case_Pipeline trống, thiếu header row.');
+
+  var targetRow = -1;
+  if (lastRow > 1) {
+    var idCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < idCol.length; i++) {
+      if (String(idCol[i][0]).trim() === String(caseId).trim()) {
+        targetRow = i + 2;
+        break;
+      }
+    }
+  }
+
+  if (targetRow !== -1) {
+    sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
+  } else {
+    sheet.getRange(lastRow + 1, 1, 1, rowValues.length).setValues([rowValues]);
+  }
+  SpreadsheetApp.flush();
+}
+
+/**
+ * Tìm row theo Case ID (cột A) và xóa row đó.
+ */
+function caseDeleteRow(caseId) {
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(CASE_SHEET_NAME);
+  if (!sheet) return;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  var idCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  for (var i = 0; i < idCol.length; i++) {
+    if (String(idCol[i][0]).trim() === String(caseId).trim()) {
+      sheet.deleteRow(i + 2);
+      SpreadsheetApp.flush();
+      return;
+    }
+  }
+}
