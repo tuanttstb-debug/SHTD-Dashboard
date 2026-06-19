@@ -53,6 +53,8 @@ function updateClock() {
   const now = new Date();
   document.getElementById('sbTime').textContent = now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('lastUpdated').textContent = now.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const vBadge = document.getElementById('appVerBadge');
+  if (vBadge && typeof APP_VERSION !== 'undefined') vBadge.textContent = 'v' + APP_VERSION;
 }
 
 function renderAll() {
