@@ -14,6 +14,11 @@ async function startApp() {
   _cpScope   = null;
   _initScope = null;
 
+  // Startup diagnostics — visible in browser console (F12)
+  console.info('%c[SHTD] v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'UNKNOWN') +
+    ' — deleteTask uses: ' + (deleteTask.toString().includes('syncAction') ? '⚠️ OLD syncAction' : '✅ _gasTaskDelete'),
+    'color:#4ade80;font-weight:bold;');
+
   loadCache();
   loadCasesFromCache();
   setupListeners();

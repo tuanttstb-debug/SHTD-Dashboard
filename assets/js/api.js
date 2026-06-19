@@ -240,6 +240,8 @@ async function writeToHandle() {
 }
 
 async function syncAction(action) {
+  // Trace: log caller so unexpected syncAction calls can be caught in console
+  console.warn('[syncAction] fired — caller:', new Error().stack.split('\n').slice(1, 4).join(' ← '));
   showLoading('Đang đồng bộ Google Sheets…');
   document.getElementById('syncDot').className = 'status-dot syncing';
 
