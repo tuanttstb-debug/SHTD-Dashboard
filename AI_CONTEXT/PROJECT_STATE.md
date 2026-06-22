@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-22 (Session 31 — Select-all bug + deleted-task re-insertion blacklist)
-**Version**: v6.3 (`APP_VERSION = '6.3-no-syncaction-20260619'`)
-**Remote HEAD (main)**: `0cec10b` — fix(select): clear selectedIds when navigating to tasks view
+**As of**: 2026-06-22 (Session 32 — sortBy select fix + cache-bust)
+**Version**: v6.3 (`APP_VERSION = '6.3-select-fix-20260622'`)
+**Remote HEAD (main)**: `56e3e43` — fix(select): sortBy clears selectedIds + cache-bust bump to force reload
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1220 | ✅ S20: #view-case-pipeline restructure — card wrapper, toolbar+view toggle, preset bar, filter bar, table wrap, board wrap |
+| `index.html` | ~1220 | ✅ S32: cache-bust `?v=20260619d` → `?v=20260622` (35 script tags, Python); S20: #view-case-pipeline restructure |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,13 +35,13 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S30: new GS_WEBAPP_URL + APP_VERSION = '6.3-no-syncaction-20260619' |
+| `assets/js/config.js` | 7 | ✅ S32: APP_VERSION = '6.3-select-fix-20260622'; S30: new GS_WEBAPP_URL |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
 | `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
 | `assets/css/auth.css` | ~150 | ✅ S23: +body[data-role="User"] .lead-only { display:none !important } |
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
-| `assets/js/views/tasks.js` | ~400 | ✅ S31: `onFilterChange()` now calls `selectedIds.clear()` synchronously before debounce; `toggleSelectAll` scoped to current page; S24: PA1 picRes case fix; S23: +_populateFilterPic, +onFilterTeamChange |
+| `assets/js/views/tasks.js` | ~400 | ✅ S32: `sortBy()` now calls `selectedIds.clear()` — sort reorders tasks across pages, stale selections mislead user; S31: `onFilterChange()` clears sync; `toggleSelectAll` scoped to current page; S24: PA1; S23: +_populateFilterPic |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
 | `assets/js/views/initiative-tracker.js` | ~760 | ✅ S29: `_initSave` → async, thêm await trước syncInitiativeAdd/Edit; S27: auto-gen milestone ID + add task from milestone; S25: view popups |

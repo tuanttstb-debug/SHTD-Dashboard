@@ -1,4 +1,109 @@
 # SESSION HANDOVER
+**Date**: 2026-06-22 (Session 32 — sortBy select fix + cache-bust + verify 26/26)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `56e3e43` ✅
+
+---
+
+## Tasks Completed (S32)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S32-T1 | Handover docs S31: SESSION_HANDOVER, PROJECT_STATE, TODO_NEXT, TECH_DEBT updated | `ai_context/` | `f583f80` | ✅ |
+| S32-T2 | `verify_select_bug.mjs` 23/23 PASS — initial S31 regression tests (S1-S5 scenarios + JS errors) | `verify_select_bug.mjs` | `b95627d` | ✅ |
+| S32-T3 | Bug: `sortBy()` not clearing `selectedIds` — column sort reorders 631 tasks across 32 pages; stale 20 IDs scatter to pages 3/7/12; bulk bar shows "20 đã chọn", only 2 visible on current page | `assets/js/views/tasks.js` | `56e3e43` | ✅ |
+| S32-T4 | Bug: S31 cache-bust not bumped — browsers served old pre-fix JS; all S31 select-bug fixes invisible to production users | `index.html`, `assets/js/config.js` | `56e3e43` | ✅ |
+| S32-T5 | `verify_select_bug.mjs`: S6 (sortBy clears) added → **26/26 PASS**; EVD screenshots s6_before/after_sort.png | `verify_select_bug.mjs`, `test-results/select_bug/` | `56e3e43` | ✅ |
+
+### Root Cause — Production Bug (BUG1.png / BUG2.png)
+
+User observed: bulk bar shows "20 task đã chọn" but only 2 rows visibly checked after switching scopes/sort.
+
+**Cause A — Browser cache stale (S31 forgot cache-bust)**:
+- S31 changed `tasks.js` + `navigation.js` but did not bump `?v=20260619d` → browsers served old pre-fix JS
+- Fix: Python replace `?v=20260619d` → `?v=20260622` in all 35 `<script>` tags in `index.html`
+- Must use **Python** (not PowerShell `Get-Content`) — PowerShell default encoding corrupts Vietnamese chars; 'Số' (2 chars, 4 UTF-8 bytes) becomes 'Sá»' (4 chars), breaking Playwright S3 filter test
+- `APP_VERSION = '6.3-select-fix-20260622'`
+
+**Cause B — `sortBy()` not clearing selectedIds**:
+- User selects 20 tasks on page 1 (sort default), clicks column header → same 20 IDs now on pages 3, 7, 12, etc.
+- Bulk bar shows "20", only 2 of those IDs visible on current page → visual discrepancy
+- Fix: `selectedIds.clear()` at top of `sortBy()` in `views/tasks.js`
+
+### Architecture: S32 Changes
+
+**`sortBy()` fix** (commit `56e3e43`):
+```js
+function sortBy(key) {
+  if (sort.key === key) sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
+  else { sort.key = key; sort.dir = 'asc'; }
+  document.querySelectorAll('#taskTable th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  selectedIds.clear();  // ← ADDED S32: sort reorders tasks across pages — stale selections mislead
+  renderTaskTable();
+}
+```
+
+**`selectedIds` clear matrix — complete after S32:**
+```
+navigateTo('tasks')            → selectedIds.clear()          ✅ S31-T4
+onFilterChange (ALL filters)   → selectedIds.clear()          ✅ S31-T2 (sync before debounce)
+toggleSelectAll                → clear → add current page     ✅ S31-T6
+setPreset / setTaskScope       → selectedIds.clear()          ✅ pre-existing
+clearFilter / clearFilters     → selectedIds.clear()          ✅ pre-existing
+goPage                         → selectedIds.clear()          ✅ pre-existing
+bulkSetRag/State/Delete        → selectedIds.clear() after op ✅ pre-existing
+deleteTask                     → selectedIds.delete(id)       ✅ pre-existing
+sortBy                         → selectedIds.clear()          ✅ NEW S32
+renderAll                      → no clear (intentional)
+```
+
+**Cache-bust rule** (lesson from S32):
+- Every commit touching any `assets/js/*.js` MUST bump `?v=` in all 35 `<script>` tags
+- Use Python: `content.replace('?v=OLD', '?v=NEW')` with `encoding='utf-8'` — never PowerShell on Windows
+- `APP_VERSION` in `config.js` must match the new version string
+
+### Commits S32
+```
+f583f80  docs: session 31 handover — select-all bug fixes + deletedIds blacklist
+b95627d  test: verify_select_bug 23/23 PASS — S31 select-all + deletedIds regression tests
+56e3e43  fix(select): sortBy clears selectedIds + cache-bust bump to force reload
+```
+
+---
+
+## Decisions Made (S32)
+
+1. **`sortBy()` must clear `selectedIds`**: Pagination means sort changes which tasks are visible per page. Stale IDs spread across many pages — bulk count mismatches visible checked rows. User rule: "Chọn số lượng task phải lấy từ giao diện."
+2. **Cache-bust MUST be bumped on every JS deployment**: S31 skipped this step → production bug. Now a hard requirement per commit.
+3. **Python-only for UTF-8 file edits on Windows**: PowerShell `Get-Content` reads as Windows-1252 → corrupts 'Số' and other Vietnamese chars. Confirmed when Playwright S3 test showed 20 rows instead of 12 (filter 'Số' matched 0 due to encoding mismatch).
+4. **Hard-reload required**: Users must Ctrl+Shift+R (or Ctrl+F5) after cache-bust bump. Until done, S31+S32 fixes remain invisible in browser.
+
+---
+
+## Blockers (S32)
+
+| Item | Status |
+|---|---|
+| **GAS redeploy** | ⏳ Same as S31 — `Code.gs` updated in `689bb10` returns `serverTs`. Requires manual: Extensions → Apps Script → Deploy → New deployment. |
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260622`. Until done, all S31+S32 fixes remain invisible in browser. |
+
+---
+
+## Regression Risks (S32)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **sortBy() behavior change** | ⚪ LOW | Previous: sort kept selections (could select then sort). New: sort always clears. Acceptable — user can re-selectAll after sort. |
+| **Mock-only test coverage** | 🟡 MEDIUM | `verify_select_bug.mjs` uses 25 mock tasks. Real 631 tasks not yet smoke-tested post-S32. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S31)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-22 (Session 31 — Select-all bug + deleted-task re-insertion blacklist)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
@@ -41,7 +146,8 @@ clearFilter / clearFilters     → selectedIds.clear()          ✅ pre-existing
 goPage                         → selectedIds.clear()          ✅ pre-existing
 bulkSetRag/State/Delete        → selectedIds.clear() after op ✅ pre-existing
 deleteTask                     → selectedIds.delete(id)       ✅ pre-existing
-sortBy / renderAll             → no clear (intentional)
+sortBy                         → selectedIds.clear()          ✅ NEW S32 (was no-clear — fixed for pagination)
+renderAll                      → no clear (intentional)
 ```
 
 **Duplicate listeners removed** (Bug 2b — commit `9e8bfd3`):

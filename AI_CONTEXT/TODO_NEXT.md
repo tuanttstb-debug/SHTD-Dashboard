@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-22 (Session 31 — Select-all bug + deleted-task re-insertion blacklist)
-**Context**: `origin/main` @ `0cec10b` — selectedIds stale-selection bugs fixed; db.deletedIds blacklist added; GAS redeploy pending.
+**Prepared**: 2026-06-22 (Session 32 — sortBy select fix + cache-bust)
+**Context**: `origin/main` @ `56e3e43` — sortBy clears selectedIds; cache-bust bumped to `?v=20260622`; 26/26 Playwright tests pass; GAS redeploy + user hard-reload still pending.
 
 ---
 
@@ -13,6 +13,16 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S32
+
+- [x] docs(S31 handover): SESSION_HANDOVER + PROJECT_STATE + TODO_NEXT + TECH_DEBT updated (`f583f80`)
+- [x] `verify_select_bug.mjs` 23/23 PASS — S31 regression tests: selectAll scoped, navigateTo clear, filter clear, goPage clear, deletedIds blacklist (`b95627d`)
+- [x] Bug: `sortBy()` now calls `selectedIds.clear()` — column sort reorders tasks across pages; stale selections showed wrong count in bulk bar (`56e3e43`)
+- [x] Bug: cache-bust bumped `?v=20260619d` → `?v=20260622` via Python (NOT PowerShell — corrupts Vietnamese UTF-8); `APP_VERSION = '6.3-select-fix-20260622'` (`56e3e43`)
+- [x] `verify_select_bug.mjs`: S6 (sortBy test) added → **26/26 PASS**; EVD screenshots s6_before/after_sort.png captured (`56e3e43`)
 
 ---
 
@@ -177,25 +187,33 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Local test S31 select-bug fixes (NOT YET DONE)
+## 🔴 PRIORITY 0 — User hard-reload required (Ctrl+Shift+R)
 
-User must test locally before trusting S31 fixes (all commits pushed without browser verification):
+Cache-bust `?v=20260622` pushed in `56e3e43`. Users must hard-reload to pick up S31+S32 JS fixes:
 
-```bash
-npx http-server D:\Workspace\Production\SHTD-Dashboard -p 3030
-```
+- **Windows/Linux**: Ctrl+Shift+R (or Ctrl+F5)
+- **Mac**: Cmd+Shift+R
+- **Verify**: Topbar badge shows `v6.3-select-fix-20260622`
 
-| Scenario | Steps | Expected |
-|---|---|---|
-| **S1** navigateTo clear | Vào Tasks → selectAll → vào Dashboard → quay lại Tasks | Bulk bar ẩn, 0 rows checked |
-| **S2** onFilterChange | selectAll → đổi Team dropdown | Bulk bar ẩn ngay |
-| **S3** selectAll accuracy | Filter Team=Số → selectAll | Số rows có tick = count trong bulk bar |
-| **S4** goPage | selectAll page 1 → click page 2 | Bulk bar ẩn |
-| **S5** deletedIds | Xóa task → import Excel cùng task → task không reappear | Task stays deleted |
+Until hard-reload: all S31+S32 select-bug fixes remain invisible in browser. `verify_select_bug.mjs` 26/26 PASS confirms code correctness — delivery depends on users clearing cache.
 
 ---
 
-## 🔴 PRIORITY 0b — GAS redeploy (BLOCKING for serverTs sync)
+## 🔴 PRIORITY 0b — Smoke test with real 631 tasks
+
+`verify_select_bug.mjs` 26/26 PASS uses 25 mock tasks. Smoke test với real data sau hard-reload:
+
+| Scenario | Steps | Expected |
+|---|---|---|
+| **Sort clear** | Select 10 tasks → click column header to sort | Bulk bar ẩn, 0 rows checked |
+| **Scope switch** | selectAll → switch scope tab | Bulk bar ẩn |
+| **Filter clear** | selectAll → change Team dropdown | Bulk bar ẩn ngay |
+| **Page change** | selectAll page 1 → click page 2 | Bulk bar ẩn |
+| **selectAll accuracy** | Filter Team=Số → selectAll | Count = số rows đang hiện |
+
+---
+
+## 🔴 PRIORITY 0c — GAS redeploy (BLOCKING for serverTs sync)
 
 `backend/Code.gs` updated in `689bb10` to return `serverTs` in `task-upsert` and `task-delete` responses. Until redeployed, `db._serverTs` won't sync after atomic writes.
 
@@ -203,7 +221,7 @@ Steps: Extensions → Apps Script → Deploy → New deployment → copy new URL
 
 ---
 
-## 🔴 PRIORITY 0c — Verify production atomic writes (S30)
+## 🔴 PRIORITY 0d — Verify production atomic writes (S30)
 
 | Check | Expected GAS Audit_Log |
 |---|---|
@@ -219,7 +237,7 @@ Steps: Extensions → Apps Script → Deploy → New deployment → copy new URL
 
 ---
 
-## 🔴 PRIORITY 0d — Fix verify_sync_fix.mjs (stale after S30)
+## 🔴 PRIORITY 0e — Fix verify_sync_fix.mjs (stale after S30)
 
 `verify_sync_fix.mjs` (S29, 24/24) test bulk ops gọi `syncAction`. Sau S30 bulk dùng atomic → những tests sẽ FAIL. Options:
 - Update tests T3–T5 để expect `task-upsert`/`task-delete` thay vì `write`
@@ -227,7 +245,7 @@ Steps: Extensions → Apps Script → Deploy → New deployment → copy new URL
 
 ---
 
-## 🔴 PRIORITY 0e — Smoke test live: S29 + S25–S27 features (còn hiệu lực)
+## 🔴 PRIORITY 0f — Smoke test live: S29 + S25–S27 features (còn hiệu lực)
 
 | Feature | Check |
 |---|---|

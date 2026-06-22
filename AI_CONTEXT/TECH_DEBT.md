@@ -449,8 +449,30 @@ function _resolveOneUser(raw) {
 
 ---
 
+## TD-040: Cache-Bust Process Not Enforced — Deployment Step Missed
+**Rating**: 🟡 HIGH (process risk)
+**Added**: 2026-06-22 (Session 32)
+
+**Issue**: S31 changed `tasks.js` + `navigation.js` but did not bump `?v=` in 35 `<script>` tags in `index.html`. Browsers served stale pre-fix JS → S31 select-bug fixes invisible in production until S32 fixed it.
+
+**Root cause**: No checklist or automation enforces the cache-bust bump. Relies on developer memory.
+
+**Impact**: Any deployment that forgets to bump `?v=` silently ships broken/missing features. Users see no error — old JS loads quietly. This happened in S31 and caused a production regression.
+
+**Additional hazard**: PowerShell `Get-Content`/`Set-Content` on Windows reads files as Windows-1252, corrupting Vietnamese chars (e.g. 'Số' → 'Sá»'). Python with `encoding='utf-8'` is required.
+
+**Fix**: Add to CLAUDE.md or deployment checklist:
+```
+EVERY commit touching assets/js/*.js → bump ?v=YYYYMMDD in all 35 <script> tags in index.html
+Method: Python replace with encoding='utf-8'  (NOT PowerShell Get-Content)
+APP_VERSION in config.js must match the bumped version string
+Verify: topbar badge shows new version after hard-reload (Ctrl+Shift+R)
+```
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-22 (Session 31 — selectedIds bug fixes; db.deletedIds blacklist; TD-039 added)
+**Last updated**: 2026-06-22 (Session 32 — sortBy select fix; cache-bust lesson; TD-040 added)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -503,3 +525,4 @@ function _resolveOneUser(raw) {
 | ~~TD-037b~~ | ~~🟡~~ | ~~bulk.js syncAction → task-write + N rows on every bulk op~~ | Small | ✅ **Resolved 2026-06-19** — S30: bulk ops → N×atomic writes |
 | verify_sync_fix.mjs stale | 🟡 | S29 test expects bulk → syncAction; S30 bulk → atomic → tests FAIL | Small | Open — update T3–T5 hoặc deprecate |
 | TD-039 | ⚪ | `db.deletedIds` grows indefinitely — permanently deleted IDs never pruned from localStorage | Tiny | Open — negligible at current scale; cap at 500 if ever needed |
+| TD-040 | 🟡 | Cache-bust bump not enforced on every JS deployment — S31 missed it → production regression; must use Python not PowerShell for UTF-8 safety | Small | Open — add to CLAUDE.md/deployment checklist |
