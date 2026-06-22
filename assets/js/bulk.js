@@ -5,9 +5,10 @@ function toggleSelect(id, checked) {
 }
 
 function toggleSelectAll(cb) {
-  getFiltered().slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE).forEach(t => {
-    if (cb.checked) selectedIds.add(t.id); else selectedIds.delete(t.id);
-  });
+  selectedIds.clear();
+  if (cb.checked) {
+    getFiltered().slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE).forEach(t => selectedIds.add(t.id));
+  }
   renderTaskTable();
 }
 

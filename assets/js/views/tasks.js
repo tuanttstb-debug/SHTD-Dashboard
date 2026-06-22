@@ -18,6 +18,7 @@ function setTaskScope(scope) {
   _taskScope = scope;
   _updateTaskScopeUI(scope);
   currentPage = 1;
+  selectedIds.clear();
   renderTaskTable();
   renderFilterChips();
 }
@@ -42,6 +43,7 @@ function setPreset(name) {
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`preset-${name}`)?.classList.add('active');
   currentPage = 1;
+  selectedIds.clear();
   renderTaskTable();
   renderFilterChips();
 }
@@ -124,6 +126,7 @@ function clearFilter(id) {
   if (el) el.value = '';
   if (id === 'filterTeam') { _populateFilterPic(''); }
   currentPage = 1;
+  selectedIds.clear();
   renderTaskTable();
   renderFilterChips();
 }
@@ -135,6 +138,7 @@ function clearFilters() {
   });
   _populateFilterPic('');
   currentPage = 1;
+  selectedIds.clear();
   renderTaskTable();
   renderFilterChips();
 }
@@ -343,4 +347,4 @@ function renderPagination(totalPages) {
   el.innerHTML = html;
 }
 
-function goPage(p) { currentPage = p; renderTaskTable(); }
+function goPage(p) { currentPage = p; selectedIds.clear(); renderTaskTable(); }
