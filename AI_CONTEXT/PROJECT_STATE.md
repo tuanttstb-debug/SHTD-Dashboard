@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-19 (Session 30 — Atomic bulk writes + new GAS URL)
+**As of**: 2026-06-22 (Session 31 — Select-all bug + deleted-task re-insertion blacklist)
 **Version**: v6.3 (`APP_VERSION = '6.3-no-syncaction-20260619'`)
-**Remote HEAD (main)**: `4fc6648` — test: update verify_atomic_write — add T8b/T8c bulk atomic write coverage
+**Remote HEAD (main)**: `0cec10b` — fix(select): clear selectedIds when navigating to tasks view
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -34,24 +34,25 @@
 | `backend/KpiSheetService.gs` | 51 | ✅ deployed |
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
-| `assets/js/constants.js` | ~65 | ✅ S21: +TEAM_LIST (8 teams: BL1/BL2/CV1/CV2/PTKD MB/PTKD MN/QLDM/Số — offline fallback) |
+| `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
 | `assets/js/config.js` | 7 | ✅ S30: new GS_WEBAPP_URL + APP_VERSION = '6.3-no-syncaction-20260619' |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
 | `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
 | `assets/css/auth.css` | ~150 | ✅ S23: +body[data-role="User"] .lead-only { display:none !important } |
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
-| `assets/js/views/tasks.js` | ~400 | ✅ S24: filter picRes so sánh `.toLowerCase()` (PA1 picRes case fix); S23: +_populateFilterPic, +onFilterTeamChange |
+| `assets/js/views/tasks.js` | ~400 | ✅ S31: `onFilterChange()` now calls `selectedIds.clear()` synchronously before debounce; `toggleSelectAll` scoped to current page; S24: PA1 picRes case fix; S23: +_populateFilterPic, +onFilterTeamChange |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
 | `assets/js/views/initiative-tracker.js` | ~760 | ✅ S29: `_initSave` → async, thêm await trước syncInitiativeAdd/Edit; S27: auto-gen milestone ID + add task from milestone; S25: view popups |
-| `assets/js/api.js` | ~375 | ✅ S24: gọi _resolvePickerCase() sau loadAppUsers() (PA2); S23b: +localAction(); S21: +_appUsers[], loadAppUsers(), helpers |
+| `assets/js/api.js` | ~390 | ✅ S31: `syncAction` merge skips `db.deletedIds`; `readFromHandle` prunes stale deletedIds; S30: atomic helpers; S24: PA2 _resolvePickerCase |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
-| `assets/js/ui/navigation.js` | ~125 | ✅ S24: +closeCaseViewPopup() trong Escape handler; S19: G+C shortcut, renderCasePipeline dispatch |
-| `assets/js/crud.js` | ~250 | ✅ S29: handleSubmit/deleteTask → `_gasTaskUpsert`/`_gasTaskDelete` (atomic); S21: User_Master dropdowns |
-| `assets/js/bulk.js` | ~47 | ✅ S30: bulkSetRag/State/Delete → N×`_gasTaskUpsert`/`_gasTaskDelete` (atomic, optimistic); NO syncAction |
+| `assets/js/ui/navigation.js` | ~120 | ✅ S31: `navigateTo('tasks')` now calls `selectedIds.clear()` before render; removed 7 duplicate filter listeners from `setupListeners`; S24: +closeCaseViewPopup() in Escape handler |
+| `assets/js/crud.js` | ~280 | ✅ S31: `deleteTask()` adds id to `db.deletedIds`; `handleSubmit()` splices from `db.deletedIds` on re-add; S29: atomic GAS writes; S21: User_Master dropdowns |
+| `assets/js/bulk.js` | ~62 | ✅ S31: `bulkDelete()` pushes ids to `db.deletedIds`; S30: atomic per-row writes; NO syncAction |
 | `assets/js/views/bld-queue.js` | ~390 | ✅ S29: task BLD approval → `await syncAction()`; Case BLD still syncCaseAction |
-| `assets/js/app.js` | ~335 | ✅ S30: startup diagnostic console log (version + deleteTask check); S26: remove filterPic rebuild; S23: handleImport() canImport() guard |
+| `assets/js/storage.js` | ~30 | ✅ S31: `loadDb()` now loads `db.deletedIds` from localStorage if present |
+| `assets/js/app.js` | ~340 | ✅ S31: `handleImport()` skips tasks in `db.deletedIds` before merging; S30: startup diagnostic; S26: remove filterPic rebuild |
 | `assets/js/api.js` | ~380 | ✅ S30: syncAction() logs caller stack on every call (debug trace, temporary); S29: atomic GAS write helpers (_gasTaskUpsert/_gasTaskDelete/_gasCaseUpsert/_gasCaseDelete); S24: _resolvePickerCase() |
 | `assets/js/initiatives.js` | ~170 | ✅ S29: syncInitiativeAdd/Edit thêm `return` → expose promise; S20: syncInitiativeAction() gold standard |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |

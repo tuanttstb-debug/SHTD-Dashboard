@@ -437,8 +437,20 @@ function _resolveOneUser(raw) {
 
 ---
 
+## TD-039: `db.deletedIds` Grows Indefinitely
+**Rating**: ⚪ LOW
+**Added**: 2026-06-22 (Session 31)
+
+**Issue**: Task IDs added to `db.deletedIds` (via `deleteTask` or `bulkDelete`) are only pruned from `readFromHandle` when the task reappears on the GAS server (a `re-add` scenario). For tasks that stay deleted, the IDs accumulate in `localStorage['shtd_v2'].deletedIds` forever.
+
+**Impact**: At current task volume (a few hundred tasks), localStorage impact is negligible. No functional impact. If over years the list grows very large, localStorage quota (5MB) could theoretically be affected, but only if tens of thousands of unique task IDs are deleted.
+
+**Fix** (if ever needed): Cap list at e.g. 500 entries with a FIFO eviction, or prune on every GAS read by checking if the ID existed in the last N months of audit log.
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-19 (Session 30 — bulk atomic writes; TD-037/038 added)
+**Last updated**: 2026-06-22 (Session 31 — selectedIds bug fixes; db.deletedIds blacklist; TD-039 added)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -460,7 +472,7 @@ function _resolveOneUser(raw) {
 | ~~TD-016~~ | ~~⚪~~ | ~~Stale comment line 2702~~ | Tiny | ✅ **Resolved 2026-06-04** — never existed in extracted parsers.js |
 | ~~TD-017~~ | ~~⚪~~ | ~~Gantt subtitle hardcoded "2025–2026"~~ | Tiny | ✅ **Resolved 2026-06-04** — dynamic year |
 | TD-018 | ⚪ | `fmtExportDate` duplicated in `app.js:exportExcel` vs `helpers.js:fmtDateExport` | Tiny | Open — defer to Phase F cleanup |
-| TD-019 | ⚪ | Inline `onchange/oninput` double handlers | Tiny | Open — cleanup when convenient |
+| ~~TD-019~~ | ~~⚪~~ | ~~Inline `onchange/oninput` double handlers~~ | Tiny | ✅ **Resolved 2026-06-22** — S31 `9e8bfd3`: removed 7 duplicate JS listeners from setupListeners(); HTML inline handlers are now sole owner |
 | ~~TD-020~~ | ~~⚪~~ | ~~KPI data hardcoded — no refresh~~ | Tiny | ✅ **Partially resolved 2026-06-04** — kpi-parser.js + GG Sheet sync for PTKD/agg; product monthly arrays still static |
 | TD-021 | ⚪ | `_sLabel()` / `_kpProgColor()` defined in view files, used globally | Tiny | Open — move to `helpers.js` |
 | ~~TD-022~~ | ~~⚪~~ | ~~`quangPTKD[1/2/10/12]` hardcoded index~~ | Tiny | ✅ **Resolved 2026-06-04** — `55ebc33` uses dynamic `.find()` |
@@ -490,3 +502,4 @@ function _resolveOneUser(raw) {
 | TD-038 | ⚪ | Startup diagnostic console.info in `app.js:18` — temp debug code | Tiny | Open — xóa cùng pass với TD-037 |
 | ~~TD-037b~~ | ~~🟡~~ | ~~bulk.js syncAction → task-write + N rows on every bulk op~~ | Small | ✅ **Resolved 2026-06-19** — S30: bulk ops → N×atomic writes |
 | verify_sync_fix.mjs stale | 🟡 | S29 test expects bulk → syncAction; S30 bulk → atomic → tests FAIL | Small | Open — update T3–T5 hoặc deprecate |
+| TD-039 | ⚪ | `db.deletedIds` grows indefinitely — permanently deleted IDs never pruned from localStorage | Tiny | Open — negligible at current scale; cap at 500 if ever needed |

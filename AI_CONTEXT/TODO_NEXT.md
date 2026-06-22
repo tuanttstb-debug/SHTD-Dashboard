@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-19 (Session 30 — Atomic bulk writes + new GAS URL)
-**Context**: `origin/main` @ `4fc6648` — syncAction eliminated from bulk ops; only Excel import remains. New GAS URL active.
+**Prepared**: 2026-06-22 (Session 31 — Select-all bug + deleted-task re-insertion blacklist)
+**Context**: `origin/main` @ `0cec10b` — selectedIds stale-selection bugs fixed; db.deletedIds blacklist added; GAS redeploy pending.
 
 ---
 
@@ -13,6 +13,17 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S31
+
+- [x] Bug 1: `_gasTaskUpsert` discarding `task-delete` response when task ID changes → task reappears in DB (`689bb10`)
+- [x] Bug 2a: `onFilterChange()` missing `selectedIds.clear()` → filter change left stale bulk selections (`5a75f97`)
+- [x] Bug 2b: Removed 7 duplicate filter event listeners from `setupListeners()` that were cancelling `onFilterChange`'s debounce (`9e8bfd3`)
+- [x] Bug 2c: `navigateTo('tasks')` now calls `selectedIds.clear()` before `renderTaskTable()` → bulk bar no longer shows on page enter (`0cec10b`)
+- [x] Bug 3: `db.deletedIds` blacklist — prevents Excel import from re-inserting deleted tasks; persisted in localStorage; pruned on GAS read confirm (`df3339b`)
+- [x] `toggleSelectAll` scoped to current page only (`ea8d5d7`)
 
 ---
 
@@ -166,7 +177,33 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Verify production atomic writes (S30)
+## 🔴 PRIORITY 0 — Local test S31 select-bug fixes (NOT YET DONE)
+
+User must test locally before trusting S31 fixes (all commits pushed without browser verification):
+
+```bash
+npx http-server D:\Workspace\Production\SHTD-Dashboard -p 3030
+```
+
+| Scenario | Steps | Expected |
+|---|---|---|
+| **S1** navigateTo clear | Vào Tasks → selectAll → vào Dashboard → quay lại Tasks | Bulk bar ẩn, 0 rows checked |
+| **S2** onFilterChange | selectAll → đổi Team dropdown | Bulk bar ẩn ngay |
+| **S3** selectAll accuracy | Filter Team=Số → selectAll | Số rows có tick = count trong bulk bar |
+| **S4** goPage | selectAll page 1 → click page 2 | Bulk bar ẩn |
+| **S5** deletedIds | Xóa task → import Excel cùng task → task không reappear | Task stays deleted |
+
+---
+
+## 🔴 PRIORITY 0b — GAS redeploy (BLOCKING for serverTs sync)
+
+`backend/Code.gs` updated in `689bb10` to return `serverTs` in `task-upsert` and `task-delete` responses. Until redeployed, `db._serverTs` won't sync after atomic writes.
+
+Steps: Extensions → Apps Script → Deploy → New deployment → copy new URL → update `GS_WEBAPP_URL` in `config.js` if changed.
+
+---
+
+## 🔴 PRIORITY 0c — Verify production atomic writes (S30)
 
 | Check | Expected GAS Audit_Log |
 |---|---|
@@ -182,7 +219,7 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0b — Fix verify_sync_fix.mjs (stale after S30)
+## 🔴 PRIORITY 0d — Fix verify_sync_fix.mjs (stale after S30)
 
 `verify_sync_fix.mjs` (S29, 24/24) test bulk ops gọi `syncAction`. Sau S30 bulk dùng atomic → những tests sẽ FAIL. Options:
 - Update tests T3–T5 để expect `task-upsert`/`task-delete` thay vì `write`
@@ -190,7 +227,7 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — Smoke test live: S29 + S25–S27 features (còn hiệu lực)
+## 🔴 PRIORITY 0e — Smoke test live: S29 + S25–S27 features (còn hiệu lực)
 
 | Feature | Check |
 |---|---|
