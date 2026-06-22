@@ -238,6 +238,7 @@ async function deleteTask() {
   const taskDel = db.tasks.find(t => t.id === id);
   // Optimistic update: remove locally + persist immediately
   db.tasks = db.tasks.filter(t => t.id !== id);
+  selectedIds.delete(id);
   persist();
 
   closeTaskModal();

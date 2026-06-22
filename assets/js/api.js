@@ -369,14 +369,16 @@ async function _gasTaskUpsert(task, oldId) {
   if (dot) dot.className = 'status-dot syncing';
   try {
     if (oldId && oldId !== task.id) {
-      await gasPost({ action: 'task-delete', taskId: oldId, taskName: task.name });
+      const delRes = await gasPost({ action: 'task-delete', taskId: oldId, taskName: task.name });
+      if (delRes.status !== 'ok') throw new Error('Xóa task cũ [' + oldId + '] thất bại: ' + (delRes.error || 'unknown'));
     }
     const json = await gasPost({ action: 'task-upsert', taskId: task.id, taskName: task.name, row: taskToRow(task) });
     if (json.status !== 'ok') throw new Error(json.error || 'task-upsert lỗi');
+    if (json.serverTs) { db._serverTs = json.serverTs; persist(); }
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
     if (dot) dot.className = 'status-dot';
-    toast('⚠️ GAS không phản hồi — task đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 5000);
+    toast('⚠️ GAS lỗi: ' + e.message + ' — task đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 6000);
   }
 }
 
@@ -387,6 +389,7 @@ async function _gasTaskDelete(taskId, taskName) {
   try {
     const json = await gasPost({ action: 'task-delete', taskId, taskName: taskName || '' });
     if (json.status !== 'ok') throw new Error(json.error || 'task-delete lỗi');
+    if (json.serverTs) { db._serverTs = json.serverTs; persist(); }
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
     if (dot) dot.className = 'status-dot';

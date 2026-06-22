@@ -160,14 +160,14 @@ function doPost(e) {
       }
       sheetUpsertTask(body.row, body.taskId);
       auditLog(tokenData, 'task-upsert', body.taskId + (body.taskName ? ' | ' + body.taskName : ''));
-      return _jsonResponse({ status: 'ok' });
+      return _jsonResponse({ status: 'ok', serverTs: _getTaskTs() });
     }
 
     if (action === 'task-delete') {
       if (!body.taskId) throw new Error('task-delete: thiếu taskId.');
       sheetDeleteTask(body.taskId);
       auditLog(tokenData, 'task-delete', body.taskId + (body.taskName ? ' | ' + body.taskName : ''));
-      return _jsonResponse({ status: 'ok' });
+      return _jsonResponse({ status: 'ok', serverTs: _getTaskTs() });
     }
 
     if (action === 'case-upsert') {
