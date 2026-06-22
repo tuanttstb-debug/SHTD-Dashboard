@@ -240,7 +240,12 @@ await SS(page, 's2_after_filter_change');
 ═══════════════════════════════════════════════════════════ */
 console.log('\n📋 S3: selectAll count matches visible rows on current page');
 await navigateTo('tasks');
-// Set filter Team=Số
+// Reset filter first, then apply Team=Số
+await page.evaluate(() => {
+  const el = document.getElementById('filterTeam');
+  if (el) { el.value = ''; onFilterTeamChange(); }
+});
+await page.waitForTimeout(350);
 await page.evaluate(() => {
   const el = document.getElementById('filterTeam');
   if (el) { el.value = 'Số'; onFilterTeamChange(); }
@@ -373,11 +378,45 @@ mergeBlocked ? PASS('S5-d', `syncAction merge BLOCKED server re-insertion of ${d
 await SS(page, 's5_deleted_ids_check');
 
 /* ═══════════════════════════════════════════════════════════
-   TEST S6: JS errors (no regressions)
+   TEST S6: sortBy clears selectedIds (NEW — S31 sortBy fix)
+   selectAll → click sort column → bulk bar ẩn (sort reorders pages)
 ═══════════════════════════════════════════════════════════ */
-console.log('\n📋 S6: No JS errors');
-jsErrors.length === 0 ? PASS('S6', `0 JS console errors throughout test run`) :
-                        FAIL('S6', `${jsErrors.length} JS error(s):\n    ${jsErrors.join('\n    ')}`);
+console.log('\n📋 S6: sortBy clears selectedIds');
+await navigateTo('tasks');
+// Clear all filters first
+await page.evaluate(() => {
+  const el = document.getElementById('filterTeam');
+  if (el) { el.value = ''; onFilterTeamChange(); }
+});
+await page.waitForTimeout(400);
+
+await selectAll();
+const selectedS6before = await selectedIdsSize();
+selectedS6before === 20 ? PASS('S6-pre', `selectAll: ${selectedS6before} tasks selected`) :
+                          FAIL('S6-pre', `expected 20, got ${selectedS6before}`);
+
+await SS(page, 's6_before_sort');
+
+// Click sort by ID (triggers sortBy('id'))
+await page.evaluate(() => sortBy('id'));
+await page.waitForTimeout(300);
+
+const bulkVisibleS6 = await isBulkBarVisible();
+const selectedS6after = await selectedIdsSize();
+
+!bulkVisibleS6 ? PASS('S6-a', 'bulk bar HIDDEN after sortBy() (selectedIds cleared)') :
+                 FAIL('S6-a', `bulk bar still VISIBLE — selectedIds.size=${selectedS6after}`);
+selectedS6after === 0 ? PASS('S6-b', 'selectedIds.size = 0 after sort') :
+                        FAIL('S6-b', `selectedIds.size = ${selectedS6after} (expected 0)`);
+
+await SS(page, 's6_after_sort');
+
+/* ═══════════════════════════════════════════════════════════
+   TEST S7: JS errors (no regressions)
+═══════════════════════════════════════════════════════════ */
+console.log('\n📋 S7: No JS errors');
+jsErrors.length === 0 ? PASS('S7', `0 JS console errors throughout test run`) :
+                        FAIL('S7', `${jsErrors.length} JS error(s):\n    ${jsErrors.join('\n    ')}`);
 
 /* ── Summary ── */
 console.log(`\n${'═'.repeat(55)}`);

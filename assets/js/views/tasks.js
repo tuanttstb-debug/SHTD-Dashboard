@@ -190,6 +190,7 @@ function sortBy(key) {
   if (sort.key === key) sort.dir = sort.dir === 'asc' ? 'desc' : 'asc';
   else { sort.key = key; sort.dir = 'asc'; }
   document.querySelectorAll('#taskTable th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  selectedIds.clear();
   renderTaskTable();
 }
 
