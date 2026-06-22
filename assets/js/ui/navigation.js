@@ -94,7 +94,7 @@ function navigateTo(view) {
   if (view === 'executive-summary')    renderExecutiveSummary();
   if (view === 'bld-queue')            renderBldQueue();
   if (view === 'case-pipeline')        renderCasePipeline();
-  if (view === 'tasks')                renderTaskTable();
+  if (view === 'tasks')                { selectedIds.clear(); renderTaskTable(); }
   if (view === 'gantt')                renderGantt();
   if (view === 'performance')          renderPerfTable();
   if (view === 'kpi-overview')         renderKpiOverview();
