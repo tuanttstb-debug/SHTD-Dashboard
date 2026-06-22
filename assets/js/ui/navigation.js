@@ -12,14 +12,8 @@ function setupListeners() {
     document.getElementById('sidebarChevron').className = sb.classList.contains('collapsed') ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left';
   });
 
-  ['filterId','filterInit','filterTeam','filterPic','filterState','filterRag','filterTuanBC'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => { currentPage = 1; renderTaskTable(); renderFilterChips(); }, 200);
-    });
-  });
+  // Filter change events are handled by inline onchange/oninput in HTML
+  // (onFilterChange / onFilterTeamChange) — no duplicate listeners here.
 
   document.getElementById('fProg').addEventListener('input', e => {
     const v = parseInt(e.target.value) || 0;
