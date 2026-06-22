@@ -178,6 +178,7 @@ function onFilterTeamChange() {
 
 function onFilterChange() {
   currentPage = 1;
+  selectedIds.clear();
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     renderTaskTable();
