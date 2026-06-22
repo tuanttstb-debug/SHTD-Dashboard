@@ -186,7 +186,9 @@ function handleImport(e) {
       const ok = await uiConfirm('Import Excel', `Tìm thấy <strong>${n} task</strong> trong file. Những task trùng ID sẽ được cập nhật (merge), task mới sẽ được thêm vào.`, 'info', `Import ${n} task`);
       if (!ok) return;
       await syncAction(() => {
+        const deletedSet = new Set(db.deletedIds || []);
         ext.tasks.forEach(t => {
+          if (deletedSet.has(t.id)) return; // skip tasks explicitly deleted from the app
           const idx = db.tasks.findIndex(x => x.id === t.id);
           if (idx > -1) db.tasks[idx] = {...db.tasks[idx], ...t};
           else db.tasks.push(t);

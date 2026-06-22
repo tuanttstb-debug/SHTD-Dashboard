@@ -1,5 +1,5 @@
 // ── App state ──
-let db = { tasks: [], initiatives: [], _serverTs: null };
+let db = { tasks: [], initiatives: [], _serverTs: null, deletedIds: [] };
 let sort = { key: 'endDate', dir: 'asc' };
 let perfTab = 'initiative';
 let fileHandle = null;

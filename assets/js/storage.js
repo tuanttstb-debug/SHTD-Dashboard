@@ -10,6 +10,7 @@ function loadCache() {
       if (parsed && Array.isArray(parsed.tasks)) {
         db.tasks = parsed.tasks;
         db.initiatives = parsed.initiatives || [];
+        if (Array.isArray(parsed.deletedIds)) db.deletedIds = parsed.deletedIds;
       }
     }
   } catch(e) {}

@@ -217,6 +217,11 @@ async function handleSubmit(e) {
   const lookupId = (origId && origId !== task.id) ? origId : task.id;
   const idx = db.tasks.findIndex(x => x.id === lookupId);
   if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
+  // If explicitly re-adding a task that was previously deleted, clear it from the blacklist
+  if (!origId && db.deletedIds) {
+    const di = db.deletedIds.indexOf(task.id);
+    if (di > -1) db.deletedIds.splice(di, 1);
+  }
   persist();
 
   const shouldReturn = !!_taskEditReturnId;
@@ -239,6 +244,8 @@ async function deleteTask() {
   // Optimistic update: remove locally + persist immediately
   db.tasks = db.tasks.filter(t => t.id !== id);
   selectedIds.delete(id);
+  if (!db.deletedIds) db.deletedIds = [];
+  if (!db.deletedIds.includes(id)) db.deletedIds.push(id);
   persist();
 
   closeTaskModal();

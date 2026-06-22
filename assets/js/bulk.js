@@ -52,6 +52,8 @@ async function bulkDelete() {
   });
   const count = toDelete.length;
   db.tasks = db.tasks.filter(t => !selectedIds.has(t.id));
+  if (!db.deletedIds) db.deletedIds = [];
+  toDelete.forEach(({ id }) => { if (!db.deletedIds.includes(id)) db.deletedIds.push(id); });
   persist();
   selectedIds.clear(); renderAll();
   toast(`Đã xóa ${count} task.`, 'success');

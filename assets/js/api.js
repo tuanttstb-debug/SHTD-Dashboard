@@ -211,6 +211,11 @@ async function readFromHandle() {
   if (json.status !== 'ok') throw new Error('Lỗi đọc: ' + (json.error || 'unknown'));
   _parseArrayIntoDb(json.values);
   if (json.serverTs) db._serverTs = json.serverTs;
+  // Clear stale deletedIds: if server has the task, the local "deleted" flag is outdated
+  if (db.deletedIds && db.deletedIds.length) {
+    const serverIds = new Set(db.tasks.map(t => t.id));
+    db.deletedIds = db.deletedIds.filter(id => !serverIds.has(id));
+  }
   persist();
   return true;
 }
@@ -276,10 +281,13 @@ async function syncAction(action) {
       const localIds = new Set(localTasks.map(t => t.id));
       const deletedIds = new Set(snapshotBefore.filter(id => !localIds.has(id)));
       const localMap = new Map(localTasks.map(t => [t.id, t]));
+      // Tasks explicitly deleted via UI (before this syncAction) — must not be restored from server
+      const persistedDeleted = new Set(db.deletedIds || []);
 
       const merged = [];
       serverMap.forEach((t, id) => {
         if (deletedIds.has(id)) return;
+        if (persistedDeleted.has(id)) return;
         if (localMap.has(id)) {
           merged.push(localMap.get(id));
         } else {
