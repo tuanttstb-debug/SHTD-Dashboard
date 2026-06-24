@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-22 (Session 32 — sortBy select fix + cache-bust)
-**Context**: `origin/main` @ `56e3e43` — sortBy clears selectedIds; cache-bust bumped to `?v=20260622`; 26/26 Playwright tests pass; GAS redeploy + user hard-reload still pending.
+**Prepared**: 2026-06-24 (Session 33 — Audit log history tab + startDate default today)
+**Context**: `origin/main` @ `466f9e9` — History tab live in task/initiative/case view popups; startDate defaults to today for new case/initiative; GAS `audit-read` deployed 2026-06-24 (URL unchanged); `?v=20260624` cache-bust; 47/47 history tests pass. Users need hard-reload.
 
 ---
 
@@ -13,6 +13,22 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 ```
 
 **AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S33
+
+- [x] GAS `auditReadByEntity(entityId)` in `AuditService.gs` — reads Audit_Log, filters by Summary prefix match (avoids cross-ID false positives) (`ea55a2b`)
+- [x] GAS `audit-read` route in `Code.gs` — no ADMIN_ONLY gate; all authenticated roles can access (`ea55a2b`)
+- [x] GAS deployed by user 2026-06-24 — `audit-read` live, URL unchanged (`ea55a2b`)
+- [x] `_gasAuditRead(entityId)` + `_buildHistoryTable(rows, synthetic, actionMap)` in `api.js` — lazy fetch, action badges, alternating rows, empty state icon, fmtTs handles ISO/YYYY-MM-DD/DD-MMM-YY (`ea55a2b`)
+- [x] CSS: `.popup-tabs`, `.popup-tab`, `.popup-tab.active`, `.badge-info` appended to `components.css` (`ea55a2b`)
+- [x] Task history tab: `_taskHistoryLoaded` flag + `_taskTabSwitch()` + `_loadTaskHistory()` in `tasks.js`; synthetic "Tạo mới" row from `t.startDate` (`ea55a2b`)
+- [x] Case history tab: same pattern in `case-pipeline.js`; **startDate defaults to today (YYYY-MM-DD)** when `openCaseModal(null)` (`ea55a2b`)
+- [x] Initiative history tab: same pattern in `initiative-tracker.js`; **startDate defaults to today (DD-MMM-YY)** using `_MMM` global when `_initOpenModal(null)` (`ea55a2b`)
+- [x] `index.html`: tab bars + history panes added to `#taskViewOverlay`, `#initViewOverlay`, `#cpViewOverlay`; cache-bust `?v=20260622` → `?v=20260624` (35 script tags, Python); `APP_VERSION = '6.4-history-20260624'` (`ea55a2b`)
+- [x] `verify_history.mjs` (new, port 9992): **47/47 PASS** — H1–H14 covering HTML structure, tab switching, lazy load, history content, synthetic row, startDate defaults; EVD to `test-results/history/` (`ea55a2b`)
+- [x] `AI_CONTEXT/PROJECT_STATE.md` updated (v6.4, HEAD `ea55a2b`) (`466f9e9`)
 
 ---
 
@@ -189,35 +205,35 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ## 🔴 PRIORITY 0 — User hard-reload required (Ctrl+Shift+R)
 
-Cache-bust `?v=20260622` pushed in `56e3e43`. Users must hard-reload to pick up S31+S32 JS fixes:
+Cache-bust `?v=20260624` pushed in `ea55a2b`. Users must hard-reload to pick up S33 (history tabs + startDate defaults):
 
 - **Windows/Linux**: Ctrl+Shift+R (or Ctrl+F5)
 - **Mac**: Cmd+Shift+R
-- **Verify**: Topbar badge shows `v6.3-select-fix-20260622`
+- **Verify**: Topbar badge shows `v6.4-history-20260624`
 
-Until hard-reload: all S31+S32 select-bug fixes remain invisible in browser. `verify_select_bug.mjs` 26/26 PASS confirms code correctness — delivery depends on users clearing cache.
+Until hard-reload: S33 history tab feature invisible in browser. `verify_history.mjs` 47/47 PASS confirms code correctness.
 
 ---
 
-## 🔴 PRIORITY 0b — Smoke test with real 631 tasks
+## 🔴 PRIORITY 0b — Smoke test production: S33 history tab
 
-`verify_select_bug.mjs` 26/26 PASS uses 25 mock tasks. Smoke test với real data sau hard-reload:
+Sau hard-reload, smoke test trên live:
 
 | Scenario | Steps | Expected |
 |---|---|---|
-| **Sort clear** | Select 10 tasks → click column header to sort | Bulk bar ẩn, 0 rows checked |
-| **Scope switch** | selectAll → switch scope tab | Bulk bar ẩn |
-| **Filter clear** | selectAll → change Team dropdown | Bulk bar ẩn ngay |
-| **Page change** | selectAll page 1 → click page 2 | Bulk bar ẩn |
-| **selectAll accuracy** | Filter Team=Số → selectAll | Count = số rows đang hiện |
+| **Task history** | Click task row → "Lịch sử" tab | Bảng hiện với cột Thời gian/Người dùng/Hành động/Chi tiết; entry "Tạo mới" ở đầu từ startDate |
+| **Case history** | Click case row → "Lịch sử" tab | Tương tự, với caseName trong cột Chi tiết |
+| **Initiative history** | Click init card → "Lịch sử" tab | Tương tự |
+| **Lazy load** | Mở popup → switch tab đi lại | Chỉ 1 GAS call lần đầu; không re-fetch khi quay lại tab |
+| **startDate case** | Thêm mới case → form mở → check trường Start Date | Tự điền ngày hôm nay (YYYY-MM-DD) |
+| **startDate initiative** | Thêm mới initiative → form mở → check trường Start Date | Tự điền ngày hôm nay (DD-MMM-YY, e.g. "24-Jun-26") |
 
 ---
 
-## 🔴 PRIORITY 0c — GAS redeploy (BLOCKING for serverTs sync)
+## ✅ PRIORITY 0c — GAS redeploy — RESOLVED 2026-06-24
 
-`backend/Code.gs` updated in `689bb10` to return `serverTs` in `task-upsert` and `task-delete` responses. Until redeployed, `db._serverTs` won't sync after atomic writes.
-
-Steps: Extensions → Apps Script → Deploy → New deployment → copy new URL → update `GS_WEBAPP_URL` in `config.js` if changed.
+- `audit-read` route deployed — URL unchanged
+- `task-upsert`/`task-delete` returning `serverTs` — also confirmed in S30 GAS
 
 ---
 

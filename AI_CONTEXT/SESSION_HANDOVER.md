@@ -1,4 +1,118 @@
 # SESSION HANDOVER
+**Date**: 2026-06-24 (Session 33 — Audit log history tab + startDate default today + GAS audit-read)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `466f9e9` ✅
+
+---
+
+## Tasks Completed (S33)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S33-T1 | GAS: `auditReadByEntity(entityId)` trong `AuditService.gs` — filter Audit_Log by Summary prefix; `audit-read` route trong `Code.gs` (no ADMIN_ONLY gate — all roles) | `backend/AuditService.gs`, `backend/Code.gs` | `ea55a2b` | ✅ |
+| S33-T2 | API layer: `_gasAuditRead(entityId)` + `_buildHistoryTable(rows, synthetic, actionMap)` appended to `api.js` — lazy fetch, empty state, alternating rows, action badges, fmtTs handles ISO/YYYY-MM-DD/DD-MMM-YY | `assets/js/api.js` | `ea55a2b` | ✅ |
+| S33-T3 | CSS: `.popup-tabs`, `.popup-tab`, `.popup-tab.active`, `.badge-info` appended to `components.css` | `assets/css/components.css` | `ea55a2b` | ✅ |
+| S33-T4 | Task history tab: `_taskHistoryLoaded` flag, `_taskTabSwitch()`, `_loadTaskHistory()` in `tasks.js`; synthetic row from `t.startDate`; reset on `openTaskViewPopup()` | `assets/js/views/tasks.js` | `ea55a2b` | ✅ |
+| S33-T5 | Case history tab: `_cpHistoryLoaded`, `_cpTabSwitch()`, `_loadCpHistory()` in `case-pipeline.js`; **startDate default today** in `openCaseModal(null)` | `assets/js/views/case-pipeline.js` | `ea55a2b` | ✅ |
+| S33-T6 | Initiative history tab: `_initHistoryLoaded`, `_initTabSwitch()`, `_loadInitHistory()` in `initiative-tracker.js`; **startDate default today** in `_initOpenModal(null)` (DD-MMM-YY format using `_MMM` global) | `assets/js/views/initiative-tracker.js` | `ea55a2b` | ✅ |
+| S33-T7 | `index.html`: tab bars (`#taskTabDetail`/`#taskTabHistory`, same for init/cp) + history panes (`#taskViewHistory`, `#initViewHistory`, `#cpViewHistory`) added to 3 view overlays; cache-bust `?v=20260622` → `?v=20260624` (35 script tags, Python); `APP_VERSION = '6.4-history-20260624'` | `index.html`, `assets/js/config.js` | `ea55a2b` | ✅ |
+| S33-T8 | `verify_history.mjs` (new, port 9992): 47/47 PASS — H1 HTML structure, H2–H5 tab switching + lazy load, H6–H8 history table content (mock rows + synthetic row), H9–H10 init/case popups, H11–H13 startDate defaults, H14 JS errors; EVD screenshots to `test-results/history/` | `verify_history.mjs` | `ea55a2b` | ✅ |
+| S33-T9 | Docs: `AI_CONTEXT/PROJECT_STATE.md` updated (v6.4, HEAD `ea55a2b`) | `AI_CONTEXT/PROJECT_STATE.md` | `466f9e9` | ✅ |
+| S33-T10 | GAS deployed by user — `audit-read` route live; URL unchanged: `AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2` | GAS | manual | ✅ |
+
+### Architecture: S33 Changes
+
+**`auditReadByEntity(entityId)`** — GAS filter logic:
+```javascript
+// backend/AuditService.gs
+var prefix = entityId + ' |';
+return data.filter(function(row) {
+  var s = String(row[5] || '');
+  return s === entityId || s.startsWith(prefix);  // avoids 'CV-001' matching 'CV-0011'
+}).map(function(row) {
+  return [row[0] instanceof Date ? row[0].toISOString() : String(row[0]),
+          String(row[1]||''), String(row[2]||''), String(row[3]||''),
+          String(row[4]||''), String(row[5]||'')];
+});
+```
+
+**`_buildHistoryTable(rows, syntheticRow, actionMap)`** — action map:
+```
+task-upsert / case-upsert / initiative-upsert → "Cập nhật"  / badge-info
+task-delete / case-delete                      → "Xóa"       / badge-red
+__create__                                     → "Tạo mới"   / badge-green
+task-write / *-write                           → "Sync import"/ badge-gray
+```
+
+**Lazy load pattern** (same for all 3 entity types):
+```javascript
+let _taskHistoryLoaded = false;          // reset on every popup open
+function _taskTabSwitch(tab) { ... }     // toggle body/history pane display
+async function _loadTaskHistory() {
+  const rows = await _gasAuditRead(t.id);
+  _taskHistoryLoaded = true;
+  const synthetic = t.startDate
+    ? [t.startDate, '', 'Dữ liệu ban đầu', '', '__create__', t.id + ' | ' + t.name]
+    : null;
+  el.innerHTML = _buildHistoryTable(rows, synthetic);
+}
+```
+
+**startDate default today**:
+```javascript
+// Case (case-pipeline.js, openCaseModal):
+const _cpTd = new Date();
+const _cpTodayISO = `${_cpTd.getFullYear()}-${...}-${...}`;
+fv('cpfStartDate', c ? c.startDate : _cpTodayISO);
+
+// Initiative (initiative-tracker.js, _initOpenModal null):
+const _initTd = new Date();
+_initStartEl.value = `${String(_initTd.getDate()).padStart(2,'0')}-${_MMM[_initTd.getMonth()]}-${String(_initTd.getFullYear()).slice(-2)}`;
+// Format: DD-MMM-YY (e.g. "24-Jun-26") — matches text input placeholder
+```
+
+**Test fix discovered during S33**:
+```
+verify_task_init_popup.mjs used old APP_DIR 'D:/Công việc/Vibecode/SHTD-Dashboard' (298-line tasks.js).
+New verify_history.mjs uses current path 'D:/Workspace/Production/SHTD-Dashboard'.
+H10 case popup FAIL fixed: test was setting localStorage key 'shtd_cp_v1' (wrong);
+actual loadCasesFromCache() reads from shtd_v2.cases — fixed to: { tasks:[t], initiatives:[i], cases:[c], _serverTs:null, deletedIds:[] }
+```
+
+### Commits S33
+```
+ea55a2b  feat(history): audit log history tab in task/initiative/case view popups + startDate default today
+466f9e9  docs: update PROJECT_STATE for S33 history tab feature
+```
+
+---
+
+## Blockers (S33)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260624`. Until done, S33 features invisible. Topbar badge shows `v6.4-history-20260624`. |
+| **Smoke test production** | ⏳ After hard-reload: verify history tab loads real audit data; verify startDate defaults to today when adding new task/case/initiative |
+| **GAS redeploy (audit-read)** | ✅ Done manually by user 2026-06-24 — URL unchanged |
+
+---
+
+## Regression Risks (S33)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **Initiative startDate text format** | ⚪ LOW | Format DD-MMM-YY generated using `_MMM` global from constants.js. If `_MMM` undefined at modal open → JS error, field stays blank. `_MMM` is defined at page load so risk is theoretical. |
+| **fmtTs() fallback for DD-MMM-YY** | ⚪ LOW | `new Date('24-Jun-26T...')` returns Invalid Date → fallback to raw string. History table shows initiative startDate as-is (not reformatted). Acceptable. |
+| **GAS quota** | ⚪ LOW | `audit-read` reads full Audit_Log sheet on each tab open (per popup). First open is live fetch. Subsequent opens in same popup session are cached via `_*HistoryLoaded`. Acceptable for typical usage. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S32)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-22 (Session 32 — sortBy select fix + cache-bust + verify 26/26)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
