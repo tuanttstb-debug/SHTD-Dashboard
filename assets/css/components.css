@@ -276,3 +276,11 @@
 }
 .scope-btn.active{background:var(--primary);color:#fff;}
 .scope-btn:hover:not(.active){background:var(--surface2);color:var(--text);}
+
+
+/* ===== POPUP TABS (history / detail tab bar inside view popups) ===== */
+.popup-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 20px;flex-shrink:0;}
+.popup-tab{padding:10px 16px;font-size:13px;font-weight:600;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--text-3);cursor:pointer;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:6px;}
+.popup-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.popup-tab:hover:not(.active){color:var(--text-1);}
+.badge-info{background:var(--info-bg,#e8f4fd);color:var(--info,#0284c7);}

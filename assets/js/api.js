@@ -519,3 +519,75 @@ function _populateUserSelect(selectId, team, currentVal) {
     el.value = currentVal;
   }
 }
+
+/* ══════════════════════════════════════════
+   AUDIT HISTORY — per-entity read from Audit_Log sheet
+══════════════════════════════════════════ */
+
+async function _gasAuditRead(entityId) {
+  if (!GS_WEBAPP_URL) return [];
+  try {
+    const res = await gasPost({ action: 'audit-read', entityId });
+    if (!res || res.status !== 'ok') return [];
+    return Array.isArray(res.rows) ? res.rows : [];
+  } catch(e) {
+    console.warn('[audit-read] error:', e.message);
+    return [];
+  }
+}
+
+function _buildHistoryTable(rows, syntheticRow, actionMap) {
+  const base = {
+    '__create__':         { label: 'Tạo mới',    cls: 'badge-green' },
+    'task-upsert':        { label: 'Cập nhật',   cls: 'badge-info'  },
+    'task-delete':        { label: 'Xóa',         cls: 'badge-red'   },
+    'task-write':         { label: 'Sync import', cls: 'badge-gray'  },
+    'case-upsert':        { label: 'Cập nhật',   cls: 'badge-info'  },
+    'case-delete':        { label: 'Xóa',         cls: 'badge-red'   },
+    'case-pipeline-write':{ label: 'Sync import', cls: 'badge-gray'  },
+    'initiative-upsert':  { label: 'Cập nhật',   cls: 'badge-info'  },
+    'initiative-write':   { label: 'Sync import', cls: 'badge-gray'  },
+  };
+  const aMap = Object.assign({}, base, actionMap || {});
+
+  const all = syntheticRow ? [syntheticRow, ...rows] : [...rows];
+
+  if (!all.length) {
+    return '<div style="padding:32px 16px;text-align:center;color:var(--text-3);">'
+         + '<i class="fa-solid fa-clock-rotate-left" style="font-size:24px;margin-bottom:10px;display:block;opacity:.3;"></i>'
+         + 'Chưa có lịch sử ghi nhận.</div>';
+  }
+
+  const fmtTs = ts => {
+    try {
+      const d = new Date(String(ts).includes('T') ? ts : ts + 'T00:00:00');
+      if (isNaN(d)) return ts || '—';
+      return d.toLocaleDateString('vi-VN') + ' '
+           + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch { return ts || '—'; }
+  };
+
+  const rowsHtml = all.map((r, i) => {
+    const info   = aMap[r[4]] || { label: r[4] || '?', cls: 'badge-gray' };
+    const detail = (r[5] || '').split(' | ').slice(1).join(' | ');
+    const bg     = i % 2 ? 'background:var(--surface-2,#f8f9fa);' : '';
+    return `<tr style="${bg}">
+      <td style="padding:9px 12px;white-space:nowrap;font-size:12px;color:var(--text-2);">${fmtTs(r[0])}</td>
+      <td style="padding:9px 12px;font-size:13px;font-weight:500;">${esc(r[2] || r[1] || '—')}</td>
+      <td style="padding:9px 12px;"><span class="badge ${info.cls}" style="font-size:11px;">${esc(info.label)}</span></td>
+      <td style="padding:9px 12px;font-size:12px;color:var(--text-3);">${esc(detail)}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div style="padding:4px 0 8px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="border-bottom:2px solid var(--border);">
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Thời gian</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Người thực hiện</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Thao tác</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;">Chi tiết</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  </div>`;
+}

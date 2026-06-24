@@ -529,7 +529,9 @@ function openCaseModal(id) {
   fv('cpfStage',      c ? c.stage       : CASE_STAGES[0]);
   fv('cpfVuongMac',   c ? c.vuongMac    : '');
   fv('cpfNextStep',   c ? c.nextStep    : '');
-  fv('cpfStartDate',  c ? c.startDate   : '');
+  const _cpTd = new Date();
+  const _cpTodayISO = `${_cpTd.getFullYear()}-${String(_cpTd.getMonth()+1).padStart(2,'0')}-${String(_cpTd.getDate()).padStart(2,'0')}`;
+  fv('cpfStartDate',  c ? c.startDate   : _cpTodayISO);
   fv('cpfDeadline',   c ? c.deadline    : '');
   fv('cpfRag',        c ? c.rag         : '');
   fv('cpfCanBLD',     c ? c.canBLD      : 'N');
@@ -627,6 +629,7 @@ async function deleteCaseItem() {
 }
 
 let _cpViewId = null;
+let _cpHistoryLoaded = false;
 
 function cpOpenDetail(id) { openCaseViewPopup(id); }
 
@@ -675,7 +678,37 @@ function openCaseViewPopup(id) {
       ${c.yKienBLD ? `<div class="cp-view-section" style="background:var(--info-bg);border-left:3px solid var(--info);"><div class="cp-view-section-title" style="color:var(--info);"><i class="fa-solid fa-comment-dots"></i>Ý kiến Ban lãnh đạo</div><div class="cp-view-text">${esc(c.yKienBLD)}</div></div>` : ''}
     </div>`;
 
+  _cpHistoryLoaded = false;
+  _cpTabSwitch('detail');
   document.getElementById('cpViewOverlay').style.display = 'flex';
+}
+
+function _cpTabSwitch(tab) {
+  document.getElementById('cpTabDetail')?.classList.toggle('active', tab === 'detail');
+  document.getElementById('cpTabHistory')?.classList.toggle('active', tab === 'history');
+  const bodyEl = document.getElementById('cpViewBody');
+  const histEl = document.getElementById('cpViewHistory');
+  if (bodyEl) bodyEl.style.display = tab === 'detail'  ? '' : 'none';
+  if (histEl) histEl.style.display = tab === 'history' ? '' : 'none';
+  if (tab === 'history' && !_cpHistoryLoaded) _loadCpHistory();
+}
+
+async function _loadCpHistory() {
+  const c = (dbCases || []).find(x => x.id === _cpViewId);
+  if (!c) return;
+  const el = document.getElementById('cpViewHistory');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--text-3);">'
+               + '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải lịch sử...</div>';
+
+  const rows = await _gasAuditRead(c.id);
+  _cpHistoryLoaded = true;
+
+  const synthetic = c.startDate
+    ? [c.startDate, '', 'Dữ liệu ban đầu', '', '__create__', c.id + (c.caseName ? ' | ' + c.caseName : '')]
+    : null;
+
+  el.innerHTML = _buildHistoryTable(rows, synthetic);
 }
 
 function closeCaseViewPopup() {

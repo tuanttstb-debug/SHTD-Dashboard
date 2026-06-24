@@ -261,6 +261,7 @@ function renderTaskTable() {
 
 let _taskViewId = null;
 let _taskEditReturnId = null;
+let _taskHistoryLoaded = false;
 
 function rowClick(e, id) {
   if (e.target.type === 'checkbox') return;
@@ -319,7 +320,37 @@ function openTaskViewPopup(id) {
       ${t.yKienBLD ? `<div class="cp-view-section" style="background:var(--info-bg);border-left:3px solid var(--info);"><div class="cp-view-section-title" style="color:var(--info);"><i class="fa-solid fa-comment-dots"></i>Ý kiến Ban lãnh đạo</div><div class="cp-view-text">${esc(t.yKienBLD)}</div></div>` : ''}
     </div>`;
 
+  _taskHistoryLoaded = false;
+  _taskTabSwitch('detail');
   document.getElementById('taskViewOverlay').style.display = 'flex';
+}
+
+function _taskTabSwitch(tab) {
+  document.getElementById('taskTabDetail')?.classList.toggle('active', tab === 'detail');
+  document.getElementById('taskTabHistory')?.classList.toggle('active', tab === 'history');
+  const bodyEl = document.getElementById('taskViewBody');
+  const histEl = document.getElementById('taskViewHistory');
+  if (bodyEl) bodyEl.style.display = tab === 'detail'  ? '' : 'none';
+  if (histEl) histEl.style.display = tab === 'history' ? '' : 'none';
+  if (tab === 'history' && !_taskHistoryLoaded) _loadTaskHistory();
+}
+
+async function _loadTaskHistory() {
+  const t = db.tasks.find(x => x.id === _taskViewId);
+  if (!t) return;
+  const el = document.getElementById('taskViewHistory');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--text-3);">'
+               + '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải lịch sử...</div>';
+
+  const rows = await _gasAuditRead(t.id);
+  _taskHistoryLoaded = true;
+
+  const synthetic = t.startDate
+    ? [t.startDate, '', 'Dữ liệu ban đầu', '', '__create__', t.id + (t.name ? ' | ' + t.name : '')]
+    : null;
+
+  el.innerHTML = _buildHistoryTable(rows, synthetic);
 }
 
 function closeTaskViewPopup() {

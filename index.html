@@ -1274,7 +1274,16 @@
       </div>
       <div class="modal-close" onclick="closeTaskViewPopup()"><i class="fa-solid fa-xmark"></i></div>
     </div>
+    <div class="popup-tabs">
+      <button class="popup-tab active" id="taskTabDetail" onclick="_taskTabSwitch('detail')">
+        <i class="fa-solid fa-circle-info"></i> Chi tiết
+      </button>
+      <button class="popup-tab" id="taskTabHistory" onclick="_taskTabSwitch('history')">
+        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử
+      </button>
+    </div>
     <div class="modal-body" id="taskViewBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-body" id="taskViewHistory" style="overflow-y:auto;flex:1;display:none;"></div>
     <div class="modal-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-outline" onclick="closeTaskViewPopup()">Đóng</button>
       <button class="btn btn-primary" onclick="taskViewOpenEdit()">
@@ -1294,7 +1303,16 @@
       </div>
       <div class="modal-close" onclick="closeInitViewPopup()"><i class="fa-solid fa-xmark"></i></div>
     </div>
+    <div class="popup-tabs">
+      <button class="popup-tab active" id="initTabDetail" onclick="_initTabSwitch('detail')">
+        <i class="fa-solid fa-circle-info"></i> Chi tiết
+      </button>
+      <button class="popup-tab" id="initTabHistory" onclick="_initTabSwitch('history')">
+        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử
+      </button>
+    </div>
     <div class="modal-body" id="initViewBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-body" id="initViewHistory" style="overflow-y:auto;flex:1;display:none;"></div>
     <div class="modal-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-outline" onclick="closeInitViewPopup()">Đóng</button>
       <button class="btn btn-primary" onclick="initViewOpenEdit()">
@@ -1314,7 +1332,16 @@
       </div>
       <div class="modal-close" onclick="closeCaseViewPopup()"><i class="fa-solid fa-xmark"></i></div>
     </div>
+    <div class="popup-tabs">
+      <button class="popup-tab active" id="cpTabDetail" onclick="_cpTabSwitch('detail')">
+        <i class="fa-solid fa-circle-info"></i> Chi tiết
+      </button>
+      <button class="popup-tab" id="cpTabHistory" onclick="_cpTabSwitch('history')">
+        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử
+      </button>
+    </div>
     <div class="modal-body" id="cpViewBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-body" id="cpViewHistory" style="overflow-y:auto;flex:1;display:none;"></div>
     <div class="modal-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
       <button class="btn btn-outline" onclick="closeCaseViewPopup()">Đóng</button>
       <button class="btn btn-primary" id="cpViewEditBtn" style="display:none;" onclick="cpViewOpenEdit()">
@@ -1400,41 +1427,41 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/config.js?v=20260622"></script>
-<script src="assets/js/constants.js?v=20260622"></script>
-<script src="assets/js/helpers.js?v=20260622"></script>
-<script src="assets/js/storage.js?v=20260622"></script>
-<script src="assets/js/parsers.js?v=20260622"></script>
-<script src="assets/js/auth.js?v=20260622"></script>
-<script src="assets/js/api.js?v=20260622"></script>
-<script src="assets/js/ui/toast.js?v=20260622"></script>
-<script src="assets/js/ui/modal.js?v=20260622"></script>
-<script src="assets/js/ui/theme.js?v=20260622"></script>
-<script src="assets/js/ui/navigation.js?v=20260622"></script>
-<script src="assets/js/crud.js?v=20260622"></script>
-<script src="assets/js/bulk.js?v=20260622"></script>
-<script src="assets/js/views/dashboard.js?v=20260622"></script>
-<script src="assets/js/views/tasks.js?v=20260622"></script>
-<script src="assets/js/views/gantt.js?v=20260622"></script>
-<script src="assets/js/views/performance.js?v=20260622"></script>
-<script src="assets/js/views/quickview.js?v=20260622"></script>
-<script src="assets/js/report.js?v=20260622"></script>
-<script src="assets/js/kpi-data.js?v=20260622"></script>
-<script src="assets/js/kpi-parser.js?v=20260622"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260622"></script>
-<script src="assets/js/views/action-plan.js?v=20260622"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260622"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260622"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260622"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260622"></script>
-<script src="assets/js/initiatives.js?v=20260622"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260622"></script>
-<script src="assets/js/views/ai-chat.js?v=20260622"></script>
-<script src="assets/js/views/user-management.js?v=20260622"></script>
-<script src="assets/js/views/executive-summary.js?v=20260622"></script>
-<script src="assets/js/views/bld-queue.js?v=20260622"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260622"></script>
-<script src="assets/js/app.js?v=20260622"></script>
+<script src="assets/js/config.js?v=20260624"></script>
+<script src="assets/js/constants.js?v=20260624"></script>
+<script src="assets/js/helpers.js?v=20260624"></script>
+<script src="assets/js/storage.js?v=20260624"></script>
+<script src="assets/js/parsers.js?v=20260624"></script>
+<script src="assets/js/auth.js?v=20260624"></script>
+<script src="assets/js/api.js?v=20260624"></script>
+<script src="assets/js/ui/toast.js?v=20260624"></script>
+<script src="assets/js/ui/modal.js?v=20260624"></script>
+<script src="assets/js/ui/theme.js?v=20260624"></script>
+<script src="assets/js/ui/navigation.js?v=20260624"></script>
+<script src="assets/js/crud.js?v=20260624"></script>
+<script src="assets/js/bulk.js?v=20260624"></script>
+<script src="assets/js/views/dashboard.js?v=20260624"></script>
+<script src="assets/js/views/tasks.js?v=20260624"></script>
+<script src="assets/js/views/gantt.js?v=20260624"></script>
+<script src="assets/js/views/performance.js?v=20260624"></script>
+<script src="assets/js/views/quickview.js?v=20260624"></script>
+<script src="assets/js/report.js?v=20260624"></script>
+<script src="assets/js/kpi-data.js?v=20260624"></script>
+<script src="assets/js/kpi-parser.js?v=20260624"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260624"></script>
+<script src="assets/js/views/action-plan.js?v=20260624"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260624"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260624"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260624"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260624"></script>
+<script src="assets/js/initiatives.js?v=20260624"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260624"></script>
+<script src="assets/js/views/ai-chat.js?v=20260624"></script>
+<script src="assets/js/views/user-management.js?v=20260624"></script>
+<script src="assets/js/views/executive-summary.js?v=20260624"></script>
+<script src="assets/js/views/bld-queue.js?v=20260624"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260624"></script>
+<script src="assets/js/app.js?v=20260624"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

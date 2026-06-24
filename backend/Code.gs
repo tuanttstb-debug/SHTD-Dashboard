@@ -195,6 +195,11 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    if (action === 'audit-read') {
+      if (!body.entityId) throw new Error('audit-read: thiếu entityId.');
+      return _jsonResponse({ status: 'ok', rows: auditReadByEntity(body.entityId) });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

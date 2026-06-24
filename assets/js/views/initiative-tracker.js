@@ -498,6 +498,9 @@ function _initOpenModal(id) {
     document.getElementById('initModalTitle').textContent = 'Thêm Initiative / Milestone';
     document.getElementById('initOrigId').value = '';
     ['initFId','initFName','initFStart','initFDeadline','initFMsTrack','initFMsDl','initFKpi','initFNotes','initFDoc'].forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
+    const _initTd = new Date();
+    const _initStartEl = document.getElementById('initFStart');
+    if (_initStartEl) _initStartEl.value = `${String(_initTd.getDate()).padStart(2,'0')}-${_MMM[_initTd.getMonth()]}-${String(_initTd.getFullYear()).slice(-2)}`;
     document.getElementById('initFPct').value = '0';
     document.getElementById('initFStatus').value = 'Active';
     document.getElementById('initFCat').value = '';
@@ -666,6 +669,7 @@ function _initStatusIcon(status) {
 /* ── Initiative View Popup ── */
 let _initViewId = null;
 let _initEditReturnId = null;
+let _initHistoryLoaded = false;
 
 function openInitViewPopup(id) {
   const ini = (db.initiatives || []).find(x => x.id === id);
@@ -712,7 +716,37 @@ function openInitViewPopup(id) {
       ${section('note-sticky', 'Ghi chú', ini.notes)}
     </div>`;
 
+  _initHistoryLoaded = false;
+  _initTabSwitch('detail');
   document.getElementById('initViewOverlay').style.display = 'flex';
+}
+
+function _initTabSwitch(tab) {
+  document.getElementById('initTabDetail')?.classList.toggle('active', tab === 'detail');
+  document.getElementById('initTabHistory')?.classList.toggle('active', tab === 'history');
+  const bodyEl = document.getElementById('initViewBody');
+  const histEl = document.getElementById('initViewHistory');
+  if (bodyEl) bodyEl.style.display = tab === 'detail'  ? '' : 'none';
+  if (histEl) histEl.style.display = tab === 'history' ? '' : 'none';
+  if (tab === 'history' && !_initHistoryLoaded) _loadInitHistory();
+}
+
+async function _loadInitHistory() {
+  const ini = (db.initiatives || []).find(x => x.id === _initViewId);
+  if (!ini) return;
+  const el = document.getElementById('initViewHistory');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--text-3);">'
+               + '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải lịch sử...</div>';
+
+  const rows = await _gasAuditRead(ini.id);
+  _initHistoryLoaded = true;
+
+  const synthetic = ini.startDate
+    ? [ini.startDate, '', 'Dữ liệu ban đầu', '', '__create__', ini.id + (ini.name ? ' | ' + ini.name : '')]
+    : null;
+
+  el.innerHTML = _buildHistoryTable(rows, synthetic);
 }
 
 function closeInitViewPopup() {
