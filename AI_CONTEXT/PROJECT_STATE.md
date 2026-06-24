@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-24 (Session 33 — Audit history tab + startDate default today)
-**Version**: v6.4 (`APP_VERSION = '6.4-history-20260624'`)
-**Remote HEAD (main)**: `ea55a2b` — feat(history): audit log history tab in task/initiative/case view popups + startDate default today
+**As of**: 2026-06-24 (Session 34 — Action Plan v2)
+**Version**: v6.5 (`APP_VERSION = '6.5-action-plan-v2-20260624b'`)
+**Remote HEAD (main)**: `a28f770` — feat(action-plan): v2 rewrite — grouped accordion view, mixed task/case kanban, extended criteria
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1220 | ✅ S32: cache-bust `?v=20260619d` → `?v=20260622` (35 script tags, Python); S20: #view-case-pipeline restructure |
+| `index.html` | ~1220 | ✅ S34: cache-bust `?v=20260624` → `?v=20260624b`; S20: #view-case-pipeline restructure |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,7 +35,7 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S32: APP_VERSION = '6.3-select-fix-20260622'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S34: APP_VERSION = '6.5-action-plan-v2-20260624b'; S30: new GS_WEBAPP_URL |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
 | `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
@@ -95,6 +95,8 @@
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
 | Initiative Tracker | ✅ | S14 milestone drill-down; S20: syncInitiativeAction() — showLoading + syncDot + GAS fallback toast |
+| **Action Plan v2** | ✅ | S34: role-aware default (Admin=all teams grouped accordion; User/TL=own team kanban); mixed Tasks+Cases kanban; Blocked/overdue auto-add; Initiatives section; 24/24 tests pass |
+| **Audit history tab** | ✅ | S33: Task/Initiative/Case view popups — History tab, lazy load from GAS audit-read; startDate defaults today on Add |
 | **AI Assistant** | ⚠️ | Frontend complete; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |
 | User Management | ✅ | Admin-only; S13 CRUD; S22: search/filter/sort/pagination added (TD-030 resolved) |
 | Login / Auth | ✅ | S11+S18 verified |
@@ -143,6 +145,7 @@ verify_ms_tasks.mjs       ← 14/14 PASS
 verify_filter_cascade.mjs ← S23 NEW — 23/23 PASS (Task PIC cascade + Case DVKD/PIC filter)
 verify_import_rbac.mjs    ← S23 NEW — 15/15 PASS (3 roles × 5 assertions)
 verify_modal_layout.mjs   ← S23 NEW — 9/9 PASS (3 modal grids, 0.0px column diff)
+verify_action_plan.mjs    ← S34 NEW — 24/24 PASS (AP1–AP14: toolbar, period/RAG, accordion, kanban, initiatives)
 verify_sync_fix.mjs       ← S29 — 24/24 PASS ⚠️ STALE after S30: bulk tests expect syncAction, now atomic
 verify_atomic_write.mjs   ← S30 NEW — 41/41 PASS (single + bulk atomic: task-upsert/delete/case-upsert/delete)
 verify_kpi_views.mjs      ← 3/3 PASS (S7)

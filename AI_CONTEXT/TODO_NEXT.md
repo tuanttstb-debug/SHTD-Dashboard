@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-24 (Session 33 — Audit log history tab + startDate default today)
-**Context**: `origin/main` @ `466f9e9` — History tab live in task/initiative/case view popups; startDate defaults to today for new case/initiative; GAS `audit-read` deployed 2026-06-24 (URL unchanged); `?v=20260624` cache-bust; 47/47 history tests pass. Users need hard-reload.
+**Prepared**: 2026-06-24 (Session 34 — Action Plan v2)
+**Context**: `origin/main` @ `a28f770` — Action Plan v2 live: role-aware default (Admin→grouped accordion; User/TL→own team kanban), mixed Tasks+Cases kanban, extended criteria (Blocked/overdue auto-add), Initiatives section, 24/24 tests pass. `?v=20260624b` cache-bust; users need hard-reload.
 
 ---
 
@@ -203,30 +203,55 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
-## 🔴 PRIORITY 0 — User hard-reload required (Ctrl+Shift+R)
+## ✅ COMPLETED S34
 
-Cache-bust `?v=20260624` pushed in `ea55a2b`. Users must hard-reload to pick up S33 (history tabs + startDate defaults):
-
-- **Windows/Linux**: Ctrl+Shift+R (or Ctrl+F5)
-- **Mac**: Cmd+Shift+R
-- **Verify**: Topbar badge shows `v6.4-history-20260624`
-
-Until hard-reload: S33 history tab feature invisible in browser. `verify_history.mjs` 47/47 PASS confirms code correctness.
+- [x] `action-plan.js` complete rewrite: filter state, role-aware default team, period range, extended criteria (Blocked/overdue auto-add), grouped accordion Admin view, single-team User/TL view, Tasks+Cases mixed kanban, Initiatives section (no period filter) (`a28f770`)
+- [x] CSS: Action Plan v2 styles appended to `components.css` (`a28f770`)
+- [x] `verify_action_plan.mjs` (new, port 9993): **24/24 PASS** — AP1–AP14 (`a28f770`)
+- [x] Cache-bust `?v=20260624` → `?v=20260624b`; `APP_VERSION = '6.5-action-plan-v2-20260624b'` (`a28f770`)
+- [x] Docs: PROJECT_STATE, SESSION_HANDOVER, TODO_NEXT updated
 
 ---
 
-## 🔴 PRIORITY 0b — Smoke test production: S33 history tab
+## ✅ COMPLETED S33
+
+- [x] GAS `auditReadByEntity(entityId)` + `audit-read` route — all roles, deployed 2026-06-24 (`ea55a2b`)
+- [x] `_gasAuditRead()` + `_buildHistoryTable()` in `api.js` (`ea55a2b`)
+- [x] History tab in Task/Case/Initiative view popups — lazy load (`ea55a2b`)
+- [x] startDate defaults to today for new Case (YYYY-MM-DD) and Initiative (DD-MMM-YY) (`ea55a2b`)
+- [x] CSS: `.popup-tabs`, `.popup-tab.active`, `.badge-info` (`ea55a2b`)
+- [x] `verify_history.mjs` 47/47 PASS (`ea55a2b`)
+
+---
+
+## 🔴 PRIORITY 0 — User hard-reload required (Ctrl+Shift+R)
+
+Cache-bust `?v=20260624b` pushed in `a28f770`. Users must hard-reload to pick up S34 (Action Plan v2):
+
+- **Windows/Linux**: Ctrl+Shift+R (or Ctrl+F5)
+- **Mac**: Cmd+Shift+R
+- **Verify**: Topbar badge shows `v6.5-action-plan-v2-20260624b`
+
+Until hard-reload: S34 Action Plan v2 invisible in browser. `verify_action_plan.mjs` 24/24 PASS confirms code correctness.
+
+---
+
+## 🔴 PRIORITY 0b — Smoke test production: Action Plan v2
 
 Sau hard-reload, smoke test trên live:
 
 | Scenario | Steps | Expected |
 |---|---|---|
-| **Task history** | Click task row → "Lịch sử" tab | Bảng hiện với cột Thời gian/Người dùng/Hành động/Chi tiết; entry "Tạo mới" ở đầu từ startDate |
-| **Case history** | Click case row → "Lịch sử" tab | Tương tự, với caseName trong cột Chi tiết |
-| **Initiative history** | Click init card → "Lịch sử" tab | Tương tự |
-| **Lazy load** | Mở popup → switch tab đi lại | Chỉ 1 GAS call lần đầu; không re-fetch khi quay lại tab |
-| **startDate case** | Thêm mới case → form mở → check trường Start Date | Tự điền ngày hôm nay (YYYY-MM-DD) |
-| **startDate initiative** | Thêm mới initiative → form mở → check trường Start Date | Tự điền ngày hôm nay (DD-MMM-YY, e.g. "24-Jun-26") |
+| **Admin view** | Login Admin → Action Plan | Accordion nhóm theo team; số task/case mỗi team; first team mở sẵn |
+| **User/TL view** | Login User/Teamlead → Action Plan | Hiển thị kanban của team chính; summary strip phía trên |
+| **Period filter** | Click "Quý này" / "Tháng trước" | Kanban cập nhật đúng deadline trong kỳ |
+| **RAG filter** | Click "■ Red" | Chỉ hiện task/case RAG=Red |
+| **Team dropdown (Admin)** | Chọn BL1 từ dropdown | Chuyển sang single-team kanban view cho BL1 |
+| **Auto badge** | Tìm task Blocked (highlight=N) | Xuất hiện trong kanban với ⚡Auto badge |
+| **Initiatives section** | Xem bên dưới kanban | Hiện danh sách parent initiatives của team |
+| **Accordion toggle** | Click header team để thu/mở | Body ẩn/hiện không re-render toàn bộ |
+| **Task card click** | Click card trong kanban | taskViewOverlay mở đúng task |
+| **Case card click** | Click card có ★CASE badge | cpViewOverlay mở đúng case |
 
 ---
 

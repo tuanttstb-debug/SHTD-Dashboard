@@ -1,4 +1,102 @@
 # SESSION HANDOVER
+**Date**: 2026-06-24 (Session 34 — Action Plan v2: grouped accordion, mixed kanban, extended criteria)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `a28f770` ✅
+
+---
+
+## Tasks Completed (S34)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S34-T1 | `action-plan.js` complete rewrite (~280→418 lines): filter state, period logic, role-aware default team, grouped accordion Admin view, single-team User/Teamlead view, Tasks+Cases mixed kanban, Initiatives section (no period filter) | `assets/js/views/action-plan.js` | `a28f770` | ✅ |
+| S34-T2 | CSS: Action Plan v2 styles appended to `components.css`: `.ap-filter-bar`, `.ap-period-btn/.ap-rag-btn`, `.ap-summary-strip`, `.ap-accordion`, `.ap-accordion-header/.body`, `.kanban-card-case`, `.ap-case-badge`, `.ap-auto-badge`, `.ap-init-section` | `assets/css/components.css` | `a28f770` | ✅ |
+| S34-T3 | `verify_action_plan.mjs` (new, port 9993): 24/24 PASS — AP1–AP14 covering toolbar, period/RAG filter, accordion, case card, initiative section, team filter, Blocked auto-add, task/case popups, prev-month 0 tasks, JS errors | `verify_action_plan.mjs` | `a28f770` | ✅ |
+| S34-T4 | Cache-bust `?v=20260624` → `?v=20260624b`; `APP_VERSION = '6.5-action-plan-v2-20260624b'` | `index.html`, `assets/js/config.js` | `a28f770` | ✅ |
+
+### Architecture: S34 Changes
+
+**Filter state globals** (`action-plan.js`):
+```javascript
+let _apFilterTeam   = null;    // null=uninit; ''=all teams; 'BL1'...=specific
+let _apFilterPeriod = 'month'; // 'month' | 'quarter' | 'prev-month'
+let _apFilterRag    = '';      // '' | 'Red' | 'Amber' | 'Green'
+let _apAccordionOpen = {};     // { [team]: boolean } — persists across re-renders
+```
+
+**Role-aware default** (`_apDefaultTeam()`):
+- Admin → `''` (all teams, grouped accordion view)
+- User/Teamlead → `u.team` (single-team kanban view)
+- Filter state cached on first call; reset on page reload only
+
+**Extended criteria** (`_apGetTasks()`):
+```
+Primary:  highlight=Y AND deadline in period range
+Extended: (state=Blocked OR Tạm dừng) AND (deadline in range OR no deadline)
+          OR endDate < today AND state≠Hoàn thành AND endDate ≤ period.end (overdue)
+Auto-added tasks get ⚡Auto badge (.ap-auto-badge) in the kanban card
+```
+
+**Initiatives** (`_apGetInits()`):
+- Parent initiatives only via `_initRealRoots()` (type=initiative, not milestone)
+- Filtered by `_appUsers.find(u.Username === i.accountable).Team`
+- **No period date filter** — initiatives always shown regardless of month/quarter selection
+- Shown below kanban as `.ap-init-section`
+
+**Accordion** (DOM mutation only — no re-render):
+```javascript
+function _apToggle(team) {
+  _apAccordionOpen[team] = !_apAccordionOpen[team];
+  const body = document.querySelector('#' + _apTid(team) + ' .ap-accordion-body');
+  body.style.display = _apAccordionOpen[team] ? 'block' : 'none';
+  // + chevron class toggle
+}
+```
+Avoids stale DOM handle issue (only `_apSetTeam/Period/Rag` trigger full re-render).
+
+**AP ID** (`_apTid(team)`): `'ap-acc-' + TEAM_LIST.indexOf(team)` — index-based, safe for Vietnamese/spaced names.
+
+**Case cards**: `.kanban-card-case` (blue left border) + `.ap-case-badge` (★CASE label); `_AP_CASE_COL` mapping stage→column.
+
+**Empty state** (`_apEmpty()`): "Không có hành động trọng tâm trong kỳ này" — only shown when tasks.length=0 AND cases.length=0 AND inits.length=0. Since initiatives are not period-filtered, empty state rarely appears.
+
+### Test discoveries (S34)
+1. **Stale handle in AP9 reset**: `teamSel` captured before `selectOption('BL2')` triggered DOM rebuild. Fixed: re-query `page.$('.ap-filter-bar select')` before reset.
+2. **AP13 empty state never fires**: Initiatives have no period filter → `inits.length > 0` even in prev-month → `empty=false`. Test updated to check `html.includes('0 tasks/cases')` in toolbar instead.
+
+### Commits S34
+```
+a28f770  feat(action-plan): v2 rewrite — grouped accordion view, mixed task/case kanban, extended criteria
+```
+
+---
+
+## Blockers (S34)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260624b`. Badge shows `v6.5-action-plan-v2-20260624b`. |
+| **GAS redeploy** | ✅ Not needed — no GAS changes in S34 |
+| **Smoke test production** | ⏳ Test Action Plan on live with real data: team filter, RAG filter, Blocked auto-add, initiative section |
+
+---
+
+## Regression Risks (S34)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **`_initRealRoots()` dependency** | 🟡 MEDIUM | `_apGetInits()` calls `_initRealRoots()` defined in `initiative-tracker.js`. If Initiative Tracker view hasn't been navigated to yet, `_initRealRoots` may not be defined. Fallback: `db.initiatives.filter(i => !i.parentId && i.id!=='BAU' && i.status!==undefined)`. |
+| **`_appUsers` race** | ⚪ LOW | If Action Plan is opened before `loadAppUsers()` completes, `_apGetInits(team)` returns all initiatives (no team filter). Resolves on next filter change. |
+| **Accordion state persistence** | ⚪ LOW | `_apAccordionOpen` persists across same-session navigations. If user collapses BL1 then navigates away and back, BL1 stays collapsed. Intentional. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S33)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-24 (Session 33 — Audit log history tab + startDate default today + GAS audit-read)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
