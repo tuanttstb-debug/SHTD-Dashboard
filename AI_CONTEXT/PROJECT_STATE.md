@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-22 (Session 32 — sortBy select fix + cache-bust)
-**Version**: v6.3 (`APP_VERSION = '6.3-select-fix-20260622'`)
-**Remote HEAD (main)**: `56e3e43` — fix(select): sortBy clears selectedIds + cache-bust bump to force reload
+**As of**: 2026-06-24 (Session 33 — Audit history tab + startDate default today)
+**Version**: v6.4 (`APP_VERSION = '6.4-history-20260624'`)
+**Remote HEAD (main)**: `ea55a2b` — feat(history): audit log history tab in task/initiative/case view popups + startDate default today
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
