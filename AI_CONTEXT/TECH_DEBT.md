@@ -471,8 +471,29 @@ Verify: topbar badge shows new version after hard-reload (Ctrl+Shift+R)
 
 ---
 
+## TD-041: CSS Files Had No Cache-Bust Versioning
+**Rating**: ⚪ LOW (resolved in S35)
+**Added**: 2026-06-24 (Session 35)
+
+**Issue**: All 16 local `<link rel="stylesheet" href="assets/css/*.css">` tags had no `?v=` query string. Every CSS change since the project started (S1–S34) required users to manually clear their CSS cache — `Ctrl+Shift+R` alone was insufficient if the browser had a long-lived cache for `.css` URLs without version params.
+
+**Discovery**: S35 bug fix to `layout.css` (sidebar scroll) would have been invisible to users who had previously cached the CSS, regardless of hard-reload, because only JS tags had `?v=`.
+
+**Resolution (S35, commit `2cb947f`)**: Added `?v=20260624c` to all 16 CSS `<link>` tags via Python regex:
+```python
+re.sub(r'(href="assets/css/[^"?]+\.css)"', r'\1?v=YYYYMMDD"', content)
+```
+
+**Process update**: Future deploys touching any `.css` file must bump both:
+1. `?v=` on 35 JS `<script>` tags (existing rule from TD-040)
+2. `?v=` on 16 CSS `<link>` tags (new rule from S35)
+
+Use same Python pattern for both. One version string for everything (e.g. `20260624c`).
+
+---
+
 ## Debt Summary
-**Last updated**: 2026-06-22 (Session 32 — sortBy select fix; cache-bust lesson; TD-040 added)
+**Last updated**: 2026-06-24 (Session 35 — sidebar scroll fix; CSS cache-bust gap discovered + resolved; TD-041 added)
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
@@ -487,7 +508,7 @@ Verify: topbar badge shows new version after hard-reload (Ctrl+Shift+R)
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 9 committed suites: 37+14+14+46+22+23+15+9+23=203 (initiative_v2 failing — TD-033); no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 10 committed suites: 37+14+14+46+22+23+15+9+23+**24**=227 (initiative_v2 failing — TD-033; verify_action_plan **24/24** added S35); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ~~⚪~~ | ~~Hardcoded default PIC~~ | Tiny | ✅ **Resolved S21** — fPicAcc/fPicRes now populated from User_Master; no hardcoded 'Tuantt4' default |
@@ -526,3 +547,4 @@ Verify: topbar badge shows new version after hard-reload (Ctrl+Shift+R)
 | verify_sync_fix.mjs stale | 🟡 | S29 test expects bulk → syncAction; S30 bulk → atomic → tests FAIL | Small | Open — update T3–T5 hoặc deprecate |
 | TD-039 | ⚪ | `db.deletedIds` grows indefinitely — permanently deleted IDs never pruned from localStorage | Tiny | Open — negligible at current scale; cap at 500 if ever needed |
 | TD-040 | 🟡 | Cache-bust bump not enforced on every JS deployment — S31 missed it → production regression; must use Python not PowerShell for UTF-8 safety | Small | Open — add to CLAUDE.md/deployment checklist |
+| ~~TD-041~~ | ~~⚪~~ | ~~CSS files had no `?v=` cache-bust versioning — S1–S34 CSS changes could be cached indefinitely by browser~~ | Tiny | ✅ **Resolved S35** — `?v=20260624c` added to all 16 CSS `<link>` tags; future deploys must bump both JS+CSS |

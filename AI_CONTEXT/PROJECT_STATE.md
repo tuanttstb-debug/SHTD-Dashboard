@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-24 (Session 34 — Action Plan v2)
-**Version**: v6.5 (`APP_VERSION = '6.5-action-plan-v2-20260624b'`)
-**Remote HEAD (main)**: `a28f770` — feat(action-plan): v2 rewrite — grouped accordion view, mixed task/case kanban, extended criteria
+**As of**: 2026-06-24 (Session 35 — Sidebar scroll fix + CSS cache-bust)
+**Version**: v6.5 (`APP_VERSION = '6.5-sidebar-scroll-fix-20260624c'`)
+**Remote HEAD (main)**: `2cb947f` — fix(sidebar): enable scroll on left nav menu when items exceed viewport height
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1220 | ✅ S34: cache-bust `?v=20260624` → `?v=20260624b`; S20: #view-case-pipeline restructure |
+| `index.html` | ~1220 | ✅ S35: `?v=20260624c` on 35 JS script tags + 16 CSS link tags (CSS had no cache-bust before S35); S20: #view-case-pipeline restructure |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,7 +35,8 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S34: APP_VERSION = '6.5-action-plan-v2-20260624b'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S35: APP_VERSION = '6.5-sidebar-scroll-fix-20260624c'; S30: new GS_WEBAPP_URL |
+| `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
 | `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |

@@ -1,4 +1,95 @@
 # SESSION HANDOVER
+**Date**: 2026-06-24 (Session 35 — Sidebar scroll fix + Action Plan test stabilization)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `2cb947f` ✅
+
+---
+
+## Tasks Completed (S35)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S35-T1 | Fix stale DOM handle crash in `verify_action_plan.mjs` AP9 reset: after `selectOption('BL2')` triggers re-render, `teamSel` handle is detached. Fix: re-query `page.$('.ap-filter-bar select')` before reset → new `teamSelReset` | `verify_action_plan.mjs` | `a28f770` | ✅ |
+| S35-T2 | Fix AP13 test expectation: initiatives are not period-filtered → `inits.length > 0` even in prev-month → `empty=false` never triggers empty-state message. Updated assertion to `html.includes('0 tasks/cases')` (toolbar count) | `verify_action_plan.mjs` | `a28f770` | ✅ |
+| S35-T3 | **24/24 PASS** on `verify_action_plan.mjs` (was crashing after 18) | — | — | ✅ |
+| S35-T4 | Bug fix: left sidebar cannot scroll when many nav items exceed viewport. Root cause: `.sidebar` had no `height` constraint on desktop → expanded with content, `body{overflow:hidden}` clipped bottom nav items, `.nav-menu{flex:1;overflow-y:auto}` had nothing to scroll against | `assets/css/layout.css` | `2cb947f` | ✅ |
+| S35-T5 | CSS: add `?v=20260624c` cache-bust to all 16 local `<link rel="stylesheet">` tags — CSS had no cache-busting before S35; browsers silently served stale CSS on every deploy | `index.html` | `2cb947f` | ✅ |
+| S35-T6 | JS cache-bust `?v=20260624b` → `?v=20260624c` (35 script tags, Python); `APP_VERSION = '6.5-sidebar-scroll-fix-20260624c'` | `index.html`, `assets/js/config.js` | `2cb947f` | ✅ |
+
+### Architecture: S35 Changes
+
+**Sidebar scroll fix** (`layout.css`):
+
+Root cause chain:
+```
+body { display:flex; height:100vh; overflow:hidden; }
+  .sidebar-wrapper { position:relative; }   ← no height
+    .sidebar { display:flex; flex-direction:column; }  ← no height → grows with content
+      .nav-menu { flex:1; overflow-y:auto; }  ← flex:1 with no constrained parent = no scroll
+```
+`overflow-y:auto` on `.nav-menu` only activates a scrollbar if the parent has a constrained height. Without that, `flex:1` simply grows, and `body{overflow:hidden}` clips the bottom — items are cut and unreachable.
+
+**Fix applied:**
+```css
+/* layout.css */
+.sidebar {
+  height: 100vh;   /* ← ADDED: constrains sidebar; same value as mobile @media rule */
+}
+.nav-menu {
+  min-height: 0;   /* ← ADDED: allows flex item to shrink below content size → scrollbar activates */
+  /* padding, flex:1, overflow-y:auto unchanged */
+}
+/* Sidebar-specific scrollbar — white-on-dark theme */
+.nav-menu::-webkit-scrollbar       { width: 4px; }
+.nav-menu::-webkit-scrollbar-track { background: transparent; }
+.nav-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 99px; }
+.nav-menu::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+```
+
+Mobile (`@media(max-width:768px)`) already had `height:100vh` on `.sidebar` and was not affected.
+
+**CSS cache-bust discovery (S35):**
+All 16 local CSS `<link>` tags had no `?v=` query string — browsers could serve stale CSS indefinitely. Added `?v=20260624c` to all. Future deploys must bump both the 35 JS script tags AND the 16 CSS link tags together.
+
+Updated Python one-liner for CSS files:
+```python
+re.sub(r'(href="assets/css/[^"?]+\.css)"', r'\1?v=YYYYMMDD"', content)
+```
+
+### Commits S35
+```
+2cb947f  fix(sidebar): enable scroll on left nav menu when items exceed viewport height
+```
+(Note: `a28f770` contains S34 Action Plan v2 code including S35-T1/T2 test fixes — both landed in same commit from session continuation.)
+
+---
+
+## Blockers (S35)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260624c` (both JS and CSS). Badge shows `v6.5-sidebar-scroll-fix-20260624c`. |
+| **GAS redeploy** | ✅ Not needed — no GAS changes in S35 |
+| **Smoke test: sidebar scroll** | ⏳ Verify on production: nav items at bottom (e.g. "Quản lý User") are reachable by scrolling the left menu on screens where sidebar height < total nav height |
+
+---
+
+## Regression Risks (S35)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **Sidebar toggle button vertical centering** | ⚪ LOW | `.sidebar-toggle { position:absolute; top:50%; }` is positioned relative to `.sidebar-wrapper`. Adding `height:100vh` to `.sidebar` (which is inside wrapper) doesn't change wrapper height — wrapper was already stretched to 100vh via flex. Toggle centering unchanged. |
+| **Collapsed sidebar** | ⚪ LOW | `.sidebar.collapsed { width:68px; min-width:68px }` — no height override. `height:100vh` from base rule applies → collapsed sidebar also scrollable if ever needed. No conflict. |
+| **Mobile** | ⚪ NONE | `@media(max-width:768px)` already had `height:100vh` on `.sidebar` with `position:fixed`. S35 base rule is identical value; mobile override takes precedence. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S34)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-24 (Session 34 — Action Plan v2: grouped accordion, mixed kanban, extended criteria)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-24 (Session 34 — Action Plan v2)
-**Context**: `origin/main` @ `a28f770` — Action Plan v2 live: role-aware default (Admin→grouped accordion; User/TL→own team kanban), mixed Tasks+Cases kanban, extended criteria (Blocked/overdue auto-add), Initiatives section, 24/24 tests pass. `?v=20260624b` cache-bust; users need hard-reload.
+**Prepared**: 2026-06-24 (Session 35 — Sidebar scroll fix + CSS cache-bust)
+**Context**: `origin/main` @ `2cb947f` — Sidebar left menu now scrolls on desktop (`height:100vh` fix). CSS files now have `?v=20260624c` cache-bust (first time CSS got versioning). Action Plan v2 24/24 PASS. Users need hard-reload (Ctrl+Shift+R) to get both JS + CSS changes.
 
 ---
 
@@ -203,6 +203,17 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ---
 
+## ✅ COMPLETED S35
+
+- [x] Fix stale DOM handle in `verify_action_plan.mjs` AP9: re-query `page.$('.ap-filter-bar select')` after `selectOption('BL2')` triggers re-render — new `teamSelReset` const (`a28f770`)
+- [x] Fix AP13 test: initiatives have no period filter → empty state never fires in prev-month; assert `html.includes('0 tasks/cases')` in toolbar count instead (`a28f770`)
+- [x] **24/24 PASS** on verify_action_plan.mjs (previously crashing at AP9 reset after 18 tests)
+- [x] Bug fix: left sidebar not scrollable on desktop — `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` in `layout.css`; sidebar scrollbar styled rgba(255,255,255,0.2) for dark bg (`2cb947f`)
+- [x] CSS cache-bust: added `?v=20260624c` to all 16 local `<link rel="stylesheet">` tags — CSS had no versioning before S35 (`2cb947f`)
+- [x] JS cache-bust `?v=20260624b` → `?v=20260624c` (35 script tags, Python); `APP_VERSION = '6.5-sidebar-scroll-fix-20260624c'` (`2cb947f`)
+
+---
+
 ## ✅ COMPLETED S34
 
 - [x] `action-plan.js` complete rewrite: filter state, role-aware default team, period range, extended criteria (Blocked/overdue auto-add), grouped accordion Admin view, single-team User/TL view, Tasks+Cases mixed kanban, Initiatives section (no period filter) (`a28f770`)
@@ -226,13 +237,14 @@ master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
 
 ## 🔴 PRIORITY 0 — User hard-reload required (Ctrl+Shift+R)
 
-Cache-bust `?v=20260624b` pushed in `a28f770`. Users must hard-reload to pick up S34 (Action Plan v2):
+Cache-bust `?v=20260624c` pushed in `2cb947f`. Users must hard-reload to pick up **both JS and CSS** changes from S34+S35:
 
 - **Windows/Linux**: Ctrl+Shift+R (or Ctrl+F5)
 - **Mac**: Cmd+Shift+R
-- **Verify**: Topbar badge shows `v6.5-action-plan-v2-20260624b`
+- **Verify**: Topbar badge shows `v6.5-sidebar-scroll-fix-20260624c`
+- **Verify sidebar**: Nav menu scrolls when items exceed viewport height (e.g. "Quản lý User" accessible at bottom)
 
-Until hard-reload: S34 Action Plan v2 invisible in browser. `verify_action_plan.mjs` 24/24 PASS confirms code correctness.
+⚠️ **CSS cache-bust was missing before S35** — if users did Ctrl+Shift+R after S33/S34 they still got old CSS. S35 is the first release where CSS is properly versioned.
 
 ---
 
