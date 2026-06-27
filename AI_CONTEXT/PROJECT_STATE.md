@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
-**Version**: v6.6 (`APP_VERSION = '6.6-case-pipeline-enhancements-20260627'`, `index.html ?v=20260627b`)
-**Remote HEAD (main)**: `a6feeae` — feat(case-pipeline): S36 enhancements
+**As of**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
+**Version**: v6.6 (`APP_VERSION = '6.6-mobile-toolbar-fix-20260627c'`, `index.html ?v=20260627c`)
+**Remote HEAD (main)**: `7eb9547` — fix(mobile): topbar always visible + toolbar buttons stack correctly
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1360 | ✅ S36: `?v=20260627b` (51 occurrences); +`#cpSummaryOverlay` popup; +`cpFilterTuanBC` filter select; stat cards onclick; S35: `?v=20260624c` on 35 JS script tags + 16 CSS link tags |
+| `index.html` | ~1360 | ✅ S37: `?v=20260627c` (51 occurrences); S36: +`#cpSummaryOverlay` popup; +`cpFilterTuanBC` filter select; stat cards onclick; S35: `?v=20260624c` on 35 JS script tags + 16 CSS link tags |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,8 +35,9 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S35: APP_VERSION = '6.5-sidebar-scroll-fix-20260624c'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S37: APP_VERSION = '6.6-mobile-toolbar-fix-20260627c'; S30: new GS_WEBAPP_URL |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
+| `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
 | `assets/css/case-pipeline.css` | ~425 | ✅ S24: +.cp-view-grid/.cp-view-row/.cp-view-label/.cp-view-val/.cp-view-section CSS cho cpViewOverlay; S23: .cp-modal-grid fix; S20: view toggle, stage chips, RAG dots |
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |

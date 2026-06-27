@@ -1,6 +1,45 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
-**Context**: S36 — 4 features: done/blocked no-overdue, default scope=all, tuần BC filter, summary popup with 4 types. 28/28 Playwright PASS. Cache-bust `?v=20260627b`. `APP_VERSION=6.6`. Users need hard-reload (Ctrl+Shift+R).
+**Prepared**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
+**Context**: S37 — Mobile responsive fix: topbar always visible via position:fixed, toolbar buttons stack vertically. Cache-bust `?v=20260627c`. `APP_VERSION=6.6-mobile-toolbar-fix-20260627c`. Users need hard-reload (Ctrl+Shift+R).
+
+---
+
+## ✅ COMPLETED S37
+
+- [x] Fix topbar hidden on iOS Safari: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` — removed from flex flow, unaffected by `.main{overflow:hidden}` (`7eb9547`)
+- [x] Content padding-top: 74px (≤768px) / 68px (≤480px) to clear fixed topbar (`7eb9547`)
+- [x] Sticky thead top: 62px (≤768px) / 56px (≤480px) to clear fixed topbar when scrolling (`7eb9547`)
+- [x] Toolbar stack vertically on mobile: `flex-direction:column` + `width:100%` for left/right + `flex-wrap:wrap;justify-content:flex-start` for buttons (`7eb9547`)
+- [x] `.path-hint{display:none}` on mobile — long file path not actionable on mobile (`7eb9547`)
+- [x] Cache-bust `?v=20260627c` (51 occurrences); `APP_VERSION='6.6-mobile-toolbar-fix-20260627c'` (`7eb9547`)
+
+---
+
+## 🔲 TODO S38 — CANDIDATE TASKS
+
+> Ưu tiên: P1 = blocking / user-reported; P2 = next feature; P3 = tech debt / cleanup
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S37 on production (iOS)** | Verify: (1) topbar (hamburger/title/avatar) always visible on iPhone; (2) toolbar buttons in Tasks + Case Pipeline all reachable; (3) sticky table header clears topbar when scrolling; (4) sidebar slide-in still works. Badge shows `v6.6-mobile-toolbar-fix-20260627c`. |
+| P1 | **Smoke test S36 on production** | Confirm RAG dots gone for done/blocked; scope=all default; tuần BC filter; summary popup. |
+| P2 | **Case Pipeline — table view sort by giaTriTy** | Currently Kanban only. Table view has no sort on value column. |
+| P2 | **Case Pipeline — export to Excel** | No export button currently. Should follow pattern of task export. |
+| P2 | **Summary popup — pagination** | If `dbCases` grows large (>50 cases), popup body will be very long. Add simple pagination or max-height scroll indicator. |
+| P3 | **TD-012: add CI** | 11 test suites, 255 assertions. `npm test` script + GitHub Actions would prevent regressions. |
+| P3 | **TD-004: global state** | `let _cpFilterTuanBC`, `let _cpScope`, etc. accumulate as module-level mutable state. Consider encapsulating per-view state in objects. |
+
+---
+
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
+
+```
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
+```
+
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
 

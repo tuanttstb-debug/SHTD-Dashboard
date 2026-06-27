@@ -1,4 +1,113 @@
 # SESSION HANDOVER
+**Date**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `7eb9547` ✅
+
+---
+
+## Tasks Completed (S37)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S37-T1 | Fix topbar hidden on iOS mobile: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` — removes topbar from flex flow, unaffected by `.main{overflow:hidden}`, always shown at viewport top | `assets/css/responsive.css` | `7eb9547` | ✅ |
+| S37-T2 | Content padding-top to clear fixed topbar: `74px` (≤768px, 62px+12px), `68px` (≤480px, 56px+12px) | `assets/css/responsive.css` | `7eb9547` | ✅ |
+| S37-T3 | Sticky thead `top` adjusted: `62px` (≤768px) / `56px` (≤480px) so table header clears fixed topbar when scrolling | `assets/css/responsive.css` | `7eb9547` | ✅ |
+| S37-T4 | Toolbar stack vertically on mobile: `.toolbar{flex-direction:column;align-items:flex-start}`, `.toolbar-left,.toolbar-right{width:100%}`, `.toolbar-right{flex-wrap:wrap;justify-content:flex-start}` — all action buttons always reachable | `assets/css/responsive.css` | `7eb9547` | ✅ |
+| S37-T5 | Hide `.path-hint` on mobile: long file path (`\\ho-file01\NHDN\...`) is not actionable on mobile | `assets/css/responsive.css` | `7eb9547` | ✅ |
+| S37-T6 | Cache-bust `?v=20260627b` → `?v=20260627c` (51 occurrences); `APP_VERSION = '6.6-mobile-toolbar-fix-20260627c'` | `index.html`, `assets/js/config.js` | `7eb9547` | ✅ |
+
+### Root Cause Analysis (S37)
+
+**Bug: Topbar not visible on iOS Safari mobile**
+
+Root cause chain:
+```
+body { display:flex; height:100vh; overflow:hidden; }
+  .sidebar-wrapper { position:relative; }   ← 0 width on mobile (sidebar=fixed, toggle=none)
+  main.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    header.topbar { height:62px; flex-shrink:0; }  ← PROBLEM: overflow:hidden on parent
+    div.content { flex:1; overflow-y:auto; }
+```
+
+On iOS Safari, `100vh` includes the area behind the browser chrome (URL bar + status bar ≈ 52-64px). The body's top 52-64px is rendered behind the browser UI. Since `.topbar` is the first flex child of `.main` at y=0, it gets partially or fully hidden behind the browser chrome. `position:sticky` is NOT an option here because `.main { overflow:hidden }` kills sticky for all descendants.
+
+**Fix applied:**
+```css
+/* responsive.css — @media(max-width:768px) */
+.topbar {
+  position: fixed;   /* removed from flex flow; not affected by overflow:hidden */
+  top: 0; left: 0; right: 0;
+  z-index: 150;      /* above content (thead z-index:2), below sidebar overlay (190) */
+  padding: 0 14px;
+}
+.content { padding: 74px 14px 12px; }  /* clear fixed topbar (62px) + original 12px */
+thead { top: 62px; }                    /* sticky header clears fixed topbar */
+
+/* @media(max-width:480px) */
+/* topbar shrinks to 56px at this breakpoint */
+.content { padding-top: 68px; }
+thead { top: 56px; }
+```
+
+**Bug: Toolbar buttons cut off on mobile**
+
+Root cause: `.toolbar{justify-content:space-between}` + `.toolbar-left` containing a long `.path-hint` path string → `.toolbar-right` with 5-7 buttons squeezed into remaining width → buttons overflow or get cut.
+
+**Fix applied:**
+```css
+.toolbar { flex-direction: column; align-items: flex-start; }
+.toolbar-left, .toolbar-right { width: 100%; }
+.toolbar-right { flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
+.path-hint { display: none; }  /* \\ho-file01\NHDN\... not useful on mobile */
+```
+
+### z-index Stack on Mobile (After S37)
+
+```
+z-index:200  .sidebar (open state, slides in from left)
+z-index:190  .sidebar-overlay (dark backdrop)
+z-index:150  .topbar (FIXED — always at viewport top)  ← NEW S37
+z-index:10   .topbar (desktop — stays in flex flow)
+z-index:2    thead (sticky table header)
+z-index:0    content
+```
+
+Sidebar overlay (190) correctly covers the fixed topbar (150) when menu opens → user taps overlay to close sidebar. ✓
+
+### Commits S37
+```
+7eb9547  fix(mobile): topbar always visible + toolbar buttons stack correctly
+```
+
+---
+
+## Blockers (S37)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260627c`. Badge shows `v6.6-mobile-toolbar-fix-20260627c`. |
+| **Smoke test production** | ⏳ Verify on iOS Safari: topbar visible at all times; toolbar buttons reachable on Tasks + Case Pipeline views |
+| **No new tests** | ℹ️ CSS-only change — Playwright can't easily test position:fixed layout. Manual smoke test on real device required. |
+
+---
+
+## Regression Risks (S37)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **Fixed topbar z-index** | ⚪ LOW | `z-index:150` is above content, below sidebar overlay (190) and sidebar (200). No conflict with existing modals (z-index:1000+) or cpSummaryOverlay (z-index:1100). |
+| **Sticky thead top offset** | ⚪ LOW | `thead{top:62px}` (768px) / `thead{top:56px}` (480px) clears fixed topbar. If topbar height changes in future, this must also change. |
+| **path-hint hidden on mobile** | ⚪ NONE | `.path-hint` is a UX shortcut for copy-to-clipboard on the file path. Not useful on mobile (no file system). Desktop unaffected. |
+| **content padding-top increase** | ⚪ LOW | `padding-top:74px` vs old `12px` — extra 62px transparent space at top of content. On very short viewports this reduces visible content area. Acceptable. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S36)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
