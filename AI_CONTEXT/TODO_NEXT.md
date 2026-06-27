@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
-**Context**: S37 — Mobile responsive fix: topbar always visible via position:fixed, toolbar buttons stack vertically. Cache-bust `?v=20260627c`. `APP_VERSION=6.6-mobile-toolbar-fix-20260627c`. Users need hard-reload (Ctrl+Shift+R).
+**Prepared**: 2026-06-27 (Session 37 — Mobile Responsive Fix + Playwright verification)
+**Context**: S37 — Mobile responsive fix: topbar always visible via position:fixed, toolbar buttons stack vertically. Cache-bust `?v=20260627c`. `APP_VERSION=6.6-mobile-toolbar-fix-20260627c`. Users need hard-reload (Ctrl+Shift+R). Playwright smoke test `verify_mobile_s37.mjs` **21/21 PASS**. Real-device iOS Safari verification still pending.
 
 ---
 
@@ -12,6 +12,7 @@
 - [x] Toolbar stack vertically on mobile: `flex-direction:column` + `width:100%` for left/right + `flex-wrap:wrap;justify-content:flex-start` for buttons (`7eb9547`)
 - [x] `.path-hint{display:none}` on mobile — long file path not actionable on mobile (`7eb9547`)
 - [x] Cache-bust `?v=20260627c` (51 occurrences); `APP_VERSION='6.6-mobile-toolbar-fix-20260627c'` (`7eb9547`)
+- [x] Playwright smoke test `verify_mobile_s37.mjs` **21/21 PASS** at 375×812 iPhone viewport — M1–M10 covering topbar fixed, content padding, hamburger, sidebar, toolbar stack, path-hint, thead offset, scroll behavior
 
 ---
 
@@ -21,7 +22,7 @@
 
 | Priority | Task | Notes |
 |---|---|---|
-| P1 | **Smoke test S37 on production (iOS)** | Verify: (1) topbar (hamburger/title/avatar) always visible on iPhone; (2) toolbar buttons in Tasks + Case Pipeline all reachable; (3) sticky table header clears topbar when scrolling; (4) sidebar slide-in still works. Badge shows `v6.6-mobile-toolbar-fix-20260627c`. |
+| P1 | **Smoke test S37 on real iOS device** | Playwright 21/21 ✅ already confirmed. Real-device check confirms `100vh` browser chrome offset on actual iOS Safari. Verify: (1) topbar always visible, not hidden behind URL bar; (2) toolbar buttons in Tasks + Case Pipeline all reachable; (3) sticky thead clears topbar when scrolling; (4) sidebar slide-in still works. Badge shows `v6.6-mobile-toolbar-fix-20260627c`. |
 | P1 | **Smoke test S36 on production** | Confirm RAG dots gone for done/blocked; scope=all default; tuần BC filter; summary popup. |
 | P2 | **Case Pipeline — table view sort by giaTriTy** | Currently Kanban only. Table view has no sort on value column. |
 | P2 | **Case Pipeline — export to Excel** | No export button currently. Should follow pattern of task export. |

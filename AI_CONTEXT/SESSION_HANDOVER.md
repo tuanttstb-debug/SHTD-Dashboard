@@ -2,7 +2,7 @@
 **Date**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `7eb9547` ✅
+**origin/main HEAD**: `6088832` ✅
 
 ---
 
@@ -75,8 +75,26 @@ z-index:0    content
 
 Sidebar overlay (190) correctly covers the fixed topbar (150) when menu opens → user taps overlay to close sidebar. ✓
 
+### Playwright Smoke Test (S37)
+
+`verify_mobile_s37.mjs` — **21/21 PASS** at 375×812 iPhone viewport:
+```
+M1 ✅ position:fixed, top:0px, z-index:150, height:56px
+M2 ✅ topbar.top===0, topbar.left===0
+M3 ✅ content padding-top: 68px (≥68px)
+M4 ✅ hamburger visible at (14, 10) — within topbar
+M5 ✅ sidebar opens; closes via overlay tap
+M6 ✅ toolbar column; 301px wide; 6 buttons in viewport; 0 clipped
+M7 ✅ path-hint display:none
+M8 ✅ thead top: 56px (≥56px — clears topbar)
+M9 ✅ CP toolbar column; 301px wide
+M10 ✅ topbar stays at y=0 after content scroll
+```
+Screenshots: `test-results/mobile_s37/` (01–06)
+
 ### Commits S37
 ```
+6088832  docs: S37 handover — mobile topbar fix + toolbar stack
 7eb9547  fix(mobile): topbar always visible + toolbar buttons stack correctly
 ```
 
@@ -87,8 +105,8 @@ Sidebar overlay (190) correctly covers the fixed topbar (150) when menu opens �
 | Item | Status |
 |---|---|
 | **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260627c`. Badge shows `v6.6-mobile-toolbar-fix-20260627c`. |
-| **Smoke test production** | ⏳ Verify on iOS Safari: topbar visible at all times; toolbar buttons reachable on Tasks + Case Pipeline views |
-| **No new tests** | ℹ️ CSS-only change — Playwright can't easily test position:fixed layout. Manual smoke test on real device required. |
+| **Smoke test real device** | ⏳ Playwright sim 21/21 ✅ — still need to verify on real iOS Safari (real device confirms `100vh` browser chrome offset). |
+| **Playwright test** | ✅ `verify_mobile_s37.mjs` **21/21 PASS** — 375×812 iPhone viewport |
 
 ---
 

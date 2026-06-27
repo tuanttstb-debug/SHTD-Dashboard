@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
 **Version**: v6.6 (`APP_VERSION = '6.6-mobile-toolbar-fix-20260627c'`, `index.html ?v=20260627c`)
-**Remote HEAD (main)**: `7eb9547` — fix(mobile): topbar always visible + toolbar buttons stack correctly
+**Remote HEAD (main)**: `6088832` — docs: S37 handover — mobile topbar fix + toolbar stack
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -141,6 +141,7 @@ backend/
   SheetService.gs, AuditService.gs, KpiSheetService.gs,
   InitiativeService.gs, UserService.gs, AiService.gs, GAS.GS
   CasePipelineService.gs ← NEW S19 (deployed 2026-06-15)
+verify_mobile_s37.mjs     ← S37 NEW — 21/21 PASS (M1–M10: topbar fixed, content pad, hamburger, sidebar, toolbar stack, path-hint, thead offset, scroll)
 verify_case_pipeline.mjs  ← S20 — 22/22 PASS
 verify_bld_queue.mjs      ← 46/46 PASS
 verify_ms_tasks.mjs       ← 14/14 PASS
@@ -175,7 +176,8 @@ debug_login.mjs           ← S18 login diagnostics
 | ID | Issue | Priority |
 |---|---|---|
 | TD-033 | `verify_initiative_v2.mjs` fail local (no auth inject) | 🟡 |
-| MOB-01/02/03 | Filter bar, toolbar, Gantt trên mobile | 🟡 Phase D |
+| MOB-01/02 | Topbar + toolbar trên mobile | ✅ **FIXED S37** — `position:fixed` + column stack |
+| MOB-03 | Gantt trên mobile | 🟡 Phase D |
 | DEBT-03/05/06 | Tech debt nhỏ | ⚪ |
 
 ---
