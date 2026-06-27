@@ -22,8 +22,18 @@
   }
   .sidebar-toggle{display:none;}
 
-  /* ── Topbar: fix hamburger always visible ──
-     Root cause: topbar-right was too wide (qv-topbar-btn + user-pill + icons),
+  /* ── Topbar: fixed on mobile so it's always visible ──
+     Root cause: body{height:100vh} on iOS Safari can place topbar behind browser
+     chrome. position:fixed on viewport removes it from flex flow, always shows at top.
+     z-index:150 = above content (thead z-index:2) but below sidebar overlay (190). */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;
+    z-index:150;
+    padding:0 14px;
+  }
+
+  /* ── Hamburger always visible ──
+     topbar-right was too wide (qv-topbar-btn + user-pill + icons),
      causing topbar-left to shrink and hamburger to disappear on narrow screens. */
   #hamburger{display:flex !important;flex-shrink:0;min-width:36px;}
   .topbar-left{min-width:0;}
@@ -36,13 +46,27 @@
 
   .form-grid{grid-template-columns:1fr;}
   .kpi-grid{grid-template-columns:1fr 1fr;}
-  .toolbar-right{width:100%;flex-wrap:wrap;}
   .dash-grid{grid-template-columns:1fr;}
-  .content{padding:12px 14px;}
-  .topbar{padding:0 14px;}
+
+  /* ── Content: top padding compensates for fixed topbar (62px + 12px original) ── */
+  .content{padding:74px 14px 12px;}
+
   .user-pill .user-info-name,.user-pill .user-info-role{display:none;}
   .user-pill{padding:5px;}
   .table-wrap{-webkit-overflow-scrolling:touch;}
+
+  /* ── Sticky thead must clear the fixed topbar ── */
+  thead{top:62px;}
+
+  /* ── Toolbar: stack vertically so all buttons are reachable ──
+     toolbar-right had many buttons that overflowed on narrow screens;
+     flex-direction:column + full-width ensures clean wrapping. */
+  .toolbar{flex-direction:column;align-items:flex-start;gap:8px;}
+  .toolbar-left,.toolbar-right{width:100%;}
+  .toolbar-right{flex-wrap:wrap;justify-content:flex-start;gap:6px;}
+  /* Hide the long file-path hint — not useful on mobile */
+  .path-hint{display:none;}
+
   .modal{width:100% !important;max-width:100% !important;border-radius:var(--radius) var(--radius) 0 0;
     position:fixed;bottom:0;left:0;right:0;max-height:92vh;}
   .overlay{align-items:flex-end;}
@@ -54,6 +78,9 @@
 @media(max-width:480px){
   .kpi-grid{grid-template-columns:1fr;}
   .toolbar-right .btn{font-size:12px;padding:7px 10px;}
+  /* Topbar shrinks to 56px — adjust content padding and sticky thead accordingly */
   .topbar{height:56px;}
+  .content{padding-top:68px;}
+  thead{top:56px;}
   .page-title{font-size:15px;max-width:130px;}
 }
