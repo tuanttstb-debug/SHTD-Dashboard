@@ -348,7 +348,8 @@ function _apTaskCard(t) {
 /* ── case card ── */
 function _apCaseCard(c) {
   const ragColor = { Green: 'var(--success)', Amber: 'var(--warning)', Red: 'var(--danger)' }[c.rag] || 'var(--text-3)';
-  const overdue  = c.deadline && new Date(c.deadline) < new Date() && _AP_CASE_COL[c.stage] !== 'done';
+  const _apCg   = _AP_CASE_COL[c.stage] || 'active';
+  const overdue  = c.deadline && new Date(c.deadline) < new Date() && _apCg !== 'done' && _apCg !== 'blocked';
   return `
   <div class="kanban-card kanban-card-case" onclick="openCaseViewPopup('${esc(c.id)}')" style="cursor:pointer;">
     <div class="ap-case-badge"><i class="fa-solid fa-star" style="font-size:9px;margin-right:2px;"></i>CASE</div>

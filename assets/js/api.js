@@ -1,6 +1,8 @@
 // ── Case Pipeline helpers ──
 
 function calcCaseRag(c) {
+  const g = CASE_STAGE_GROUP[c.stage] || 'active';
+  if (g === 'done' || g === 'blocked') return '';
   if (!c.deadline) return '';
   const d = parseVNDate(c.deadline);
   if (!d) return '';

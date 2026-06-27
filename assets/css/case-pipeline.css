@@ -56,6 +56,10 @@
 .cp-stat-card:hover {
   box-shadow: var(--shadow);
   border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+.cp-stat-card:active {
+  transform: translateY(0);
 }
 .cp-stat-icon {
   width: 42px;

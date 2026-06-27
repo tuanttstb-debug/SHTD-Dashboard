@@ -1,8 +1,26 @@
 # SESSION HANDOVER
-**Date**: 2026-06-24 (Session 35 — Sidebar scroll fix + Action Plan test stabilization)
+**Date**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `2cb947f` ✅
+**origin/main HEAD**: TBD (S36 commit pending)
+
+---
+
+## Tasks Completed (S36)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S36-T1 | Done/Blocked stages không tính quá hạn: Fix `calcCaseRag()` skip nếu group=done/blocked; fix `action-plan.js` overdue check tương tự | `assets/js/api.js`, `assets/js/views/action-plan.js` | S36 | ✅ |
+| S36-T2 | Default scope = 'all' cho mọi user: `_getCpScope()` bỏ role check → luôn `_cpScope = 'all'` | `assets/js/views/case-pipeline.js` | S36 | ✅ |
+| S36-T3 | Filter tuần báo cáo: `cpFilterTuanBC` select, populate chronological, filter chip, clear | `assets/js/views/case-pipeline.js`, `index.html` | S36 | ✅ |
+| S36-T4 | Summary popup: `#cpSummaryOverlay`, `openCpSummaryPopup(type)`, `closeCpSummaryPopup()` — 4 types: total/value/overdue/bld; stat cards clickable; ESC closes | `assets/js/views/case-pipeline.js`, `assets/js/ui/navigation.js`, `index.html`, `assets/css/case-pipeline.css` | S36 | ✅ |
+| S36-T5 | Playwright test `verify_case_pipeline_s36.mjs` — **28/28 PASS**; EVD screenshots to `test-results/cp_s36/` | `verify_case_pipeline_s36.mjs` | S36 | ✅ |
+| S36-T6 | Cache-bust: `APP_VERSION = '6.6-case-pipeline-enhancements-20260627'`; `index.html ?v=20260627b` (51 occurrences) | `assets/js/config.js`, `index.html` | S36 | ✅ |
+
+### Key fixes discovered during testing
+- **`let dbCases` is NOT `window.dbCases`**: Top-level `let` in browser scripts is module-scoped, NOT on `window`. Playwright `page.evaluate` must use `dbCases = cases` (direct assignment), not `window.dbCases = cases`.
+- **`setupListeners()` never called when auth fails**: ESC key handler only registers inside `setupListeners()` which runs post-auth. Test inject must call `try { setupListeners(); } catch(e) {}` to register the keydown listener.
+- **`loginOverlay` blocks pointer events**: Must `document.getElementById('loginOverlay').style.display = 'none'` in inject.
 
 ---
 

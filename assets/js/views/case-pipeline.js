@@ -6,13 +6,14 @@ let _cpScope    = null; // null = uninit | 'mine' | 'all'
 let _cpPage     = 1;
 let _cpSort     = { key: 'id', dir: 'asc' };
 let _cpSearch   = '';
-let _cpFilterTeam  = '';
-let _cpFilterRag   = '';
-let _cpFilterLoai  = '';
-let _cpFilterStage = '';
-let _cpFilterPic   = '';
-let _cpFilterDvkd  = '';
-let _cpEditId      = null;
+let _cpFilterTeam   = '';
+let _cpFilterRag    = '';
+let _cpFilterLoai   = '';
+let _cpFilterStage  = '';
+let _cpFilterPic    = '';
+let _cpFilterDvkd   = '';
+let _cpFilterTuanBC = '';
+let _cpEditId       = null;
 
 const CP_PAGE_SIZE = 20;
 
@@ -76,7 +77,7 @@ function cpToggleView(mode) {
 function _getCpScope() {
   if (_cpScope === null) {
     const u = getCurrentUser();
-    _cpScope = (u && u.role === 'Admin') ? 'all' : 'mine';
+    _cpScope = 'all';
     _updateCpScopeUI(_cpScope);
   }
   return _cpScope;
@@ -158,12 +159,13 @@ function _cpGetFiltered() {
   }
 
   return cases.filter(c => {
-    if (_cpFilterTeam  && c.team              !== _cpFilterTeam)           return false;
-    if (_cpFilterLoai  && c.loaiHinh          !== _cpFilterLoai)           return false;
-    if (_cpFilterStage && c.stage             !== _cpFilterStage)          return false;
-    if (_cpFilterRag   && _cpCalcRagLabel(c)  !== _cpFilterRag)            return false;
-    if (_cpFilterPic   && (c.pic||'').toLowerCase() !== _cpFilterPic.toLowerCase()) return false;
-    if (_cpFilterDvkd  && c.dvkd              !== _cpFilterDvkd)           return false;
+    if (_cpFilterTeam   && c.team              !== _cpFilterTeam)                        return false;
+    if (_cpFilterLoai   && c.loaiHinh          !== _cpFilterLoai)                        return false;
+    if (_cpFilterStage  && c.stage             !== _cpFilterStage)                       return false;
+    if (_cpFilterRag    && _cpCalcRagLabel(c)  !== _cpFilterRag)                         return false;
+    if (_cpFilterPic    && (c.pic||'').toLowerCase() !== _cpFilterPic.toLowerCase())     return false;
+    if (_cpFilterDvkd   && c.dvkd              !== _cpFilterDvkd)                        return false;
+    if (_cpFilterTuanBC && c.tuanBC            !== _cpFilterTuanBC)                      return false;
     return true;
   });
 }
@@ -171,12 +173,13 @@ function _cpGetFiltered() {
 /* ── keep _cpApplyFilters for legacy board path ── */
 function _cpApplyFilters(cases) {
   return cases.filter(c => {
-    if (_cpFilterTeam  && c.team              !== _cpFilterTeam)           return false;
-    if (_cpFilterLoai  && c.loaiHinh          !== _cpFilterLoai)           return false;
-    if (_cpFilterStage && c.stage             !== _cpFilterStage)          return false;
-    if (_cpFilterRag   && _cpCalcRagLabel(c)  !== _cpFilterRag)            return false;
-    if (_cpFilterPic   && (c.pic||'').toLowerCase() !== _cpFilterPic.toLowerCase()) return false;
-    if (_cpFilterDvkd  && c.dvkd              !== _cpFilterDvkd)           return false;
+    if (_cpFilterTeam   && c.team              !== _cpFilterTeam)                        return false;
+    if (_cpFilterLoai   && c.loaiHinh          !== _cpFilterLoai)                        return false;
+    if (_cpFilterStage  && c.stage             !== _cpFilterStage)                       return false;
+    if (_cpFilterRag    && _cpCalcRagLabel(c)  !== _cpFilterRag)                         return false;
+    if (_cpFilterPic    && (c.pic||'').toLowerCase() !== _cpFilterPic.toLowerCase())     return false;
+    if (_cpFilterDvkd   && c.dvkd              !== _cpFilterDvkd)                        return false;
+    if (_cpFilterTuanBC && c.tuanBC            !== _cpFilterTuanBC)                      return false;
     return true;
   });
 }
@@ -212,13 +215,14 @@ function cpFilterTeamChange() {
 }
 
 function cpFilterChange() {
-  _cpFilterTeam  = (document.getElementById('cpFilterTeam')  || {}).value || '';
-  _cpFilterLoai  = (document.getElementById('cpFilterLoai')  || {}).value || '';
-  _cpFilterStage = (document.getElementById('cpFilterStage') || {}).value || '';
-  _cpFilterRag   = (document.getElementById('cpFilterRag')   || {}).value || '';
-  _cpFilterPic   = (document.getElementById('cpFilterPic')   || {}).value || '';
-  _cpFilterDvkd  = (document.getElementById('cpFilterDvkd')  || {}).value || '';
-  _cpSearch      = (document.getElementById('cpSearch')      || {}).value || '';
+  _cpFilterTeam   = (document.getElementById('cpFilterTeam')   || {}).value || '';
+  _cpFilterLoai   = (document.getElementById('cpFilterLoai')   || {}).value || '';
+  _cpFilterStage  = (document.getElementById('cpFilterStage')  || {}).value || '';
+  _cpFilterRag    = (document.getElementById('cpFilterRag')    || {}).value || '';
+  _cpFilterPic    = (document.getElementById('cpFilterPic')    || {}).value || '';
+  _cpFilterDvkd   = (document.getElementById('cpFilterDvkd')   || {}).value || '';
+  _cpFilterTuanBC = (document.getElementById('cpFilterTuanBC') || {}).value || '';
+  _cpSearch       = (document.getElementById('cpSearch')       || {}).value || '';
   _cpPage = 1;
   _cpRenderSummary();
   renderCpFilterChips();
@@ -240,13 +244,14 @@ function cpSearchChange() {
 
 function renderCpFilterChips() {
   const labels = {
-    cpFilterStage: v => `Stage: ${v}`,
-    cpFilterTeam:  v => `Team: ${v}`,
-    cpFilterPic:   v => `PIC: ${v}`,
-    cpFilterLoai:  v => `Loại: ${v}`,
-    cpFilterRag:   v => `RAG: ${v}`,
-    cpFilterDvkd:  v => `ĐVKD: ${v}`,
-    cpSearch:      v => `Tìm: "${v}"`,
+    cpFilterStage:  v => `Stage: ${v}`,
+    cpFilterTeam:   v => `Team: ${v}`,
+    cpFilterPic:    v => `PIC: ${v}`,
+    cpFilterLoai:   v => `Loại: ${v}`,
+    cpFilterRag:    v => `RAG: ${v}`,
+    cpFilterDvkd:   v => `ĐVKD: ${v}`,
+    cpFilterTuanBC: v => `Tuần BC: ${v}`,
+    cpSearch:       v => `Tìm: "${v}"`,
   };
   const chips = [];
   Object.entries(labels).forEach(([id, label]) => {
@@ -265,7 +270,7 @@ function clearCpFilter(id) {
 }
 
 function clearCpFilters() {
-  ['cpFilterTeam','cpFilterLoai','cpFilterStage','cpFilterRag','cpFilterPic','cpFilterDvkd','cpSearch'].forEach(id => {
+  ['cpFilterTeam','cpFilterLoai','cpFilterStage','cpFilterRag','cpFilterPic','cpFilterDvkd','cpFilterTuanBC','cpSearch'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -308,6 +313,20 @@ function _cpPopulateFilters() {
     _cpFilterDvkd = dvkdSel.value;
   }
 
+  const tuanSel = document.getElementById('cpFilterTuanBC');
+  if (tuanSel) {
+    const weeks = [...new Set((dbCases || []).map(c => c.tuanBC).filter(Boolean))]
+      .sort((a, b) => {
+        const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? +m[2] * 100 + +m[1] : 0; };
+        return parse(a) - parse(b);
+      });
+    const prevW = tuanSel.value;
+    tuanSel.innerHTML = '<option value="">Tất cả</option>'
+      + weeks.map(w => `<option value="${esc(w)}">${esc(w)}</option>`).join('');
+    tuanSel.value = weeks.includes(prevW) ? prevW : '';
+    _cpFilterTuanBC = tuanSel.value;
+  }
+
   // Sync PIC dropdown based on current team selection
   _cpSyncFilterPic(_cpFilterTeam);
 }
@@ -331,12 +350,7 @@ function _cpRagClass(rag) {
 function _cpRenderSummary() {
   const filtered    = _cpGetFiltered();
   const totalVal    = filtered.reduce((s, c) => s + (c.giaTriTy || 0), 0);
-  const overdueList = filtered.filter(c => {
-    const d = parseVNDate(c.deadline);
-    if (!d) return false;
-    const today = new Date(); today.setHours(0,0,0,0);
-    return d < today && !['Đã phê duyệt','Đang triển khai','Chờ giải ngân/triển khai'].includes(c.stage);
-  });
+  const overdueList = filtered.filter(c => _cpCalcRagLabel(c) === 'Đỏ');
   const bldList = filtered.filter(c => c.canBLD === 'Y');
   const fmt = n => n.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
   const el  = id => document.getElementById(id);
@@ -749,6 +763,82 @@ function exportCasesToExcel() {
   XLSX.utils.book_append_sheet(wb, ws, 'Case_Pipeline');
   XLSX.writeFile(wb, `CasePipeline_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Đã xuất Excel thành công.', 'success');
+}
+
+/* ══════════════════════════════════════════
+   SUMMARY POPUP
+══════════════════════════════════════════ */
+function openCpSummaryPopup(type) {
+  const base = _cpGetFiltered();
+  let cases, title, subtitle;
+
+  if (type === 'total') {
+    cases    = base;
+    title    = 'Tổng số Case';
+    subtitle = `${cases.length} case đang theo dõi`;
+  } else if (type === 'value') {
+    cases    = base.filter(c => c.giaTriTy > 0).sort((a, b) => b.giaTriTy - a.giaTriTy);
+    const tv = cases.reduce((s, c) => s + (c.giaTriTy || 0), 0);
+    subtitle = `${tv.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tỷ — ${cases.length} case`;
+    title    = 'Tổng giá trị pipeline';
+  } else if (type === 'overdue') {
+    cases    = base.filter(c => _cpCalcRagLabel(c) === 'Đỏ');
+    title    = 'Quá hạn deadline';
+    subtitle = `${cases.length} case cần xử lý ngay`;
+  } else if (type === 'bld') {
+    cases    = base.filter(c => c.canBLD === 'Y');
+    title    = 'Cần BLĐ duyệt';
+    subtitle = `${cases.length} case đang chờ phê duyệt`;
+  } else { return; }
+
+  document.getElementById('cpSummaryTitle').textContent    = title;
+  document.getElementById('cpSummarySubtitle').textContent = subtitle;
+
+  const body = document.getElementById('cpSummaryBody');
+  if (!cases || !cases.length) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-3);">
+      <i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;"></i>
+      Không có case nào.
+    </div>`;
+  } else {
+    body.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);color:var(--text-2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+            <th style="padding:8px 6px;text-align:left;font-weight:600;">ID</th>
+            <th style="padding:8px 6px;text-align:left;font-weight:600;">Khách hàng / Case</th>
+            <th style="padding:8px 6px;text-align:left;font-weight:600;">Stage</th>
+            <th style="padding:8px 6px;font-weight:600;">PIC</th>
+            <th style="padding:8px 6px;font-weight:600;">Deadline</th>
+            <th style="padding:8px 6px;text-align:center;font-weight:600;">RAG</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cases.map(c => {
+            const rag = _cpCalcRagLabel(c);
+            const rc  = _cpRagClass(rag);
+            const grp = CASE_STAGE_GROUP[c.stage] || 'active';
+            return `<tr onclick="closeCpSummaryPopup();cpOpenDetail('${esc(c.id)}')"
+                        style="cursor:pointer;border-bottom:1px solid var(--border);"
+                        onmouseover="this.style.background='var(--bg-2)'"
+                        onmouseout="this.style.background=''">
+              <td style="padding:8px 6px;font-family:var(--mono);color:var(--primary);font-weight:700;white-space:nowrap;">${esc(c.id)}</td>
+              <td style="padding:8px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.caseName || '')}">${esc(c.caseName || '–')}</td>
+              <td style="padding:8px 6px;"><span class="cp-stage-chip group-${grp}" style="font-size:10px;">${esc(c.stage || '–')}</span></td>
+              <td style="padding:8px 6px;white-space:nowrap;font-size:12px;">${esc(c.pic || '–')}</td>
+              <td style="padding:8px 6px;white-space:nowrap;font-size:12px;${rc === 'red' ? 'color:var(--danger);font-weight:600;' : ''}">${fmtDate(c.deadline) || '–'}</td>
+              <td style="padding:8px 6px;text-align:center;"><span class="cp-rag-dot ${rc}"></span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  document.getElementById('cpSummaryOverlay').style.display = 'flex';
+}
+
+function closeCpSummaryPopup() {
+  document.getElementById('cpSummaryOverlay').style.display = 'none';
 }
 
 /* ══════════════════════════════════════════

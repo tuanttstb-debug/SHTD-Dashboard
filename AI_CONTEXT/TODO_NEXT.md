@@ -1,6 +1,17 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-24 (Session 35 — Sidebar scroll fix + CSS cache-bust)
-**Context**: `origin/main` @ `2cb947f` — Sidebar left menu now scrolls on desktop (`height:100vh` fix). CSS files now have `?v=20260624c` cache-bust (first time CSS got versioning). Action Plan v2 24/24 PASS. Users need hard-reload (Ctrl+Shift+R) to get both JS + CSS changes.
+**Prepared**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
+**Context**: S36 — 4 features: done/blocked no-overdue, default scope=all, tuần BC filter, summary popup with 4 types. 28/28 Playwright PASS. Cache-bust `?v=20260627b`. `APP_VERSION=6.6`. Users need hard-reload (Ctrl+Shift+R).
+
+---
+
+## ✅ COMPLETED S36
+
+- [x] Done/blocked stages: `calcCaseRag()` returns `''` for done/blocked groups; `action-plan.js` overdue check updated
+- [x] Default scope = 'all' for all users (removed role check from `_getCpScope()`)
+- [x] Filter tuần báo cáo (`cpFilterTuanBC` select, chronological sort, chip, clear)
+- [x] Summary popup: `#cpSummaryOverlay`, 4 types (total/value/overdue/bld), clickable rows open detail, ESC closes
+- [x] Playwright 28/28 PASS — `verify_case_pipeline_s36.mjs`; EVD in `test-results/cp_s36/`
+- [x] Cache-bust `?v=20260627b` (51 occurrences); `APP_VERSION=6.6-case-pipeline-enhancements-20260627`
 
 ---
 
