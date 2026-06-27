@@ -15,6 +15,21 @@
 
 ---
 
+## 🔲 TODO S37 — CANDIDATE TASKS
+
+> Ưu tiên: P1 = blocking / user-reported; P2 = next feature; P3 = tech debt / cleanup
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S36 on production** | Confirm RAG dots gone for done/blocked; scope=all default; tuần BC filter; summary popup. Users must hard-reload first. |
+| P2 | **Case Pipeline — table view sort by giaTriTy** | Currently Kanban only. Table view has no sort on value column. |
+| P2 | **Case Pipeline — export to Excel** | No export button currently. Should follow pattern of task export. |
+| P2 | **Summary popup — pagination** | If `dbCases` grows large (>50 cases), popup body will be very long. Add simple pagination or max-height scroll indicator. |
+| P3 | **TD-012: add CI** | 11 test suites, 255 assertions. `npm test` script + GitHub Actions would prevent regressions. |
+| P3 | **TD-004: global state** | `let _cpFilterTuanBC`, `let _cpScope`, etc. accumulate as module-level mutable state. Consider encapsulating per-view state in objects. |
+
+---
+
 ## NGUYÊN TẮC BRANCH (CONFIRMED S24)
 
 ```

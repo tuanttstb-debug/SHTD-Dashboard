@@ -2,7 +2,7 @@
 **Date**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `a6feeae` ✅
+**origin/main HEAD**: `348bc59` ✅ (`a6feeae` feat + `348bc59` docs)
 
 ---
 
@@ -80,6 +80,63 @@ re.sub(r'(href="assets/css/[^"?]+\.css)"', r'\1?v=YYYYMMDD"', content)
 2cb947f  fix(sidebar): enable scroll on left nav menu when items exceed viewport height
 ```
 (Note: `a28f770` contains S34 Action Plan v2 code including S35-T1/T2 test fixes — both landed in same commit from session continuation.)
+
+### Architecture: S36 Changes
+
+**`calcCaseRag()` fix** (`api.js`):
+```js
+function calcCaseRag(c) {
+  const g = CASE_STAGE_GROUP[c.stage] || 'active';
+  if (g === 'done' || g === 'blocked') return '';   // ← S36: skip overdue for done/blocked
+  if (!c.deadline) return '';
+  const d = parseVNDate(c.deadline);
+  if (!d) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.ceil((d - today) / 86400000);
+  if (diff <= 0) return 'Đỏ';
+  if (diff <= 7) return 'Vàng';
+  return 'Xanh';
+}
+```
+
+**Summary popup types** (`openCpSummaryPopup(type)`):
+- `total` → all filtered cases, sorted by startDate desc
+- `value` → all filtered cases, sorted by giaTriTy desc; subtitle = "ΣtỷVND — N case"
+- `overdue` → `_cpCalcRagLabel(c) === 'Đỏ'`
+- `bld` → `c.canBLD === 'Y'`
+Rows are clickable: `closeCpSummaryPopup(); cpOpenDetail(id)` → opens `#cpViewOverlay`.
+
+**Playwright learnings** (applicable to ALL future test files):
+- Top-level `let` in browser scripts is NOT `window.*`. Use `dbCases = cases`, not `window.dbCases = cases`.
+- `setupListeners()` only runs after successful auth. Tests must call `try { setupListeners(); } catch(e) {}` in inject.
+- Use `page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})))` instead of `page.keyboard.press('Escape')` to avoid focus dependency.
+
+### Commits S36
+```
+a6feeae  feat(case-pipeline): S36 enhancements — done/blocked no-overdue, scope=all default, tuần BC filter, summary popup
+348bc59  docs: session 36 handover — case pipeline enhancements + 28/28 tests pass
+```
+
+---
+
+## Blockers (S36)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R. Badge should show `v6.6-case-pipeline-enhancements-20260627`. |
+| **GAS redeploy** | ✅ Not needed — no GAS changes in S36. `case-pipeline-read` already returns all cases for all roles. |
+| **Smoke test** | ⏳ Verify: (1) done/blocked cards show no red RAG dot; (2) tuần BC filter populates from live data; (3) stat card clicks open correct popup; (4) all users default to "Tất cả" scope. |
+
+---
+
+## Regression Risks (S36)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **action-plan.js overdue change** | ⚪ LOW | `_apCg !== 'done' && _apCg !== 'blocked'` added to overdue check. If any stage name in `_AP_CASE_COL` differs from `CASE_STAGE_GROUP` key, the two maps could diverge. Both use same stage strings — low risk. |
+| **scope=all default** | ⚪ LOW | Users who previously relied on "Của tôi" default now see all cases on load. Intentional by design; no functional break. |
+| **cpSummaryOverlay z-index** | ⚪ LOW | Set to `z-index:1100` in HTML inline style — above cpViewOverlay (1000). If any other overlay has z-index >1100, stacking could be wrong. Check if adding new modals. |
+| **ESC handler chain order** | ⚪ NONE | `closeCpSummaryPopup()` added before `closeCaseViewPopup()` in ESC chain — correct order (inner popup first). |
 
 ---
 

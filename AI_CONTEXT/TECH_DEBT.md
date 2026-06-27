@@ -508,7 +508,7 @@ Use same Python pattern for both. One version string for everything (e.g. `20260
 | TD-009 | 🟢 | Duplicate parsing logic | Small | Open — Phase B (parsers.js unifies) |
 | TD-010 | 🟢 | CDN SRI missing | Small | Open |
 | TD-011 | ~~🟢~~ | Wrong AI_CONTEXT docs | Small | ✅ **Resolved 2026-06-03** |
-| TD-012 | 🟢→⚪ | No tests | Large | Partial — 10 committed suites: 37+14+14+46+22+23+15+9+23+**24**=227 (initiative_v2 failing — TD-033; verify_action_plan **24/24** added S35); no CI |
+| TD-012 | 🟢→⚪ | No tests | Large | Partial — 11 committed suites: 37+14+14+46+22+23+15+9+23+24+**28**=255 (initiative_v2 failing — TD-033; verify_case_pipeline_s36 **28/28** added S36); no CI |
 | TD-013 | 🟢 | Legacy full-write path | Small | Open |
 | TD-014 | ⚪ | Emoji in selects | Tiny | Open |
 | TD-015 | ~~⚪~~ | ~~Hardcoded default PIC~~ | Tiny | ✅ **Resolved S21** — fPicAcc/fPicRes now populated from User_Master; no hardcoded 'Tuantt4' default |
