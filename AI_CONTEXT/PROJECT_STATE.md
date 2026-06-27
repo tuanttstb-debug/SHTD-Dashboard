@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-06-27 (Session 36 — Case Pipeline Enhancements)
 **Version**: v6.6 (`APP_VERSION = '6.6-case-pipeline-enhancements-20260627'`, `index.html ?v=20260627b`)
-**Remote HEAD (main)**: TBD (S36 commit pending push)
+**Remote HEAD (main)**: `a6feeae` — feat(case-pipeline): S36 enhancements
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
