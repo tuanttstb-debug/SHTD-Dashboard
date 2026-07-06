@@ -1,4 +1,9 @@
 window.onload = async () => {
+  // Sync lang toggle buttons with stored preference (i18n.js already set _lang)
+  document.getElementById('langVI')?.classList.toggle('active', _lang === 'vi');
+  document.getElementById('langEN')?.classList.toggle('active', _lang === 'en');
+  applyI18n();
+
   const auth = getAuthSession();
   if (!auth) {
     showLoginScreen();

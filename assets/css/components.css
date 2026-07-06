@@ -339,3 +339,9 @@
 .ap-init-row:hover{background:var(--surface2);}
 .ap-init-name{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ap-init-meta{color:var(--text-3);flex-shrink:0;}
+
+/* ── Language Toggle ── */
+.lang-toggle{display:flex;align-items:center;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:2px;flex-shrink:0;}
+.lang-btn{padding:3px 8px;font-size:11px;font-weight:600;letter-spacing:.04em;border:none;background:transparent;color:var(--text-2);border-radius:calc(var(--radius-sm) - 2px);cursor:pointer;transition:background .15s,color .15s;line-height:1.4;font-family:var(--font-mono,monospace);}
+.lang-btn:hover{background:var(--surface3);color:var(--text-1);}
+.lang-btn.active{background:var(--primary);color:#fff;}

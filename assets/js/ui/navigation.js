@@ -76,21 +76,7 @@ function navigateTo(view) {
   document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
   const sec = document.getElementById(`view-${view}`);
   if (sec) { sec.style.display = 'contents'; sec.style.animation = 'none'; void sec.offsetWidth; sec.style.animation = ''; }
-  const titles = {
-    dashboard:'Executive Dashboard', 'executive-summary':'Tổng hợp BLĐ', 'bld-queue':'Phê duyệt BLĐ',
-    'case-pipeline':'Case Pipeline – Cơ hội kinh doanh',
-    tasks:'Quản lý Công việc',
-    gantt:'Timeline (Gantt)', performance:'Báo cáo Hiệu suất',
-    'kpi-overview':'KPI Digital Overview', 'action-plan':'Action Plan – Kế hoạch hành động',
-    'kpi-progress':'KPI Progress – Tiến độ từng sản phẩm',
-    'owner-analysis':'Owner Analysis – Theo chủ sở hữu',
-    'branch-analysis':'Branch Analysis – Theo chi nhánh',
-    'rm-analysis':'RM Analysis – Theo Relationship Manager',
-    'initiative-tracker':'Theo dõi Initiative',
-    'ai-chat':'AI Assistant – Trợ lý thông minh',
-    'user-management':'Quản lý User',
-  };
-  document.getElementById('pageTitle').textContent = titles[view] || view;
+  document.getElementById('pageTitle').textContent = t('page.' + view) || view;
   if (view === 'executive-summary')    renderExecutiveSummary();
   if (view === 'bld-queue')            renderBldQueue();
   if (view === 'case-pipeline')        renderCasePipeline();
@@ -111,6 +97,6 @@ function navigateTo(view) {
 
 function copyPath() {
   navigator.clipboard?.writeText('\\\\ho-file01\\NHDN\\Noibo\\Team Số Hóa TD\\Báo cáo tuần')
-    .then(() => toast('Đã copy đường dẫn!','success'))
-    .catch(() => toast('Copy không thành công, vui lòng copy thủ công.','warning'));
+    .then(() => toast(t('toast.path-copied'),'success'))
+    .catch(() => toast(t('toast.copy-failed'),'warning'));
 }

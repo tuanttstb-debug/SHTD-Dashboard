@@ -8,22 +8,22 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260706">
-<link rel="stylesheet" href="assets/css/base.css?v=20260706">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260706">
-<link rel="stylesheet" href="assets/css/components.css?v=20260706">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260706">
-<link rel="stylesheet" href="assets/css/table.css?v=20260706">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260706">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260706">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260706">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260706">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260706">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260706">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260706">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260706">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260706">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260706">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/base.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/components.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/table.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260706b">
 
 </head>
 <body>
@@ -34,22 +34,22 @@
     <div class="login-brand">
       <div class="brand-logo" style="font-size:22px;padding:6px 10px;">SHTD</div>
       <div class="login-brand-text">
-        Web Nội Bộ
-        <div style="font-weight:400;opacity:.7;">Trung tâm Sản Phẩm & Giải Pháp Tín Dụng</div>
+        <span data-i18n="auth.internal-portal">Web Nội Bộ</span>
+        <div style="font-weight:400;opacity:.7;" data-i18n="auth.org-sub">Trung tâm Sản Phẩm & Giải Pháp Tín Dụng</div>
       </div>
     </div>
-    <div class="login-title">Đăng nhập</div>
+    <div class="login-title" data-i18n="auth.signin-title">Đăng nhập</div>
     <div class="login-error" id="loginError"></div>
     <div class="form-group">
-      <label class="form-label">Tên đăng nhập</label>
+      <label class="form-label" data-i18n="auth.username-label">Tên đăng nhập</label>
       <input type="text" id="loginUsername" class="form-control" placeholder="VD: TuanTT4" autocomplete="username">
     </div>
     <div class="form-group">
-      <label class="form-label">Mật khẩu</label>
+      <label class="form-label" data-i18n="auth.password-label">Mật khẩu</label>
       <input type="password" id="loginPassword" class="form-control" placeholder="Mật khẩu" autocomplete="current-password">
     </div>
     <button class="btn btn-primary login-btn" id="loginBtn" onclick="handleLogin()">
-      <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+      <i class="fa-solid fa-right-to-bracket"></i> <span data-i18n="auth.login-btn">Đăng nhập</span>
     </button>
   </div>
 </div>
@@ -74,26 +74,26 @@
     <div class="brand">
       <div class="brand-logo">SHTD</div>
       <div class="brand-label">
-        Web Nội Bộ
-        <div class="brand-sub">TT Sản Phẩm & Giải Pháp Tín Dụng</div>
+        <span data-i18n="sidebar.brand-name">Web Nội Bộ</span>
+        <div class="brand-sub" data-i18n="sidebar.brand-sub">TT Sản Phẩm & Giải Pháp Tín Dụng</div>
       </div>
     </div>
     <nav class="nav-menu">
-      <div class="nav-section-label">Tổng quan</div>
+      <div class="nav-section-label" data-i18n="nav.section.overview">Tổng quan</div>
       <div class="nav-item active" data-view="dashboard">
         <i class="fa-solid fa-chart-pie nav-icon"></i>
         <span class="nav-label">Dashboard</span>
       </div>
       <div class="nav-item" data-view="executive-summary">
         <i class="fa-solid fa-crown nav-icon"></i>
-        <span class="nav-label">Tổng hợp BLĐ</span>
+        <span class="nav-label" data-i18n="nav.executive-summary">Tổng hợp BLĐ</span>
       </div>
       <div class="nav-item" data-view="bld-queue">
         <i class="fa-solid fa-clipboard-check nav-icon"></i>
-        <span class="nav-label">Phê duyệt BLĐ</span>
+        <span class="nav-label" data-i18n="nav.bld-queue">Phê duyệt BLĐ</span>
         <span class="nav-badge danger" id="navBadgeBld" style="display:none;">0</span>
       </div>
-      <div class="nav-section-label">Quản lý</div>
+      <div class="nav-section-label" data-i18n="nav.section.management">Quản lý</div>
       <div class="nav-item" data-view="case-pipeline">
         <i class="fa-solid fa-filter-circle-dollar nav-icon"></i>
         <span class="nav-label">Case Pipeline</span>
@@ -101,18 +101,18 @@
       </div>
       <div class="nav-item" data-view="initiative-tracker">
         <i class="fa-solid fa-diagram-project nav-icon"></i>
-        <span class="nav-label">Theo dõi Initiative</span>
+        <span class="nav-label" data-i18n="nav.initiative-tracker">Theo dõi Initiative</span>
       </div>
       <div class="nav-item" data-view="tasks">
         <i class="fa-solid fa-list-check nav-icon"></i>
-        <span class="nav-label">Quản lý Task</span>
+        <span class="nav-label" data-i18n="nav.tasks">Quản lý Task</span>
         <span class="nav-badge" id="navBadgeTotal">0</span>
       </div>
       <div class="nav-item" data-view="gantt">
         <i class="fa-solid fa-bars-progress nav-icon"></i>
         <span class="nav-label">Timeline (Gantt)</span>
       </div>
-      <div class="nav-section-label">Báo cáo</div>
+      <div class="nav-section-label" data-i18n="nav.section.reports">Báo cáo</div>
       <div class="nav-item" data-view="performance">
         <i class="fa-solid fa-chart-line nav-icon"></i>
         <span class="nav-label">Performance</span>
@@ -143,15 +143,15 @@
         <i class="fa-solid fa-people-arrows nav-icon"></i>
         <span class="nav-label">RM Analysis</span>
       </div>
-      <div class="nav-section-label">Trợ lý</div>
+      <div class="nav-section-label" data-i18n="nav.section.assistant">Trợ lý</div>
       <div class="nav-item" data-view="ai-chat">
         <i class="fa-solid fa-robot nav-icon"></i>
         <span class="nav-label">AI Assistant</span>
       </div>
-      <div class="nav-section-label admin-only">Quản trị</div>
+      <div class="nav-section-label admin-only" data-i18n="nav.section.admin">Quản trị</div>
       <div class="nav-item admin-only" data-view="user-management">
         <i class="fa-solid fa-users-gear nav-icon"></i>
-        <span class="nav-label">Quản lý User</span>
+        <span class="nav-label" data-i18n="nav.user-management">Quản lý User</span>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -159,7 +159,7 @@
       <span class="sidebar-footer-text" id="dbStatus">Chưa kết nối DB</span>
     </div>
   </aside>
-  <div class="sidebar-toggle" id="sidebarToggle" title="Thu gọn sidebar (Ctrl+B)"><i class="fa-solid fa-chevron-left" id="sidebarChevron"></i></div>
+  <div class="sidebar-toggle" id="sidebarToggle" title="Thu gọn sidebar (Ctrl+B)" data-i18n-title="topbar.sidebar-title"><i class="fa-solid fa-chevron-left" id="sidebarChevron"></i></div>
 </div>
 
 <!-- MAIN -->
@@ -167,16 +167,20 @@
   <!-- TOPBAR -->
   <header class="topbar">
     <div class="topbar-left">
-      <div class="icon-btn" id="hamburger" title="Menu (mở sidebar)" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
+      <div class="icon-btn" id="hamburger" title="Menu (mở sidebar)" data-i18n-title="topbar.menu-title" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></div>
       <div class="topbar-title-group">
         <div class="page-title" id="pageTitle">Executive Dashboard</div>
-        <div class="breadcrumb" id="pageBreadcrumb">Tổng quan · Cập nhật <span id="lastUpdated">–</span> · <span id="appVerBadge" style="opacity:.45;font-size:.72em;font-family:monospace;"></span></div>
+        <div class="breadcrumb" id="pageBreadcrumb"><span data-i18n="topbar.overview">Tổng quan</span> · <span data-i18n="topbar.updated">Cập nhật</span> <span id="lastUpdated">–</span> · <span id="appVerBadge" style="opacity:.45;font-size:.72em;font-family:monospace;"></span></div>
       </div>
     </div>
     <div class="topbar-right">
       <div class="status-dot" id="syncDot"></div>
-      <div class="icon-btn" onclick="openKbModal()" title="Phím tắt (?)"><i class="fa-solid fa-keyboard"></i></div>
-      <div class="icon-btn" id="darkModeBtn" onclick="toggleDark()" title="Đổi giao diện (Ctrl+D)"><i class="fa-solid fa-moon"></i></div>
+      <div class="icon-btn" onclick="openKbModal()" title="Phím tắt (?)" data-i18n-title="topbar.shortcuts-title"><i class="fa-solid fa-keyboard"></i></div>
+      <div class="icon-btn" id="darkModeBtn" onclick="toggleDark()" title="Đổi giao diện (Ctrl+D)" data-i18n-title="topbar.theme-title"><i class="fa-solid fa-moon"></i></div>
+      <div class="lang-toggle" id="langToggle">
+        <button class="lang-btn active" id="langVI" onclick="setLang('vi')">VI</button>
+        <button class="lang-btn" id="langEN" onclick="setLang('en')">EN</button>
+      </div>
       <button class="qv-topbar-btn" onclick="openQuickView()" title="Quick View (Q)">
         <i class="fa-solid fa-bolt" style="color:var(--accent);"></i>
         Quick View
@@ -199,10 +203,10 @@
     <section class="view-section active" id="view-dashboard">
       <!-- Dashboard filter bar -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
-        <div style="font-size:13px;font-weight:600;color:var(--text-2);white-space:nowrap;"><i class="fa-solid fa-calendar-week" style="margin-right:5px;color:var(--primary);"></i>Xem theo tuần:</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-2);white-space:nowrap;"><i class="fa-solid fa-calendar-week" style="margin-right:5px;color:var(--primary);"></i><span data-i18n="dash.filter.label">Xem theo tuần:</span></div>
         <select id="dashFilterTuan" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="renderDashboard()">
-          <option value="">📊 Tất cả task</option>
-          <option value="__thisweek__">📅 Tuần này</option>
+          <option value="" data-i18n="dash.filter.all-tasks">📊 Tất cả task</option>
+          <option value="__thisweek__" data-i18n="dash.filter.this-week">📅 Tuần này</option>
         </select>
         <div style="font-size:12px;color:var(--text-3);" id="dashFilterLabel"></div>
       </div>
@@ -212,15 +216,15 @@
           <div class="kpi-icon" style="background:var(--primary-xlight);color:var(--primary);">
             <i class="fa-solid fa-list-check"></i>
           </div>
-          <div class="kpi-label">Tổng số Task</div>
+          <div class="kpi-label" data-i18n="dash.total-label">Tổng số Task</div>
           <div class="kpi-value" id="kpiTotal">0</div>
-          <div class="kpi-sub">Tất cả dự án & BAU</div>
+          <div class="kpi-sub" data-i18n="dash.total-sub">Tất cả dự án & BAU</div>
         </div>
         <div class="kpi-card kpi-done" onclick="showDetailModal('done','Hoàn thành 100%')">
           <div class="kpi-icon" style="background:var(--success-bg);color:var(--success);">
             <i class="fa-solid fa-check-double"></i>
           </div>
-          <div class="kpi-label">Hoàn thành</div>
+          <div class="kpi-label" data-i18n="dash.done-label">Hoàn thành</div>
           <div class="kpi-value" id="kpiDone">0</div>
           <div class="kpi-sub">Progress = 100%</div>
         </div>
@@ -228,7 +232,7 @@
           <div class="kpi-icon" style="background:var(--warning-bg);color:var(--warning);">
             <i class="fa-solid fa-spinner"></i>
           </div>
-          <div class="kpi-label">Đang thực hiện</div>
+          <div class="kpi-label" data-i18n="dash.inprogress-label">Đang thực hiện</div>
           <div class="kpi-value" id="kpiInProgress">0</div>
           <div class="kpi-sub" id="kpiAvgProg">TB tiến độ –%</div>
         </div>
@@ -236,16 +240,16 @@
           <div class="kpi-icon" style="background:var(--danger-bg);color:var(--danger);">
             <i class="fa-solid fa-triangle-exclamation"></i>
           </div>
-          <div class="kpi-label">Quá hạn</div>
+          <div class="kpi-label" data-i18n="dash.overdue-label">Quá hạn</div>
           <div class="kpi-value" id="kpiOverdue" style="color:var(--danger);">0</div>
-          <div class="kpi-sub">Chưa hoàn thành & qua deadline</div>
+          <div class="kpi-sub" data-i18n="dash.overdue-sub">Chưa hoàn thành & qua deadline</div>
         </div>
       </div>
 
       <div class="dash-grid">
         <div class="card">
           <div class="card-header">
-            <div><div class="card-title">Phân bổ Health (RAG)</div><div class="card-subtitle">Click vào biểu đồ để xem chi tiết</div></div>
+            <div><div class="card-title" data-i18n="dash.rag-title">Phân bổ Health (RAG)</div><div class="card-subtitle" data-i18n="dash.rag-sub">Click vào biểu đồ để xem chi tiết</div></div>
           </div>
           <div style="position:relative;height:220px;display:flex;justify-content:center;">
             <canvas id="ragChart"></canvas>
@@ -254,16 +258,16 @@
         </div>
         <div class="card">
           <div class="card-header">
-            <div><div class="card-title">Tổng hợp theo Initiative</div><div class="card-subtitle">Click để xem danh sách task</div></div>
+            <div><div class="card-title" data-i18n="dash.init-table-title">Tổng hợp theo Initiative</div><div class="card-subtitle" data-i18n="dash.init-table-sub">Click để xem danh sách task</div></div>
           </div>
           <div class="table-wrap">
             <table class="init-table">
               <thead>
                 <tr>
                   <th>Initiative</th>
-                  <th style="width:70px;">Tổng</th>
-                  <th style="width:70px;">Xong</th>
-                  <th class="init-progress-col">Tiến độ</th>
+                  <th style="width:70px;" data-i18n="dash.init-col-total">Tổng</th>
+                  <th style="width:70px;" data-i18n="dash.init-col-done">Xong</th>
+                  <th class="init-progress-col" data-i18n="dash.init-col-progress">Tiến độ</th>
                   <th style="width:60px;">RAG</th>
                 </tr>
               </thead>
@@ -275,11 +279,11 @@
 
       <div class="dash-grid">
         <div class="card">
-          <div class="card-header"><div class="card-title">Phân bổ theo Team</div></div>
+          <div class="card-header"><div class="card-title" data-i18n="dash.team-dist-title">Phân bổ theo Team</div></div>
           <div id="teamStatList"></div>
         </div>
         <div class="card">
-          <div class="card-header"><div class="card-title">Blocked & Cần BLĐ</div></div>
+          <div class="card-header"><div class="card-title" data-i18n="dash.blocked-title">Blocked & Cần BLĐ</div></div>
           <div id="blockedList"></div>
         </div>
       </div>
@@ -1450,41 +1454,42 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/config.js?v=20260706"></script>
-<script src="assets/js/constants.js?v=20260706"></script>
-<script src="assets/js/helpers.js?v=20260706"></script>
-<script src="assets/js/storage.js?v=20260706"></script>
-<script src="assets/js/parsers.js?v=20260706"></script>
-<script src="assets/js/auth.js?v=20260706"></script>
-<script src="assets/js/api.js?v=20260706"></script>
-<script src="assets/js/ui/toast.js?v=20260706"></script>
-<script src="assets/js/ui/modal.js?v=20260706"></script>
-<script src="assets/js/ui/theme.js?v=20260706"></script>
-<script src="assets/js/ui/navigation.js?v=20260706"></script>
-<script src="assets/js/crud.js?v=20260706"></script>
-<script src="assets/js/bulk.js?v=20260706"></script>
-<script src="assets/js/views/dashboard.js?v=20260706"></script>
-<script src="assets/js/views/tasks.js?v=20260706"></script>
-<script src="assets/js/views/gantt.js?v=20260706"></script>
-<script src="assets/js/views/performance.js?v=20260706"></script>
-<script src="assets/js/views/quickview.js?v=20260706"></script>
-<script src="assets/js/report.js?v=20260706"></script>
-<script src="assets/js/kpi-data.js?v=20260706"></script>
-<script src="assets/js/kpi-parser.js?v=20260706"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260706"></script>
-<script src="assets/js/views/action-plan.js?v=20260706"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260706"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260706"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260706"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260706"></script>
-<script src="assets/js/initiatives.js?v=20260706"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260706"></script>
-<script src="assets/js/views/ai-chat.js?v=20260706"></script>
-<script src="assets/js/views/user-management.js?v=20260706"></script>
-<script src="assets/js/views/executive-summary.js?v=20260706"></script>
-<script src="assets/js/views/bld-queue.js?v=20260706"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260706"></script>
-<script src="assets/js/app.js?v=20260706"></script>
+<script src="assets/js/i18n.js?v=20260706b"></script>
+<script src="assets/js/config.js?v=20260706b"></script>
+<script src="assets/js/constants.js?v=20260706b"></script>
+<script src="assets/js/helpers.js?v=20260706b"></script>
+<script src="assets/js/storage.js?v=20260706b"></script>
+<script src="assets/js/parsers.js?v=20260706b"></script>
+<script src="assets/js/auth.js?v=20260706b"></script>
+<script src="assets/js/api.js?v=20260706b"></script>
+<script src="assets/js/ui/toast.js?v=20260706b"></script>
+<script src="assets/js/ui/modal.js?v=20260706b"></script>
+<script src="assets/js/ui/theme.js?v=20260706b"></script>
+<script src="assets/js/ui/navigation.js?v=20260706b"></script>
+<script src="assets/js/crud.js?v=20260706b"></script>
+<script src="assets/js/bulk.js?v=20260706b"></script>
+<script src="assets/js/views/dashboard.js?v=20260706b"></script>
+<script src="assets/js/views/tasks.js?v=20260706b"></script>
+<script src="assets/js/views/gantt.js?v=20260706b"></script>
+<script src="assets/js/views/performance.js?v=20260706b"></script>
+<script src="assets/js/views/quickview.js?v=20260706b"></script>
+<script src="assets/js/report.js?v=20260706b"></script>
+<script src="assets/js/kpi-data.js?v=20260706b"></script>
+<script src="assets/js/kpi-parser.js?v=20260706b"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260706b"></script>
+<script src="assets/js/views/action-plan.js?v=20260706b"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260706b"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260706b"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260706b"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260706b"></script>
+<script src="assets/js/initiatives.js?v=20260706b"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260706b"></script>
+<script src="assets/js/views/ai-chat.js?v=20260706b"></script>
+<script src="assets/js/views/user-management.js?v=20260706b"></script>
+<script src="assets/js/views/executive-summary.js?v=20260706b"></script>
+<script src="assets/js/views/bld-queue.js?v=20260706b"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260706b"></script>
+<script src="assets/js/app.js?v=20260706b"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

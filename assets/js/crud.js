@@ -80,7 +80,7 @@ function openTaskModal(task = null) {
   updateFilterDropdowns();
 
   if (task) {
-    document.getElementById('modalTitle').textContent = 'Chỉnh sửa Task';
+    document.getElementById('modalTitle').textContent = t('modal.task-edit-title');
     document.getElementById('modalSubtitle').textContent = `ID: ${task.id}`;
     document.getElementById('origId').value = task.id;
     document.getElementById('fId').value = task.id;
@@ -117,8 +117,8 @@ function openTaskModal(task = null) {
     document.getElementById('btnDelete').style.display = 'inline-flex';
     document.getElementById('btnClone').style.display = 'inline-flex';
   } else {
-    document.getElementById('modalTitle').textContent = 'Thêm Task mới';
-    document.getElementById('modalSubtitle').textContent = 'Điền thông tin công việc';
+    document.getElementById('modalTitle').textContent = t('modal.task-add-title');
+    document.getElementById('modalSubtitle').textContent = t('modal.task-add-sub');
     document.getElementById('origId').value = '';
     const _cu = getCurrentUser();
     const _defTeam = (_cu && _cu.team) || '';
@@ -235,11 +235,11 @@ async function handleSubmit(e) {
       const fresh = db.tasks.find(t => t.id === origId);
       if (fresh && _hasTaskChanged(fresh, _editOrigTask)) {
         const overwrite = await uiConfirm(
-          '⚠️ Xung đột cập nhật',
+          t('confirm.conflict-title'),
           `Task <strong>${esc(origId)}</strong> vừa được người khác chỉnh sửa sau khi bạn mở form.<br>` +
           `<small style="color:var(--text-3);">Phiên bản hiện tại: "${esc(fresh.name)}" · ${esc(fresh.state)}</small><br><br>` +
-          `Nhấn <strong>Ghi đè và lưu</strong> để lưu phiên bản của bạn, hoặc <strong>Hủy</strong> để xem lại dữ liệu mới.`,
-          'danger', 'Ghi đè và lưu'
+          t('confirm.overwrite-info'),
+          'danger', t('confirm.conflict-btn')
         );
         if (!overwrite) {
           openTaskModal(fresh); // reload form with server's latest version
@@ -254,9 +254,9 @@ async function handleSubmit(e) {
   }
 
   if (!confirmed) {
-    const ok = await uiConfirm('Xác nhận lưu Task',
+    const ok = await uiConfirm(t('confirm.save-title'),
       `<strong>${task.id}</strong> – ${task.name}<br><small style="color:var(--text-3);">Deadline: ${fmtDate(task.endDate)} · PIC: ${task.picRes} · ${task.state}</small>`,
-      'info', 'Lưu');
+      'info', t('confirm.save-btn'));
     if (!ok) return;
   }
 
@@ -274,7 +274,7 @@ async function handleSubmit(e) {
   const shouldReturn = !!_taskEditReturnId;
   closeTaskModal();
   if (shouldReturn) openTaskViewPopup(task.id);
-  toast(`Đã lưu task <strong>${task.id}</strong>!`, 'success');
+  toast(`${t('toast.task-saved')} <strong>${task.id}</strong>!`, 'success');
   renderAll();
 
   // Fire atomic GAS write in background (1 row, not all tasks)
@@ -284,7 +284,7 @@ async function handleSubmit(e) {
 async function deleteTask() {
   const id = document.getElementById('origId').value;
   if (!id) return;
-  const ok = await uiConfirm('Xóa Task', `Bạn có chắc chắn muốn xóa task <strong>${id}</strong>? Hành động này không thể hoàn tác.`, 'danger', 'Xóa');
+  const ok = await uiConfirm(t('modal.task-delete-title'), `Bạn có chắc chắn muốn xóa task <strong>${id}</strong>? Hành động này không thể hoàn tác.`, 'danger', t('confirm.delete-btn'));
   if (!ok) return;
 
   const taskDel = db.tasks.find(t => t.id === id);
@@ -296,7 +296,7 @@ async function deleteTask() {
   persist();
 
   closeTaskModal();
-  toast(`Đã xóa task ${id}.`, 'info');
+  toast(`${t('toast.task-deleted')} ${id}.`, 'info');
   renderAll();
 
   // Fire atomic GAS delete in background (1 row, not all tasks)
@@ -320,7 +320,7 @@ function cloneTask() {
   document.getElementById('fEnd').value = '';
   document.getElementById('btnDelete').style.display = 'none';
   document.getElementById('btnClone').style.display = 'none';
-  document.getElementById('modalTitle').textContent = 'Nhân bản Task mới';
+  document.getElementById('modalTitle').textContent = t('modal.task-clone-title');
   checkDupId(newId);
   document.getElementById('fName').focus();
   toast('Đã nhân bản. Điền tên & deadline mới rồi lưu.','info');
