@@ -1,3 +1,15 @@
+// Snapshot of task fields when edit modal was opened — used for concurrent-edit detection
+let _editOrigTask = null;
+
+function _hasTaskChanged(fresh, orig) {
+  return fresh.name     !== orig.name
+      || fresh.state    !== orig.state
+      || fresh.endDate  !== orig.endDate
+      || fresh.progress !== orig.progress
+      || fresh.picRes   !== orig.picRes
+      || fresh.picAcc   !== orig.picAcc;
+}
+
 function fmtTuanBC(el) {
   let v = el.value.replace(/[^\d]/g, '');
   if (!v) return;
@@ -50,6 +62,10 @@ function autoProgress() {
 }
 
 function openTaskModal(task = null) {
+  _editOrigTask = task
+    ? { id: task.id, name: task.name, state: task.state, endDate: task.endDate,
+        progress: task.progress, picRes: task.picRes, picAcc: task.picAcc }
+    : null;
   document.getElementById('taskForm').reset();
   document.getElementById('errId').classList.remove('visible');
   document.getElementById('fId').classList.remove('error');
@@ -162,6 +178,7 @@ function populatePicDropdown(selected) {
 function closeTaskModal() {
   document.getElementById('taskOverlay').classList.remove('open');
   _taskEditReturnId = null;
+  _editOrigTask = null;
 }
 
 function editTask(id) {
@@ -207,13 +224,43 @@ async function handleSubmit(e) {
     noiDungBLD: document.getElementById('fBLDTxt').value,
     yKienBLD: document.getElementById('fYKien').value,
   };
-  const ok = await uiConfirm('Xác nhận lưu Task',
-    `<strong>${task.id}</strong> – ${task.name}<br><small style="color:var(--text-3);">Deadline: ${fmtDate(task.endDate)} · PIC: ${task.picRes} · ${task.state}</small>`,
-    'info', 'Lưu');
-  if (!ok) return;
+  const origId = document.getElementById('origId').value;
+  let confirmed = false;
+
+  // Concurrent-edit conflict check: fetch latest GAS state before writing
+  // Prevents stale-cache overwrite when another user edited the same task since this modal opened
+  if (origId && _editOrigTask) {
+    try {
+      await readFromHandle();
+      const fresh = db.tasks.find(t => t.id === origId);
+      if (fresh && _hasTaskChanged(fresh, _editOrigTask)) {
+        const overwrite = await uiConfirm(
+          '⚠️ Xung đột cập nhật',
+          `Task <strong>${esc(origId)}</strong> vừa được người khác chỉnh sửa sau khi bạn mở form.<br>` +
+          `<small style="color:var(--text-3);">Phiên bản hiện tại: "${esc(fresh.name)}" · ${esc(fresh.state)}</small><br><br>` +
+          `Nhấn <strong>Ghi đè và lưu</strong> để lưu phiên bản của bạn, hoặc <strong>Hủy</strong> để xem lại dữ liệu mới.`,
+          'danger', 'Ghi đè và lưu'
+        );
+        if (!overwrite) {
+          openTaskModal(fresh); // reload form with server's latest version
+          return;
+        }
+        confirmed = true; // user confirmed via conflict dialog — skip normal confirm
+      }
+    } catch (conflictErr) {
+      // GAS unavailable — proceed without conflict check, same as before this fix
+      console.warn('[handleSubmit] conflict check skipped (GAS unavailable):', conflictErr.message);
+    }
+  }
+
+  if (!confirmed) {
+    const ok = await uiConfirm('Xác nhận lưu Task',
+      `<strong>${task.id}</strong> – ${task.name}<br><small style="color:var(--text-3);">Deadline: ${fmtDate(task.endDate)} · PIC: ${task.picRes} · ${task.state}</small>`,
+      'info', 'Lưu');
+    if (!ok) return;
+  }
 
   // Optimistic update: mutate local db + persist immediately
-  const origId = document.getElementById('origId').value;
   const lookupId = (origId && origId !== task.id) ? origId : task.id;
   const idx = db.tasks.findIndex(x => x.id === lookupId);
   if (idx > -1) db.tasks[idx] = task; else db.tasks.push(task);
