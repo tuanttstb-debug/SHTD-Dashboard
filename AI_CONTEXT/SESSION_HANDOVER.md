@@ -1,8 +1,86 @@
 # SESSION HANDOVER
+**Date**: 2026-07-06 (Session 39 — Phase 1 Bilingual UI VI/EN)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `5579193` ✅
+
+---
+
+## Tasks Completed (S39)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S39-T1 | Create `assets/js/i18n.js` — `t(key)`, `setLang(lang)`, `applyI18n()`, `TRANSLATIONS` (VI+EN, ~120 keys per lang); `_lang` persisted in `localStorage('shtd_lang')` | `assets/js/i18n.js` | `5579193` | ✅ |
+| S39-T2 | VI/EN toggle pill added to topbar (between dark mode btn and Quick View) — `id="langVI"` / `id="langEN"` with `.lang-btn.active` CSS; `.lang-toggle` pill style appended to `components.css` | `index.html`, `assets/css/components.css` | `5579193` | ✅ |
+| S39-T3 | `index.html` — `data-i18n` / `data-i18n-title` attributes on: nav section labels (6), nav item spans (5 Vietnamese ones), login overlay (brand, title, labels, btn), breadcrumb text spans, topbar icon-btn titles, dashboard KPI labels (6), dashboard section titles/table-headers (9), filter bar | `index.html` | `5579193` | ✅ |
+| S39-T4 | `navigation.js` — replace hardcoded `titles` map with `t('page.'+view)` in `navigateTo()`; `copyPath()` toasts use `t()` | `assets/js/ui/navigation.js` | `5579193` | ✅ |
+| S39-T5 | `crud.js` — modal titles, confirm dialog titles+buttons, key toasts all use `t()` | `assets/js/crud.js` | `5579193` | ✅ |
+| S39-T6 | `app.js` — `window.onload` syncs lang toggle active state + calls `applyI18n()` | `assets/js/app.js` | `5579193` | ✅ |
+| S39-T7 | `i18n.js` as FIRST `<script>` tag; `APP_VERSION = '6.6-i18n-phase1-20260706'`; cache-bust `?v=20260706b` (52 refs) | `index.html`, `assets/js/config.js` | `5579193` | ✅ |
+
+### i18n Architecture (S39)
+
+**Three text categories:**
+```
+1. UI Chrome → translate (nav, login, dashboard KPIs, topbar, modal titles, confirms, toasts)
+2. Data values in GAS → NEVER translate (states: Hoàn thành/Chưa bắt đầu, RAG: Xanh/Vàng/Đỏ)
+   → changing these would break all filter/display logic
+3. User content → NEVER translate (task names, notes, results)
+Banking terms: BLĐ, ĐVKD, Tuần BC kept as-is (confirmed Q2)
+```
+
+**Key functions in `assets/js/i18n.js`:**
+```javascript
+let _lang = localStorage.getItem('shtd_lang') || 'vi';
+function t(key) { return TRANSLATIONS[_lang][key] || TRANSLATIONS.vi[key] || key; }
+function applyI18n() { /* walk DOM, set textContent/placeholder/title via data-i18n attrs */ }
+function setLang(lang) { _lang=lang; localStorage.setItem('shtd_lang',lang); applyI18n(); renderAll(); }
+```
+
+**DOM attribute pattern:**
+- `data-i18n="key"` → sets `textContent`
+- `data-i18n-title="key"` → sets `title` tooltip
+- `data-i18n-placeholder="key"` → sets `placeholder` (for future use)
+
+**Load order:** `i18n.js` FIRST (line 1457 in index.html), before config.js. `window.onload` in app.js calls `applyI18n()` + syncs toggle button state.
+
+**Phase 2 (pending):** VIEW content labels — tasks filter bar, STATE_LABELS/RAG_LABELS display mapping, KPI view
+**Phase 3 (pending):** Full coverage — bld-queue, initiative-tracker, action-plan form labels
+
+### Commits S39
+```
+5579193  feat(i18n): Phase 1 bilingual UI – VI/EN language toggle
+```
+
+---
+
+## Blockers (S39)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Ctrl+Shift+R to pick up `?v=20260706b`. Badge: `v6.6-i18n-phase1-20260706`. |
+| **Smoke test i18n** | ⏳ Manual: switch to EN → nav "Overview"/"Management"/"Reports", dashboard "Total Tasks"/"Completed"/"In Progress"/"Overdue", login "Sign In". Switch back → VI restored. |
+
+---
+
+## Regression Risks (S39)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **`renderAll()` inside `setLang()`** | ⚪ LOW | If Phase 2+ adds `data-i18n` to dynamic-render containers, renderAll would overwrite them before `applyI18n()` is re-applied. Not a problem in Phase 1 (all data-i18n elements are static HTML). |
+| **`<option data-i18n>` value safety** | ⚪ NONE | `applyI18n()` sets `textContent`, not `value` attribute. The `value=""` and `value="__thisweek__"` are HTML attributes unaffected by textContent. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S38)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-06 (Session 38 — Concurrent Task Edit Overwrite Fix)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `90776ee` ✅
+**origin/main HEAD**: `9c7a674` ✅
 
 ---
 

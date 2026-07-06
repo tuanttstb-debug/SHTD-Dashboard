@@ -1,31 +1,37 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-06 (Session 38 — Concurrent Task Edit Overwrite Fix)
-**Context**: S38 — Fixed stale-cache overwrite bug: `handleSubmit` now calls `readFromHandle()` before saving an existing task, compares 6 key fields (name/state/endDate/progress/picRes/picAcc) with snapshot taken at modal open. If conflict detected, shows "⚠️ Xung đột cập nhật" dialog. Cache-bust `?v=20260706`. `APP_VERSION=6.6-conflict-detect-20260706`. Users need hard-reload (Ctrl+Shift+R).
+**Prepared**: 2026-07-06 (Session 39 — Phase 1 Bilingual UI VI/EN)
+**Context**: S39 — Implemented Phase 1 bilingual UI. New `assets/js/i18n.js` with `t()`, `setLang()`, `applyI18n()`, ~120 translation keys VI+EN. VI/EN toggle pill added to topbar. `data-i18n` attributes on nav, login, dashboard KPIs, breadcrumb, topbar titles. `navigation.js` page titles now use `t()`. `crud.js` modal/confirm/toast strings use `t()`. Cache-bust `?v=20260706b` (52 refs). `APP_VERSION=6.6-i18n-phase1-20260706`. Users need hard-reload (Ctrl+Shift+R).
 
 ---
 
-## ✅ COMPLETED S38
+## ✅ COMPLETED S39
 
-- [x] Debug concurrent task edit overwrite: root cause = `sheetUpsertTask` has no VERSION_CONFLICT check (unlike `sheetWrite`), first introduced as S30 atomic path (`90776ee`)
-- [x] Fix: `_editOrigTask` snapshot in `openTaskModal`; `_hasTaskChanged()` helper; conflict check block in `handleSubmit` before confirm dialog; GAS offline = silent fallback (`90776ee`)
-- [x] Cache-bust `?v=20260706` (51 occurrences); `APP_VERSION='6.6-conflict-detect-20260706'` (`90776ee`)
+- [x] Create `assets/js/i18n.js` — `t()`, `setLang()`, `applyI18n()`, TRANSLATIONS object VI+EN (~120 keys each), `_lang` in localStorage (`5579193`)
+- [x] Add VI/EN toggle pill to topbar; `.lang-toggle` + `.lang-btn` CSS in `components.css` (`5579193`)
+- [x] `index.html` — `data-i18n`/`data-i18n-title` on nav sections (6), nav items (5), login overlay, breadcrumb, topbar icon titles, dashboard KPI cards+section titles+filter bar (30+ elements) (`5579193`)
+- [x] `navigation.js` — `titles` map removed, replaced with `t('page.'+view)`; `copyPath()` toasts use `t()` (`5579193`)
+- [x] `crud.js` — modal titles, confirm titles+buttons, key toasts now use `t()` (`5579193`)
+- [x] `app.js` — `window.onload` calls `applyI18n()` + syncs lang toggle button active state (`5579193`)
+- [x] `i18n.js` as FIRST script tag; cache-bust `?v=20260706b` (52 occurrences); `APP_VERSION='6.6-i18n-phase1-20260706'` (`5579193`)
 
 ---
 
-## 🔲 TODO S39 — CANDIDATE TASKS
+## 🔲 TODO S40 — CANDIDATE TASKS
 
 > Ưu tiên: P1 = blocking / user-reported; P2 = next feature; P3 = tech debt / cleanup
 
 | Priority | Task | Notes |
 |---|---|---|
-| P1 | **Smoke test S38 conflict detection** | Manual: open same task in 2 tabs, save Tab B first, then save Tab A → expect "⚠️ Xung đột cập nhật" dialog. Verify: [Hủy] reloads form with Tab B's data; [Ghi đè và lưu] writes Tab A's version. Badge `v6.6-conflict-detect-20260706`. |
-| P1 | **Smoke test S37 on real iOS device** | Playwright 21/21 ✅ already confirmed. Confirm: (1) topbar always visible, not hidden behind URL bar; (2) toolbar buttons reachable; (3) sticky thead clears topbar when scrolling. |
+| P1 | **Smoke test S39 i18n** | Manual: switch to EN → nav shows "Overview"/"Management"/"Reports"/"Assistant"/"Administration"; nav items show "BLĐ Approval"/"Initiative Tracker"/"Task Management"/"User Management"; dashboard KPIs show "Total Tasks"/"Completed"/"In Progress"/"Overdue"; login shows "Sign In"/"Username"/"Password". Switch back → VI restored. Badge `v6.6-i18n-phase1-20260706`. |
+| P1 | **Smoke test S38 conflict detection** | Manual: open same task in 2 tabs, save Tab B first, then save Tab A → "⚠️ Xung đột cập nhật" dialog. Verify [Hủy] reloads form with Tab B's data; [Ghi đè và lưu] writes Tab A's version. |
+| P1 | **Smoke test S37 on real iOS device** | Playwright 21/21 ✅ confirmed. Real-device: topbar always visible, toolbar buttons reachable, sticky thead clears topbar when scrolling. |
 | P1 | **Smoke test S36 on production** | Confirm RAG dots gone for done/blocked; scope=all default; tuần BC filter; summary popup. |
+| P2 | **i18n Phase 2** | Translate VIEW content labels: tasks filter bar (Lọc theo, Tìm kiếm...), STATE_LABELS/RAG_LABELS display mapping (display-only, not raw data), KPI view labels. Requires careful display-layer mapping: `STATE_DISPLAY[lang][rawValue]` pattern so raw GAS values unchanged. |
 | P2 | **Case Pipeline — table view sort by giaTriTy** | Currently Kanban only. Table view has no sort on value column. |
 | P2 | **Case Pipeline — export to Excel** | No export button currently. Should follow pattern of task export. |
-| P2 | **Summary popup — pagination** | If `dbCases` grows large (>50 cases), popup body will be very long. Add simple pagination or max-height scroll indicator. |
+| P3 | **i18n Phase 3** | Full coverage: bld-queue, initiative-tracker, action-plan form labels. |
 | P3 | **TD-012: add CI** | 11 test suites, 255 assertions. `npm test` script + GitHub Actions would prevent regressions. |
-| P3 | **TD-004: global state** | `let _cpFilterTuanBC`, `let _cpScope`, etc. accumulate as module-level mutable state. Consider encapsulating per-view state in objects. |
+| P3 | **TD-004: global state** | `let _cpFilterTuanBC`, `let _cpScope`, etc. accumulate as module-level mutable state. |
 
 ---
 
