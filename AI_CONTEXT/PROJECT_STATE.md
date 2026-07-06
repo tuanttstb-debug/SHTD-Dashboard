@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
-**Version**: v6.6 (`APP_VERSION = '6.6-mobile-toolbar-fix-20260627c'`, `index.html ?v=20260627c`)
-**Remote HEAD (main)**: `6088832` — docs: S37 handover — mobile topbar fix + toolbar stack
+**As of**: 2026-07-06 (Session 38 — Concurrent Task Edit Overwrite Fix)
+**Version**: v6.6 (`APP_VERSION = '6.6-conflict-detect-20260706'`, `index.html ?v=20260706`)
+**Remote HEAD (main)**: `90776ee` — fix(crud): detect concurrent task edits before saving to prevent stale-cache overwrite
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1360 | ✅ S37: `?v=20260627c` (51 occurrences); S36: +`#cpSummaryOverlay` popup; +`cpFilterTuanBC` filter select; stat cards onclick; S35: `?v=20260624c` on 35 JS script tags + 16 CSS link tags |
+| `index.html` | ~1360 | ✅ S38: `?v=20260706` (51 occurrences); S37: fixed topbar position on mobile; S36: +`#cpSummaryOverlay` popup; +`cpFilterTuanBC` filter select; stat cards onclick |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,7 +35,7 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S37: APP_VERSION = '6.6-mobile-toolbar-fix-20260627c'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S38: APP_VERSION = '6.6-conflict-detect-20260706'; S30: new GS_WEBAPP_URL |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |
@@ -43,6 +43,7 @@
 | `assets/css/initiative.css` | ~360 | ✅ S23: .init-modal-grid → minmax(0,1fr) minmax(0,1fr) |
 | `assets/css/auth.css` | ~150 | ✅ S23: +body[data-role="User"] .lead-only { display:none !important } |
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
+| `assets/js/crud.js` | ~295 | ✅ S38: `_editOrigTask` snapshot + `_hasTaskChanged()` + conflict check in `handleSubmit` (readFromHandle before save, VERSION_CONFLICT dialog); S31: deleteTask adds to deletedIds; S29: atomic GAS writes |
 | `assets/js/views/tasks.js` | ~400 | ✅ S32: `sortBy()` now calls `selectedIds.clear()` — sort reorders tasks across pages, stale selections mislead user; S31: `onFilterChange()` clears sync; `toggleSelectAll` scoped to current page; S24: PA1; S23: +_populateFilterPic |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |

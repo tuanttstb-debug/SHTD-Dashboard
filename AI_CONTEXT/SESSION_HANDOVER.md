@@ -1,4 +1,144 @@
 # SESSION HANDOVER
+**Date**: 2026-07-06 (Session 38 — Concurrent Task Edit Overwrite Fix)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `90776ee` ✅
+
+---
+
+## Tasks Completed (S38)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S38-T1 | Debug + fix concurrent task edit overwrite bug: `handleSubmit` now calls `readFromHandle()` before saving to detect if another user modified the same task since the modal was opened; if conflict detected, shows "⚠️ Xung đột cập nhật" dialog with [Ghi đè và lưu] / [Hủy] | `assets/js/crud.js`, `assets/js/config.js`, `index.html` | `90776ee` | ✅ |
+
+### Root Cause Analysis (S38)
+
+**Bug: Task overwrite — User B silently clobbers User A's changes**
+
+Audit log evidence:
+```
+11:16:21  LienPK   task-upsert  BL1-028 | Chạy lại bộ chỉ tiêu cập nhật phân loại ĐVKD
+11:43:02  DungNP3  task-upsert  BL1-028 | Bộ câu hỏi CT UDLS ngành trọng tâm để CBBH thi
+```
+
+DungNP3 had the app open before 11:16. She edited BL1-028 from her stale local cache ("Bộ câu hỏi...") without knowing LienPK had already renamed it. Her save overwrote LienPK's changes.
+
+**Root cause chain:**
+```
+handleSubmit
+  → _gasTaskUpsert(task, origId)           ← fire-and-forget, no version guard
+      → gasPost({ action: 'task-upsert' })
+          → sheetUpsertTask(row, taskId)   ← BLIND OVERWRITE, no clientTs check
+              sheet.getRange(...).setValues([rowValues])  ← last write wins
+```
+
+Compare with `sheetWrite` (full-rewrite path) which already has:
+```javascript
+if (String(clientTs) !== String(serverTs)) throw new Error('VERSION_CONFLICT');
+```
+
+`sheetUpsertTask` (added in S30 for atomic per-row writes) never received the same guard.
+
+**Why it "came back":**
+- S29: `handleSubmit → syncAction()` → used `sheetWrite` (has VERSION_CONFLICT)
+- S30: `handleSubmit → _gasTaskUpsert()` → uses `sheetUpsertTask` (no check) → bug re-introduced
+
+### Fix Applied (S38)
+
+**`assets/js/crud.js` — 3 additions + 1 modification:**
+
+```javascript
+// 1. Module-level snapshot
+let _editOrigTask = null;
+
+// 2. Comparison helper
+function _hasTaskChanged(fresh, orig) {
+  return fresh.name     !== orig.name
+      || fresh.state    !== orig.state
+      || fresh.endDate  !== orig.endDate
+      || fresh.progress !== orig.progress
+      || fresh.picRes   !== orig.picRes
+      || fresh.picAcc   !== orig.picAcc;
+}
+
+// 3. openTaskModal: snapshot on edit open
+_editOrigTask = task
+  ? { id, name, state, endDate, progress, picRes, picAcc }
+  : null;
+
+// 4. closeTaskModal: reset
+_editOrigTask = null;
+```
+
+**`handleSubmit` — conflict check block (before confirm dialog):**
+```javascript
+// For existing tasks only (origId is set):
+if (origId && _editOrigTask) {
+  await readFromHandle();               // fetch latest GAS state
+  const fresh = db.tasks.find(t => t.id === origId);
+  if (fresh && _hasTaskChanged(fresh, _editOrigTask)) {
+    const overwrite = await uiConfirm('⚠️ Xung đột cập nhật', ...);
+    if (!overwrite) {
+      openTaskModal(fresh);             // reload form with server data
+      return;
+    }
+    confirmed = true;                   // skip normal confirm
+  }
+}
+// Falls back silently if GAS is offline
+```
+
+**Flow:**
+- No conflict detected (normal case): transparent, proceeds to normal confirm dialog
+- Conflict detected: single dialog "⚠️ Xung đột" replaces the normal confirm
+  - [Ghi đè và lưu] → proceeds to save user's version
+  - [Hủy] → `openTaskModal(fresh)` — form reloads with server's latest data
+- GAS offline: `catch` swallows error, save proceeds without check (same as before)
+- New tasks (`origId = ''`): check is skipped entirely
+
+**No GAS changes required.** `sheetUpsertTask` remains unchanged — the fix is fully frontend.
+
+### Trade-offs (S38)
+
+| Item | Detail |
+|---|---|
+| **GAS quota** | Every task EDIT save now incurs 1 extra `readFromHandle()` (full-table read). Task ADD saves unaffected. ~1 extra GAS call per edit. Acceptable at current team size. |
+| **Latency** | ~1-2s pause after form submit before confirm dialog appears (GAS read). UX: user clicks Lưu, brief pause, then confirm appears. Acceptable. |
+| **False negatives** | Conflict check compares 6 key fields. If User A changed only `result` or `nextPlan` (not in the 6), no conflict is raised and User B's save proceeds. These fields are lower-risk (weekly updates, not structural). Acceptable trade-off. |
+| **False positives** | None — check is per-task (not table-level), so another user editing a different task does not trigger this conflict. |
+
+### Commits S38
+```
+90776ee  fix(crud): detect concurrent task edits before saving to prevent stale-cache overwrite
+```
+
+---
+
+## Blockers (S38)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Users must Ctrl+Shift+R to pick up `?v=20260706`. Badge shows `v6.6-conflict-detect-20260706`. |
+| **No Playwright test** | ⏳ Concurrent edit simulation requires 2 browser contexts — complex to automate. Manual verification: open task in Tab A, open same task in Tab B, save B first, then save A → expect conflict dialog in A. |
+
+---
+
+## Regression Risks (S38)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **Extra GAS read per task edit** | ⚪ LOW | `readFromHandle()` adds ~1-2s to every existing-task save. No functional regression. GAS quota impact negligible at current usage. |
+| **`_editOrigTask` not reset between modals** | ⚪ LOW | `closeTaskModal()` resets `_editOrigTask = null`. `openTaskModal(null)` for Add also sets `_editOrigTask = null`. All paths covered. |
+| **`readFromHandle()` side-effects** | ⚪ LOW | Updates `db.tasks`, `db.initiatives`, `db._serverTs`, calls `persist()`. Modal stays open (no `renderAll()`). Form DOM is unchanged. User's typed values not lost. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S37)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-06-27 (Session 37 — Mobile Responsive Fix)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

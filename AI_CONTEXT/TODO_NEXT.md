@@ -1,6 +1,43 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-06-27 (Session 37 — Mobile Responsive Fix + Playwright verification)
-**Context**: S37 — Mobile responsive fix: topbar always visible via position:fixed, toolbar buttons stack vertically. Cache-bust `?v=20260627c`. `APP_VERSION=6.6-mobile-toolbar-fix-20260627c`. Users need hard-reload (Ctrl+Shift+R). Playwright smoke test `verify_mobile_s37.mjs` **21/21 PASS**. Real-device iOS Safari verification still pending.
+**Prepared**: 2026-07-06 (Session 38 — Concurrent Task Edit Overwrite Fix)
+**Context**: S38 — Fixed stale-cache overwrite bug: `handleSubmit` now calls `readFromHandle()` before saving an existing task, compares 6 key fields (name/state/endDate/progress/picRes/picAcc) with snapshot taken at modal open. If conflict detected, shows "⚠️ Xung đột cập nhật" dialog. Cache-bust `?v=20260706`. `APP_VERSION=6.6-conflict-detect-20260706`. Users need hard-reload (Ctrl+Shift+R).
+
+---
+
+## ✅ COMPLETED S38
+
+- [x] Debug concurrent task edit overwrite: root cause = `sheetUpsertTask` has no VERSION_CONFLICT check (unlike `sheetWrite`), first introduced as S30 atomic path (`90776ee`)
+- [x] Fix: `_editOrigTask` snapshot in `openTaskModal`; `_hasTaskChanged()` helper; conflict check block in `handleSubmit` before confirm dialog; GAS offline = silent fallback (`90776ee`)
+- [x] Cache-bust `?v=20260706` (51 occurrences); `APP_VERSION='6.6-conflict-detect-20260706'` (`90776ee`)
+
+---
+
+## 🔲 TODO S39 — CANDIDATE TASKS
+
+> Ưu tiên: P1 = blocking / user-reported; P2 = next feature; P3 = tech debt / cleanup
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S38 conflict detection** | Manual: open same task in 2 tabs, save Tab B first, then save Tab A → expect "⚠️ Xung đột cập nhật" dialog. Verify: [Hủy] reloads form with Tab B's data; [Ghi đè và lưu] writes Tab A's version. Badge `v6.6-conflict-detect-20260706`. |
+| P1 | **Smoke test S37 on real iOS device** | Playwright 21/21 ✅ already confirmed. Confirm: (1) topbar always visible, not hidden behind URL bar; (2) toolbar buttons reachable; (3) sticky thead clears topbar when scrolling. |
+| P1 | **Smoke test S36 on production** | Confirm RAG dots gone for done/blocked; scope=all default; tuần BC filter; summary popup. |
+| P2 | **Case Pipeline — table view sort by giaTriTy** | Currently Kanban only. Table view has no sort on value column. |
+| P2 | **Case Pipeline — export to Excel** | No export button currently. Should follow pattern of task export. |
+| P2 | **Summary popup — pagination** | If `dbCases` grows large (>50 cases), popup body will be very long. Add simple pagination or max-height scroll indicator. |
+| P3 | **TD-012: add CI** | 11 test suites, 255 assertions. `npm test` script + GitHub Actions would prevent regressions. |
+| P3 | **TD-004: global state** | `let _cpFilterTuanBC`, `let _cpScope`, etc. accumulate as module-level mutable state. Consider encapsulating per-view state in objects. |
+
+---
+
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
+
+```
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
+```
+
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
 
