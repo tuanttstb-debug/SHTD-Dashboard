@@ -9,7 +9,7 @@
  * AP6:  RAG filter — only Red tasks/cases shown when RAG=Red
  * AP7:  Accordion toggle — body collapses and expands on header click
  * AP8:  Initiatives section appears below kanban
- * AP9:  Team dropdown filter — selecting BL2 shows only BL2 items
+ * AP9:  Team dropdown filter — selecting BL shows only BL items
  * AP10: Extended criteria — Blocked task (highlight=N) auto-added with Auto badge
  * AP11: Click task card → #taskViewOverlay opens
  * AP12: Click case card → #cpViewOverlay opens
@@ -59,7 +59,7 @@ const outMonth = `${Y - 1}-12-31`;                    // last year — outside a
 
 /* ── Mock data ── */
 const mkTask = (o) => Object.assign({
-  id: 'T-001', name: 'Task Test', team: 'BL1', highlight: 'Y',
+  id: 'T-001', name: 'Task Test', team: 'BL', highlight: 'Y',
   state: 'Đang thực hiện', status: 'Green', progress: '50',
   endDate: inMonth, startDate: `${Y}-01-01`,
   initiative: '', milestone: '', type: 'Task', category: '',
@@ -69,7 +69,7 @@ const mkTask = (o) => Object.assign({
 }, o);
 
 const mkCase = (o) => Object.assign({
-  id: 'CP-001', caseName: 'Case Test', team: 'BL1', pic: 'TuanTT4',
+  id: 'CP-001', caseName: 'Case Test', team: 'BL', pic: 'TuanTT4',
   highlight: 'Y', stage: 'Đang phân tích', rag: 'Green',
   deadline: inMonth, startDate: `${Y}-01-01`,
   dvkd: '', loaiHinh: 'Món', complexity: 'Thấp',
@@ -79,33 +79,33 @@ const mkCase = (o) => Object.assign({
 
 const mkInit = (o) => Object.assign({
   id: 'INIT-001', name: 'Initiative Test', type: 'initiative',
-  category: '', accountable: 'DungBL1',
+  category: '', accountable: 'DungBL',
   startDate: `${Y}-01-01`, deadline: `${Y}-12-31`,
   pct: 40, status: 'Active', milestoneTracking: '',
   milestoneDeadline: '', kpiTarget: '', notes: '', docLink: '', parentId: null,
 }, o);
 
 const MOCK_TASKS = [
-  mkTask({ id: 'BL1-001', name: 'BL1 Highlight Task', team: 'BL1', highlight: 'Y', endDate: inMonth, status: 'Green' }),
-  mkTask({ id: 'BL1-RED', name: 'BL1 Red Task',       team: 'BL1', highlight: 'Y', endDate: inMonth, status: 'Red' }),
-  mkTask({ id: 'BL2-001', name: 'BL2 Highlight Task', team: 'BL2', highlight: 'Y', endDate: inMonth, status: 'Green', state: 'Hoàn thành' }),
-  mkTask({ id: 'BL1-OUT', name: 'BL1 Outside Period', team: 'BL1', highlight: 'Y', endDate: outMonth, status: 'Green', state: 'Hoàn thành' }),
-  mkTask({ id: 'BL1-BLK', name: 'BL1 Blocked Auto',  team: 'BL1', highlight: 'N', endDate: inMonth,  status: 'Red', state: 'Blocked' }),
+  mkTask({ id: 'BL-001', name: 'BL Highlight Task',   team: 'BL',  highlight: 'Y', endDate: inMonth,  status: 'Green' }),
+  mkTask({ id: 'BL-RED', name: 'BL Red Task',          team: 'BL',  highlight: 'Y', endDate: inMonth,  status: 'Red' }),
+  mkTask({ id: 'CV1-001', name: 'CV1 Highlight Task',  team: 'CV1', highlight: 'Y', endDate: inMonth,  status: 'Green' }),
+  mkTask({ id: 'BL-OUT', name: 'BL Outside Period',    team: 'BL',  highlight: 'Y', endDate: outMonth, status: 'Green', state: 'Hoàn thành' }),
+  mkTask({ id: 'BL-BLK', name: 'BL Blocked Auto',      team: 'BL',  highlight: 'N', endDate: inMonth,  status: 'Red', state: 'Blocked' }),
 ];
 
 const MOCK_CASES = [
-  mkCase({ id: 'CP-001', caseName: 'Case BL1 Test', team: 'BL1', highlight: 'Y', deadline: inMonth, rag: 'Green' }),
+  mkCase({ id: 'CP-001', caseName: 'Case BL Test', team: 'BL', highlight: 'Y', deadline: inMonth, rag: 'Green' }),
 ];
 
 const MOCK_INITS = [
-  mkInit({ id: 'INIT-BL1', name: 'Initiative BL1', accountable: 'DungBL1' }),
-  mkInit({ id: 'INIT-BL2', name: 'Initiative BL2', accountable: 'DungBL2' }),
+  mkInit({ id: 'INIT-BL',  name: 'Initiative BL',  accountable: 'DungBL' }),
+  mkInit({ id: 'INIT-CV1', name: 'Initiative CV1', accountable: 'DungCV1' }),
 ];
 
 const MOCK_USERS = [
-  { Username: 'TuanTT4', Display_Name: 'Tuấn TT', Role: 'Admin',  Team: 'Số',  Email: '', Active: 'TRUE' },
-  { Username: 'DungBL1', Display_Name: 'Dung BL1', Role: 'User',  Team: 'BL1', Email: '', Active: 'TRUE' },
-  { Username: 'DungBL2', Display_Name: 'Dung BL2', Role: 'User',  Team: 'BL2', Email: '', Active: 'TRUE' },
+  { Username: 'TuanTT4', Display_Name: 'Tuấn TT',  Role: 'Admin', Team: 'Số',  Email: '', Active: 'TRUE' },
+  { Username: 'DungBL',  Display_Name: 'Dung BL',   Role: 'User',  Team: 'BL',  Email: '', Active: 'TRUE' },
+  { Username: 'DungCV1', Display_Name: 'Dung CV1',  Role: 'User',  Team: 'CV1', Email: '', Active: 'TRUE' },
 ];
 
 /* ── Browser + GAS mock ── */
@@ -209,10 +209,10 @@ await loadApp();
 /* AP3: Period filter — task outside month hidden when "Tháng này" active */
 {
   const html = await page.$eval('#actionPlanRoot', el => el.innerHTML);
-  // BL1-OUT has endDate last year → should NOT be in current month view
-  const hasOutside = html.includes('BL1 Outside Period');
-  // BL1-001 has endDate this month → SHOULD appear
-  const hasInside  = html.includes('BL1 Highlight Task');
+  // BL-OUT has endDate last year → should NOT be in current month view
+  const hasOutside = html.includes('BL Outside Period');
+  // BL-001 has endDate this month → SHOULD appear
+  const hasInside  = html.includes('BL Highlight Task');
   if (!hasOutside) PASS('AP3a', 'Task outside period (last year) correctly hidden');
   else FAIL('AP3a', 'Task outside period incorrectly shown');
   if (hasInside) PASS('AP3b', 'Task in current month correctly shown');
@@ -222,15 +222,15 @@ await loadApp();
 /* AP4: Admin grouped view — accordion headers per team */
 {
   const accordions = await page.$$('.ap-accordion');
-  // Should see BL1 and BL2 accordions (both have data this month)
+  // Should see BL and CV1 accordions (both have data this month)
   const html = await page.$eval('#actionPlanRoot', el => el.innerHTML);
-  const hasBL1 = html.includes('>BL1<');
-  const hasBL2 = html.includes('>BL2<');
+  const hasBL  = html.includes('>BL<');
+  const hasCV1 = html.includes('>CV1<');
   await SS(page, 'ap4_grouped_view');
   if (accordions.length >= 2) PASS('AP4a', `Accordion count ≥ 2 (${accordions.length} found)`);
   else FAIL('AP4a', `Expected ≥ 2 accordions, got ${accordions.length}`);
-  if (hasBL1 && hasBL2) PASS('AP4b', 'BL1 and BL2 accordion headers present');
-  else FAIL('AP4b', `BL1: ${hasBL1}, BL2: ${hasBL2}`);
+  if (hasBL && hasCV1) PASS('AP4b', 'BL and CV1 accordion headers present');
+  else FAIL('AP4b', `BL: ${hasBL}, CV1: ${hasCV1}`);
   // Count badges should be present
   const counts = await page.$$('.ap-acc-count');
   if (counts.length >= 2) PASS('AP4c', 'Team count badges rendered');
@@ -255,24 +255,24 @@ await loadApp();
   await page.waitForTimeout(400);
   await SS(page, 'ap6_rag_red');
   const html = await page.$eval('#actionPlanRoot', el => el.innerHTML);
-  const hasGreenTask = html.includes('BL1 Highlight Task') && !html.includes('BL1 Highlight Task');
-  // BL1-RED (Red) should show; BL2-001 (Green, Hoàn thành) should NOT
-  const showsRedTask  = html.includes('BL1 Red Task');
-  const hidesGreenBL2 = !html.includes('BL2 Highlight Task');
+  const hasGreenTask = html.includes('BL Highlight Task') && !html.includes('BL Highlight Task');
+  // BL-RED (Red) should show; CV1-001 (Green) should NOT
+  const showsRedTask  = html.includes('BL Red Task');
+  const hidesGreenCV1 = !html.includes('CV1 Highlight Task');
   if (showsRedTask) PASS('AP6a', 'Red task shown when RAG=Red filter active');
   else FAIL('AP6a', 'Red task not shown with RAG=Red filter');
-  if (hidesGreenBL2) PASS('AP6b', 'Green task from BL2 hidden when RAG=Red');
-  else FAIL('AP6b', 'Green task from BL2 still visible with RAG=Red');
+  if (hidesGreenCV1) PASS('AP6b', 'Green task from CV1 hidden when RAG=Red');
+  else FAIL('AP6b', 'Green task from CV1 still visible with RAG=Red');
   // Reset RAG filter
   await page.click('.ap-rag-btn:first-child');
   await page.waitForTimeout(400);
 }
 
-/* AP7: Accordion toggle — first BL1 accordion is open, click to collapse */
+/* AP7: Accordion toggle — first BL accordion is open, click to collapse */
 {
-  // Find BL1 accordion header and its body
-  const bl1Header = await page.$('.ap-accordion-header[data-team="BL1"]');
-  if (!bl1Header) { FAIL('AP7', 'BL1 accordion header not found'); }
+  // Find BL accordion header and its body
+  const bl1Header = await page.$('.ap-accordion-header[data-team="BL"]');
+  if (!bl1Header) { FAIL('AP7', 'BL accordion header not found'); }
   else {
     const tid = await page.evaluate(h => {
       const acc = h.closest('.ap-accordion');
@@ -305,23 +305,23 @@ await loadApp();
   else FAIL('AP8b', 'No .ap-init-row found');
 }
 
-/* AP9: Team dropdown filter — select BL2 → only BL2 items */
+/* AP9: Team dropdown filter — select BL → only BL items */
 {
-  // Select BL2 in the team dropdown (Admin only)
+  // Select BL in the team dropdown (Admin only)
   const teamSel = await page.$('.ap-filter-bar select');
   if (!teamSel) { FAIL('AP9', 'Team dropdown not found (Admin required)'); }
   else {
-    await teamSel.selectOption('BL2');
+    await teamSel.selectOption('BL');
     await page.waitForTimeout(400);
-    await SS(page, 'ap9_team_bl2');
+    await SS(page, 'ap9_team_bl');
     const html = await page.$eval('#actionPlanRoot', el => el.innerHTML);
-    const showsBL2 = html.includes('BL2 Highlight Task');
-    const hidesBL1 = !html.includes('BL1 Highlight Task');
-    if (showsBL2) PASS('AP9a', 'BL2 task shown after team filter = BL2');
-    else FAIL('AP9a', 'BL2 task not shown after team filter');
-    if (hidesBL1) PASS('AP9b', 'BL1 task hidden after team filter = BL2');
-    else FAIL('AP9b', 'BL1 task still visible after team filter = BL2');
-    // Re-query: selectOption('BL2') triggered re-render so teamSel handle is stale
+    const showsBL   = html.includes('BL Highlight Task');
+    const hidesCV1  = !html.includes('CV1 Highlight Task');
+    if (showsBL) PASS('AP9a', 'BL task shown after team filter = BL');
+    else FAIL('AP9a', 'BL task not shown after team filter');
+    if (hidesCV1) PASS('AP9b', 'CV1 task hidden after team filter = BL');
+    else FAIL('AP9b', 'CV1 task still visible after team filter = BL');
+    // Re-query: selectOption('BL') triggered re-render so teamSel handle is stale
     const teamSelReset = await page.$('.ap-filter-bar select');
     if (teamSelReset) await teamSelReset.selectOption('');
     await page.waitForTimeout(400);
@@ -331,8 +331,8 @@ await loadApp();
 /* AP10: Extended criteria — Blocked task (highlight=N) appears with Auto badge */
 {
   const html = await page.$eval('#actionPlanRoot', el => el.innerHTML);
-  // BL1-BLK is Blocked + highlight=N → should be auto-added
-  const showsBlocked = html.includes('BL1 Blocked Auto');
+  // BL-BLK is Blocked + highlight=N → should be auto-added
+  const showsBlocked = html.includes('BL Blocked Auto');
   const hasAutoBadge = html.includes('ap-auto-badge');
   if (showsBlocked) PASS('AP10a', 'Blocked task (highlight=N) auto-added to kanban');
   else FAIL('AP10a', 'Blocked task (highlight=N) missing from kanban');
@@ -342,7 +342,7 @@ await loadApp();
 
 /* AP11: Click task card → taskViewOverlay opens */
 {
-  // Find a task card and click it (first one in BL1 kanban)
+  // Find a task card and click it (first one in BL kanban)
   const taskCard = await page.$('.kanban-card:not(.kanban-card-case)');
   if (!taskCard) { FAIL('AP11', 'No task kanban card found to click'); }
   else {

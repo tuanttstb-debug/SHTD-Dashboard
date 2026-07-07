@@ -8,22 +8,22 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/base.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/components.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/table.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260706b">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260706b">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260707">
+<link rel="stylesheet" href="assets/css/base.css?v=20260707">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260707">
+<link rel="stylesheet" href="assets/css/components.css?v=20260707">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260707">
+<link rel="stylesheet" href="assets/css/table.css?v=20260707">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260707">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260707">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260707">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260707">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260707">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260707">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260707">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260707">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260707">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260707">
 
 </head>
 <body>
@@ -709,7 +709,7 @@
             <select id="filterTeam" class="form-control" onchange="onFilterTeamChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
               <option>Số</option><option>CV1</option><option>CV2</option>
-              <option>BL1</option><option>BL2</option>
+              <option>BL</option>
               <option>PTKD MB</option><option>PTKD MN</option><option>QLDM</option>
             </select>
           </div>
@@ -798,7 +798,7 @@
           <div style="display:flex;gap:8px;align-items:center;">
             <select id="ganttFilterTeam" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="renderGantt()">
               <option value="">Tất cả Team</option>
-              <option>Số</option><option>CV1</option><option>CV2</option><option>BL1</option><option>BL2</option>
+              <option>Số</option><option>CV1</option><option>CV2</option><option>BL</option>
             </select>
             <select id="ganttFilterInit" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="renderGantt()">
               <option value="">Tất cả Initiative</option>
@@ -1454,42 +1454,42 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260706b"></script>
-<script src="assets/js/config.js?v=20260706b"></script>
-<script src="assets/js/constants.js?v=20260706b"></script>
-<script src="assets/js/helpers.js?v=20260706b"></script>
-<script src="assets/js/storage.js?v=20260706b"></script>
-<script src="assets/js/parsers.js?v=20260706b"></script>
-<script src="assets/js/auth.js?v=20260706b"></script>
-<script src="assets/js/api.js?v=20260706b"></script>
-<script src="assets/js/ui/toast.js?v=20260706b"></script>
-<script src="assets/js/ui/modal.js?v=20260706b"></script>
-<script src="assets/js/ui/theme.js?v=20260706b"></script>
-<script src="assets/js/ui/navigation.js?v=20260706b"></script>
-<script src="assets/js/crud.js?v=20260706b"></script>
-<script src="assets/js/bulk.js?v=20260706b"></script>
-<script src="assets/js/views/dashboard.js?v=20260706b"></script>
-<script src="assets/js/views/tasks.js?v=20260706b"></script>
-<script src="assets/js/views/gantt.js?v=20260706b"></script>
-<script src="assets/js/views/performance.js?v=20260706b"></script>
-<script src="assets/js/views/quickview.js?v=20260706b"></script>
-<script src="assets/js/report.js?v=20260706b"></script>
-<script src="assets/js/kpi-data.js?v=20260706b"></script>
-<script src="assets/js/kpi-parser.js?v=20260706b"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260706b"></script>
-<script src="assets/js/views/action-plan.js?v=20260706b"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260706b"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260706b"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260706b"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260706b"></script>
-<script src="assets/js/initiatives.js?v=20260706b"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260706b"></script>
-<script src="assets/js/views/ai-chat.js?v=20260706b"></script>
-<script src="assets/js/views/user-management.js?v=20260706b"></script>
-<script src="assets/js/views/executive-summary.js?v=20260706b"></script>
-<script src="assets/js/views/bld-queue.js?v=20260706b"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260706b"></script>
-<script src="assets/js/app.js?v=20260706b"></script>
+<script src="assets/js/i18n.js?v=20260707"></script>
+<script src="assets/js/config.js?v=20260707"></script>
+<script src="assets/js/constants.js?v=20260707"></script>
+<script src="assets/js/helpers.js?v=20260707"></script>
+<script src="assets/js/storage.js?v=20260707"></script>
+<script src="assets/js/parsers.js?v=20260707"></script>
+<script src="assets/js/auth.js?v=20260707"></script>
+<script src="assets/js/api.js?v=20260707"></script>
+<script src="assets/js/ui/toast.js?v=20260707"></script>
+<script src="assets/js/ui/modal.js?v=20260707"></script>
+<script src="assets/js/ui/theme.js?v=20260707"></script>
+<script src="assets/js/ui/navigation.js?v=20260707"></script>
+<script src="assets/js/crud.js?v=20260707"></script>
+<script src="assets/js/bulk.js?v=20260707"></script>
+<script src="assets/js/views/dashboard.js?v=20260707"></script>
+<script src="assets/js/views/tasks.js?v=20260707"></script>
+<script src="assets/js/views/gantt.js?v=20260707"></script>
+<script src="assets/js/views/performance.js?v=20260707"></script>
+<script src="assets/js/views/quickview.js?v=20260707"></script>
+<script src="assets/js/report.js?v=20260707"></script>
+<script src="assets/js/kpi-data.js?v=20260707"></script>
+<script src="assets/js/kpi-parser.js?v=20260707"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260707"></script>
+<script src="assets/js/views/action-plan.js?v=20260707"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260707"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260707"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260707"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260707"></script>
+<script src="assets/js/initiatives.js?v=20260707"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260707"></script>
+<script src="assets/js/views/ai-chat.js?v=20260707"></script>
+<script src="assets/js/views/user-management.js?v=20260707"></script>
+<script src="assets/js/views/executive-summary.js?v=20260707"></script>
+<script src="assets/js/views/bld-queue.js?v=20260707"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260707"></script>
+<script src="assets/js/app.js?v=20260707"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

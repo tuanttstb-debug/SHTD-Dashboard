@@ -59,21 +59,21 @@ const WK_PREV2 = weekLabel(-14);
 
 const MOCK_CASES = [
   {
-    id:'CP-001', tuanBC: WK_THIS,  team:'BL1', pic:'TuanTT4',
+    id:'CP-001', tuanBC: WK_THIS,  team:'BL', pic:'TuanTT4',
     dvkd:'HCM', caseName:'Case A – Active sắp đến hạn', loaiHinh:'Món',
     complexity:'Cao', phuongAn:'', giaTriTy:5, stage:'Đang phân tích',
     vuongMac:'', nextStep:'', startDate: relDate(-30), deadline: relDate(30),
     rag:'', canBLD:'Y', highlight:'N', ghiChu:'', yKienBLD:'',
   },
   {
-    id:'CP-002', tuanBC: WK_PREV,  team:'BL2', pic:'DungLQ1',
+    id:'CP-002', tuanBC: WK_PREV,  team:'BL', pic:'DungLQ1',
     dvkd:'HN', caseName:'Case B – Active QUÁ HẠN', loaiHinh:'Dự án',
     complexity:'Trung bình', phuongAn:'', giaTriTy:8, stage:'Chờ TTĐ/Thẩm định',
     vuongMac:'', nextStep:'', startDate: relDate(-90), deadline: relDate(-10),
     rag:'', canBLD:'N', highlight:'N', ghiChu:'', yKienBLD:'',
   },
   {
-    id:'CP-003', tuanBC: WK_THIS,  team:'BL1', pic:'TuanTT4',
+    id:'CP-003', tuanBC: WK_THIS,  team:'BL', pic:'TuanTT4',
     dvkd:'HCM', caseName:'Case C – Đã phê duyệt (done, deadline qua)', loaiHinh:'Món',
     complexity:'Thấp', phuongAn:'', giaTriTy:12, stage:'Đã phê duyệt',
     vuongMac:'', nextStep:'', startDate: relDate(-60), deadline: relDate(-20),
@@ -87,7 +87,7 @@ const MOCK_CASES = [
     rag:'', canBLD:'N', highlight:'N', ghiChu:'', yKienBLD:'',
   },
   {
-    id:'CP-005', tuanBC: WK_THIS,  team:'BL2', pic:'DungLQ1',
+    id:'CP-005', tuanBC: WK_THIS,  team:'BL', pic:'DungLQ1',
     dvkd:'HN', caseName:'Case E – Tạm dừng/Blocked (no overdue)', loaiHinh:'Dự án',
     complexity:'Cao', phuongAn:'', giaTriTy:3, stage:'Tạm dừng/Blocked',
     vuongMac:'Blocked vì thiếu hồ sơ', nextStep:'', startDate: relDate(-45), deadline: relDate(-5),
@@ -102,7 +102,7 @@ const MOCK_CASES = [
   },
 ];
 
-const MOCK_USER = { username:'TuanTT4', role:'User', team:'BL1', displayName:'Tuấn TT' };
+const MOCK_USER = { username:'TuanTT4', role:'User', team:'BL', displayName:'Tuấn TT' };
 
 /* ════════════════════════════════════════ */
 const browser  = await chromium.launch({ headless: true });

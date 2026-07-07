@@ -35,7 +35,7 @@ async function injectAuth(page) {
         { id:'CV-001', name:'Task A', state:'Đang làm', rag:'Xanh', team:'Số',
           picRes:'TuanTT4', picAcc:'TuanTT4', highlight:'Y',
           deadline:'2026-12-31', startDate:'2026-01-01', progress:50 },
-        { id:'CV-002', name:'Task B', state:'Đang làm', rag:'Đỏ', team:'BL1',
+        { id:'CV-002', name:'Task B', state:'Đang làm', rag:'Đỏ', team:'BL',
           picRes:'DungLQ1', picAcc:'DungLQ1', highlight:'Y',
           deadline:'2026-01-01', startDate:'2026-01-01', progress:10 }
       ],
