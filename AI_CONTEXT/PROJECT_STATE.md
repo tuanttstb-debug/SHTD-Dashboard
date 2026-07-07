@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-06 (Session 38 — Concurrent Task Edit Overwrite Fix)
-**Version**: v6.6 (`APP_VERSION = '6.6-conflict-detect-20260706'`, `index.html ?v=20260706`)
-**Remote HEAD (main)**: `90776ee` — fix(crud): detect concurrent task edits before saving to prevent stale-cache overwrite
+**As of**: 2026-07-07 (Session 40 — Team BL1+BL2 Merge → BL)
+**Version**: v6.6 (`APP_VERSION = '6.6-team-bl-merge-20260707'`, `index.html ?v=20260707`)
+**Remote HEAD (main)**: `2758f58` — feat(teams): merge BL1+BL2 into single team BL
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -34,8 +34,9 @@
 | `backend/KpiSheetService.gs` | 51 | ✅ deployed |
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
-| `assets/js/constants.js` | ~65 | ✅ S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (8 teams — offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S38: APP_VERSION = '6.6-conflict-detect-20260706'; S30: new GS_WEBAPP_URL |
+| `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
+| `assets/js/config.js` | 7 | ✅ S40: APP_VERSION = '6.6-team-bl-merge-20260707'; S30: new GS_WEBAPP_URL |
+| `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |

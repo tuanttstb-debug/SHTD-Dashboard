@@ -1,4 +1,70 @@
 # SESSION HANDOVER
+**Date**: 2026-07-07 (Session 40 — Team BL1+BL2 Merge → BL)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `2758f58` ✅
+
+---
+
+## Tasks Completed (S40)
+
+| # | Task | Files | Commits | Status |
+|---|---|---|---|---|
+| S40-T1 | `constants.js` TEAM_LIST: `['BL1','BL2',...]` → `['BL','CV1','CV2','PTKD MB','PTKD MN','QLDM','Số']` (7 teams) | `assets/js/constants.js` | `2758f58` | ✅ |
+| S40-T2 | `index.html` `#filterTeam` (line 712): `<option>BL1</option><option>BL2</option>` → `<option>BL</option>` | `index.html` | `2758f58` | ✅ |
+| S40-T3 | `index.html` `#ganttFilterTeam` (line 801): `...BL1</option><option>BL2` → `...BL` | `index.html` | `2758f58` | ✅ |
+| S40-T4 | `config.js` APP_VERSION → `'6.6-team-bl-merge-20260707'`; cache-bust `?v=20260706b` → `?v=20260707` (52 refs, Python) | `assets/js/config.js`, `index.html` | `2758f58` | ✅ |
+| S40-T5 | `verify_action_plan.mjs` full rewrite: fixtures BL1/BL2 → BL + add CV1-001 cross-team task; AP3/AP4b/AP6/AP7/AP9/AP10 assertions updated; **24/24 PASS** | `verify_action_plan.mjs` | `2758f58` | ✅ |
+| S40-T6 | `verify_case_pipeline_s36.mjs`: MOCK_CASES CP-001/CP-002/CP-003/CP-005 + MOCK_USER team `BL1`/`BL2` → `BL`; **28/28 PASS** | `verify_case_pipeline_s36.mjs` | `2758f58` | ✅ |
+| S40-T7 | `verify_mobile_s37.mjs`: task `team:'BL1'` → `team:'BL'`; **21/21 PASS** | `verify_mobile_s37.mjs` | `2758f58` | ✅ |
+| S40-T8 | `backend/MigrationService.gs` (NEW): `dryRunTeamBL()` / `commitTeamBL()` — batch migrate Task_Master + Case_Pipeline + User_Master team fields; idempotent; Audit_Log untouched | `backend/MigrationService.gs` | `2758f58` | ✅ |
+
+### S40 Impact Analysis
+
+**No GAS code changes needed** — 0 hardcoded team names in `.gs` files. Only data in Sheets needs updating.
+
+**Auto-updates after constants.js change (no code touch needed):**
+- `action-plan.js`: team dropdown (`TEAM_LIST.map()`), accordion rendering (`TEAM_LIST.forEach()`), accordion ID (`TEAM_LIST.indexOf(team)`) → all auto-correct
+- `case-pipeline.js` `cpFilterTeam`: built dynamically from `new Set(cases.map(c => c.team))` — auto-updates after data migration
+
+**Task/Case IDs**: historical IDs like `BL1-028` are NOT changed (only `team` field value changes).
+
+**Playwright test redesign (AP9)**:
+- OLD: select `BL2` → `BL2 Highlight Task` shown, `BL1 Highlight Task` hidden
+- NEW: select `BL` → `BL Highlight Task` shown, `CV1 Highlight Task` hidden (added `CV1-001` mock task as cross-team counterpart)
+
+### Commits S40
+```
+2758f58  feat(teams): merge BL1+BL2 into single team BL
+```
+
+---
+
+## Blockers (S40)
+
+| Item | Status |
+|---|---|
+| **Hard-reload (users)** | ⏳ Ctrl+Shift+R. Badge: `v6.6-team-bl-merge-20260707`. |
+| **GAS data migration** | ⏳ **USER ACTION REQUIRED**: Paste `backend/MigrationService.gs` into GAS Editor → run `dryRunTeamBL()` → verify Logger → run `commitTeamBL()` |
+| **Notify BL1/BL2 users** | ⏳ Session team stale for users logged in as BL1/BL2 → ask them to re-login |
+
+---
+
+## Regression Risks (S40)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| **TEAM_LIST index shift** | ⚪ LOW | `_apTid(team)` = `'ap-acc-' + TEAM_LIST.indexOf(team)`. BL at index 0 (same as BL1 was). CV1 shifts from index 2 → 1. Old accordion state keyed by team string — no impact. |
+| **Stale session team** | ⚪ LOW | Users with `shtd_auth_v1` still showing `team:'BL1'/'BL2'` get own-team view with 0 results. Fix: re-login. |
+| **GAS data migration timing** | 🟡 MEDIUM | Until `commitTeamBL()` runs, live data still has BL1/BL2 teams. Frontend BL dropdown shows empty until migration runs. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S39)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-06 (Session 39 — Phase 1 Bilingual UI VI/EN)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
