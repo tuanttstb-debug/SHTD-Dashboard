@@ -2,7 +2,7 @@
 **Date**: 2026-07-07 (Session 40 — Team BL1+BL2 Merge → BL)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `2758f58` ✅
+**origin/main HEAD**: `7a027dc` ✅
 
 ---
 
@@ -18,6 +18,7 @@
 | S40-T6 | `verify_case_pipeline_s36.mjs`: MOCK_CASES CP-001/CP-002/CP-003/CP-005 + MOCK_USER team `BL1`/`BL2` → `BL`; **28/28 PASS** | `verify_case_pipeline_s36.mjs` | `2758f58` | ✅ |
 | S40-T7 | `verify_mobile_s37.mjs`: task `team:'BL1'` → `team:'BL'`; **21/21 PASS** | `verify_mobile_s37.mjs` | `2758f58` | ✅ |
 | S40-T8 | `backend/MigrationService.gs` (NEW): `dryRunTeamBL()` / `commitTeamBL()` — batch migrate Task_Master + Case_Pipeline + User_Master team fields; idempotent; Audit_Log untouched | `backend/MigrationService.gs` | `2758f58` | ✅ |
+| S40-T9 | **Bugfix MigrationService.gs**: `indexOf('team')` không tìm thấy `"Team chính"` (Task_Master) và `"Team"` (capital T, Case_Pipeline) → cả hai sheet bị SKIP; fix: dùng `_norm()` partial match giống `parsers.js`; confirmed migration chạy thành công | `backend/MigrationService.gs` | `7a027dc` | ✅ |
 
 ### S40 Impact Analysis
 
@@ -44,9 +45,9 @@
 
 | Item | Status |
 |---|---|
-| **Hard-reload (users)** | ⏳ Ctrl+Shift+R. Badge: `v6.6-team-bl-merge-20260707`. |
-| **GAS data migration** | ⏳ **USER ACTION REQUIRED**: Paste `backend/MigrationService.gs` into GAS Editor → run `dryRunTeamBL()` → verify Logger → run `commitTeamBL()` |
-| **Notify BL1/BL2 users** | ⏳ Session team stale for users logged in as BL1/BL2 → ask them to re-login |
+| **Hard-reload (users)** | ✅ Xóa Cache / Ctrl+Shift+R. Badge: `v6.6-team-bl-merge-20260707`. |
+| **GAS data migration** | ✅ `commitTeamBL()` ran — Task_Master + Case_Pipeline + User_Master updated (BL1/BL2 → BL). Filter team=BL hoạt động. |
+| **Notify BL1/BL2 users** | ⏳ Users logged in with `team:'BL1'/'BL2'` in session token cần re-login để get team='BL' |
 
 ---
 

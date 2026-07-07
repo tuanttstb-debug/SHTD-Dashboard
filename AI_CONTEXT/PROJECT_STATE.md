@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-07-07 (Session 40 — Team BL1+BL2 Merge → BL)
 **Version**: v6.6 (`APP_VERSION = '6.6-team-bl-merge-20260707'`, `index.html ?v=20260707`)
-**Remote HEAD (main)**: `2758f58` — feat(teams): merge BL1+BL2 into single team BL
+**Remote HEAD (main)**: `7a027dc` — fix(migration): normalize column search for "Team chính"/"Team" headers
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
