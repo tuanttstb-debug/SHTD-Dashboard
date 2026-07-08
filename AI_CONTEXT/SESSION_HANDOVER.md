@@ -2,7 +2,7 @@
 **Date**: 2026-07-08 (Session 41 — Issue Tracker full implementation)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `7988129` ✅
+**origin/main HEAD**: `e377aa8` ✅
 
 ---
 
@@ -40,6 +40,8 @@
 51bae57  feat(issue-tracker): S41 — full Issue Tracker feature
 9595d46  docs: S41 handover — update commit hash 51bae57
 7988129  test: S41 Issue Tracker smoke tests 61/61 PASS
+c01d471  docs: S41 handover — 61/61 PASS, HEAD 7988129
+e377aa8  test: add self-contained HTTP servers to all test suites; fix verify_case_pipeline TEST13/14
 ```
 
 ---
@@ -50,7 +52,7 @@
 |---|---|
 | **GAS redeploy** | ✅ DONE — IssueService.gs deployed, new version active. |
 | **Hard-reload** | ⏳ Users Ctrl+Shift+R. Badge: `v6.7-issue-tracker-20260708`. |
-| **Playwright tests** | ✅ `verify_issue_tracker.mjs` — **61/61 PASS** (`7988129`). |
+| **Playwright tests** | ✅ **13/13 suites — 388/388 PASS** (`e377aa8`). All suites now self-contained (HTTP server nội bộ). |
 
 ---
 
