@@ -2,8 +2,26 @@
  * verify_bld_queue.mjs — BLD Approval Queue feature tests
  */
 import { chromium } from './node_modules/playwright/index.mjs';
+import http from 'http';
+import fs   from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE = 'http://localhost:3030';
+
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const fp  = path.join(__dirname, url === '/' ? 'index.html' : url);
+  try {
+    const data = fs.readFileSync(fp);
+    const ext  = path.extname(fp);
+    const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  } catch { res.writeHead(404); res.end('404'); }
+});
+server.listen(3030);
 const PASS = (msg) => console.log('✅', msg);
 const FAIL = (msg) => { console.error('❌', msg); process.exitCode = 1; };
 
@@ -549,4 +567,5 @@ if (consoleErrors.length > 0) {
 }
 
 await browser.close();
+server.close();
 console.log('\nDone.');

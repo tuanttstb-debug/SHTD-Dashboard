@@ -12,6 +12,7 @@
  */
 
 import { chromium } from 'playwright';
+import http         from 'http';
 import fs           from 'fs';
 import path         from 'path';
 import { fileURLToPath } from 'url';
@@ -22,6 +23,20 @@ const BASE_URL  = `http://localhost:${PORT}`;
 const EVD_DIR   = path.join(__dirname, 'test-results', 'cp_s36');
 
 if (!fs.existsSync(EVD_DIR)) fs.mkdirSync(EVD_DIR, { recursive: true });
+
+/* ── HTTP server ── */
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const fp  = path.join(__dirname, url === '/' ? 'index.html' : url);
+  try {
+    const data = fs.readFileSync(fp);
+    const ext  = path.extname(fp);
+    const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  } catch { res.writeHead(404); res.end('404'); }
+});
+server.listen(PORT);
 
 /* ── helpers ── */
 let passed = 0, failed = 0;
@@ -353,6 +368,7 @@ log('CPX-no-js-errors', jsErrors.length === 0,
 
 /* ── Tổng hợp ── */
 await browser.close();
+server.close();
 
 console.log('\n══════════════════════════════════════════════');
 console.log(`  KẾT QUẢ: ${passed}/${passed + failed} PASS`);

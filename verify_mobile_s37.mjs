@@ -7,13 +7,29 @@ import { chromium } from 'playwright';
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT   = 3037;
 const BASE   = `http://localhost:${PORT}`;
 const OUT    = 'test-results/mobile_s37';
 const IPHONE = { width: 375, height: 812, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 
 fs.mkdirSync(OUT, { recursive: true });
+
+/* ── HTTP server ── */
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const fp  = path.join(__dirname, url === '/' ? 'index.html' : url);
+  try {
+    const data = fs.readFileSync(fp);
+    const ext  = path.extname(fp);
+    const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  } catch { res.writeHead(404); res.end('404'); }
+});
+server.listen(PORT);
 
 /* ── helpers ── */
 let pass = 0, fail = 0;
@@ -403,6 +419,7 @@ await page.waitForTimeout(300);
    Summary
    ══════════════════════════════════════════════ */
 await browser.close();
+server.close();
 
 const total = pass + fail;
 console.log('\n══════════════════════════════════════════');

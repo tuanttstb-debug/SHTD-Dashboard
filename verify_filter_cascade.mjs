@@ -3,8 +3,26 @@
  * Test: Task filter PIC cascade + Case Pipeline PIC/DVKD filter + DVKD column
  */
 import { chromium } from 'playwright';
+import http from 'http';
+import fs   from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE = 'http://localhost:3030';
+
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const fp  = path.join(__dirname, url === '/' ? 'index.html' : url);
+  try {
+    const data = fs.readFileSync(fp);
+    const ext  = path.extname(fp);
+    const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  } catch { res.writeHead(404); res.end('404'); }
+});
+server.listen(3030);
 
 const AUTH = {
   token: 'local-test-token',
@@ -253,6 +271,7 @@ async function run() {
 
   await ctx.close();
   await browser.close();
+  server.close();
 
   console.log(`\n${'─'.repeat(50)}`);
   console.log(`  verify_filter_cascade: ${pass}/${pass + fail} PASS${fail > 0 ? ` (${fail} FAIL)` : ''}`);

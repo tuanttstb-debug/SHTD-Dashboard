@@ -4,8 +4,26 @@
  */
 
 import { chromium } from './node_modules/playwright/index.mjs';
+import http from 'http';
+import fs   from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE  = 'http://localhost:3030';
+
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const fp  = path.join(__dirname, url === '/' ? 'index.html' : url);
+  try {
+    const data = fs.readFileSync(fp);
+    const ext  = path.extname(fp);
+    const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  } catch { res.writeHead(404); res.end('404'); }
+});
+server.listen(3030);
 const PASS  = '✅';
 const FAIL  = '❌';
 let passed  = 0;
@@ -201,26 +219,34 @@ async function run() {
       `closed=${closed} row=${rowInTable}`);
   } catch(e) { log('TEST12', 'Add case', false, e.message); }
 
-  /* ─── TEST13: Click table row opens edit modal with Sửa title ─── */
+  /* ─── TEST13: openCaseModal(id) → edit modal title = Sửa Case ─── */
+  // Row click now opens detail view (cpOpenDetail → openCaseViewPopup), not edit modal directly.
+  // Test the actual edit modal by calling openCaseModal(id) directly.
   try {
-    const row = page.locator('#cpTbody tr').filter({ hasText: 'Wego Việt Nam' }).first();
-    await row.click();
+    const opened = await page.evaluate(() => {
+      const c = dbCases.find(x => x.caseName === 'Wego Việt Nam');
+      if (!c) return null;
+      openCaseModal(c.id);
+      return c.id;
+    });
     await page.waitForTimeout(300);
     const title  = await page.locator('#cpModalTitle').textContent();
     const isEdit = title.includes('Sửa');
-    log('TEST13', 'Click table row → edit modal (Sửa Case)', isEdit, `title="${title}"`);
-    await page.keyboard.press('Escape');
+    log('TEST13', 'openCaseModal(id) → edit modal (Sửa Case)', isEdit, `title="${title}" id=${opened}`);
+    await page.evaluate(() => closeCaseModal && closeCaseModal());
     await page.waitForTimeout(200);
   } catch(e) { log('TEST13', 'Edit modal', false, e.message); }
 
-  /* ─── TEST14: Delete button visible when editing ─── */
+  /* ─── TEST14: Delete button visible in edit modal ─── */
   try {
-    const row = page.locator('#cpTbody tr').filter({ hasText: 'Wego Việt Nam' }).first();
-    await row.click();
+    await page.evaluate(() => {
+      const c = dbCases.find(x => x.caseName === 'Wego Việt Nam');
+      if (c) openCaseModal(c.id);
+    });
     await page.waitForTimeout(300);
     const delVis = await page.locator('#cpModalDeleteBtn').isVisible();
     log('TEST14', 'Delete button visible in edit modal', delVis);
-    await page.keyboard.press('Escape');
+    await page.evaluate(() => closeCaseModal && closeCaseModal());
     await page.waitForTimeout(200);
   } catch(e) { log('TEST14', 'Delete button', false, e.message); }
 
@@ -292,6 +318,7 @@ async function run() {
   }
 
   await browser.close();
+  server.close();
 
   /* ─── Summary ─── */
   console.log('\n' + '─'.repeat(50));
