@@ -2,7 +2,7 @@
 **Date**: 2026-07-08 (Session 41 — Issue Tracker full implementation)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `51bae57` ✅
+**origin/main HEAD**: `7988129` ✅
 
 ---
 
@@ -38,6 +38,8 @@
 ### Commits S41
 ```
 51bae57  feat(issue-tracker): S41 — full Issue Tracker feature
+9595d46  docs: S41 handover — update commit hash 51bae57
+7988129  test: S41 Issue Tracker smoke tests 61/61 PASS
 ```
 
 ---
@@ -46,9 +48,9 @@
 
 | Item | Status |
 |---|---|
-| **GAS redeploy** | ⏳ REQUIRED — paste `IssueService.gs` into GAS editor, then deploy new version of Code.gs. Sheet auto-creates on first `issue-read`. |
+| **GAS redeploy** | ✅ DONE — IssueService.gs deployed, new version active. |
 | **Hard-reload** | ⏳ Users Ctrl+Shift+R. Badge: `v6.7-issue-tracker-20260708`. |
-| **Smoke test** | ⏳ Navigate G+I → add issue → verify SLA auto-fill → save → check GAS audit log → verify charts. |
+| **Playwright tests** | ✅ `verify_issue_tracker.mjs` — **61/61 PASS** (`7988129`). |
 
 ---
 
