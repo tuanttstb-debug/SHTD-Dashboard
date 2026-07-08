@@ -593,3 +593,101 @@ function _buildHistoryTable(rows, syntheticRow, actionMap) {
     </table>
   </div>`;
 }
+
+/* ══════════════════════════════════════════
+   ISSUE TRACKER API
+══════════════════════════════════════════ */
+
+function rowToIssue(r) {
+  return {
+    id:            String(r[0]  || '').trim(),
+    ngayPhatSinh:  String(r[1]  || '').trim(),
+    tieuDe:        String(r[2]  || '').trim(),
+    heTong:        String(r[3]  || '').trim(),
+    loaiIssue:     String(r[4]  || '').trim(),
+    mucDo:         String(r[5]  || '').trim(),
+    loaiXuLy:      String(r[6]  || '').trim(),
+    trangThai:     String(r[7]  || '').trim(),
+    phongBan:      String(r[8]  || '').trim(),
+    nguyenNhan:    String(r[9]  || '').trim(),
+    deXuat:        String(r[10] || '').trim(),
+    deadline:      String(r[11] || '').trim(),
+    ngayGiaiQuyet: String(r[12] || '').trim(),
+    ticketNgoai:   String(r[13] || '').trim(),
+    anhHuong:      String(r[14] || '').trim(),
+    nguoiLog:      String(r[15] || '').trim(),
+    nguoiXuLy:     String(r[16] || '').trim(),
+    ghiChu:        String(r[17] || '').trim(),
+  };
+}
+
+function issueToRow(iss) {
+  return [
+    iss.id, iss.ngayPhatSinh, iss.tieuDe, iss.heTong,
+    iss.loaiIssue, iss.mucDo, iss.loaiXuLy, iss.trangThai, iss.phongBan,
+    iss.nguyenNhan, iss.deXuat, iss.deadline, iss.ngayGiaiQuyet,
+    iss.ticketNgoai, iss.anhHuong, iss.nguoiLog, iss.nguoiXuLy, iss.ghiChu,
+  ];
+}
+
+function genIssueId() {
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const prefix = 'IS-' + yy + '-';
+  const existing = dbIssues.filter(i => i.id.startsWith(prefix));
+  if (!existing.length) return prefix + '001';
+  const max = Math.max(...existing.map(i => parseInt((i.id.split('-')[2]) || '0', 10)));
+  return prefix + String(max + 1).padStart(3, '0');
+}
+
+async function _gasIssueUpsert(iss) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'issue-upsert', issueId: iss.id, issueName: iss.tieuDe, row: issueToRow(iss) });
+    if (json.status !== 'ok') throw new Error(json.error || 'issue-upsert lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS lỗi: ' + e.message + ' — issue đã lưu cục bộ.', 'warning', 6000);
+  }
+}
+
+async function _gasIssueDelete(issueId, issueName) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'issue-delete', issueId, issueName: issueName || '' });
+    if (json.status !== 'ok') throw new Error(json.error || 'issue-delete lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS lỗi: ' + e.message + ' — đã xóa cục bộ.', 'warning', 6000);
+  }
+}
+
+async function readIssues() {
+  if (!GS_WEBAPP_URL) return;
+  try {
+    const json = await gasPost({ action: 'issue-read' });
+    if (json.status !== 'ok') return;
+    const rows = json.values || [];
+    if (rows.length <= 1) { dbIssues = []; persistIssues(); return; }
+    dbIssues = rows.slice(1).map(rowToIssue).filter(i => i.id);
+    persistIssues();
+  } catch(e) {
+    console.warn('readIssues error:', e.message);
+  }
+}
+
+function persistIssues() {
+  try { localStorage.setItem('shtd_issues_v1', JSON.stringify(dbIssues)); } catch(e) {}
+}
+
+function loadIssuesFromCache() {
+  try {
+    const cached = localStorage.getItem('shtd_issues_v1');
+    if (cached) dbIssues = JSON.parse(cached);
+  } catch(e) {}
+}

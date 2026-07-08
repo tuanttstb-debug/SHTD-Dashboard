@@ -1,6 +1,96 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-06 (Session 39 — Phase 1 Bilingual UI VI/EN)
-**Context**: S39 — Implemented Phase 1 bilingual UI. New `assets/js/i18n.js` with `t()`, `setLang()`, `applyI18n()`, ~120 translation keys VI+EN. VI/EN toggle pill added to topbar. `data-i18n` attributes on nav, login, dashboard KPIs, breadcrumb, topbar titles. `navigation.js` page titles now use `t()`. `crud.js` modal/confirm/toast strings use `t()`. Cache-bust `?v=20260706b` (52 refs). `APP_VERSION=6.6-i18n-phase1-20260706`. Users need hard-reload (Ctrl+Shift+R).
+**Prepared**: 2026-07-08 (Session 41 — Issue Tracker full implementation)
+**Context**: S41 — Full Issue Tracker feature: GAS backend (IssueService.gs + 3 Code.gs routes), frontend (issue-tracker.css, issue-tracker.js, index.html wiring, navigation.js, i18n.js). localStorage key `shtd_issues_v1`. Issue IDs `IS-YY-NNN`. Two lifecycle flows (Simple/Complex). SLA auto-fill. Chart.js trend+bar. MTTR/root-cause tables. Excel export. APP_VERSION=6.7-issue-tracker-20260708. **GAS redeploy REQUIRED** (IssueService.gs new file).
+
+---
+
+## ✅ COMPLETED S41
+
+- [x] `backend/IssueService.gs` (NEW) — Sheet `Issue_Tracker` 18 cols, `issueRead/UpsertRow/DeleteRow()`
+- [x] `backend/Code.gs` — 3 routes: `issue-read`, `issue-upsert`, `issue-delete` + auditLog
+- [x] `constants.js` — `dbIssues`, all ISSUE_* constants, `ISSUE_SLA_DAYS`
+- [x] `api.js` — complete Issue API section: `rowToIssue/issueToRow/genIssueId/_gasIssueUpsert/Delete/readIssues/persistIssues/loadIssuesFromCache`
+- [x] `app.js` — `loadIssuesFromCache()` + `readIssues()` on startup
+- [x] `assets/css/issue-tracker.css` (NEW, 220 lines) — KPI grid, badges, charts, modal, overlay, dark mode
+- [x] `assets/js/views/issue-tracker.js` (NEW, 430 lines) — full view: KPI, charts, MTTR, root cause, table, CRUD modal, view popup, export
+- [x] `index.html` — CSS link + nav item (badge) + view section + `#itModal` + `#itViewOverlay` + KB shortcut G+I + script tag + cache-bust `?v=20260708`
+- [x] `navigation.js` — `renderIssueTracker()` dispatch, ESC chain, G+I keymap
+- [x] `i18n.js` — `page.issue-tracker` VI + EN
+- [x] `config.js` — `APP_VERSION='6.7-issue-tracker-20260708'`
+
+---
+
+## 🔴 PRIORITY 0 — GAS redeploy (BLOCKING for Issue Tracker to work)
+
+1. Open GAS editor → New file → paste contents of `backend/IssueService.gs`
+2. `Code.gs` already has the 3 new routes (update `Code.gs` in GAS editor too)
+3. Deploy → New deployment → Web app → Execute as Me, Anyone
+4. URL should stay the same (just a new version)
+5. Verify: open Issue Tracker → add test issue → check `Issue_Tracker` sheet auto-created
+
+---
+
+## 🔴 PRIORITY 0b — Smoke test Issue Tracker
+
+| Check | Expected |
+|---|---|
+| Navigate G+I | Issue Tracker view loads; KPI cards show 0/0/0/– |
+| Thêm Issue | Modal opens; severity→ deadline auto-fills; Loại xử lý → status options update |
+| Save issue | Toast "✅ Đã tạo issue IS-26-001"; row appears in table; `syncDot` blinks |
+| SLA Breach highlight | Set deadline to yesterday → row turns red (`row-overdue` class) |
+| Charts | After 3+ issues: Trend line shows data points; System bar shows counts |
+| MTTR table | After 1 resolved issue with ngayGiaiQuyet set: table shows dept row |
+| Export Excel | Click Export → `.xlsx` downloaded with correct headers |
+| View popup | Click table row → view overlay opens; backdrop click closes |
+| ESC | Modal + popup both close on ESC |
+| Dark mode | Severity/status badge colors adjust correctly |
+
+---
+
+## 🔲 TODO S42 — CANDIDATE TASKS
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S41 Issue Tracker** | See table above. GAS redeploy first. |
+| P1 | **Smoke test S40 BL migration** | Confirm GAS data migrated (all `team='BL1'/'BL2'` → `'BL'`); users re-logged in to refresh session token. |
+| P2 | **Issue Tracker — comment/log thread** | Add per-issue notes timeline (Ghi chú entries with timestamp+user), similar to audit history tab |
+| P2 | **Issue Tracker — bulk status update** | Select multiple issues → change status/dept together |
+| P2 | **i18n Phase 2** | Translate VIEW content labels: tasks filter bar, STATE/RAG display mapping |
+| P3 | **TD-012: add CI** | `npm test` + GitHub Actions for 11 test suites |
+
+---
+
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
+
+```
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
+```
+
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
+
+---
+
+## ✅ COMPLETED S40
+
+- [x] `constants.js` TEAM_LIST: `['BL1','BL2',...]` → `['BL','CV1','CV2','PTKD MB','PTKD MN','QLDM','Số']`
+- [x] `index.html` `#filterTeam` + `#ganttFilterTeam`: BL1/BL2 → BL
+- [x] `config.js` APP_VERSION → `'6.6-team-bl-merge-20260707'`; cache-bust → `?v=20260707`
+- [x] `verify_action_plan.mjs`, `verify_case_pipeline_s36.mjs`, `verify_mobile_s37.mjs`: BL1/BL2 → BL; **all pass**
+- [x] `backend/MigrationService.gs` (NEW): `dryRunTeamBL()` / `commitTeamBL()` — batch migrate sheets
+
+---
+
+## ✅ COMPLETED S39
+
+- [x] Create `assets/js/i18n.js` — `t()`, `setLang()`, `applyI18n()`, TRANSLATIONS VI+EN (~120 keys)
+- [x] VI/EN toggle pill to topbar; `.lang-toggle` CSS in `components.css`
+- [x] `index.html` — `data-i18n` on 30+ elements
+- [x] `navigation.js` — `t('page.'+view)`; `copyPath()` toasts use `t()`
+- [x] `crud.js` — modal/confirm/toast use `t()`
+- [x] `app.js` — `applyI18n()` + toggle sync on `window.onload`
+- [x] cache-bust `?v=20260706b` (52 refs); `APP_VERSION='6.6-i18n-phase1-20260706'`
 
 ---
 

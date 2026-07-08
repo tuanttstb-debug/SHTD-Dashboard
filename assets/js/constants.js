@@ -78,6 +78,19 @@ const CASE_STAGE_GROUP = {
 const CASE_LOAI_HINH   = ['Món', 'Dự án', 'HMTD', 'Rà soát'];
 const CASE_COMPLEXITY  = ['Cao', 'Trung bình', 'Thấp'];
 
+// ── Issue Tracker ──
+let dbIssues = [];
+
+const ISSUE_SYSTEMS  = ['BIZ', 'BPM DXGN', 'BPM QTGN', 'Khác'];
+const ISSUE_TYPES    = ['Bug', 'Performance', 'Data', 'Config', 'Other'];
+const ISSUE_SEVERITY = ['Critical', 'High', 'Medium', 'Low'];
+const ISSUE_DEPTS    = ['BIZ', 'Dev1', 'Dev3', 'Other'];
+
+const ISSUE_STATUS_SIMPLE  = ['Mới', 'Đang xử lý', 'Đã xử lý', 'Tạm dừng'];
+const ISSUE_STATUS_COMPLEX = ['Mới', 'Dev xử lý', 'Testing', 'UAT', 'Đã xử lý', 'Tạm dừng'];
+
+const ISSUE_SLA_DAYS = { 'Critical': 1, 'High': 3, 'Medium': 7, 'Low': 14 };
+
 const CASE_COLS = [
   'ID', 'Tuần BC', 'Team', 'PIC', 'ĐVKD', 'Khách hàng / Case',
   'Loại hình', 'Mức độ phức tạp', 'Phương án', 'Giá trị (tỷ đồng)',

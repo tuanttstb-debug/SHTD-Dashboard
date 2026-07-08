@@ -8,22 +8,23 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260707">
-<link rel="stylesheet" href="assets/css/base.css?v=20260707">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260707">
-<link rel="stylesheet" href="assets/css/components.css?v=20260707">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260707">
-<link rel="stylesheet" href="assets/css/table.css?v=20260707">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260707">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260707">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260707">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260707">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260707">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260707">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260707">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260707">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260707">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260707">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260708">
+<link rel="stylesheet" href="assets/css/base.css?v=20260708">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260708">
+<link rel="stylesheet" href="assets/css/components.css?v=20260708">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260708">
+<link rel="stylesheet" href="assets/css/table.css?v=20260708">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260708">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260708">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260708">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260708">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260708">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260708">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260708">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260708">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260708">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260708">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260708">
 
 </head>
 <body>
@@ -98,6 +99,11 @@
         <i class="fa-solid fa-filter-circle-dollar nav-icon"></i>
         <span class="nav-label">Case Pipeline</span>
         <span class="nav-badge" id="navBadgeCase" style="display:none;">0</span>
+      </div>
+      <div class="nav-item" data-view="issue-tracker">
+        <i class="fa-solid fa-bug nav-icon"></i>
+        <span class="nav-label">Issue Tracker</span>
+        <span class="nav-badge danger" id="navBadgeIssue" style="display:none;">0</span>
       </div>
       <div class="nav-item" data-view="initiative-tracker">
         <i class="fa-solid fa-diagram-project nav-icon"></i>
@@ -632,6 +638,177 @@
           <div class="cp-board-wrap">
             <div class="cp-board" id="cpBoard"></div>
           </div>
+        </div>
+
+      </div><!-- /.card -->
+
+    </section>
+
+    <!-- ===== ISSUE TRACKER ===== -->
+    <section class="view-section" id="view-issue-tracker" style="display:none;">
+
+      <!-- KPI Cards -->
+      <div class="it-kpi-grid">
+        <div class="it-kpi-card">
+          <div class="it-kpi-icon" style="background:var(--primary-xlight);color:var(--primary);"><i class="fa-solid fa-bug"></i></div>
+          <div><div class="it-kpi-num" id="itStatTotal">0</div><div class="it-kpi-label">Tổng issue</div></div>
+        </div>
+        <div class="it-kpi-card">
+          <div class="it-kpi-icon" style="background:var(--warning-bg);color:var(--warning);"><i class="fa-solid fa-spinner"></i></div>
+          <div><div class="it-kpi-num" id="itStatOpen">0</div><div class="it-kpi-label">Đang xử lý</div></div>
+        </div>
+        <div class="it-kpi-card">
+          <div class="it-kpi-icon" style="background:var(--danger-bg);color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div><div class="it-kpi-num" id="itStatBreach" style="color:var(--danger);">0</div><div class="it-kpi-label">SLA Breach</div></div>
+        </div>
+        <div class="it-kpi-card">
+          <div class="it-kpi-icon" style="background:var(--success-bg);color:var(--success);"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <div><div class="it-kpi-num" id="itStatMttr">–</div><div class="it-kpi-label">Avg. giải quyết</div></div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="it-chart-grid" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Xu hướng issue phát sinh</div></div>
+            <div class="it-trend-toggle">
+              <button class="it-trend-btn active" data-mode="week" onclick="itSetTrendMode('week')">Tuần</button>
+              <button class="it-trend-btn" data-mode="month" onclick="itSetTrendMode('month')">Tháng</button>
+            </div>
+          </div>
+          <div class="it-chart-wrap"><canvas id="itTrendChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Issue theo hệ thống</div></div>
+          </div>
+          <div class="it-chart-wrap"><canvas id="itSystemChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="it-chart-grid" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">MTTR theo phòng ban</div><div class="card-subtitle">Mean Time to Resolve – issue đã xử lý</div></div>
+          </div>
+          <div id="itMttrTable"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Nguyên nhân tái lặp</div><div class="card-subtitle">Top 5 nguyên nhân phổ biến nhất</div></div>
+          </div>
+          <div id="itRootCauseTable"></div>
+        </div>
+      </div>
+
+      <!-- Main table card -->
+      <div class="card">
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <div style="font-size:17px;font-weight:800;">Issue Tracker – Theo dõi lỗi hệ thống</div>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-outline btn-sm" onclick="itExportExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
+            <button class="btn btn-primary btn-sm" onclick="openIssueModal(null)"><i class="fa-solid fa-plus"></i> Thêm Issue</button>
+          </div>
+        </div>
+
+        <!-- Preset tabs -->
+        <div class="preset-bar">
+          <button class="preset-btn it-preset-btn active" id="it-preset-open" onclick="itSetPreset('open')">
+            <span class="preset-icon">🔵</span> Đang mở
+            <span class="preset-count" id="it-pcount-open"></span>
+          </button>
+          <button class="preset-btn it-preset-btn" id="it-preset-breach" onclick="itSetPreset('breach')">
+            <span class="preset-icon">⚠</span> SLA Breach
+            <span class="preset-count preset-count-danger" id="it-pcount-breach"></span>
+          </button>
+          <button class="preset-btn it-preset-btn" id="it-preset-done" onclick="itSetPreset('done')">
+            <span class="preset-icon">✅</span> Đã xử lý
+            <span class="preset-count" id="it-pcount-done"></span>
+          </button>
+          <button class="preset-btn it-preset-btn" id="it-preset-all" onclick="itSetPreset('all')">
+            <span class="preset-icon">📋</span> Tất cả
+            <span class="preset-count" id="it-pcount-all"></span>
+          </button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <div class="filter-group" style="min-width:130px;max-width:220px;">
+            <div class="filter-label">Tìm kiếm</div>
+            <input type="text" id="itFSearch" class="form-control" oninput="itFilterChange()" placeholder="ID / tiêu đề / nguyên nhân…" style="font-size:12px;padding:7px 10px;">
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Hệ thống</div>
+            <select id="itFSystem" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option>BIZ</option><option>BPM DXGN</option><option>BPM QTGN</option><option>Khác</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Loại</div>
+            <select id="itFType" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option>Bug</option><option>Performance</option><option>Data</option><option>Config</option><option>Other</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Mức độ</div>
+            <select id="itFSeverity" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Trạng thái</div>
+            <select id="itFStatus" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option>Mới</option><option>Đang xử lý</option><option>Dev xử lý</option>
+              <option>Testing</option><option>UAT</option><option>Đã xử lý</option><option>Tạm dừng</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Phòng ban</div>
+            <select id="itFDept" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+              <option value="">Tất cả</option>
+              <option>BIZ</option><option>Dev1</option><option>Dev3</option><option>Other</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn btn-ghost btn-sm" onclick="itClearFilters()" title="Xóa bộ lọc"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-size:12px;color:var(--text-3);" id="itCountInfo"></span>
+            <button class="btn btn-ghost btn-sm" onclick="renderIssueTracker()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+          </div>
+          <div class="table-wrap">
+            <table id="itTable">
+              <thead>
+                <tr>
+                  <th onclick="itSortBy('id')" style="width:90px;">ID <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('tieuDe')">Tiêu đề <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('heTong')" style="width:110px;">Hệ thống <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('mucDo')" style="width:100px;">Mức độ <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('trangThai')" style="width:120px;">Trạng thái <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('phongBan')" style="width:80px;">Phòng ban <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('ngayPhatSinh')" style="width:105px;">Ngày PS <span class="sort-icon">↕</span></th>
+                  <th onclick="itSortBy('deadline')" style="width:105px;">Deadline <span class="sort-icon">↕</span></th>
+                  <th style="width:80px;"></th>
+                </tr>
+              </thead>
+              <tbody id="itTbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="itPagination"></div>
         </div>
 
       </div><!-- /.card -->
@@ -1378,6 +1555,137 @@
   </div>
 </div>
 
+<!-- ===== ISSUE TRACKER CRUD MODAL ===== -->
+<div id="itModal">
+  <div class="it-modal-box">
+    <div class="it-modal-header">
+      <div>
+        <div class="it-modal-title" id="itModalTitle">Thêm Issue mới</div>
+        <div class="it-modal-sub">Issue Tracker · Số hóa tín dụng</div>
+      </div>
+      <div class="modal-close" onclick="closeIssueModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <input type="hidden" id="itOrigId">
+    <div class="it-form-grid">
+
+      <!-- Ngày phát sinh + Hệ thống -->
+      <div class="form-group">
+        <label class="form-label">Ngày phát sinh <span style="color:var(--danger)">*</span></label>
+        <input type="date" id="itfNgayPS" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hệ thống</label>
+        <select id="itfHeTong" class="form-control">
+          <option value="">-- Chọn hệ thống --</option>
+          <option>BIZ</option><option>BPM DXGN</option><option>BPM QTGN</option><option>Khác</option>
+        </select>
+      </div>
+
+      <!-- Tiêu đề (full width) -->
+      <div class="form-group it-form-full">
+        <label class="form-label">Tiêu đề issue <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="itfTieuDe" class="form-control" placeholder="Mô tả ngắn gọn về issue…">
+      </div>
+
+      <!-- Loại + Mức độ -->
+      <div class="form-group">
+        <label class="form-label">Loại issue</label>
+        <select id="itfLoai" class="form-control">
+          <option value="">-- Loại --</option>
+          <option>Bug</option><option>Performance</option><option>Data</option><option>Config</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mức độ</label>
+        <select id="itfMucDo" class="form-control" onchange="_itAutoDeadline()">
+          <option value="">-- Mức độ --</option>
+          <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+      </div>
+
+      <!-- Loại xử lý + Trạng thái -->
+      <div class="form-group">
+        <label class="form-label">Loại xử lý</label>
+        <select id="itfLoaiXuLy" class="form-control" onchange="_itUpdateStatusOptions()">
+          <option value="Đơn giản">Đơn giản</option>
+          <option value="Phức tạp">Phức tạp</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trạng thái</label>
+        <select id="itfTrangThai" class="form-control">
+          <option>Mới</option><option>Đang xử lý</option><option>Đã xử lý</option><option>Tạm dừng</option>
+        </select>
+      </div>
+
+      <!-- Phòng ban + Deadline -->
+      <div class="form-group">
+        <label class="form-label">Phòng ban xử lý</label>
+        <select id="itfPhongBan" class="form-control">
+          <option value="">-- Phòng ban --</option>
+          <option>BIZ</option><option>Dev1</option><option>Dev3</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deadline xử lý</label>
+        <input type="date" id="itfDeadline" class="form-control">
+      </div>
+
+      <!-- Ngày giải quyết + Ticket ngoài -->
+      <div class="form-group">
+        <label class="form-label">Ngày giải quyết</label>
+        <input type="date" id="itfNgayGQ" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ticket ngoài (JIRA / ServiceNow)</label>
+        <input type="text" id="itfTicket" class="form-control" placeholder="VD: JIRA-1234">
+      </div>
+
+      <!-- Ảnh hưởng NV (full width) -->
+      <div class="form-group it-form-full">
+        <label class="form-label">Ảnh hưởng nghiệp vụ</label>
+        <input type="text" id="itfAnhHuong" class="form-control" placeholder="Mô tả ảnh hưởng đến nghiệp vụ…">
+      </div>
+
+      <!-- Nguyên nhân (full width) -->
+      <div class="form-group it-form-full">
+        <label class="form-label">Nguyên nhân</label>
+        <textarea id="itfNguyenNhan" class="form-control" rows="2" placeholder="Nguyên nhân gốc rễ của issue…"></textarea>
+      </div>
+
+      <!-- Đề xuất (full width) -->
+      <div class="form-group it-form-full">
+        <label class="form-label">Đề xuất / Giải pháp</label>
+        <textarea id="itfDeXuat" class="form-control" rows="2" placeholder="Đề xuất hướng xử lý, giải pháp…"></textarea>
+      </div>
+
+      <!-- Người log + Người xử lý -->
+      <div class="form-group">
+        <label class="form-label">Người log</label>
+        <input type="text" id="itfNguoiLog" class="form-control" placeholder="Tên đăng nhập">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Người xử lý</label>
+        <input type="text" id="itfNguoiXuLy" class="form-control" placeholder="Tên đăng nhập / tên người">
+      </div>
+
+      <!-- Ghi chú (full width) -->
+      <div class="form-group it-form-full">
+        <label class="form-label">Ghi chú</label>
+        <textarea id="itfGhiChu" class="form-control" rows="2" placeholder="Thông tin bổ sung…"></textarea>
+      </div>
+
+    </div><!-- /.it-form-grid -->
+    <div class="it-form-actions">
+      <button class="btn btn-ghost" onclick="closeIssueModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="itSaveIssue()"><i class="fa-solid fa-floppy-disk"></i> Lưu Issue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ISSUE VIEW OVERLAY ===== -->
+<div id="itViewOverlay" onclick="if(event.target===this)closeIssueViewPopup()"></div>
+
 <!-- ===== DETAIL MODAL ===== -->
 <div class="overlay" id="detailOverlay">
   <div class="modal detail-modal">
@@ -1448,48 +1756,50 @@
         <div class="kb-row"><span class="kb-desc">Đến Performance</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">P</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến AI Assistant</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">A</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Case Pipeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">C</span></div></div>
+        <div class="kb-row"><span class="kb-desc">Đến Issue Tracker</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">I</span></div></div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260707"></script>
-<script src="assets/js/config.js?v=20260707"></script>
-<script src="assets/js/constants.js?v=20260707"></script>
-<script src="assets/js/helpers.js?v=20260707"></script>
-<script src="assets/js/storage.js?v=20260707"></script>
-<script src="assets/js/parsers.js?v=20260707"></script>
-<script src="assets/js/auth.js?v=20260707"></script>
-<script src="assets/js/api.js?v=20260707"></script>
-<script src="assets/js/ui/toast.js?v=20260707"></script>
-<script src="assets/js/ui/modal.js?v=20260707"></script>
-<script src="assets/js/ui/theme.js?v=20260707"></script>
-<script src="assets/js/ui/navigation.js?v=20260707"></script>
-<script src="assets/js/crud.js?v=20260707"></script>
-<script src="assets/js/bulk.js?v=20260707"></script>
-<script src="assets/js/views/dashboard.js?v=20260707"></script>
-<script src="assets/js/views/tasks.js?v=20260707"></script>
-<script src="assets/js/views/gantt.js?v=20260707"></script>
-<script src="assets/js/views/performance.js?v=20260707"></script>
-<script src="assets/js/views/quickview.js?v=20260707"></script>
-<script src="assets/js/report.js?v=20260707"></script>
-<script src="assets/js/kpi-data.js?v=20260707"></script>
-<script src="assets/js/kpi-parser.js?v=20260707"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260707"></script>
-<script src="assets/js/views/action-plan.js?v=20260707"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260707"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260707"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260707"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260707"></script>
-<script src="assets/js/initiatives.js?v=20260707"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260707"></script>
-<script src="assets/js/views/ai-chat.js?v=20260707"></script>
-<script src="assets/js/views/user-management.js?v=20260707"></script>
-<script src="assets/js/views/executive-summary.js?v=20260707"></script>
-<script src="assets/js/views/bld-queue.js?v=20260707"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260707"></script>
-<script src="assets/js/app.js?v=20260707"></script>
+<script src="assets/js/i18n.js?v=20260708"></script>
+<script src="assets/js/config.js?v=20260708"></script>
+<script src="assets/js/constants.js?v=20260708"></script>
+<script src="assets/js/helpers.js?v=20260708"></script>
+<script src="assets/js/storage.js?v=20260708"></script>
+<script src="assets/js/parsers.js?v=20260708"></script>
+<script src="assets/js/auth.js?v=20260708"></script>
+<script src="assets/js/api.js?v=20260708"></script>
+<script src="assets/js/ui/toast.js?v=20260708"></script>
+<script src="assets/js/ui/modal.js?v=20260708"></script>
+<script src="assets/js/ui/theme.js?v=20260708"></script>
+<script src="assets/js/ui/navigation.js?v=20260708"></script>
+<script src="assets/js/crud.js?v=20260708"></script>
+<script src="assets/js/bulk.js?v=20260708"></script>
+<script src="assets/js/views/dashboard.js?v=20260708"></script>
+<script src="assets/js/views/tasks.js?v=20260708"></script>
+<script src="assets/js/views/gantt.js?v=20260708"></script>
+<script src="assets/js/views/performance.js?v=20260708"></script>
+<script src="assets/js/views/quickview.js?v=20260708"></script>
+<script src="assets/js/report.js?v=20260708"></script>
+<script src="assets/js/kpi-data.js?v=20260708"></script>
+<script src="assets/js/kpi-parser.js?v=20260708"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260708"></script>
+<script src="assets/js/views/action-plan.js?v=20260708"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260708"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260708"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260708"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260708"></script>
+<script src="assets/js/initiatives.js?v=20260708"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260708"></script>
+<script src="assets/js/views/ai-chat.js?v=20260708"></script>
+<script src="assets/js/views/user-management.js?v=20260708"></script>
+<script src="assets/js/views/executive-summary.js?v=20260708"></script>
+<script src="assets/js/views/bld-queue.js?v=20260708"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260708"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260708"></script>
+<script src="assets/js/app.js?v=20260708"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

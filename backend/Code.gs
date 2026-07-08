@@ -200,6 +200,26 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', rows: auditReadByEntity(body.entityId) });
     }
 
+    if (action === 'issue-read') {
+      return _jsonResponse({ status: 'ok', values: issueRead() });
+    }
+
+    if (action === 'issue-upsert') {
+      if (!body.row || !Array.isArray(body.row) || !body.issueId) {
+        throw new Error('issue-upsert: thiếu row hoặc issueId.');
+      }
+      issueUpsertRow(body.row, body.issueId);
+      auditLog(tokenData, 'issue-upsert', body.issueId + (body.issueName ? ' | ' + body.issueName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'issue-delete') {
+      if (!body.issueId) throw new Error('issue-delete: thiếu issueId.');
+      issueDeleteRow(body.issueId);
+      auditLog(tokenData, 'issue-delete', body.issueId + (body.issueName ? ' | ' + body.issueName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

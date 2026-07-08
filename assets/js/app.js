@@ -26,6 +26,7 @@ async function startApp() {
 
   loadCache();
   loadCasesFromCache();
+  loadIssuesFromCache();
   setupListeners();
   renderAll();
   updateClock();
@@ -35,6 +36,7 @@ async function startApp() {
     await autoConnectDB();
     readInitiatives(); // non-blocking
     readCases();       // non-blocking — load Case_Pipeline sau tasks
+    readIssues();      // non-blocking — load Issue_Tracker
     loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
   }
 }

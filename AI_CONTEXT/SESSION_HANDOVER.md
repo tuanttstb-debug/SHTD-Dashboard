@@ -1,4 +1,72 @@
 # SESSION HANDOVER
+**Date**: 2026-07-08 (Session 41 — Issue Tracker full implementation)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `pending push` ⏳
+
+---
+
+## Tasks Completed (S41)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S41-T1 | `backend/IssueService.gs` (NEW) — `issueRead()`, `issueUpsertRow()`, `issueDeleteRow()`, Sheet: `Issue_Tracker` 18 cols A→R, auto-create sheet | `backend/IssueService.gs` | ✅ |
+| S41-T2 | `backend/Code.gs` — 3 new routes: `issue-read`, `issue-upsert`, `issue-delete` with auditLog | `backend/Code.gs` | ✅ |
+| S41-T3 | `constants.js` — `dbIssues`, `ISSUE_SYSTEMS/TYPES/SEVERITY/DEPTS/STATUS_SIMPLE/STATUS_COMPLEX/SLA_DAYS` | `assets/js/constants.js` | ✅ |
+| S41-T4 | `api.js` — `rowToIssue()`, `issueToRow()`, `genIssueId()` (IS-YY-NNN), `_gasIssueUpsert/Delete()`, `readIssues()`, `persistIssues()`, `loadIssuesFromCache()` | `assets/js/api.js` | ✅ |
+| S41-T5 | `app.js` — `loadIssuesFromCache()` + `readIssues()` in startup | `assets/js/app.js` | ✅ |
+| S41-T6 | `assets/css/issue-tracker.css` (NEW) — KPI grid, severity/status/system badges, trend toggle, stat table, modal, view overlay, dark mode, responsive | `assets/css/issue-tracker.css` | ✅ |
+| S41-T7 | `assets/js/views/issue-tracker.js` (NEW) — renderIssueTracker, KPI, Chart.js trend+bar, MTTR, root cause, preset/filter/sort/pagination, CRUD modal, view popup, Excel export | `assets/js/views/issue-tracker.js` | ✅ |
+| S41-T8 | `index.html` — CSS link, nav item + badge, view section, `#itModal`, `#itViewOverlay`, KB G+I row, script tag | `index.html` | ✅ |
+| S41-T9 | `navigation.js` — `renderIssueTracker()`, ESC closes modal+popup, G+I keymap | `assets/js/ui/navigation.js` | ✅ |
+| S41-T10 | `i18n.js` — `page.issue-tracker` VI + EN | `assets/js/i18n.js` | ✅ |
+| S41-T11 | `config.js` + cache-bust — `APP_VERSION='6.7-issue-tracker-20260708'`, `?v=20260708` (index.html) | `assets/js/config.js`, `index.html` | ✅ |
+
+### Issue Tracker Architecture (S41)
+
+**localStorage key**: `shtd_issues_v1` (separate from `shtd_v2` tasks and `shtd_cp_v1` cases)
+**Issue ID**: `IS-YY-NNN` (e.g. IS-26-001), counter resets each calendar year
+**Sheet**: `Issue_Tracker`, 18 cols A→R — auto-created by `issueRead()` on first call
+**Two flows**: Đơn giản (4 statuses) vs Phức tạp (6 statuses), chosen at creation
+**SLA auto-fill**: Critical=1d, High=3d, Medium=7d, Low=14d — only fills empty deadline
+**View popup** (`#itViewOverlay`): dynamic innerHTML, reuses `.cp-view-*` CSS, closes on ESC or backdrop click
+**KPI nav badge** (`#navBadgeIssue`): SLA breach count, red, hidden when 0
+
+**GAS files changed**: `IssueService.gs` (new), `Code.gs` (3 routes added)
+**GAS redeploy required**: Yes — copy IssueService.gs + deploy Code.gs new version
+
+### Commits S41
+```
+pending — commit + push after AI_CONTEXT update
+```
+
+---
+
+## Blockers (S41)
+
+| Item | Status |
+|---|---|
+| **GAS redeploy** | ⏳ REQUIRED — paste `IssueService.gs` into GAS editor, then deploy new version of Code.gs. Sheet auto-creates on first `issue-read`. |
+| **Hard-reload** | ⏳ Users Ctrl+Shift+R. Badge: `v6.7-issue-tracker-20260708`. |
+| **Smoke test** | ⏳ Navigate G+I → add issue → verify SLA auto-fill → save → check GAS audit log → verify charts. |
+
+---
+
+## Regression Risks (S41)
+
+| Risk | Severity | Detail |
+|---|---|---|
+| `shtd_issues_v1` key | ⚪ NONE | Separate localStorage key, no collision with tasks or cases. |
+| Chart.js destroy | ⚪ LOW | `_itChartTrend.destroy()` called before each re-render. Safe for repeated navigations. |
+| SLA auto-fill on edit | ⚪ NONE | Only fills deadline if field is currently empty — existing deadlines unaffected. |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S40)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-07 (Session 40 — Team BL1+BL2 Merge → BL)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
