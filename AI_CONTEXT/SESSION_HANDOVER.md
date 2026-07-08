@@ -1,12 +1,55 @@
 # SESSION HANDOVER
-**Date**: 2026-07-08 (Session 41 — Issue Tracker full implementation)
+**Date**: 2026-07-08 (Session 41b — Regression run + test infrastructure fix)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `e377aa8` ✅
+**origin/main HEAD**: `2a8b55b` ✅
 
 ---
 
-## Tasks Completed (S41)
+## Tasks Completed (S41b — continuation of S41)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S41b-T1 | Fix `verify_issue_tracker.mjs` 2 remaining failures: mock auth missing `exp` field (IT3) + IT9 expected search scope wrong (`heTong` không nằm trong `_itGetFiltered`) | `verify_issue_tracker.mjs` | ✅ 61/61 PASS |
+| S41b-T2 | Add `http.createServer` nội bộ vào 8 test files thiếu server (rely vào leftover process): `verify_mobile_s37`, `verify_case_pipeline_s36`, `verify_issue_tracker`, `verify_bld_queue`, `verify_case_pipeline`, `verify_filter_cascade`, `verify_import_rbac`, `verify_modal_layout` | 8 files | ✅ |
+| S41b-T3 | Fix `verify_case_pipeline` TEST13/14: row click → `cpOpenDetail()` → view popup (since S33), không còn mở edit modal trực tiếp. Cập nhật test dùng `openCaseModal(id)` via evaluate | `verify_case_pipeline.mjs` | ✅ 22/22 PASS |
+| S41b-T4 | Full regression: 13/13 suites, 388/388 PASS | tất cả | ✅ |
+
+### Commits S41b
+```
+7988129  test: S41 Issue Tracker smoke tests 61/61 PASS
+c01d471  docs: S41 handover — 61/61 PASS, HEAD 7988129
+e377aa8  test: add self-contained HTTP servers to all test suites; fix verify_case_pipeline TEST13/14
+2a8b55b  docs: update handover HEAD e377aa8 — 13/13 suites 388 tests PASS
+```
+
+### Test suite snapshot (2026-07-08, HEAD 2a8b55b)
+```
+verify_issue_tracker       61/61  PASS  (S41 — Issue Tracker)
+verify_mobile_s37          21/21  PASS  (S37 — mobile responsive)
+verify_case_pipeline_s36   28/28  PASS  (S36 — case pipeline enhancements)
+verify_action_plan         24/24  PASS  (S34 — action plan v2)
+verify_history             47/47  PASS  (S33 — audit history)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────
+TOTAL                     388/388 PASS  0 FAIL
+```
+
+### Test infrastructure notes (S41b)
+- Tất cả test files nay có `http.createServer` nội bộ — chạy standalone `node <file>` mà không cần server bên ngoài
+- `verify_case_pipeline` TEST13/14: dùng `page.evaluate(() => openCaseModal(id))` thay vì click row (vì S33 đổi row click → `cpOpenDetail` → view popup)
+- Port allocation: 3030 (5 files cũ), 3036 (cp_s36), 3037 (mobile), 3041 (issue_tracker), 9992 (history), 9993 (action_plan), dynamic (milestone_task, task_init_popup)
+
+---
+
+## Tasks Completed (S41 — Issue Tracker full implementation)
 
 | # | Task | Files | Status |
 |---|---|---|---|
@@ -33,15 +76,12 @@
 **KPI nav badge** (`#navBadgeIssue`): SLA breach count, red, hidden when 0
 
 **GAS files changed**: `IssueService.gs` (new), `Code.gs` (3 routes added)
-**GAS redeploy required**: Yes — copy IssueService.gs + deploy Code.gs new version
+**GAS redeploy required**: ✅ DONE — deployed, URL unchanged.
 
 ### Commits S41
 ```
 51bae57  feat(issue-tracker): S41 — full Issue Tracker feature
 9595d46  docs: S41 handover — update commit hash 51bae57
-7988129  test: S41 Issue Tracker smoke tests 61/61 PASS
-c01d471  docs: S41 handover — 61/61 PASS, HEAD 7988129
-e377aa8  test: add self-contained HTTP servers to all test suites; fix verify_case_pipeline TEST13/14
 ```
 
 ---
@@ -50,9 +90,9 @@ e377aa8  test: add self-contained HTTP servers to all test suites; fix verify_ca
 
 | Item | Status |
 |---|---|
-| **GAS redeploy** | ✅ DONE — IssueService.gs deployed, new version active. |
+| **GAS redeploy** | ✅ DONE — IssueService.gs deployed, URL unchanged. |
 | **Hard-reload** | ⏳ Users Ctrl+Shift+R. Badge: `v6.7-issue-tracker-20260708`. |
-| **Playwright tests** | ✅ **13/13 suites — 388/388 PASS** (`e377aa8`). All suites now self-contained (HTTP server nội bộ). |
+| **Playwright tests** | ✅ **13/13 suites — 388/388 PASS** (`2a8b55b`). Tất cả self-contained. |
 
 ---
 
