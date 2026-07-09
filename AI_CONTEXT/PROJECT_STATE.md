@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-09 (Session 44 — Champion Section + Initiative Popup)
-**Version**: v6.11 (`APP_VERSION = '6.11-mw-champion-20260709'`, `index.html ?v=20260709d`)
-**Remote HEAD (main)**: `51eafbd` — feat(my-work): S44b — Champion section
+**As of**: 2026-07-09 (Session 48 — i18n Phase 5: Quick View + Executive Summary)
+**Version**: v6.14 (`APP_VERSION = '6.14-i18n-phase5-20260709'`, `index.html ?v=20260709g`)
+**Remote HEAD (main)**: TBD — feat(i18n): S48 — i18n Phase 5: Quick View + Executive Summary bilingual
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1860 | ✅ S44a: +#mwInitPopup overlay; `?v=20260709c`; S43: data-i18n on tasks filter labels, preset spans, scope toggle spans; explicit values on filterState options; S42: +my-work nav item, view section, CSS link, KB G+M row, script tag |
+| `index.html` | ~1870 | ✅ S48: cache-bust `?v=20260709g` (56 refs); S44a: +#mwInitPopup overlay; S43: data-i18n on tasks filter labels |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -37,7 +37,7 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S44b: APP_VERSION = '6.11-mw-champion-20260709'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S48: APP_VERSION = '6.14-i18n-phase5-20260709'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |
@@ -48,7 +48,7 @@
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
 | `assets/js/crud.js` | ~295 | ✅ S38: `_editOrigTask` snapshot + `_hasTaskChanged()` + conflict check in `handleSubmit` (readFromHandle before save, VERSION_CONFLICT dialog); S31: deleteTask adds to deletedIds; S29: atomic GAS writes |
 | `assets/js/views/tasks.js` | ~400 | ✅ S43: renderFilterChips uses t()+tState(); renderTaskTable count/empty use t(); _populateFilterPic "Tất cả"→t('common.all'); S32: sortBy() clears selectedIds; S31: onFilterChange clears; S24: PA1; S23: +_populateFilterPic |
-| `assets/js/i18n.js` | ~370 | ✅ S43: +STATE_KEY map + tState() helper + 50 new VI/EN keys (state display, filter labels, preset, scope, count, chips); S39: Phase 1 chrome keys |
+| `assets/js/i18n.js` | ~420 | ✅ S48: +qv.* keys (12) + es.* keys (9) + mw.* keys (22); S43: +STATE_KEY map + tState() helper + 50 keys; S39: Phase 1 chrome keys |
 | `assets/js/helpers.js` | ~80 | ✅ S43: stateChip() uses tState() for language-aware label |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
@@ -60,7 +60,10 @@
 | `assets/js/bulk.js` | ~62 | ✅ S31: `bulkDelete()` pushes ids to `db.deletedIds`; S30: atomic per-row writes; NO syncAction |
 | `assets/js/views/bld-queue.js` | ~390 | ✅ S29: task BLD approval → `await syncAction()`; Case BLD still syncCaseAction |
 | `assets/js/storage.js` | ~30 | ✅ S31: `loadDb()` now loads `db.deletedIds` from localStorage if present |
-| `assets/js/app.js` | ~340 | ✅ S31: `handleImport()` skips tasks in `db.deletedIds` before merging; S30: startup diagnostic; S26: remove filterPic rebuild |
+| `assets/js/app.js` | ~345 | ✅ S48: renderAll() guards for executiveSummary + `if (_qvIsOpen) renderQuickView()`; S31: handleImport() skips deletedIds; S26: remove filterPic rebuild |
+| `assets/js/views/quickview.js` | ~480 | ✅ S48: t()-shadowing fix (map t→tk in 4 callbacks); renderQuickView() calls _qvPopulateFilters()+_qvUpdateTime() for live lang switch |
+| `assets/js/views/executive-summary.js` | ~310 | ✅ S48: 6 t() calls wired (chart empty, attention empty, cfg labels, more-link, init table empty, status tags via t('es.risk.*')) |
+| `verify_i18n_p5.mjs` | ~194 | ✅ S48: NEW — 24/24 PASS; covers QV filter/subtitle/labels, ES attention/init-table, EN/VI switch |
 | `assets/js/api.js` | ~380 | ✅ S30: syncAction() logs caller stack on every call (debug trace, temporary); S29: atomic GAS write helpers (_gasTaskUpsert/_gasTaskDelete/_gasCaseUpsert/_gasCaseDelete); S24: _resolvePickerCase() |
 | `assets/js/initiatives.js` | ~170 | ✅ S29: syncInitiativeAdd/Edit thêm `return` → expose promise; S20: syncInitiativeAction() gold standard |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S19: G+C shortcut, case-pipeline title, renderCasePipeline dispatch |
@@ -74,6 +77,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **i18n Phase 5 — Quick View + Executive Summary** | ✅ | S48: QV filter/subtitle/labels + ES attention/init-table/status-tags bilingual; t()-shadowing fix (map t→tk); renderQuickView() live lang switch; 24/24 PASS + 17/17 regression |
 | **Milestone auto-gen ID + Add Task** | ✅ | S27: "Thêm Milestone" tự gen ID `{parentId}-M{n}` + pre-fill category; "+ Task" btn trên mỗi milestone → task modal pre-filled (initiative, milestone, category, PIC, team, auto-gen ID) |
 | **Task view popup** | ✅ | S25: click row → taskViewOverlay (read-only); Chỉnh sửa → edit modal; sau save → popup re-opens |
 | **Initiative view popup** | ✅ | S25: click card header → initViewOverlay (read-only); Chỉnh sửa → _initOpenModal; sau save → popup re-opens |

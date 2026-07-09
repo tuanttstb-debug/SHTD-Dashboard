@@ -79,6 +79,8 @@ function renderAll() {
   if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
   if (document.getElementById('view-action-plan')?.style.display === 'contents') renderActionPlan();
   if (document.getElementById('view-bld-queue')?.style.display === 'contents') renderBldQueue();
+  if (document.getElementById('view-executive-summary')?.style.display === 'contents') renderExecutiveSummary();
+  if (_qvIsOpen) renderQuickView();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
 

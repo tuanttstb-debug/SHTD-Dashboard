@@ -1,4 +1,87 @@
 # SESSION HANDOVER
+**Date**: 2026-07-09 (Session 48 — i18n Phase 5: Quick View + Executive Summary bilingual)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `TBD` — S48: i18n Phase 5 — Quick View + Executive Summary bilingual
+
+---
+
+## Tasks Completed (S48 — i18n Phase 5: Quick View + Executive Summary)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S48-T1 | `quickview.js` — 18 t() calls wired (filter options, subtitle, done label, state chip via tState(), time prefix, plan labels, group-by, deadline prefix, overdue prefix, issue flags, risk/BLĐ titles, empty states) | `assets/js/views/quickview.js` | ✅ |
+| S48-T2 | `quickview.js` — fix t()-shadowing: renamed loop var `t→tk` in 4 map callbacks (done, plan, initiative, issue) | `assets/js/views/quickview.js` | ✅ |
+| S48-T3 | `quickview.js` — `renderQuickView()` now calls `_qvPopulateFilters()` + `_qvUpdateTime()` so filter labels and time prefix update live on language switch | `assets/js/views/quickview.js` | ✅ |
+| S48-T4 | `executive-summary.js` — 6 t() calls wired (chart empty label, attention empty, cfg labels BLĐ+Overdue, more-link, table empty, status tags High Risk/Watch/On Track) | `assets/js/views/executive-summary.js` | ✅ |
+| S48-T5 | `app.js` — 2 new guards in `renderAll()`: ES view + QV panel re-render on language switch | `assets/js/app.js` | ✅ |
+| S48-T6 | `config.js` — APP_VERSION='6.14-i18n-phase5-20260709'; cache-bust ?v=20260709g | `assets/js/config.js`, `index.html` | ✅ |
+| S48-T7 | `verify_i18n_p5.mjs` (NEW) — 24/24 PASS (IP5-1 to IP5-14: QV filter, subtitle, done/plan/init/issue labels, time prefix, ES empty/attention/status tags, VI restore, 0 JS errors) | `verify_i18n_p5.mjs` | ✅ |
+| S48-T8 | `run_tests.mjs` — added verify_i18n_p5.mjs as first suite (now 17 suites) | `run_tests.mjs` | ✅ |
+| S48-T9 | Full regression: **17/17 suites PASS** | all | ✅ |
+
+### i18n Phase 5 Architecture (S48)
+
+**All translation keys pre-existed** in `i18n.js` (qv.*, es.* written in prior session). Phase 5 was purely wiring.
+
+**Critical t()-shadowing bug** (found and fixed this session):
+```javascript
+// quickview.js: BEFORE (broken — local `t` shadows global t() i18n function)
+done.map(t => `...${t('qv.done.label')}...`)  // t is task object; t() fails
+
+// AFTER (fixed — renamed loop var to tk)
+done.map(tk => `...${t('qv.done.label')}...`)  // t() is the global i18n function again
+```
+Same fix applied to plan.map, initTasks.map, issues.map.
+
+**Live language switch fix for QV**:
+`renderQuickView()` now calls `_qvPopulateFilters()` + `_qvUpdateTime()` at the start, so filter labels and time prefix update immediately on `setLang()`.
+
+**renderAll() additions (app.js)**:
+```javascript
+if (document.getElementById('view-executive-summary')?.style.display === 'contents') renderExecutiveSummary();
+if (_qvIsOpen) renderQuickView();
+```
+
+### Test suite snapshot (2026-07-09, S48)
+```
+verify_i18n_p5             24/24  PASS  (S48 NEW)
+verify_i18n_p3             62/62  PASS  (S45)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_my_work             62/62  PASS  (S47)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+TOTAL (17 suites)        PASS  0 FAIL
+```
+
+### Smoke test checklist (S48 — manual, production)
+| Check | Expected |
+|---|---|
+| Hard-reload | Badge shows `v6.14-i18n-phase5-20260709` |
+| Open Quick View → switch to EN | Filter "All" / "All Weeks" / "📅 This Week", subtitle contains "tasks" + "All", "Done:", "Next Week Plan", "Group by Initiative", "Updated:" |
+| Switch back to VI | "Tất cả", "Cập nhật:" |
+| Executive Summary → switch EN | "High Risk", "Watch"/"On Track", "Pending Approval", "Overdue" |
+| Switch back to VI | "Rủi ro cao", "Cần chú ý", "Cần BLĐ", "Quá hạn" |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S47)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-09 (Session 47 — i18n Phase 4: My Work bilingual labels)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

@@ -69,7 +69,7 @@ function renderExecutiveSummary() {
   const bldPulse = document.querySelector('#esBldCard .es-alert-pulse');
   if (bldPulse) bldPulse.style.display = bldNum > 0 ? 'inline-block' : 'none';
 
-  _esSet('esAvgProg', `TB: ${avgProg}%`);
+  _esSet('esAvgProg', `${t('es.avg-prog')} ${avgProg}%`);
 
   // Zone 2A: RAG donut
   _esRenderRagChart(rag, total);
@@ -100,7 +100,7 @@ function _esRenderRagChart(rag, total) {
   esChartInst = new Chart(canvas.getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: empty ? ['Chưa có dữ liệu'] : ['Green', 'Amber', 'Red'],
+      labels: empty ? [t('db.no-data')] : ['Green', 'Amber', 'Red'],
       datasets: [{
         data: empty ? [1] : [rag.Green, rag.Amber, rag.Red],
         backgroundColor: empty ? ['#E2E8F0'] : ['#22C55E', '#F59E0B', '#EF4444'],
@@ -114,7 +114,7 @@ function _esRenderRagChart(rag, total) {
         legend: { display: false },
         tooltip: { callbacks: {
           label: ctx => {
-            if (empty) return 'Chưa có dữ liệu';
+            if (empty) return t('db.no-data');
             const pct = total ? Math.round(ctx.raw / total * 100) : 0;
             return ` ${ctx.raw} task (${pct}%)`;
           }
@@ -152,7 +152,7 @@ function _esRenderAttentionList(attention) {
   if (attention.length === 0) {
     el.innerHTML = `<div class="es-empty-state">
       <i class="fa-solid fa-circle-check"></i>
-      Tuyệt vời! Không có hạng mục nào cần xử lý khẩn.
+      ${t('es.no-urgent')}
     </div>`;
     return;
   }
@@ -160,9 +160,9 @@ function _esRenderAttentionList(attention) {
   attention.sort((a, b) => a.priority - b.priority);
 
   const cfg = {
-    bld:     { cls: 'es-att-bld',      tag: 'tag-bld',     icon: 'fa-solid fa-circle-exclamation', color: 'var(--warning)', label: 'Cần BLĐ' },
+    bld:     { cls: 'es-att-bld',      tag: 'tag-bld',     icon: 'fa-solid fa-circle-exclamation', color: 'var(--warning)', label: t('es.label.bld') },
     blocked: { cls: 'es-att-blocked',  tag: 'tag-blocked', icon: 'fa-solid fa-ban',                color: 'var(--accent)',  label: 'Blocked' },
-    overdue: { cls: 'es-att-critical', tag: 'tag-overdue', icon: 'fa-solid fa-clock',              color: 'var(--danger)',  label: 'Quá hạn' }
+    overdue: { cls: 'es-att-critical', tag: 'tag-overdue', icon: 'fa-solid fa-clock',              color: 'var(--danger)',  label: t('es.label.overdue') }
   };
 
   const maxShow = 8;
@@ -183,7 +183,7 @@ function _esRenderAttentionList(attention) {
   }).join('');
 
   if (rest > 0) {
-    html += `<div class="es-more-link" onclick="navigateTo('tasks')">+ ${rest} hạng mục nữa → Xem tất cả</div>`;
+    html += `<div class="es-more-link" onclick="navigateTo('tasks')">+ ${rest} ${t('es.more-items')}</div>`;
   }
 
   el.innerHTML = html;
@@ -196,7 +196,7 @@ function _esRenderInitTable(initSummary) {
   const entries = Object.entries(initSummary);
   if (entries.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-3);">
-      Chưa có dữ liệu. Upload file Excel hoặc kết nối DB.
+      ${t('es.no-data-upload')}
     </td></tr>`;
     return;
   }
@@ -218,9 +218,9 @@ function _esRenderInitTable(initSummary) {
     const pfCls = avg >= 70 ? 'pf-green' : avg >= 30 ? 'pf-amber' : 'pf-red';
 
     let stTag, stCls;
-    if (domRag === 'Red') { stTag = 'Rủi ro cao'; stCls = 'st-risk'; }
-    else if (domRag === 'Amber') { stTag = 'Cần chú ý'; stCls = 'st-watch'; }
-    else { stTag = 'Đúng tiến độ'; stCls = 'st-good'; }
+    if (domRag === 'Red') { stTag = t('es.risk.high'); stCls = 'st-risk'; }
+    else if (domRag === 'Amber') { stTag = t('es.risk.watch'); stCls = 'st-watch'; }
+    else { stTag = t('es.risk.good'); stCls = 'st-good'; }
 
     return `<tr>
       <td><div class="es-init-name" title="${esc(k)}">${esc(k)}</div></td>

@@ -1,6 +1,37 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-09 (Session 47 — i18n Phase 4: My Work)
-**Context**: S47 done. My Work bilingual. 22 new mw.* keys. 16/16 suites PASS. HEAD f87eb3e. APP_VERSION=6.13-i18n-phase4-20260709.
+**Prepared**: 2026-07-09 (Session 48 — i18n Phase 5: Quick View + Executive Summary)
+**Context**: S48 done. QV + ES bilingual. 21 new keys (qv.*/es.*). 17/17 suites PASS. APP_VERSION=6.14-i18n-phase5-20260709.
+
+---
+
+## ✅ COMPLETED S48 — i18n Phase 5: Quick View + Executive Summary
+
+- [x] `i18n.js` — +12 qv.* keys + 9 es.* keys VI + EN (filter labels, subtitle, time prefix, attention labels, status tags, empty states)
+- [x] `quickview.js` — t()-shadowing fix: map var `t` → `tk` in 4 callbacks; `renderQuickView()` calls `_qvPopulateFilters()` + `_qvUpdateTime()` for live lang switch
+- [x] `executive-summary.js` — 6 `t()` calls wired: chart empty, attention empty, cfg labels, more-link, init table empty, status tags via `t('es.risk.*')`
+- [x] `app.js` — `renderAll()` +2 lines: executiveSummary guard + `if (_qvIsOpen) renderQuickView()`
+- [x] `config.js` — APP_VERSION='6.14-i18n-phase5-20260709'; cache-bust `?v=20260709g`
+- [x] `verify_i18n_p5.mjs` — NEW; **24/24 PASS** (IP5-1 → IP5-14; covers QV filter/subtitle/labels, ES attention/init-table, EN↔VI switch)
+- [x] `run_tests.mjs` — +verify_i18n_p5.mjs as first suite; **17/17 PASS**
+- [x] **Bug fixed**: `t()` shadowing in quickview.js map callbacks (loop var `t` shadowed global `t()`) → renamed to `tk`
+- [x] **Bug fixed**: `_qvPopulateFilters()` only called in `openQuickView()`, not in `renderQuickView()` → filter labels now update on lang switch
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test S48 on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.14-i18n-phase5-20260709` |
+| Open Quick View (QV button) | Panel opens; filter dropdowns in VI ("Tất cả") |
+| Switch EN → QV open | Filter: "All" / "All Weeks" / "📅 This Week"; subtitle includes "tasks" |
+| QV done card | Shows "Done:" label |
+| QV plan card | Shows "Next Week Plan" / "tasks to do" |
+| QV issue card | Shows "Pending Approval" / "Issue" flags |
+| Switch VI → QV open | Filter: "Tất cả"; subtitle includes "Tất cả"; time "Cập nhật:" |
+| Navigate → Executive Summary | View loads |
+| Switch EN → ES | Attention items show "Pending Approval" / "Overdue"; init table shows "High Risk"/"Watch" |
+| Switch VI → ES | Attention shows "Cần BLĐ"; init table shows "Rủi ro"/"Theo dõi" |
 
 ---
 
@@ -47,12 +78,12 @@
 
 ---
 
-## 🔲 CANDIDATE TASKS S48+
+## 🔲 CANDIDATE TASKS S49+
 
 | Priority | Task | Notes |
 |---|---|---|
-| P1 | **Smoke test S47 on production** | See checklist above |
-| P2 | **i18n Phase 5** — remaining views | dashboard.js, tasks.js, perf, quickview, etc. |
+| P1 | **Smoke test S48 on production** | See checklist above |
+| P2 | **i18n Phase 6** — remaining views | dashboard.js, tasks.js, perf table, initiative-tracker |
 | P2 | **Phase 0 security hardening** | Per arch roadmap — input sanitization, RBAC audit |
 
 ---
