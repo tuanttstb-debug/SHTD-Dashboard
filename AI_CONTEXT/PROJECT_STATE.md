@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-09 (Session 42 — My Work personalized dashboard)
-**Version**: v6.8 (`APP_VERSION = '6.8-my-work-20260709'`, `index.html ?v=20260709`)
-**Remote HEAD (main)**: `5da1c86` — feat(my-work): S42 — personalized dashboard for PO/PTKD/QLDM roles
+**As of**: 2026-07-09 (Session 43 — i18n Phase 2: state display + tasks filter bar)
+**Version**: v6.9 (`APP_VERSION = '6.9-i18n-phase2-20260709'`, `index.html ?v=20260709b`)
+**Remote HEAD (main)**: `5edf349` — feat(i18n): S43 — i18n Phase 2: state display mapping + tasks filter bar translation
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1820 | ✅ S42: `?v=20260709` (54 occurrences); +my-work nav item (fa-house-user), view section, CSS link, KB G+M row, script tag |
+| `index.html` | ~1840 | ✅ S43: `?v=20260709b` (56 occurrences); data-i18n on tasks filter labels, preset spans, scope toggle spans; explicit values on filterState options; S42: +my-work nav item, view section, CSS link, KB G+M row, script tag |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -37,7 +37,7 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | 488 | ✅ NEW S42 — page/section/card/badge styles, dark mode, responsive |
 | `assets/js/views/my-work.js` | ~280 | ✅ NEW S42 — role detection, data getters, render, quick-save functions |
-| `assets/js/config.js` | 7 | ✅ S42: APP_VERSION = '6.8-my-work-20260709'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S43: APP_VERSION = '6.9-i18n-phase2-20260709'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |
@@ -47,7 +47,9 @@
 | `assets/css/auth.css` | ~150 | ✅ S23: +body[data-role="User"] .lead-only { display:none !important } |
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
 | `assets/js/crud.js` | ~295 | ✅ S38: `_editOrigTask` snapshot + `_hasTaskChanged()` + conflict check in `handleSubmit` (readFromHandle before save, VERSION_CONFLICT dialog); S31: deleteTask adds to deletedIds; S29: atomic GAS writes |
-| `assets/js/views/tasks.js` | ~400 | ✅ S32: `sortBy()` now calls `selectedIds.clear()` — sort reorders tasks across pages, stale selections mislead user; S31: `onFilterChange()` clears sync; `toggleSelectAll` scoped to current page; S24: PA1; S23: +_populateFilterPic |
+| `assets/js/views/tasks.js` | ~400 | ✅ S43: renderFilterChips uses t()+tState(); renderTaskTable count/empty use t(); _populateFilterPic "Tất cả"→t('common.all'); S32: sortBy() clears selectedIds; S31: onFilterChange clears; S24: PA1; S23: +_populateFilterPic |
+| `assets/js/i18n.js` | ~370 | ✅ S43: +STATE_KEY map + tState() helper + 50 new VI/EN keys (state display, filter labels, preset, scope, count, chips); S39: Phase 1 chrome keys |
+| `assets/js/helpers.js` | ~80 | ✅ S43: stateChip() uses tState() for language-aware label |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
 | `assets/js/views/initiative-tracker.js` | ~760 | ✅ S29: `_initSave` → async, thêm await trước syncInitiativeAdd/Edit; S27: auto-gen milestone ID + add task from milestone; S25: view popups |

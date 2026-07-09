@@ -1,8 +1,70 @@
 # SESSION HANDOVER
-**Date**: 2026-07-09 (Session 42 — My Work personalized dashboard)
+**Date**: 2026-07-09 (Session 43 — i18n Phase 2)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `5da1c86` — feat(my-work): S42 — personalized dashboard for PO/PTKD/QLDM roles
+**origin/main HEAD**: `5edf349` — feat(i18n): S43 — i18n Phase 2: state display mapping + tasks filter bar translation
+
+---
+
+## Tasks Completed (S43 — i18n Phase 2)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S43-T1 | `i18n.js` — STATE_KEY lookup + tState() helper + 50 new VI/EN keys (state display, filter labels, preset, scope, count, chips) | `assets/js/i18n.js` | ✅ |
+| S43-T2 | `helpers.js` — stateChip() uses tState() for language-aware label; EN: Not Started/In Progress/Completed/On Hold; VI: unchanged | `assets/js/helpers.js` | ✅ |
+| S43-T3 | `index.html` — data-i18n on tasks filter bar labels, preset button text spans, scope toggle spans; explicit value attrs on filterState options (prevents value corruption when EN text differs from raw VI value) | `index.html` | ✅ |
+| S43-T4 | `tasks.js` — renderFilterChips uses t()+tState(); renderTaskTable count/empty use t(); _populateFilterPic "Tất cả"→t('common.all') | `assets/js/views/tasks.js` | ✅ |
+| S43-T5 | `config.js` — APP_VERSION = '6.9-i18n-phase2-20260709'; cache-bust ?v=20260709b | `assets/js/config.js`, `index.html` | ✅ |
+| S43-T6 | `verify_i18n_p2.mjs` — 36/36 PASS (IP1–IP14); `verify_my_work.mjs` — MW18 focus race fix (blur loginUsername before G+M dispatch) | `verify_i18n_p2.mjs`, `verify_my_work.mjs` | ✅ |
+| S43-T7 | Full regression: **15/15 suites 459/459 PASS** | all | ✅ |
+
+### i18n Phase 2 Architecture (S43)
+
+**STATE translation**: Raw GAS values (Vietnamese) stored unchanged. Display layer only:
+- `_STATE_KEY` map: raw Vietnamese → i18n key (`state.not-started`, etc.)
+- `tState(raw)`: `if (!raw) return '–'; return t(_STATE_KEY[raw] || '') || raw;`
+- `stateChip(s)`: CSS class from raw value (unchanged); display text from `tState(s)`
+- VI mode: identity map (Chưa bắt đầu → Chưa bắt đầu); EN mode: translated
+
+**Filter options**: Explicit `value` attributes added to filterState options:
+```html
+<option value="Chưa bắt đầu" data-i18n="state.not-started">Chưa bắt đầu</option>
+```
+When EN: applyI18n() sets text to "Not Started" but value stays "Chưa bắt đầu" → filtering `t.state !== fSt` still works.
+
+**RAG NOT translated**: Green/Amber/Red treated as banking domain terms, kept in English in both modes.
+
+**Scope**: i18n Phase 2 covers tasks view only. Phase 3 = other views (case-pipeline, action-plan, etc.)
+
+**MW18 fix**: `verify_my_work.mjs` MW18 had a loginUsername focus race — `showLoginScreen()` focuses `loginUsername` INPUT, so `inInput=true` makes G key ignored. Fix: `document.activeElement?.blur()` before G+M dispatch.
+
+### Test suite snapshot (2026-07-09)
+```
+verify_i18n_p2             36/36  PASS  (S43 NEW — i18n Phase 2)
+verify_my_work             35/35  PASS  (S42)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+TOTAL (15 suites)         459/459 PASS  0 FAIL
+```
+
+### Commit S43
+```
+5edf349  feat(i18n): S43 — i18n Phase 2: state display mapping + tasks filter bar translation
+```
+
+---
 
 ---
 
