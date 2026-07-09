@@ -33,11 +33,11 @@ function _mwDiffDays(endDate) {
 function _mwDeadlineBadge(endDate) {
   const diff = _mwDiffDays(endDate);
   if (diff === null) return '';
-  if (diff < 0)  return `<span class="mw-dl-badge dl-overdue">Quá hạn ${Math.abs(diff)}N</span>`;
-  if (diff === 0) return `<span class="mw-dl-badge dl-today">Hôm nay!</span>`;
-  if (diff <= 3) return `<span class="mw-dl-badge dl-urgent">Còn ${diff}N</span>`;
-  if (diff <= 7) return `<span class="mw-dl-badge dl-soon">Còn ${diff}N</span>`;
-  return `<span class="mw-dl-badge dl-ok">Còn ${diff}N</span>`;
+  if (diff < 0)  return `<span class="mw-dl-badge dl-overdue">${t('mw.dl.overdue')} ${Math.abs(diff)}${t('mw.dl.days')}</span>`;
+  if (diff === 0) return `<span class="mw-dl-badge dl-today">${t('mw.dl.today')}</span>`;
+  if (diff <= 3) return `<span class="mw-dl-badge dl-urgent">${t('mw.dl.in')} ${diff}${t('mw.dl.days')}</span>`;
+  if (diff <= 7) return `<span class="mw-dl-badge dl-soon">${t('mw.dl.in')} ${diff}${t('mw.dl.days')}</span>`;
+  return `<span class="mw-dl-badge dl-ok">${t('mw.dl.in')} ${diff}${t('mw.dl.days')}</span>`;
 }
 
 // ── Data getters ──
@@ -124,35 +124,35 @@ function _mwGetChampionTasks(tasks) {
 function _mwBuildChampionSection(champTasks) {
   if (!champTasks || champTasks.length === 0) return '';
 
-  const unfilledCount = champTasks.filter(t => !t.result).length;
+  const unfilledCount = champTasks.filter(ct => !ct.result).length;
   const allFilled     = unfilledCount === 0;
 
-  const items = champTasks.map(t => {
-    const id       = esc(t.id);
-    const hasFilled = !!t.result;
+  const items = champTasks.map(ct => {
+    const id       = esc(ct.id);
+    const hasFilled = !!ct.result;
     return `
 <div class="mw-champion-item${hasFilled ? ' is-filled' : ''}" data-id="${id}">
   <div class="mw-champion-item-header">
     <span class="mw-init-id">${id}</span>
-    <span class="mw-champion-name" title="${esc(t.name)}">${esc(t.name)}</span>
-    <span class="mw-champion-status ${hasFilled ? 'status-ok' : 'status-todo'}">${hasFilled ? '✅ Đã cập nhật' : '⚠️ Chưa cập nhật'}</span>
+    <span class="mw-champion-name" title="${esc(ct.name)}">${esc(ct.name)}</span>
+    <span class="mw-champion-status ${hasFilled ? 'status-ok' : 'status-todo'}">${hasFilled ? t('mw.champion.filled') : t('mw.champion.unfilled')}</span>
   </div>
   <textarea class="mw-result-area" rows="2"
-    placeholder="Kết quả / Ghi chú tuần này…"
+    placeholder="${t('mw.champion.placeholder')}"
     onblur="mwQuickSaveResult('${id}',this.value);mwRefreshChampionStatus('${id}',this.value)"
-  >${esc(t.result || '')}</textarea>
+  >${esc(ct.result || '')}</textarea>
 </div>`;
   }).join('');
 
   const statusBadge = allFilled
-    ? `<span class="mw-champion-done">✅ Đã cập nhật đầy đủ</span>`
-    : `<span class="mw-champion-pending">${unfilledCount} chưa cập nhật</span>`;
+    ? `<span class="mw-champion-done">${t('mw.champion.all-filled')}</span>`
+    : `<span class="mw-champion-pending">${unfilledCount} ${t('mw.champion.count-unfilled')}</span>`;
 
   return `
 <div class="mw-section mw-champion-section" id="mwChampionSection">
   <div class="mw-section-header">
     <div class="mw-section-icon champion"><i class="fa-solid fa-star"></i></div>
-    <span class="mw-section-title">Champion tuần này</span>
+    <span class="mw-section-title">${t('mw.champion.title')}</span>
     <span class="mw-count">${champTasks.length}</span>
     ${statusBadge}
   </div>
@@ -179,30 +179,30 @@ function _mwRagDots(taskId, currentRag) {
   return `<div class="mw-rag-wrap" title="RAG">${html}</div>`;
 }
 
-function _mwBuildTaskCard(t) {
-  const id    = esc(t.id);
-  const prog  = Math.min(Math.max(parseInt(t.progress) || 0, 0), 100);
-  const isDone = t.state === 'Hoàn thành';
-  const isHl   = t.highlight === 'Y';
+function _mwBuildTaskCard(task) {
+  const id    = esc(task.id);
+  const prog  = Math.min(Math.max(parseInt(task.progress) || 0, 0), 100);
+  const isDone = task.state === 'Hoàn thành';
+  const isHl   = task.highlight === 'Y';
   const STATES = [
     'Chưa bắt đầu', 'Đang thực hiện', 'Hoàn thành chuẩn bị',
     'Hoàn thành', 'Tạm dừng', 'Blocked',
   ];
   const opts = STATES.map(s =>
-    `<option value="${esc(s)}"${t.state === s ? ' selected' : ''}>${esc(s)}</option>`
+    `<option value="${esc(s)}"${task.state === s ? ' selected' : ''}>${esc(tState(s))}</option>`
   ).join('');
 
   return `
 <div class="mw-task-card${isHl ? ' is-highlight' : ''}${isDone ? ' is-done' : ''}" data-id="${id}">
   <div class="mw-task-card-top">
-    <span class="mw-task-id">${esc(t.id)}</span>
-    <span class="mw-task-name" title="${esc(t.name)}">${esc(t.name)}</span>
+    <span class="mw-task-id">${esc(task.id)}</span>
+    <span class="mw-task-name" title="${esc(task.name)}">${esc(task.name)}</span>
     ${isHl ? '<i class="fa-solid fa-star mw-task-star" title="Highlight báo cáo"></i>' : ''}
-    ${_mwDeadlineBadge(t.endDate)}
+    ${_mwDeadlineBadge(task.endDate)}
   </div>
   <div class="mw-controls">
     <select class="mw-state-sel" onchange="mwQuickSaveState('${id}',this.value)">${opts}</select>
-    ${_mwRagDots(t.id, t.rag)}
+    ${_mwRagDots(task.id, task.rag)}
   </div>
   <div class="mw-controls">
     <div class="mw-prog-wrap">
@@ -217,9 +217,9 @@ function _mwBuildTaskCard(t) {
     </div>
   </div>
   <textarea class="mw-result-area" rows="2"
-    placeholder="Kết quả / Ghi chú tuần này…"
+    placeholder="${t('mw.champion.placeholder')}"
     onblur="mwQuickSaveResult('${id}',this.value)"
-  >${esc(t.result || '')}</textarea>
+  >${esc(task.result || '')}</textarea>
 </div>`;
 }
 
@@ -252,14 +252,14 @@ function _mwBuildUrgentSection(urgent) {
   });
 
   const body = total === 0
-    ? `<div class="mw-empty"><i class="fa-solid fa-circle-check" style="color:#22c55e;margin-right:6px;"></i>Không có task/case nào quá hạn hoặc sắp đến deadline trong 7 ngày.</div>`
+    ? `<div class="mw-empty"><i class="fa-solid fa-circle-check" style="color:#22c55e;margin-right:6px;"></i>${t('mw.urgent.empty')}</div>`
     : `<div class="mw-urgent-list">${[...taskItems, ...caseItems].join('')}</div>`;
 
   return `
 <div class="mw-section" id="mwSectionUrgent">
   <div class="mw-section-header">
     <div class="mw-section-icon urgent"><i class="fa-solid fa-triangle-exclamation"></i></div>
-    <span class="mw-section-title">Cần làm ngay</span>
+    <span class="mw-section-title">${t('mw.urgent.title')}</span>
     <span class="mw-count" id="mwUrgentCount">${total}</span>
   </div>
   ${body}
@@ -272,16 +272,16 @@ function _mwBuildTaskSection(tasks) {
   const hasMore = tasks.length > MAX;
 
   const body = shown.length === 0
-    ? `<div class="mw-empty">Chưa có task nào được giao. Dữ liệu sẽ hiển thị sau khi kết nối Google Sheets.</div>`
+    ? `<div class="mw-empty">${t('mw.tasks.empty')}</div>`
     : `<div class="mw-task-grid">${shown.map(_mwBuildTaskCard).join('')}</div>`;
 
   return `
 <div class="mw-section">
   <div class="mw-section-header">
     <div class="mw-section-icon tasks"><i class="fa-solid fa-list-check"></i></div>
-    <span class="mw-section-title">Task của tôi</span>
+    <span class="mw-section-title">${t('mw.tasks.title')}</span>
     <span class="mw-count">${tasks.length}</span>
-    ${hasMore ? `<span class="mw-section-link" onclick="navigateTo('tasks')">Xem tất cả →</span>` : ''}
+    ${hasMore ? `<span class="mw-section-link" onclick="navigateTo('tasks')">${t('mw.view-all')}</span>` : ''}
   </div>
   ${body}
 </div>`;
@@ -302,7 +302,7 @@ function _mwBuildInitSection(inits) {
   const shown    = inits.slice(0, MAX_INIT);
 
   const body = inits.length === 0
-    ? `<div class="mw-empty">Chưa có initiative nào phụ trách.</div>`
+    ? `<div class="mw-empty">${t('mw.init.empty')}</div>`
     : `<div class="mw-init-grid">${shown.map(ini => {
         const msCnt   = (db.initiatives || []).filter(x => x.parentId === ini.id && x.type === 'milestone').length;
         const taskCnt = (db.tasks || []).filter(t => t.initiative === ini.id).length;
@@ -325,9 +325,9 @@ function _mwBuildInitSection(inits) {
 <div class="mw-section" id="mwSectionThird">
   <div class="mw-section-header">
     <div class="mw-section-icon third"><i class="fa-solid fa-diagram-project"></i></div>
-    <span class="mw-section-title">Initiative phụ trách</span>
+    <span class="mw-section-title">${t('mw.init.title')}</span>
     <span class="mw-count">${inits.length}</span>
-    <span class="mw-section-link" onclick="mwOpenInitPopup()">Xem tất cả →</span>
+    <span class="mw-section-link" onclick="mwOpenInitPopup()">${t('mw.view-all')}</span>
   </div>
   ${body}
 </div>`;
@@ -349,16 +349,16 @@ function _mwBuildCaseSection(cases) {
 </div>`);
 
   const body = cases.length === 0
-    ? `<div class="mw-empty">Chưa có case active nào của team.</div>`
+    ? `<div class="mw-empty">${t('mw.case.empty')}</div>`
     : `<div class="mw-case-grid">${items.join('')}</div>`;
 
   return `
 <div class="mw-section" id="mwSectionThird">
   <div class="mw-section-header">
     <div class="mw-section-icon third"><i class="fa-solid fa-filter-circle-dollar"></i></div>
-    <span class="mw-section-title">Case Pipeline của team</span>
+    <span class="mw-section-title">${t('mw.case.title')}</span>
     <span class="mw-count">${cases.length}</span>
-    <span class="mw-section-link" onclick="navigateTo('case-pipeline')">Xem tất cả →</span>
+    <span class="mw-section-link" onclick="navigateTo('case-pipeline')">${t('mw.view-all')}</span>
   </div>
   ${body}
 </div>`;
@@ -372,7 +372,7 @@ function renderMyWork() {
 
   const user = getCurrentUser();
   if (!user) {
-    root.innerHTML = '<div class="mw-page"><div class="mw-empty">Vui lòng đăng nhập để xem công việc của bạn.</div></div>';
+    root.innerHTML = `<div class="mw-page"><div class="mw-empty">${t('mw.login-required')}</div></div>`;
     return;
   }
 
@@ -395,7 +395,7 @@ function renderMyWork() {
 <div class="mw-page">
   <div class="mw-page-header">
     <div>
-      <div class="mw-greeting">Xin chào, ${esc(user.displayName || user.username)} 👋</div>
+      <div class="mw-greeting">${t('mw.greeting')} ${esc(user.displayName || user.username)} 👋</div>
       <div class="mw-sub">${esc(user.team)} · ${esc(roleLabel)} view · ${todayStr}</div>
     </div>
   </div>
@@ -490,7 +490,7 @@ function mwRefreshChampionStatus(taskId, val) {
   const badge = item.querySelector('.mw-champion-status');
   if (badge) {
     badge.className = `mw-champion-status ${hasFilled ? 'status-ok' : 'status-todo'}`;
-    badge.textContent = hasFilled ? '✅ Đã cập nhật' : '⚠️ Chưa cập nhật';
+    badge.textContent = hasFilled ? t('mw.champion.filled') : t('mw.champion.unfilled');
   }
   // Update section-level pending count
   const section = document.getElementById('mwChampionSection');
@@ -500,11 +500,11 @@ function mwRefreshChampionStatus(taskId, val) {
   const pending  = section.querySelector('.mw-champion-pending');
   const done     = section.querySelector('.mw-champion-done');
   if (unfilled === 0) {
-    if (pending) { pending.className = 'mw-champion-done'; pending.textContent = '✅ Đã cập nhật đầy đủ'; }
-    if (done)   done.textContent = '✅ Đã cập nhật đầy đủ';
+    if (pending) { pending.className = 'mw-champion-done'; pending.textContent = t('mw.champion.all-filled'); }
+    if (done)   done.textContent = t('mw.champion.all-filled');
   } else {
-    if (pending) pending.textContent = `${unfilled} chưa cập nhật`;
-    if (done)   { done.className = 'mw-champion-pending'; done.textContent = `${unfilled} chưa cập nhật`; }
+    if (pending) pending.textContent = `${unfilled} ${t('mw.champion.count-unfilled')}`;
+    if (done)   { done.className = 'mw-champion-pending'; done.textContent = `${unfilled} ${t('mw.champion.count-unfilled')}`; }
   }
 }
 
@@ -538,7 +538,7 @@ function mwOpenInitPopup() {
   const list = document.getElementById('mwInitPopupList');
   if (list) {
     list.innerHTML = allRoots.length === 0
-      ? `<div class="mw-empty" style="margin:16px;">Chưa có initiative nào.</div>`
+      ? `<div class="mw-empty" style="margin:16px;">${t('mw.init.popup-empty')}</div>`
       : items.join('');
   }
   const cnt = document.getElementById('mwInitPopupCount');

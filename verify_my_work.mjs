@@ -36,6 +36,10 @@
  *  MW33 – done highlight=Y task excluded from champion section
  *  MW34 – unfilled result shows "⚠️ Chưa cập nhật"; filled shows "✅ Đã cập nhật"
  *  MW35 – mwRefreshChampionStatus updates badge in DOM without re-render
+ *  MW36 – i18n EN: greeting shows "Hello,"
+ *  MW37 – i18n EN: section titles switch to English (Action Needed, My Tasks, Weekly Champion)
+ *  MW38 – i18n EN: overdue deadline badge shows "Overdue"
+ *  MW39 – i18n VI: setLang('vi') restores Vietnamese labels
  *
  * Run: node verify_my_work.mjs
  * EVD: test-results/my_work/
@@ -640,6 +644,66 @@ const h01FilledClass = await page.evaluate(() => {
 log('MW35-status-updated',   h01StatusAfter && h01StatusAfter.includes('Đã'), `Badge flipped to: "${h01StatusAfter}"`);
 log('MW35-is-filled-class',  h01FilledClass, 'Item gets is-filled class after refresh');
 await shot(page, 'MW35-champion-refresh');
+
+/* ══════════════════════════════════════════
+   MW36 — i18n: switch to EN → greeting "Hello,"
+══════════════════════════════════════════ */
+await injectPO();
+await page.evaluate(() => setLang('en'));
+await page.waitForTimeout(400);
+
+const greetingEN = await page.evaluate(() => {
+  const el = document.querySelector('#view-my-work .mw-greeting');
+  return el ? el.textContent.trim() : '';
+});
+log('MW36-greeting-en', greetingEN.startsWith('Hello,'), `EN greeting: "${greetingEN}"`);
+await shot(page, 'MW36-lang-en');
+
+/* ══════════════════════════════════════════
+   MW37 — i18n: EN → section titles in English
+══════════════════════════════════════════ */
+const urgentTitleEN = await page.evaluate(() => {
+  const el = document.querySelector('#mwSectionUrgent .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+const tasksTitleEN = await page.evaluate(() => {
+  const el = document.querySelector('.mw-section:not(#mwSectionUrgent):not(#mwChampionSection):not(#mwSectionThird) .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+const champTitleEN = await page.evaluate(() => {
+  const el = document.querySelector('#mwChampionSection .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+log('MW37-urgent-title-en',  urgentTitleEN === 'Action Needed',   `Urgent title EN: "${urgentTitleEN}"`);
+log('MW37-tasks-title-en',   tasksTitleEN  === 'My Tasks',        `Tasks title EN: "${tasksTitleEN}"`);
+log('MW37-champion-title-en', champTitleEN === 'Weekly Champion', `Champion title EN: "${champTitleEN}"`);
+
+/* ══════════════════════════════════════════
+   MW38 — i18n: EN → overdue badge shows "Overdue"
+══════════════════════════════════════════ */
+const overdueBadgeEN = await page.evaluate(() => {
+  const badge = document.querySelector('.mw-dl-badge.dl-overdue');
+  return badge ? badge.textContent.trim() : '';
+});
+log('MW38-overdue-badge-en', overdueBadgeEN.startsWith('Overdue'), `EN overdue badge: "${overdueBadgeEN}"`);
+
+/* ══════════════════════════════════════════
+   MW39 — i18n: switch back to VI → labels restore
+══════════════════════════════════════════ */
+await page.evaluate(() => setLang('vi'));
+await page.waitForTimeout(400);
+
+const greetingVI = await page.evaluate(() => {
+  const el = document.querySelector('#view-my-work .mw-greeting');
+  return el ? el.textContent.trim() : '';
+});
+const urgentTitleVI = await page.evaluate(() => {
+  const el = document.querySelector('#mwSectionUrgent .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+log('MW39-greeting-vi',      greetingVI.startsWith('Xin chào,'), `VI greeting: "${greetingVI}"`);
+log('MW39-urgent-title-vi',  urgentTitleVI === 'Cần làm ngay',   `Urgent title VI: "${urgentTitleVI}"`);
+await shot(page, 'MW39-lang-vi');
 
 /* ══════════════════════════════════════════
    MW25 — No JS errors
