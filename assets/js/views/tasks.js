@@ -105,13 +105,13 @@ function getFiltered() {
 
 function renderFilterChips() {
   const labels = {
-    filterInit: v => `Initiative: ${v}`,
-    filterTeam: v => `Team: ${v}`,
-    filterPic:  v => `PIC: ${v}`,
-    filterState:v => `Trạng thái: ${v}`,
-    filterRag:  v => `RAG: ${v}`,
-    filterId:   v => `ID: ${v}`,
-    filterTuanBC: v => `Tuần BC: ${v === '__thisweek__' ? 'Tuần này' : v}`,
+    filterInit:  v => `${t('chip.initiative')}: ${v}`,
+    filterTeam:  v => `${t('chip.team')}: ${v}`,
+    filterPic:   v => `${t('chip.pic')}: ${v}`,
+    filterState: v => `${t('chip.state')}: ${tState(v)}`,
+    filterRag:   v => `${t('chip.rag')}: ${v}`,
+    filterId:    v => `${t('chip.id')}: ${v}`,
+    filterTuanBC: v => `${t('chip.tuanbc')}: ${v === '__thisweek__' ? t('chip.thisweek') : v}`,
   };
   const chips = [];
   Object.entries(labels).forEach(([id, label]) => {
@@ -163,7 +163,7 @@ function _populateFilterPic(team) {
     const pics = [...seen.values()].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     opts = pics.map(p => ({ value: p, label: p }));
   }
-  sel.innerHTML = '<option value="">Tất cả</option>'
+  sel.innerHTML = `<option value="">${t('common.all')}</option>`
     + opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
   if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
 }
@@ -222,12 +222,15 @@ function renderTaskTable() {
   if (currentPage > totalPages) currentPage = totalPages;
   const paged = tasks.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
 
-  document.getElementById('taskCountInfo').textContent = `Hiển thị ${(currentPage-1)*PAGE_SIZE+1}–${Math.min(currentPage*PAGE_SIZE,total)} / ${total} task`;
+  const from = (currentPage-1)*PAGE_SIZE+1;
+  const to   = Math.min(currentPage*PAGE_SIZE, total);
+  document.getElementById('taskCountInfo').textContent =
+    `${t('task.count.showing')} ${from}–${to} ${t('task.count.of')} ${total} ${t('task.count.unit')}`;
 
   if (paged.length === 0) {
     tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--text-3);">
       <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-      Không có task nào. Thêm mới hoặc Import file Excel.
+      ${t('task.empty')}
     </td></tr>`;
   } else {
     tbody.innerHTML = paged.map(t => {

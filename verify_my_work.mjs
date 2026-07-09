@@ -380,6 +380,11 @@ await shot(page, 'MW17-rag-dots');
 await page.evaluate(() => navigateTo('dashboard')); // go away first
 await page.waitForTimeout(200);
 await page.evaluate(() => {
+  // un-focus any input that loginScreen may have focused (loginUsername stays focused
+  // even after overlay is hidden, which makes gKey handler see inInput=true)
+  if (document.activeElement && document.activeElement !== document.body) {
+    document.activeElement.blur();
+  }
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'm', bubbles: true }));
 });

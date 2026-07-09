@@ -137,6 +137,50 @@ const TRANSLATIONS = {
     'toast.copy-failed':       'Copy không thành công, vui lòng copy thủ công.',
     'toast.conflict-reload':   'Dữ liệu vừa được cập nhật bởi người khác. Đang tải lại dữ liệu mới nhất…',
     'toast.conflict-check-skip': 'conflict check skipped (GAS unavailable)',
+
+    // ── State display (raw GAS values stay Vietnamese; this is display-only) ──
+    'state.not-started': 'Chưa bắt đầu',
+    'state.in-progress': 'Đang thực hiện',
+    'state.prep-done':   'Hoàn thành chuẩn bị',
+    'state.completed':   'Hoàn thành',
+    'state.on-hold':     'Tạm dừng',
+    'state.blocked':     'Blocked',
+
+    // ── Filter bar — Tasks view ──
+    'filter.id':          'Mã Task',
+    'filter.initiative':  'Initiative',
+    'filter.team':        'Team',
+    'filter.pic':         'PIC Responsible',
+    'filter.state':       'Trạng thái',
+    'filter.rag':         'Health (RAG)',
+    'filter.tuanbc':      'Tuần BC',
+    'filter.thisweek':    '📅 Tuần này',
+
+    // ── Preset bar — Tasks view ──
+    'preset.active':  'Đang làm',
+    'preset.week':    'Tuần BC này',
+    'preset.overdue': 'Quá hạn',
+    'preset.all':     'Tất cả',
+
+    // ── Task scope toggle ──
+    'task.scope.mine': 'Của tôi',
+    'task.scope.all':  'Tất cả',
+
+    // ── Task table UI ──
+    'task.count.showing': 'Hiển thị',
+    'task.count.of':      '/',
+    'task.count.unit':    'task',
+    'task.empty':         'Không có task nào. Thêm mới hoặc Import file Excel.',
+
+    // ── Filter chip prefixes ──
+    'chip.id':        'ID',
+    'chip.initiative':'Initiative',
+    'chip.team':      'Team',
+    'chip.pic':       'PIC',
+    'chip.state':     'Trạng thái',
+    'chip.rag':       'RAG',
+    'chip.tuanbc':    'Tuần BC',
+    'chip.thisweek':  'Tuần này',
   },
 
   en: {
@@ -267,8 +311,69 @@ const TRANSLATIONS = {
     'toast.copy-failed':       'Copy failed, please copy manually.',
     'toast.conflict-reload':   'Data was just updated by another user. Reloading latest data…',
     'toast.conflict-check-skip': 'conflict check skipped (GAS unavailable)',
+
+    // ── State display ──
+    'state.not-started': 'Not Started',
+    'state.in-progress': 'In Progress',
+    'state.prep-done':   'Prep. Done',
+    'state.completed':   'Completed',
+    'state.on-hold':     'On Hold',
+    'state.blocked':     'Blocked',
+
+    // ── Filter bar — Tasks view ──
+    'filter.id':          'Task ID',
+    'filter.initiative':  'Initiative',
+    'filter.team':        'Team',
+    'filter.pic':         'PIC Responsible',
+    'filter.state':       'Status',
+    'filter.rag':         'Health (RAG)',
+    'filter.tuanbc':      'Report Week',
+    'filter.thisweek':    '📅 This Week',
+
+    // ── Preset bar — Tasks view ──
+    'preset.active':  'Active',
+    'preset.week':    'This Week',
+    'preset.overdue': 'Overdue',
+    'preset.all':     'All',
+
+    // ── Task scope toggle ──
+    'task.scope.mine': 'Mine',
+    'task.scope.all':  'All',
+
+    // ── Task table UI ──
+    'task.count.showing': 'Showing',
+    'task.count.of':      '/',
+    'task.count.unit':    'tasks',
+    'task.empty':         'No tasks found. Add new or Import Excel file.',
+
+    // ── Filter chip prefixes ──
+    'chip.id':        'ID',
+    'chip.initiative':'Initiative',
+    'chip.team':      'Team',
+    'chip.pic':       'PIC',
+    'chip.state':     'Status',
+    'chip.rag':       'RAG',
+    'chip.tuanbc':    'Week',
+    'chip.thisweek':  'This Week',
   },
 };
+
+/** Raw state value → i18n key lookup (state raw values are Vietnamese, stored in GAS unchanged). */
+const _STATE_KEY = {
+  'Chưa bắt đầu':       'state.not-started',
+  'Đang thực hiện':      'state.in-progress',
+  'Hoàn thành chuẩn bị': 'state.prep-done',
+  'Hoàn thành':          'state.completed',
+  'Tạm dừng':            'state.on-hold',
+  'Blocked':             'state.blocked',
+};
+
+/** Display-translated state label. Raw GAS value in → localized string out. */
+function tState(raw) {
+  if (!raw) return '–';
+  const key = _STATE_KEY[raw];
+  return key ? t(key) : raw;
+}
 
 /** Return translated string for current language. Falls back to Vietnamese, then the key itself. */
 function t(key) {

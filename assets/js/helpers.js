@@ -30,7 +30,8 @@ const ragBadge = s => { const c = {Green:'badge-green',Amber:'badge-amber',Red:'
 
 const stateChip = s => {
   const map = { 'Chưa bắt đầu':'s0','Đang thực hiện':'s1','Hoàn thành chuẩn bị':'s2','Hoàn thành':'s3','Tạm dừng':'s4','Blocked':'s5' };
-  return `<span class="state-chip ${map[s]||'s0'}">${s||'–'}</span>`;
+  const label = typeof tState === 'function' ? tState(s) : (s || '–');
+  return `<span class="state-chip ${map[s]||'s0'}">${label}</span>`;
 };
 
 function genId(init, team, ms, extra = []) {
