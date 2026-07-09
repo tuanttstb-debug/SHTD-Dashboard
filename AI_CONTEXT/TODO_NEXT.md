@@ -1,16 +1,19 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-09 (Session 44 — My Work Initiative Popup + Champion Section)
-**Context**: S44a+S44b done. Initiative popup (Xem tất cả → overlay, MAX_INIT=4) + Champion section (highlight=Y weekly reminder, amber theme, status badges, DOM-only refresh). 15 suites 479/479 PASS. APP_VERSION=6.11-mw-champion-20260709.
+**Prepared**: 2026-07-09 (Session 45 — i18n Phase 3)
+**Context**: S45 done. bilingual BLD Queue, Case Pipeline, Action Plan. 32 new keys. 16 suites 593/593 PASS. APP_VERSION=6.12-i18n-phase3-20260709.
 
 ---
 
-## ✅ COMPLETED S44b
+## ✅ COMPLETED S45 — i18n Phase 3
 
-- [x] `my-work.js` — _mwGetChampionTasks(), _mwBuildChampionSection(), mwRefreshChampionStatus()
-- [x] `my-work.css` — .mw-champion-section + item + status + pending/done badge styles
-- [x] `config.js` — APP_VERSION='6.11-mw-champion-20260709'; cache-bust ?v=20260709d
-- [x] `verify_my_work.mjs` — MW30-MW35; **55/55 PASS** (was 45)
-- [x] Full regression: **15/15 suites 479/479 PASS**
+- [x] `i18n.js` — +32 keys (cp.stat.*, cp.view.*, cp.preset.*, cp.filter.*, bld.*, ap.*) VI + EN
+- [x] `index.html` — data-i18n on CP stat cards, preset spans, view toggle, scope toggle, CP filter labels, BLD filter label/refresh/history; cache-bust ?v=20260709e
+- [x] `action-plan.js` — period buttons + summary strip + all-teams option via t()
+- [x] `bld-queue.js` — count chip + empty state + filter selects via t()
+- [x] `app.js` — renderAll() re-renders AP + BLD when views visible (live lang switch)
+- [x] `config.js` — APP_VERSION='6.12-i18n-phase3-20260709'
+- [x] `verify_i18n_p3.mjs` — **62/62 PASS** (port 3044)
+- [x] Full regression: **16/16 suites 593/593 PASS**
 
 ---
 
@@ -18,25 +21,25 @@
 
 | Check | Expected |
 |---|---|
-| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.11-mw-champion-20260709` |
-| My Work (PO/QLDM, user has highlight=Y tasks) | "Champion tuần này" amber section appears at top |
-| Task with result empty | ⚠️ Chưa cập nhật badge |
-| Task with result filled | ✅ Đã cập nhật badge, green border |
-| Fill result in textarea → blur | Badge flips to ✅ without re-render; task saves to GAS |
-| No highlight=Y tasks | Champion section hidden |
-| Initiative section | Shows max 4 cards; "Xem tất cả →" opens popup |
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.12-i18n-phase3-20260709` |
+| Switch EN: Case Pipeline stat cards | "Total Cases / Total Pipeline Value / Overdue / Needs Approval" |
+| Switch EN: CP preset tabs | "In Progress / Needs Approval / Overdue / All" |
+| Switch EN: CP filter labels | "Search case / Stage / Team / PIC / Branch / Type / RAG" |
+| Switch EN: BLD Queue filter label | "Filter:" instead of "Lọc:" |
+| Switch EN: BLD count chip | "N pending approval" |
+| Switch EN: Action Plan period buttons | "This Month / This Quarter / Last Month" |
+| Switch EN: AP summary strip | "N actions · M In Progress" |
+| Switch back VI | All labels restore to Vietnamese |
 
 ---
 
-## 🔲 CANDIDATE TASKS S45
+## 🔲 CANDIDATE TASKS S46
 
 | Priority | Task | Notes |
 |---|---|---|
-| P1 | **Smoke test S44a+S44b** | See checklist above |
-| P1 | **Smoke test S43 i18n Phase 2** | Badge v6.9 → v6.11; EN mode: Status/Not Started/Active |
-| P1 | **Smoke test S41 Issue Tracker** | GAS redeploy needed (IssueService.gs) |
-| P2 | **i18n Phase 3** | Extend to other views: bld-queue, case-pipeline filter labels, action-plan |
-| P3 | **TD-012: add CI** | npm test + GitHub Actions for 15 test suites |
+| P1 | **Smoke test S45 i18n Phase 3** | See checklist above |
+| P1 | **Smoke test S44a+S44b My Work** | Champion section + Initiative popup |
+| P3 | **TD-012: add CI** | npm test + GitHub Actions for 16 test suites |
 
 ---
 
