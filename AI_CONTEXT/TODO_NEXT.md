@@ -33,13 +33,22 @@
 
 ---
 
-## 🔲 CANDIDATE TASKS S46
+## ✅ COMPLETED S46 — CI (TD-012)
+
+- [x] `run_tests.mjs` — sequential runner: 16 suites, ✅/❌ per suite, exits 1 on failure
+- [x] `package.json` — `"test": "node run_tests.mjs"` + `"engines": { "node": ">=18" }`
+- [x] `.github/workflows/ci.yml` — ubuntu-latest, Node 20, playwright chromium, `npm test`
+- [x] Local smoke: **16/16 PASS** in ~5 min
+
+---
+
+## 🔲 CANDIDATE TASKS S47
 
 | Priority | Task | Notes |
 |---|---|---|
 | P1 | **Smoke test S45 i18n Phase 3** | See checklist above |
 | P1 | **Smoke test S44a+S44b My Work** | Champion section + Initiative popup |
-| P3 | **TD-012: add CI** | npm test + GitHub Actions for 16 test suites |
+| P2 | **Check CI run on GitHub** | Push triggered workflow — verify green badge at https://github.com/tuanttstb-debug/SHTD-Dashboard/actions |
 
 ---
 

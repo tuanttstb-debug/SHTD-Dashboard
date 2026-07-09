@@ -1,8 +1,8 @@
 # SESSION HANDOVER
-**Date**: 2026-07-09 (Session 45 — i18n Phase 3: BLD Queue + Case Pipeline + Action Plan)
+**Date**: 2026-07-09 (Session 46 — TD-012: CI with GitHub Actions)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `c8eab25` — feat: S45 i18n Phase 3
+**origin/main HEAD**: `4a8e386` — feat: TD-012 CI + npm test runner
 
 ---
 
