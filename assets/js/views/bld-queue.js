@@ -16,7 +16,7 @@ function renderBldQueue() {
   const total = pendingTasks.length + pendingCases.length;
   const chip  = document.getElementById('bldCountChip');
   if (chip) {
-    chip.textContent = total ? `${total} chờ phê duyệt` : 'Không có mục nào';
+    chip.textContent = total ? `${total} ${t('bld.count.pending')}` : t('bld.count.none');
     chip.classList.toggle('none', total === 0);
   }
 
@@ -84,14 +84,14 @@ function _bldPopulateFilters() {
 
   if (teamSel) {
     const prev = teamSel.value;
-    teamSel.innerHTML = '<option value="">Tất cả đội</option>' +
+    teamSel.innerHTML = `<option value="">${t('bld.filter.all-teams')}</option>` +
       teams.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
     teamSel.value = teams.includes(prev) ? prev : '';
     _bldFilterTeam = teamSel.value;
   }
   if (initSel) {
     const prev = initSel.value;
-    initSel.innerHTML = '<option value="">Tất cả sáng kiến</option>' +
+    initSel.innerHTML = `<option value="">${t('bld.filter.all-inits')}</option>` +
       inits.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join('');
     initSel.value = inits.includes(prev) ? prev : '';
     _bldFilterInit = initSel.value;
@@ -118,8 +118,8 @@ function _bldRenderPending(taskItems, caseItems) {
   if (!taskItems.length && !caseItems.length) {
     el.innerHTML = `<div class="bld-empty-state">
       <div class="bld-empty-icon"><i class="fa-solid fa-circle-check"></i></div>
-      <div class="bld-empty-title">Không có mục chờ phê duyệt</div>
-      <div class="bld-empty-sub">Tất cả yêu cầu đã được xử lý hoặc chưa có mục nào.</div>
+      <div class="bld-empty-title">${t('bld.empty.title')}</div>
+      <div class="bld-empty-sub">${t('bld.empty.sub')}</div>
     </div>`;
     return;
   }

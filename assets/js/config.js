@@ -5,4 +5,4 @@
 const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec';
 
 // Build version — tăng số này mỗi lần deploy để phát hiện browser cache stale
-const APP_VERSION = '6.11-mw-champion-20260709';
+const APP_VERSION = '6.12-i18n-phase3-20260709';

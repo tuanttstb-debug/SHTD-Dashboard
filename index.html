@@ -8,24 +8,24 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/base.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/components.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/table.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260709d">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260709d">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/base.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/components.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/table.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260709e">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20260709e">
 
 </head>
 <body>
@@ -435,14 +435,14 @@
           <span class="bld-timestamp" id="bldTimestamp"></span>
         </div>
         <div class="bld-filter-bar">
-          <span class="bld-filter-label"><i class="fa-solid fa-filter" style="margin-right:4px;"></i>Lọc:</span>
+          <span class="bld-filter-label"><i class="fa-solid fa-filter" style="margin-right:4px;"></i><span data-i18n="bld.filter.label">Lọc:</span></span>
           <select id="bldFilterTeam" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:140px;" onchange="_bldFilterTeam=this.value;renderBldQueue()">
             <option value="">Tất cả đội</option>
           </select>
           <select id="bldFilterInit" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="_bldFilterInit=this.value;renderBldQueue()">
             <option value="">Tất cả sáng kiến</option>
           </select>
-          <button class="btn btn-outline btn-sm" onclick="renderBldQueue()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+          <button class="btn btn-outline btn-sm" onclick="renderBldQueue()"><i class="fa-solid fa-rotate"></i> <span data-i18n="common.refresh">Làm mới</span></button>
         </div>
       </div>
 
@@ -452,7 +452,7 @@
       <!-- History section -->
       <div id="bldHistoryWrap" style="display:none;">
         <div class="bld-history-header">
-          <div class="bld-history-title"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i>Đã xử lý (7 ngày qua)</div>
+          <div class="bld-history-title"><i class="fa-solid fa-clock-rotate-left" style="margin-right:5px;"></i><span data-i18n="bld.history.title">Đã xử lý (7 ngày qua)</span></div>
           <div class="bld-history-line"></div>
         </div>
         <div class="bld-history-list" id="bldHistoryList"></div>
@@ -471,7 +471,7 @@
           </div>
           <div class="cp-stat-body">
             <div class="cp-stat-num" id="cpStatTotal">0</div>
-            <div class="cp-stat-label">Tổng số Case</div>
+            <div class="cp-stat-label" data-i18n="cp.stat.total">Tổng số Case</div>
           </div>
         </div>
         <div class="cp-stat-card" onclick="openCpSummaryPopup('value')" style="cursor:pointer;" title="Xem danh sách theo giá trị">
@@ -480,7 +480,7 @@
           </div>
           <div class="cp-stat-body">
             <div class="cp-stat-num" id="cpStatValue">0</div>
-            <div class="cp-stat-label">Tổng giá trị pipeline</div>
+            <div class="cp-stat-label" data-i18n="cp.stat.value">Tổng giá trị pipeline</div>
           </div>
         </div>
         <div class="cp-stat-card" onclick="openCpSummaryPopup('overdue')" style="cursor:pointer;" title="Xem danh sách quá hạn">
@@ -489,7 +489,7 @@
           </div>
           <div class="cp-stat-body">
             <div class="cp-stat-num" id="cpStatOverdue" style="color:var(--danger);">0</div>
-            <div class="cp-stat-label">Quá hạn deadline</div>
+            <div class="cp-stat-label" data-i18n="cp.stat.overdue">Quá hạn deadline</div>
           </div>
         </div>
         <div class="cp-stat-card" onclick="openCpSummaryPopup('bld')" style="cursor:pointer;" title="Xem danh sách cần BLĐ duyệt">
@@ -498,7 +498,7 @@
           </div>
           <div class="cp-stat-body">
             <div class="cp-stat-num" id="cpStatBld">0</div>
-            <div class="cp-stat-label">Cần BLĐ duyệt</div>
+            <div class="cp-stat-label" data-i18n="cp.stat.bld">Cần BLĐ duyệt</div>
           </div>
         </div>
       </div>
@@ -513,8 +513,8 @@
           </div>
           <div class="toolbar-right">
             <div class="cp-view-toggle">
-              <button class="cp-view-btn active" data-view="table" onclick="cpToggleView('table')" title="Bảng danh sách"><i class="fa-solid fa-table-list"></i> Danh sách</button>
-              <button class="cp-view-btn" data-view="kanban" onclick="cpToggleView('kanban')" title="Kanban board"><i class="fa-solid fa-table-columns"></i> Kanban</button>
+              <button class="cp-view-btn active" data-view="table" onclick="cpToggleView('table')" title="Bảng danh sách"><i class="fa-solid fa-table-list"></i> <span data-i18n="cp.view.table">Danh sách</span></button>
+              <button class="cp-view-btn" data-view="kanban" onclick="cpToggleView('kanban')" title="Kanban board"><i class="fa-solid fa-table-columns"></i> <span data-i18n="cp.view.kanban">Kanban</span></button>
             </div>
             <input type="file" id="cpImportFile" class="lead-only" accept=".xlsx,.xls" style="display:none" onchange="importCasesFromExcel(this.files[0]);this.value=''">
             <button class="btn btn-outline btn-sm lead-only" onclick="document.getElementById('cpImportFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
@@ -526,27 +526,27 @@
         <!-- Preset tabs -->
         <div class="preset-bar">
           <button class="preset-btn cp-preset-btn active" id="cp-preset-active" onclick="cpSetPreset('active')">
-            <span class="preset-icon">🔵</span> Đang xử lý
+            <span class="preset-icon">🔵</span> <span data-i18n="cp.preset.active">Đang xử lý</span>
             <span class="preset-count" id="cp-pcount-active"></span>
           </button>
           <button class="preset-btn cp-preset-btn" id="cp-preset-bld" onclick="cpSetPreset('bld')">
-            <span class="preset-icon">⚡</span> Cần BLĐ
+            <span class="preset-icon">⚡</span> <span data-i18n="cp.preset.bld">Cần BLĐ</span>
             <span class="preset-count preset-count-danger" id="cp-pcount-bld"></span>
           </button>
           <button class="preset-btn cp-preset-btn" id="cp-preset-overdue" onclick="cpSetPreset('overdue')">
-            <span class="preset-icon">⚠</span> Quá hạn
+            <span class="preset-icon">⚠</span> <span data-i18n="cp.preset.overdue">Quá hạn</span>
             <span class="preset-count preset-count-danger" id="cp-pcount-overdue"></span>
           </button>
           <button class="preset-btn cp-preset-btn" id="cp-preset-all" onclick="cpSetPreset('all')">
-            <span class="preset-icon">📋</span> Tất cả
+            <span class="preset-icon">📋</span> <span data-i18n="cp.preset.all">Tất cả</span>
             <span class="preset-count" id="cp-pcount-all"></span>
           </button>
           <div class="scope-toggle" id="cpScopeToggle" style="margin-left:auto;align-self:center;">
             <button class="scope-btn active" id="cpScopeMine" onclick="setCpScope('mine')">
-              <i class="fa-solid fa-user" style="margin-right:3px;"></i>Của tôi
+              <i class="fa-solid fa-user" style="margin-right:3px;"></i><span data-i18n="task.scope.mine">Của tôi</span>
             </button>
             <button class="scope-btn" id="cpScopeAll" onclick="setCpScope('all')">
-              Tất cả
+              <span data-i18n="task.scope.all">Tất cả</span>
             </button>
           </div>
         </div>
@@ -554,29 +554,29 @@
         <!-- Filter bar (Task Manager pattern) -->
         <div class="filter-bar">
           <div class="filter-group" style="min-width:120px;max-width:200px;">
-            <div class="filter-label">Tìm case</div>
+            <div class="filter-label" data-i18n="cp.filter.search">Tìm case</div>
             <input type="text" id="cpSearch" class="form-control" oninput="cpSearchChange()" placeholder="ID / tên / PIC…" style="font-size:12px;padding:7px 10px;">
           </div>
           <div class="filter-group">
-            <div class="filter-label">Stage</div>
+            <div class="filter-label" data-i18n="cp.filter.stage">Stage</div>
             <select id="cpFilterStage" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
-            <div class="filter-label">Team</div>
+            <div class="filter-label" data-i18n="filter.team">Team</div>
             <select id="cpFilterTeam" class="form-control" onchange="cpFilterTeamChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
-            <div class="filter-label">PIC</div>
+            <div class="filter-label" data-i18n="cp.filter.pic">PIC</div>
             <select id="cpFilterPic" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
-            <div class="filter-label">ĐVKD</div>
+            <div class="filter-label" data-i18n="cp.filter.dvkd">ĐVKD</div>
             <select id="cpFilterDvkd" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
             </select>
@@ -588,14 +588,14 @@
             </select>
           </div>
           <div class="filter-group">
-            <div class="filter-label">Loại hình</div>
+            <div class="filter-label" data-i18n="cp.filter.loai">Loại hình</div>
             <select id="cpFilterLoai" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
               <option>Món</option><option>Dự án</option><option>HMTD</option><option>Rà soát</option>
             </select>
           </div>
           <div class="filter-group">
-            <div class="filter-label">RAG</div>
+            <div class="filter-label" data-i18n="cp.filter.rag">RAG</div>
             <select id="cpFilterRag" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
               <option value="">Tất cả</option>
               <option value="Đỏ">🔴 Đỏ</option>
@@ -1795,44 +1795,44 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260709d"></script>
-<script src="assets/js/config.js?v=20260709d"></script>
-<script src="assets/js/constants.js?v=20260709d"></script>
-<script src="assets/js/helpers.js?v=20260709d"></script>
-<script src="assets/js/storage.js?v=20260709d"></script>
-<script src="assets/js/parsers.js?v=20260709d"></script>
-<script src="assets/js/auth.js?v=20260709d"></script>
-<script src="assets/js/api.js?v=20260709d"></script>
-<script src="assets/js/ui/toast.js?v=20260709d"></script>
-<script src="assets/js/ui/modal.js?v=20260709d"></script>
-<script src="assets/js/ui/theme.js?v=20260709d"></script>
-<script src="assets/js/ui/navigation.js?v=20260709d"></script>
-<script src="assets/js/crud.js?v=20260709d"></script>
-<script src="assets/js/bulk.js?v=20260709d"></script>
-<script src="assets/js/views/dashboard.js?v=20260709d"></script>
-<script src="assets/js/views/tasks.js?v=20260709d"></script>
-<script src="assets/js/views/gantt.js?v=20260709d"></script>
-<script src="assets/js/views/performance.js?v=20260709d"></script>
-<script src="assets/js/views/quickview.js?v=20260709d"></script>
-<script src="assets/js/report.js?v=20260709d"></script>
-<script src="assets/js/kpi-data.js?v=20260709d"></script>
-<script src="assets/js/kpi-parser.js?v=20260709d"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260709d"></script>
-<script src="assets/js/views/action-plan.js?v=20260709d"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260709d"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260709d"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260709d"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260709d"></script>
-<script src="assets/js/initiatives.js?v=20260709d"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260709d"></script>
-<script src="assets/js/views/ai-chat.js?v=20260709d"></script>
-<script src="assets/js/views/user-management.js?v=20260709d"></script>
-<script src="assets/js/views/executive-summary.js?v=20260709d"></script>
-<script src="assets/js/views/bld-queue.js?v=20260709d"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260709d"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260709d"></script>
-<script src="assets/js/views/my-work.js?v=20260709d"></script>
-<script src="assets/js/app.js?v=20260709d"></script>
+<script src="assets/js/i18n.js?v=20260709e"></script>
+<script src="assets/js/config.js?v=20260709e"></script>
+<script src="assets/js/constants.js?v=20260709e"></script>
+<script src="assets/js/helpers.js?v=20260709e"></script>
+<script src="assets/js/storage.js?v=20260709e"></script>
+<script src="assets/js/parsers.js?v=20260709e"></script>
+<script src="assets/js/auth.js?v=20260709e"></script>
+<script src="assets/js/api.js?v=20260709e"></script>
+<script src="assets/js/ui/toast.js?v=20260709e"></script>
+<script src="assets/js/ui/modal.js?v=20260709e"></script>
+<script src="assets/js/ui/theme.js?v=20260709e"></script>
+<script src="assets/js/ui/navigation.js?v=20260709e"></script>
+<script src="assets/js/crud.js?v=20260709e"></script>
+<script src="assets/js/bulk.js?v=20260709e"></script>
+<script src="assets/js/views/dashboard.js?v=20260709e"></script>
+<script src="assets/js/views/tasks.js?v=20260709e"></script>
+<script src="assets/js/views/gantt.js?v=20260709e"></script>
+<script src="assets/js/views/performance.js?v=20260709e"></script>
+<script src="assets/js/views/quickview.js?v=20260709e"></script>
+<script src="assets/js/report.js?v=20260709e"></script>
+<script src="assets/js/kpi-data.js?v=20260709e"></script>
+<script src="assets/js/kpi-parser.js?v=20260709e"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260709e"></script>
+<script src="assets/js/views/action-plan.js?v=20260709e"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260709e"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260709e"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260709e"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260709e"></script>
+<script src="assets/js/initiatives.js?v=20260709e"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260709e"></script>
+<script src="assets/js/views/ai-chat.js?v=20260709e"></script>
+<script src="assets/js/views/user-management.js?v=20260709e"></script>
+<script src="assets/js/views/executive-summary.js?v=20260709e"></script>
+<script src="assets/js/views/bld-queue.js?v=20260709e"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260709e"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260709e"></script>
+<script src="assets/js/views/my-work.js?v=20260709e"></script>
+<script src="assets/js/app.js?v=20260709e"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

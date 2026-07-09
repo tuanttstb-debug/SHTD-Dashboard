@@ -77,6 +77,8 @@ function renderAll() {
   renderTaskTable();
   renderPerfTable();
   if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
+  if (document.getElementById('view-action-plan')?.style.display === 'contents') renderActionPlan();
+  if (document.getElementById('view-bld-queue')?.style.display === 'contents') renderBldQueue();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
 

@@ -143,13 +143,13 @@ function _apToolbar(team, itemCount, initCount) {
   ).join('');
 
   const periods = [
-    { k: 'month',      l: 'Tháng này' },
-    { k: 'quarter',    l: 'Quý này' },
-    { k: 'prev-month', l: 'Tháng trước' },
+    { k: 'month',      l: t('ap.period.month') },
+    { k: 'quarter',    l: t('ap.period.quarter') },
+    { k: 'prev-month', l: t('ap.period.prev-month') },
   ];
 
   const rags = [
-    { k: '',      l: 'Tất cả',  s: '' },
+    { k: '',      l: t('common.all'),  s: '' },
     { k: 'Red',   l: '■ Red',   s: 'color:var(--danger)' },
     { k: 'Amber', l: '■ Amber', s: 'color:var(--warning)' },
     { k: 'Green', l: '■ Green', s: 'color:var(--success)' },
@@ -163,7 +163,7 @@ function _apToolbar(team, itemCount, initCount) {
         ${isAdminUser
           ? `<select class="form-control" style="font-size:12px;padding:5px 10px;width:auto;height:auto;"
                onchange="_apSetTeam(this.value)">
-               <option value="" ${team === '' ? 'selected' : ''}>Tất cả team</option>
+               <option value="" ${team === '' ? 'selected' : ''}>${t('ap.all-teams')}</option>
                ${teamOpts}
              </select>`
           : `<span class="type-pill" style="font-size:12px;padding:4px 10px;">
@@ -208,9 +208,9 @@ function _apSummaryStrip(tasks, cases) {
   const red     = items.filter(x => x.rag === 'Red').length;
   return `
   <div class="ap-summary-strip">
-    <span><b>${items.length}</b> hành động</span>
+    <span><b>${items.length}</b> ${t('ap.actions')}</span>
     <span class="ap-sum-sep">|</span>
-    <span style="color:var(--info);">◉ ${doing} Đang TH</span>
+    <span style="color:var(--info);">◉ ${doing} ${t('ap.doing')}</span>
     <span class="ap-sum-sep">|</span>
     <span style="color:var(--danger);">⛔ ${blocked} Blocked</span>
     <span class="ap-sum-sep">|</span>

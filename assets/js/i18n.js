@@ -181,6 +181,42 @@ const TRANSLATIONS = {
     'chip.rag':       'RAG',
     'chip.tuanbc':    'Tuần BC',
     'chip.thisweek':  'Tuần này',
+
+    // ── Case Pipeline filter / preset / view / stat cards ──
+    'cp.stat.total':        'Tổng số Case',
+    'cp.stat.value':        'Tổng giá trị pipeline',
+    'cp.stat.overdue':      'Quá hạn deadline',
+    'cp.stat.bld':          'Cần BLĐ duyệt',
+    'cp.view.table':        'Danh sách',
+    'cp.view.kanban':       'Kanban',
+    'cp.preset.active':     'Đang xử lý',
+    'cp.preset.bld':        'Cần BLĐ',
+    'cp.preset.overdue':    'Quá hạn',
+    'cp.preset.all':        'Tất cả',
+    'cp.filter.search':     'Tìm case',
+    'cp.filter.stage':      'Stage',
+    'cp.filter.pic':        'PIC',
+    'cp.filter.dvkd':       'ĐVKD',
+    'cp.filter.loai':       'Loại hình',
+    'cp.filter.rag':        'RAG',
+
+    // ── BLD Queue ──
+    'bld.filter.label':     'Lọc:',
+    'bld.filter.all-teams': 'Tất cả đội',
+    'bld.filter.all-inits': 'Tất cả sáng kiến',
+    'bld.history.title':    'Đã xử lý (7 ngày qua)',
+    'bld.count.pending':    'chờ phê duyệt',
+    'bld.count.none':       'Không có mục nào',
+    'bld.empty.title':      'Không có mục chờ phê duyệt',
+    'bld.empty.sub':        'Tất cả yêu cầu đã được xử lý hoặc chưa có mục nào.',
+
+    // ── Action Plan ──
+    'ap.period.month':      'Tháng này',
+    'ap.period.quarter':    'Quý này',
+    'ap.period.prev-month': 'Tháng trước',
+    'ap.all-teams':         'Tất cả team',
+    'ap.actions':           'hành động',
+    'ap.doing':             'Đang TH',
   },
 
   en: {
@@ -355,6 +391,42 @@ const TRANSLATIONS = {
     'chip.rag':       'RAG',
     'chip.tuanbc':    'Week',
     'chip.thisweek':  'This Week',
+
+    // ── Case Pipeline filter / preset / view / stat cards ──
+    'cp.stat.total':        'Total Cases',
+    'cp.stat.value':        'Total Pipeline Value',
+    'cp.stat.overdue':      'Overdue',
+    'cp.stat.bld':          'Needs Approval',
+    'cp.view.table':        'List',
+    'cp.view.kanban':       'Kanban',
+    'cp.preset.active':     'In Progress',
+    'cp.preset.bld':        'Needs Approval',
+    'cp.preset.overdue':    'Overdue',
+    'cp.preset.all':        'All',
+    'cp.filter.search':     'Search case',
+    'cp.filter.stage':      'Stage',
+    'cp.filter.pic':        'PIC',
+    'cp.filter.dvkd':       'Branch',
+    'cp.filter.loai':       'Type',
+    'cp.filter.rag':        'RAG',
+
+    // ── BLD Queue ──
+    'bld.filter.label':     'Filter:',
+    'bld.filter.all-teams': 'All Teams',
+    'bld.filter.all-inits': 'All Initiatives',
+    'bld.history.title':    'Processed (last 7 days)',
+    'bld.count.pending':    'pending approval',
+    'bld.count.none':       'No items',
+    'bld.empty.title':      'No pending items',
+    'bld.empty.sub':        'All requests processed or none pending.',
+
+    // ── Action Plan ──
+    'ap.period.month':      'This Month',
+    'ap.period.quarter':    'This Quarter',
+    'ap.period.prev-month': 'Last Month',
+    'ap.all-teams':         'All Teams',
+    'ap.actions':           'actions',
+    'ap.doing':             'In Progress',
   },
 };
 
