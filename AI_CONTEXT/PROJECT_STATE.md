@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-07-09 (Session 48 — i18n Phase 5: Quick View + Executive Summary)
 **Version**: v6.14 (`APP_VERSION = '6.14-i18n-phase5-20260709'`, `index.html ?v=20260709g`)
-**Remote HEAD (main)**: TBD — feat(i18n): S48 — i18n Phase 5: Quick View + Executive Summary bilingual
+**Remote HEAD (main)**: `5aa429b` — feat(i18n): S48 — i18n Phase 5: Quick View + Executive Summary bilingual
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
