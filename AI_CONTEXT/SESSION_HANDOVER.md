@@ -1,4 +1,110 @@
 # SESSION HANDOVER
+**Date**: 2026-07-09 (Session 42 — My Work personalized dashboard)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: TBD (will update after push)
+
+---
+
+## Tasks Completed (S42 — My Work personalized dashboard)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S42-T1 | `assets/css/my-work.css` (NEW) — page layout, section icons, deadline badges, urgent list, task cards, RAG dots, progress bar, result textarea, init/case cards, dark mode, responsive | `assets/css/my-work.css` | ✅ |
+| S42-T2 | `assets/js/views/my-work.js` (NEW) — role detection (PO/PTKD/QLDM from user.team), data getters, HTML builders, renderMyWork(), inline quick-save functions (state/RAG/progress/result) | `assets/js/views/my-work.js` | ✅ |
+| S42-T3 | `i18n.js` — `nav.my-work` + `page.my-work` VI + EN | `assets/js/i18n.js` | ✅ |
+| S42-T4 | `navigation.js` — `renderMyWork()` dispatch, G+M keymap | `assets/js/ui/navigation.js` | ✅ |
+| S42-T5 | `app.js` — `navigateTo('my-work')` as default landing in `startApp()`, `renderAll()` guard | `assets/js/app.js` | ✅ |
+| S42-T6 | `index.html` — CSS link, nav item (fa-house-user), view section, KB G+M row, script tag, cache-bust `?v=20260709` | `index.html` | ✅ |
+| S42-T7 | `config.js` — `APP_VERSION='6.8-my-work-20260709'` | `assets/js/config.js` | ✅ |
+| S42-T8 | `verify_my_work.mjs` — port 3042, 35/35 PASS (MW1–MW25 + sub-checks) | `verify_my_work.mjs` | ✅ |
+| S42-T9 | Full regression: 13/13 suites (388/388) still PASS — zero regressions | all | ✅ |
+
+### My Work Architecture (S42)
+
+**Role detection** (`_mwRoleView(user)`): maps `user.team` → `po` | `ptkd` | `qldm`
+- PO: teams BL/CV1/CV2/Số → task list + Initiative phụ trách
+- PTKD: teams PTKD MB/PTKD MN → task list + Case Pipeline của team
+- QLDM: team QLDM → same as PO
+
+**Task ownership** (`_mwGetMyTasks(user)`): `picAcc=me OR picRes=me OR team=myTeam`
+- Sort: done tasks last → highlight=Y first → endDate ASC
+
+**Urgent section** (`_mwGetUrgent(tasks, cases)`): state≠Hoàn thành AND endDate diff ≤7 days
+
+**Deadline badge classes**: dl-overdue / dl-today / dl-urgent (≤3d) / dl-soon (≤7d) / dl-ok
+
+**Quick save** (local-first + GAS fire-and-forget via `_gasTaskUpsert`):
+- `mwQuickSaveState(id, val)` → full `renderMyWork()` re-render (urgent section may change)
+- `mwQuickSaveRag(id, val)` → DOM-only dot update (toggle: clicking active dot = clear)
+- `mwQuickSaveProgress(id, raw)` → DOM-only bar+label update; clamps 0–100
+- `mwQuickSaveResult(id, val)` → persist only; textarea already shows new value
+
+**Default landing**: `startApp()` calls `navigateTo('my-work')` after `renderAll()`. Loading overlay from `autoConnectDB()` covers any brief flash.
+
+**`renderAll()` guard**: `if (view-my-work.style.display === 'contents') renderMyWork()` — avoids redundant re-render when not visible.
+
+### Test suite snapshot (2026-07-09)
+```
+verify_my_work             35/35  PASS  (S42 — My Work dashboard)  ← NEW
+verify_issue_tracker       61/61  PASS  (S41 — Issue Tracker)
+verify_mobile_s37          21/21  PASS  (S37 — mobile responsive)
+verify_case_pipeline_s36   28/28  PASS  (S36 — case pipeline enhancements)
+verify_action_plan         24/24  PASS  (S34 — action plan v2)
+verify_history             47/47  PASS  (S33 — audit history)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────
+TOTAL (14 suites)         423/423 PASS  0 FAIL
+```
+
+### Commits S42
+```
+TBD  feat(my-work): S42 — personalized dashboard for PO/PTKD/QLDM roles (35/35 tests)
+TBD  docs: S42 handover — 14/14 suites 423/423 PASS
+```
+
+---
+
+## Blockers (S42)
+
+| Item | Status |
+|---|---|
+| **No GAS changes** | ✅ — My Work reads `db.tasks`, `dbCases`, `db.initiatives` (already in memory). Saves use existing `_gasTaskUpsert` — no new GAS routes needed. |
+| **Hard-reload** | ⏳ Users Ctrl+Shift+R. Badge: `v6.8-my-work-20260709`. |
+| **Smoke test production** | ⏳ See checklist below. |
+
+### Smoke test checklist (S42)
+| Check | Expected |
+|---|---|
+| Login → landing | My Work view loads (not Dashboard) |
+| PO user (team Số/BL/CV1/CV2) | Sections: Cần làm ngay / Task của tôi / Initiative phụ trách |
+| PTKD user (team PTKD MB/MN) | Sections: Cần làm ngay / Task của tôi / Case Pipeline của team |
+| QLDM user | Same as PO view |
+| Deadline badge | Overdue task → "Quá hạn 3N" red badge |
+| Urgent section | Task endDate ≤7 days appears; done tasks excluded |
+| Quick save state | Change dropdown → task.state updates + re-render |
+| Quick save RAG | Click dot → colored in-place (no reload) |
+| RAG toggle | Click active dot → grey (cleared) |
+| Quick save progress | Click bar → input appears; type 75 → bar + label update in-place |
+| Quick save result | Blur textarea → task.result saved |
+| G+M shortcut | Press G then M → My Work view |
+| Dark mode | Cards adapt correctly |
+| KB modal | Shows G+M entry |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S41b)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-08 (Session 41b — Regression run + test infrastructure fix)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-07 (Session 40 — Team BL1+BL2 Merge → BL)
-**Version**: v6.6 (`APP_VERSION = '6.6-team-bl-merge-20260707'`, `index.html ?v=20260707`)
-**Remote HEAD (main)**: `7a027dc` — fix(migration): normalize column search for "Team chính"/"Team" headers
+**As of**: 2026-07-09 (Session 42 — My Work personalized dashboard)
+**Version**: v6.8 (`APP_VERSION = '6.8-my-work-20260709'`, `index.html ?v=20260709`)
+**Remote HEAD (main)**: TBD (push pending)
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1360 | ✅ S38: `?v=20260706` (51 occurrences); S37: fixed topbar position on mobile; S36: +`#cpSummaryOverlay` popup; +`cpFilterTuanBC` filter select; stat cards onclick |
+| `index.html` | ~1820 | ✅ S42: `?v=20260709` (54 occurrences); +my-work nav item (fa-house-user), view section, CSS link, KB G+M row, script tag |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,7 +35,9 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
-| `assets/js/config.js` | 7 | ✅ S40: APP_VERSION = '6.6-team-bl-merge-20260707'; S30: new GS_WEBAPP_URL |
+| `assets/css/my-work.css` | 488 | ✅ NEW S42 — page/section/card/badge styles, dark mode, responsive |
+| `assets/js/views/my-work.js` | ~280 | ✅ NEW S42 — role detection, data getters, render, quick-save functions |
+| `assets/js/config.js` | 7 | ✅ S42: APP_VERSION = '6.8-my-work-20260709'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |

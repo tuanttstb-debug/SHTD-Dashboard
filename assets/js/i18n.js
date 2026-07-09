@@ -19,6 +19,7 @@ const TRANSLATIONS = {
     'nav.section.admin':       'Quản trị',
 
     // ── Navigation items ──
+    'nav.my-work':             'Công việc của tôi',
     'nav.executive-summary':   'Tổng hợp BLĐ',
     'nav.bld-queue':           'Phê duyệt BLĐ',
     'nav.initiative-tracker':  'Theo dõi Initiative',
@@ -27,6 +28,7 @@ const TRANSLATIONS = {
 
     // ── Page titles (topbar) ──
     'page.dashboard':          'Executive Dashboard',
+    'page.my-work':            'Công việc của tôi',
     'page.executive-summary':  'Tổng hợp BLĐ',
     'page.bld-queue':          'Phê duyệt BLĐ',
     'page.case-pipeline':      'Case Pipeline – Cơ hội kinh doanh',
@@ -147,6 +149,7 @@ const TRANSLATIONS = {
     'nav.section.admin':       'Administration',
 
     // ── Navigation items ──
+    'nav.my-work':             'My Work',
     'nav.executive-summary':   'Exec Summary',
     'nav.bld-queue':           'BLĐ Approval',
     'nav.initiative-tracker':  'Initiative Tracker',
@@ -155,6 +158,7 @@ const TRANSLATIONS = {
 
     // ── Page titles (topbar) ──
     'page.dashboard':          'Executive Dashboard',
+    'page.my-work':            'My Work',
     'page.executive-summary':  'Exec Summary',
     'page.bld-queue':          'BLĐ Approval Queue',
     'page.case-pipeline':      'Case Pipeline – Business Opportunities',

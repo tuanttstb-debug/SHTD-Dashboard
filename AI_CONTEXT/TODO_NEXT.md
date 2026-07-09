@@ -1,6 +1,62 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-08 (Session 41 — Issue Tracker full implementation)
-**Context**: S41 — Full Issue Tracker feature: GAS backend (IssueService.gs + 3 Code.gs routes), frontend (issue-tracker.css, issue-tracker.js, index.html wiring, navigation.js, i18n.js). localStorage key `shtd_issues_v1`. Issue IDs `IS-YY-NNN`. Two lifecycle flows (Simple/Complex). SLA auto-fill. Chart.js trend+bar. MTTR/root-cause tables. Excel export. APP_VERSION=6.7-issue-tracker-20260708. **GAS redeploy REQUIRED** (IssueService.gs new file).
+**Prepared**: 2026-07-09 (Session 42 — My Work personalized dashboard)
+**Context**: S42 — Personalized home page "My Work" replaces Dashboard as default landing. Role-aware: PO/QLDM sees initiatives, PTKD sees Case Pipeline. Task cards with inline quick-save (state/RAG/progress/result). Urgent section for deadlines within 7 days. APP_VERSION=6.8-my-work-20260709. No GAS changes needed.
+
+---
+
+## ✅ COMPLETED S42
+
+- [x] `assets/css/my-work.css` (NEW) — full styles: page, sections, urgent list, task cards, RAG dots, progress, init/case cards, dark mode, responsive
+- [x] `assets/js/views/my-work.js` (NEW) — role detection, data getters, HTML builders, `renderMyWork()`, quick-save functions (state/RAG/progress/result)
+- [x] `i18n.js` — `nav.my-work` + `page.my-work` VI + EN
+- [x] `navigation.js` — `renderMyWork()` dispatch, G+M keymap
+- [x] `app.js` — default landing `navigateTo('my-work')` in `startApp()`, `renderAll()` guard
+- [x] `index.html` — CSS link, nav item (fa-house-user icon), view section, KB G+M row, script tag, cache-bust `?v=20260709`
+- [x] `config.js` — `APP_VERSION='6.8-my-work-20260709'`
+- [x] `verify_my_work.mjs` — **35/35 PASS** (port 3042, MW1–MW25)
+- [x] Full regression: **14/14 suites 423/423 PASS** (13 existing + new my-work suite)
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test My Work on production
+
+| Check | Expected |
+|---|---|
+| Login → landing | My Work view loads (not Dashboard) |
+| PO user (team Số/BL/CV1/CV2) | 3 sections: Cần làm ngay / Task của tôi / Initiative phụ trách |
+| PTKD user (team PTKD MB/MN) | Sections: Cần làm ngay / Task của tôi / Case Pipeline của team |
+| Deadline badge | Overdue → "Quá hạn 3N"; soon → "Còn 5N" |
+| Urgent section | Tasks ≤7 days appear; done excluded |
+| Quick save state | Dropdown change → task saves + re-renders |
+| Quick save RAG | Click dot → colors in-place |
+| Quick save progress | Click bar → input; blur → bar updates |
+| Quick save result | Blur textarea → saved |
+| G+M shortcut | Press G then M → My Work |
+
+---
+
+## 🔲 CANDIDATE TASKS S43
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S42 My Work** | See checklist above. Hard-reload first (v6.8-my-work-20260709). |
+| P1 | **Smoke test S41 Issue Tracker** | GAS redeploy first (IssueService.gs). |
+| P2 | **My Work — "Xem tất cả Initiative" popup** | Click "Xem tất cả →" → overlay with full list (currently navigates to initiative-tracker view). Optional enhancement. |
+| P2 | **My Work — Highlight task champion** | Weekly update smoke test (PO requirement from S41 notes). |
+| P2 | **i18n Phase 2** | Translate view content labels: tasks filter bar, STATE/RAG display mapping |
+| P3 | **TD-012: add CI** | npm test + GitHub Actions for 14 test suites |
+
+---
+
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
+
+```
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
+```
+
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
 

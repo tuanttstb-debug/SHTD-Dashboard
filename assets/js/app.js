@@ -29,6 +29,7 @@ async function startApp() {
   loadIssuesFromCache();
   setupListeners();
   renderAll();
+  navigateTo('my-work');
   updateClock();
   setInterval(updateClock, 30000);
 
@@ -75,6 +76,7 @@ function renderAll() {
   renderDashboard();
   renderTaskTable();
   renderPerfTable();
+  if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
 

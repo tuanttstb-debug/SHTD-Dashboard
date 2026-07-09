@@ -47,7 +47,7 @@ function setupListeners() {
 
     if (e.key === 'g' && !inInput) { gKey = 'g'; return; }
     if (gKey === 'g' && !inInput) {
-      const map = { d:'dashboard', e:'executive-summary', b:'bld-queue', c:'case-pipeline', i:'issue-tracker', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
+      const map = { m:'my-work', d:'dashboard', e:'executive-summary', b:'bld-queue', c:'case-pipeline', i:'issue-tracker', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
       if (map[e.key]) navigateTo(map[e.key]);
       gKey = null;
     }
@@ -93,6 +93,7 @@ function navigateTo(view) {
   if (view === 'issue-tracker')        renderIssueTracker();
   if (view === 'ai-chat')              renderAiChat();
   if (view === 'user-management')      renderUserManagement();
+  if (view === 'my-work')              renderMyWork();
   closeSidebar();
 }
 
