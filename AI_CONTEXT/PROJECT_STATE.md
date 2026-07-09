@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-07-09 (Session 42 — My Work personalized dashboard)
 **Version**: v6.8 (`APP_VERSION = '6.8-my-work-20260709'`, `index.html ?v=20260709`)
-**Remote HEAD (main)**: TBD (push pending)
+**Remote HEAD (main)**: `5da1c86` — feat(my-work): S42 — personalized dashboard for PO/PTKD/QLDM roles
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
