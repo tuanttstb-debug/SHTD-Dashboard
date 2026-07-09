@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-09 (Session 43 — i18n Phase 2: state display + tasks filter bar)
-**Version**: v6.9 (`APP_VERSION = '6.9-i18n-phase2-20260709'`, `index.html ?v=20260709b`)
-**Remote HEAD (main)**: `5edf349` — feat(i18n): S43 — i18n Phase 2: state display mapping + tasks filter bar translation
+**As of**: 2026-07-09 (Session 44 — My Work Initiative Popup)
+**Version**: v6.10 (`APP_VERSION = '6.10-mw-init-popup-20260709'`, `index.html ?v=20260709c`)
+**Remote HEAD (main)**: `ec142c2` — feat(my-work): S44a — Initiative popup overlay
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -22,7 +22,7 @@
 
 | File | Lines | Status |
 |---|---|---|
-| `index.html` | ~1840 | ✅ S43: `?v=20260709b` (56 occurrences); data-i18n on tasks filter labels, preset spans, scope toggle spans; explicit values on filterState options; S42: +my-work nav item, view section, CSS link, KB G+M row, script tag |
+| `index.html` | ~1860 | ✅ S44a: +#mwInitPopup overlay; `?v=20260709c`; S43: data-i18n on tasks filter labels, preset spans, scope toggle spans; explicit values on filterState options; S42: +my-work nav item, view section, CSS link, KB G+M row, script tag |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
 | `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
@@ -35,9 +35,9 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
-| `assets/css/my-work.css` | 488 | ✅ NEW S42 — page/section/card/badge styles, dark mode, responsive |
-| `assets/js/views/my-work.js` | ~280 | ✅ NEW S42 — role detection, data getters, render, quick-save functions |
-| `assets/js/config.js` | 7 | ✅ S43: APP_VERSION = '6.9-i18n-phase2-20260709'; S30: new GS_WEBAPP_URL |
+| `assets/css/my-work.css` | ~505 | ✅ S44a: +.mw-popup-ini-item/.mw-popup-ini-header; S42: page/section/card/badge styles, dark mode, responsive |
+| `assets/js/views/my-work.js` | ~310 | ✅ S44a: mwOpenInitPopup/mwCloseInitPopup, MAX_INIT=4; S42: role detection, data getters, render, quick-save functions |
+| `assets/js/config.js` | 7 | ✅ S44a: APP_VERSION = '6.10-mw-init-popup-20260709'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |

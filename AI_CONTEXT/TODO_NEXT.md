@@ -1,6 +1,58 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-09 (Session 43 — i18n Phase 2)
-**Context**: S43 — i18n Phase 2 done. Tasks filter bar labels + STATE display mapping are now bilingual (VI/EN). tState() helper + data-i18n on filter bar / preset / scope buttons. filterState options have explicit values so filtering is safe. RAG kept as English domain term. 15 suites 459/459 PASS. APP_VERSION=6.9-i18n-phase2-20260709.
+**Prepared**: 2026-07-09 (Session 44 — My Work Initiative Popup)
+**Context**: S44a done. "Xem tất cả →" in Initiative section now opens popup overlay instead of navigating away. MAX_INIT=4 truncation in section. mwOpenInitPopup() shows ALL root initiatives. ESC/backdrop/X all close it. 15 suites 469/469 PASS. APP_VERSION=6.10-mw-init-popup-20260709.
+
+---
+
+## ✅ COMPLETED S44a
+
+- [x] `my-work.js` — _mwBuildInitSection MAX_INIT=4; "Xem tất cả →" calls mwOpenInitPopup(); mwOpenInitPopup/mwCloseInitPopup functions
+- [x] `index.html` — #mwInitPopup overlay + #mwInitPopupList + #mwInitPopupCount; cache-bust ?v=20260709c
+- [x] `my-work.css` — .mw-popup-ini-item + .mw-popup-ini-header
+- [x] `navigation.js` — mwCloseInitPopup() in ESC chain
+- [x] `config.js` — APP_VERSION='6.10-mw-init-popup-20260709'
+- [x] `verify_my_work.mjs` — MW26-MW29; **45/45 PASS** (was 35)
+- [x] Full regression: **15/15 suites 469/469 PASS**
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.10-mw-init-popup-20260709` |
+| My Work → Initiative section | Shows up to 4 initiative cards |
+| "Xem tất cả →" click | Popup opens (NOT navigating to initiative-tracker) |
+| Popup content | Shows ALL root initiatives with status badges, ms/task counts |
+| "Mở Initiative Tracker" in popup | Navigates to Initiative Tracker + closes popup |
+| ESC key | Closes popup |
+| Backdrop click | Closes popup |
+
+---
+
+## 🔲 CANDIDATE TASKS S45
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S44a Initiative Popup** | See checklist above |
+| P1 | **Smoke test S43 i18n Phase 2** | Badge v6.9; switch EN → Status/Not Started/Active; switch back → VI restored |
+| P1 | **Smoke test S42 My Work** | Login → My Work default landing; role views; quick-save; G+M shortcut |
+| P1 | **Smoke test S41 Issue Tracker** | GAS redeploy needed (IssueService.gs) |
+| P2 | **My Work — Highlight task champion** | Weekly update reminder for tasks with highlight=Y |
+| P2 | **i18n Phase 3** | Extend to other views: bld-queue, case-pipeline filter labels, action-plan |
+| P3 | **TD-012: add CI** | npm test + GitHub Actions for 15 test suites |
+
+---
+
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
+
+```
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
+```
+
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
 

@@ -1,8 +1,54 @@
 # SESSION HANDOVER
-**Date**: 2026-07-09 (Session 43 — i18n Phase 2)
+**Date**: 2026-07-09 (Session 44 — My Work Initiative Popup)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `5edf349` — feat(i18n): S43 — i18n Phase 2: state display mapping + tasks filter bar translation
+**origin/main HEAD**: `ec142c2` — feat(my-work): S44a — Initiative popup overlay
+
+---
+
+## Tasks Completed (S44a — My Work Initiative Popup)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S44a-T1 | `my-work.js` — _mwBuildInitSection: MAX_INIT=4, inlines card builder, "Xem tất cả →" → mwOpenInitPopup() | `assets/js/views/my-work.js` | ✅ |
+| S44a-T2 | `my-work.js` — mwOpenInitPopup(): builds ALL root initiatives in overlay; mwCloseInitPopup() | `assets/js/views/my-work.js` | ✅ |
+| S44a-T3 | `index.html` — #mwInitPopup overlay with list+count+close+footer buttons; cache-bust ?v=20260709c | `index.html` | ✅ |
+| S44a-T4 | `my-work.css` — .mw-popup-ini-item + .mw-popup-ini-header styles | `assets/css/my-work.css` | ✅ |
+| S44a-T5 | `navigation.js` — mwCloseInitPopup() added to ESC handler chain | `assets/js/ui/navigation.js` | ✅ |
+| S44a-T6 | `config.js` — APP_VERSION='6.10-mw-init-popup-20260709' | `assets/js/config.js` | ✅ |
+| S44a-T7 | `verify_my_work.mjs` — MW26-MW29 popup tests; 45/45 PASS (was 35) | `verify_my_work.mjs` | ✅ |
+| S44a-T8 | Full regression: **15/15 suites 469/469 PASS** | all | ✅ |
+
+### Initiative Popup Architecture (S44a)
+
+- **Trigger**: "Xem tất cả →" in Initiative section header → `mwOpenInitPopup()`
+- **Content**: ALL root initiatives (`type=initiative`, no parentId, not BAU, status defined) sorted by id
+- **Why all, not just user's**: "Xem tất cả" = see the full picture; user's filtered subset already shown in section
+- **Close paths**: X button, "Đóng" button, backdrop click, ESC key
+- **"Mở Initiative Tracker" button**: navigates to initiative-tracker view + closes popup
+- **MAX_INIT=4**: Section grid now truncates at 4 cards; popup shows the rest
+- **Popup HTML**: `#mwInitPopup .modal > .modal-header + #mwInitPopupList + .modal-footer`
+
+### Test suite snapshot (2026-07-09, S44a)
+```
+verify_my_work             45/45  PASS  (S44a: +MW26-MW29 popup; S42 base)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+TOTAL (15 suites)         469/469 PASS  0 FAIL
+```
 
 ---
 
