@@ -253,10 +253,15 @@ function _mwInitStatusClass(status) {
 }
 
 function _mwBuildInitSection(inits) {
-  const items = inits.map(ini => {
-    const msCnt   = (db.initiatives || []).filter(x => x.parentId === ini.id && x.type === 'milestone').length;
-    const taskCnt = (db.tasks || []).filter(t => t.initiative === ini.id).length;
-    return `
+  const MAX_INIT = 4;
+  const shown    = inits.slice(0, MAX_INIT);
+
+  const body = inits.length === 0
+    ? `<div class="mw-empty">Chưa có initiative nào phụ trách.</div>`
+    : `<div class="mw-init-grid">${shown.map(ini => {
+        const msCnt   = (db.initiatives || []).filter(x => x.parentId === ini.id && x.type === 'milestone').length;
+        const taskCnt = (db.tasks || []).filter(t => t.initiative === ini.id).length;
+        return `
 <div class="mw-init-card" onclick="navigateTo('initiative-tracker')">
   <div class="mw-init-header">
     <span class="mw-init-id">${esc(ini.id)}</span>
@@ -269,11 +274,7 @@ function _mwBuildInitSection(inits) {
   </div>
   ${ini.accountable ? `<div style="font-size:11px;color:var(--text-3);"><i class="fa-solid fa-user" style="margin-right:3px;"></i>${esc(ini.accountable)}</div>` : ''}
 </div>`;
-  });
-
-  const body = inits.length === 0
-    ? `<div class="mw-empty">Chưa có initiative nào phụ trách.</div>`
-    : `<div class="mw-init-grid">${items.join('')}</div>`;
+      }).join('')}</div>`;
 
   return `
 <div class="mw-section" id="mwSectionThird">
@@ -281,7 +282,7 @@ function _mwBuildInitSection(inits) {
     <div class="mw-section-icon third"><i class="fa-solid fa-diagram-project"></i></div>
     <span class="mw-section-title">Initiative phụ trách</span>
     <span class="mw-count">${inits.length}</span>
-    <span class="mw-section-link" onclick="navigateTo('initiative-tracker')">Xem tất cả →</span>
+    <span class="mw-section-link" onclick="mwOpenInitPopup()">Xem tất cả →</span>
   </div>
   ${body}
 </div>`;
@@ -432,4 +433,47 @@ function mwQuickSaveResult(taskId, val) {
   t.result = val;
   _mwInlineSave(t);
   // No DOM update needed — textarea already shows updated value
+}
+
+// ── Initiative popup ──
+
+function mwOpenInitPopup() {
+  const overlay = document.getElementById('mwInitPopup');
+  if (!overlay) return;
+
+  const allRoots = (db.initiatives || [])
+    .filter(i => !i.parentId && i.type === 'initiative' && i.id !== 'BAU' && i.status !== undefined)
+    .sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+
+  const items = allRoots.map(ini => {
+    const msCnt   = (db.initiatives || []).filter(x => x.parentId === ini.id && x.type === 'milestone').length;
+    const taskCnt = (db.tasks || []).filter(x => x.initiative === ini.id).length;
+    return `
+<div class="mw-popup-ini-item" onclick="navigateTo('initiative-tracker');mwCloseInitPopup()">
+  <div class="mw-popup-ini-header">
+    <span class="mw-init-id">${esc(ini.id)}</span>
+    <span class="mw-init-name">${esc(ini.name)}</span>
+  </div>
+  <div class="mw-init-meta" style="margin-top:4px;">
+    <span class="mw-init-status ${_mwInitStatusClass(ini.status)}">${esc(ini.status || 'Active')}</span>
+    ${ini.accountable ? `<span style="font-size:11px;color:var(--text-3);">${esc(ini.accountable)}</span>` : ''}
+    <span class="mw-init-stats">${msCnt} MS · ${taskCnt} task</span>
+  </div>
+</div>`;
+  });
+
+  const list = document.getElementById('mwInitPopupList');
+  if (list) {
+    list.innerHTML = allRoots.length === 0
+      ? `<div class="mw-empty" style="margin:16px;">Chưa có initiative nào.</div>`
+      : items.join('');
+  }
+  const cnt = document.getElementById('mwInitPopupCount');
+  if (cnt) cnt.textContent = allRoots.length;
+  overlay.style.display = 'flex';
+}
+
+function mwCloseInitPopup() {
+  const overlay = document.getElementById('mwInitPopup');
+  if (overlay) overlay.style.display = 'none';
 }

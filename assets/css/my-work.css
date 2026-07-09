@@ -463,6 +463,24 @@
   border-radius: var(--radius);
 }
 
+/* ── Initiative popup list items ── */
+.mw-popup-ini-item {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid #8b5cf6;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: box-shadow .14s;
+}
+.mw-popup-ini-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+.mw-popup-ini-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 /* ── Dark mode ── */
 [data-theme="dark"] .mw-result-area {
   background: rgba(255,255,255,.04);

@@ -26,6 +26,10 @@
  *  MW23 – Quick save progress: mwQuickSaveProgress clamps 0-100, updates bar fill
  *  MW24 – Quick save result: mwQuickSaveResult updates task.result, no re-render
  *  MW25 – No JS errors throughout
+ *  MW26 – Initiative popup HTML: #mwInitPopup + list + count elements exist
+ *  MW27 – Initiative popup opens when mwOpenInitPopup() called
+ *  MW28 – Popup content shows all root initiatives (incl. other-user's)
+ *  MW29 – ESC keydown closes initiative popup
  *
  * Run: node verify_my_work.mjs
  * EVD: test-results/my_work/
@@ -113,8 +117,11 @@ const MOCK_TASKS = [
 
 /* ── Mock initiatives ── */
 const MOCK_INITIATIVES = [
-  { id:'INI-01', name:'Sản phẩm tín dụng online', type:'initiative', status:'Active', accountable:'TuanTT4', parentId:'', category:'Chuyển đổi số' },
-  { id:'INI-02', name:'Initiative khác team', type:'initiative', status:'Pending', accountable:'OtherUser', parentId:'', category:'Vận hành' },
+  { id:'INI-01', name:'Sản phẩm tín dụng online', type:'initiative', status:'Active',   accountable:'TuanTT4',   parentId:'', category:'Chuyển đổi số' },
+  { id:'INI-02', name:'Initiative khác team',      type:'initiative', status:'Pending',  accountable:'OtherUser', parentId:'', category:'Vận hành' },
+  { id:'INI-03', name:'Hệ thống báo cáo tự động', type:'initiative', status:'Active',   accountable:'TuanTT4',   parentId:'', category:'Chuyển đổi số' },
+  { id:'INI-04', name:'Chuẩn hóa quy trình BL',   type:'initiative', status:'Active',   accountable:'TuanTT4',   parentId:'', category:'Vận hành' },
+  { id:'INI-05', name:'Phân tích dữ liệu KH',      type:'initiative', status:'Paused',   accountable:'TuanTT4',   parentId:'', category:'Phân tích' },
   { id:'INI-01-MS1', name:'Milestone 1', type:'milestone', status:'Active', accountable:'TuanTT4', parentId:'INI-01', category:'' },
 ];
 
@@ -491,6 +498,65 @@ const resultAfter = await page.evaluate(() => {
   return t ? t.result : null;
 });
 log('MW24-result-saved', resultAfter === newResult, `Result saved: "${resultAfter ? resultAfter.substring(0,20) : ''}..."`);
+
+/* ══════════════════════════════════════════
+   MW26 — Initiative popup: HTML overlay exists
+══════════════════════════════════════════ */
+const mwInitPopupEl = await page.$('#mwInitPopup');
+log('MW26-popup-html', !!mwInitPopupEl, '#mwInitPopup overlay exists in DOM');
+const mwInitListEl  = await page.$('#mwInitPopupList');
+const mwInitCntEl   = await page.$('#mwInitPopupCount');
+log('MW26-popup-list',  !!mwInitListEl, '#mwInitPopupList container exists');
+log('MW26-popup-count', !!mwInitCntEl,  '#mwInitPopupCount span exists');
+
+/* ══════════════════════════════════════════
+   MW27 — Initiative popup: opens on "Xem tất cả →"
+══════════════════════════════════════════ */
+// Re-inject PO to ensure we have the init section
+await injectPO();
+const popupHiddenBefore = await page.evaluate(() => {
+  const el = document.getElementById('mwInitPopup');
+  return el ? el.style.display : 'missing';
+});
+// Click the "Xem tất cả →" link in the initiative section
+await page.evaluate(() => mwOpenInitPopup());
+await page.waitForTimeout(200);
+const popupDisplayAfter = await page.evaluate(() => {
+  const el = document.getElementById('mwInitPopup');
+  return el ? el.style.display : 'missing';
+});
+log('MW27-popup-hidden-initially', popupHiddenBefore === 'none' || popupHiddenBefore === '', `Popup hidden before open (display='${popupHiddenBefore}')`);
+log('MW27-popup-opens', popupDisplayAfter === 'flex', `Popup display becomes 'flex' after mwOpenInitPopup() (display='${popupDisplayAfter}')`);
+await shot(page, 'MW27-init-popup-open');
+
+/* ══════════════════════════════════════════
+   MW28 — Initiative popup: content shows all root initiatives
+══════════════════════════════════════════ */
+const popupListHtml  = await page.evaluate(() => document.getElementById('mwInitPopupList')?.innerHTML || '');
+const popupCountText = await page.evaluate(() => document.getElementById('mwInitPopupCount')?.textContent || '');
+const hasINI01  = popupListHtml.includes('INI-01');
+const hasINI02  = popupListHtml.includes('INI-02');
+const hasINI03  = popupListHtml.includes('INI-03');
+const popupCnt  = parseInt(popupCountText) || 0;
+log('MW28-popup-ini01',  hasINI01,   'Popup shows INI-01');
+log('MW28-popup-ini02',  hasINI02,   'Popup shows INI-02 (other user\'s initiative, still in full list)');
+log('MW28-popup-ini03',  hasINI03,   'Popup shows INI-03');
+log('MW28-popup-count',  popupCnt >= 5, `Count shows ≥5 initiatives (got ${popupCnt})`);
+
+/* ══════════════════════════════════════════
+   MW29 — Initiative popup: ESC closes it
+══════════════════════════════════════════ */
+// popup is still open from MW27; dispatch ESC
+await page.evaluate(() =>
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+);
+await page.waitForTimeout(200);
+const popupAfterEsc = await page.evaluate(() => {
+  const el = document.getElementById('mwInitPopup');
+  return el ? el.style.display : 'missing';
+});
+log('MW29-esc-closes', popupAfterEsc === 'none', `ESC closes popup (display='${popupAfterEsc}')`);
+await shot(page, 'MW29-popup-closed');
 
 /* ══════════════════════════════════════════
    MW25 — No JS errors
