@@ -30,6 +30,12 @@
  *  MW27 – Initiative popup opens when mwOpenInitPopup() called
  *  MW28 – Popup content shows all root initiatives (incl. other-user's)
  *  MW29 – ESC keydown closes initiative popup
+ *  MW30 – Champion section visible when highlight=Y tasks exist (PO view)
+ *  MW31 – highlight=Y non-done tasks appear in champion section
+ *  MW32 – highlight=N task excluded from champion section
+ *  MW33 – done highlight=Y task excluded from champion section
+ *  MW34 – unfilled result shows "⚠️ Chưa cập nhật"; filled shows "✅ Đã cập nhật"
+ *  MW35 – mwRefreshChampionStatus updates badge in DOM without re-render
  *
  * Run: node verify_my_work.mjs
  * EVD: test-results/my_work/
@@ -113,6 +119,14 @@ const MOCK_TASKS = [
   { id:'T-26-D01', name:'Done overdue task', initiative:'INI-01', category:'Dev',
     milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:OVERDUE,
     state:'Hoàn thành', progress:'100', highlight:'N', rag:'Xanh', result:'Done', tuanBC:'', canBLD:'', status:'' },
+  // highlight=Y, result filled → champion "Đã cập nhật"
+  { id:'T-26-C01', name:'Champion task result filled', initiative:'INI-01', category:'Dev',
+    milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:LATER,
+    state:'Đang thực hiện', progress:'70', highlight:'Y', rag:'Xanh', result:'Đã hoàn thành phân tích yêu cầu', tuanBC:'', canBLD:'', status:'' },
+  // highlight=Y, done → excluded from champion section
+  { id:'T-26-C02', name:'Champion task done excluded', initiative:'INI-01', category:'Dev',
+    milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:LATER,
+    state:'Hoàn thành', progress:'100', highlight:'Y', rag:'Xanh', result:'Completed', tuanBC:'', canBLD:'', status:'' },
 ];
 
 /* ── Mock initiatives ── */
@@ -557,6 +571,75 @@ const popupAfterEsc = await page.evaluate(() => {
 });
 log('MW29-esc-closes', popupAfterEsc === 'none', `ESC closes popup (display='${popupAfterEsc}')`);
 await shot(page, 'MW29-popup-closed');
+
+/* ══════════════════════════════════════════
+   MW30 — Champion section visible for PO with highlight=Y tasks
+══════════════════════════════════════════ */
+// Re-inject PO data (has T-26-H01 highlight=Y, T-26-C01 highlight=Y with result)
+await injectPO();
+const champSection = await page.$('#mwChampionSection');
+log('MW30-champion-section-exists', !!champSection, '#mwChampionSection visible for PO with highlight=Y tasks');
+const champHtml = champSection ? await champSection.innerHTML() : '';
+await shot(page, 'MW30-champion-section');
+
+/* ══════════════════════════════════════════
+   MW31 — highlight=Y non-done tasks appear in champion section
+══════════════════════════════════════════ */
+// T-26-H01: highlight=Y, not done → should appear
+// T-26-C01: highlight=Y, not done, result filled → should appear
+const hasH01inChamp = champHtml.includes('T-26-H01');
+const hasC01inChamp = champHtml.includes('T-26-C01');
+log('MW31-h01-in-champion', hasH01inChamp, 'T-26-H01 (highlight=Y, no result) appears in champion section');
+log('MW31-c01-in-champion', hasC01inChamp, 'T-26-C01 (highlight=Y, has result) appears in champion section');
+
+/* ══════════════════════════════════════════
+   MW32 — highlight=N task excluded from champion section
+══════════════════════════════════════════ */
+const hasH02inChamp = champHtml.includes('T-26-H02');
+const hasH03inChamp = champHtml.includes('T-26-H03');
+log('MW32-h02-excluded', !hasH02inChamp, 'T-26-H02 (highlight=N) excluded from champion section');
+log('MW32-h03-excluded', !hasH03inChamp, 'T-26-H03 (highlight=N) excluded from champion section');
+
+/* ══════════════════════════════════════════
+   MW33 — done highlight=Y task excluded from champion section
+══════════════════════════════════════════ */
+// T-26-C02: highlight=Y but state=Hoàn thành → excluded
+const hasC02inChamp = champHtml.includes('T-26-C02');
+log('MW33-done-excluded', !hasC02inChamp, 'T-26-C02 (highlight=Y but done) excluded from champion section');
+
+/* ══════════════════════════════════════════
+   MW34 — unfilled shows ⚠️ Chưa cập nhật; filled shows ✅ Đã cập nhật
+══════════════════════════════════════════ */
+// T-26-H01: result='' → status-todo "Chưa cập nhật"
+// T-26-C01: result filled → status-ok "Đã cập nhật"
+const h01Status = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-H01"]');
+  return item ? item.querySelector('.mw-champion-status')?.textContent?.trim() : null;
+});
+const c01Status = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-C01"]');
+  return item ? item.querySelector('.mw-champion-status')?.textContent?.trim() : null;
+});
+log('MW34-unfilled-status', h01Status && h01Status.includes('Chưa'), `T-26-H01 status: "${h01Status}"`);
+log('MW34-filled-status',   c01Status && c01Status.includes('Đã'),   `T-26-C01 status: "${c01Status}"`);
+
+/* ══════════════════════════════════════════
+   MW35 — mwRefreshChampionStatus updates badge in DOM without re-render
+══════════════════════════════════════════ */
+// Fill result for T-26-H01 → badge should flip to "Đã cập nhật"
+await page.evaluate(() => mwRefreshChampionStatus('T-26-H01', 'Báo cáo tuần W28 hoàn thành'));
+await page.waitForTimeout(150);
+const h01StatusAfter = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-H01"]');
+  return item ? item.querySelector('.mw-champion-status')?.textContent?.trim() : null;
+});
+const h01FilledClass = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-H01"]');
+  return item ? item.classList.contains('is-filled') : false;
+});
+log('MW35-status-updated',   h01StatusAfter && h01StatusAfter.includes('Đã'), `Badge flipped to: "${h01StatusAfter}"`);
+log('MW35-is-filled-class',  h01FilledClass, 'Item gets is-filled class after refresh');
+await shot(page, 'MW35-champion-refresh');
 
 /* ══════════════════════════════════════════
    MW25 — No JS errors

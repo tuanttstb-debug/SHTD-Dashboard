@@ -115,6 +115,51 @@ function _mwGetMyCases(user) {
   });
 }
 
+// ── Champion tasks (highlight=Y, not done) ──
+
+function _mwGetChampionTasks(tasks) {
+  return tasks.filter(t => t.highlight === 'Y' && t.state !== 'Hoàn thành');
+}
+
+function _mwBuildChampionSection(champTasks) {
+  if (!champTasks || champTasks.length === 0) return '';
+
+  const unfilledCount = champTasks.filter(t => !t.result).length;
+  const allFilled     = unfilledCount === 0;
+
+  const items = champTasks.map(t => {
+    const id       = esc(t.id);
+    const hasFilled = !!t.result;
+    return `
+<div class="mw-champion-item${hasFilled ? ' is-filled' : ''}" data-id="${id}">
+  <div class="mw-champion-item-header">
+    <span class="mw-init-id">${id}</span>
+    <span class="mw-champion-name" title="${esc(t.name)}">${esc(t.name)}</span>
+    <span class="mw-champion-status ${hasFilled ? 'status-ok' : 'status-todo'}">${hasFilled ? '✅ Đã cập nhật' : '⚠️ Chưa cập nhật'}</span>
+  </div>
+  <textarea class="mw-result-area" rows="2"
+    placeholder="Kết quả / Ghi chú tuần này…"
+    onblur="mwQuickSaveResult('${id}',this.value);mwRefreshChampionStatus('${id}',this.value)"
+  >${esc(t.result || '')}</textarea>
+</div>`;
+  }).join('');
+
+  const statusBadge = allFilled
+    ? `<span class="mw-champion-done">✅ Đã cập nhật đầy đủ</span>`
+    : `<span class="mw-champion-pending">${unfilledCount} chưa cập nhật</span>`;
+
+  return `
+<div class="mw-section mw-champion-section" id="mwChampionSection">
+  <div class="mw-section-header">
+    <div class="mw-section-icon champion"><i class="fa-solid fa-star"></i></div>
+    <span class="mw-section-title">Champion tuần này</span>
+    <span class="mw-count">${champTasks.length}</span>
+    ${statusBadge}
+  </div>
+  <div class="mw-champion-list">${items}</div>
+</div>`;
+}
+
 // ── Build HTML ──
 
 function _mwRagDots(taskId, currentRag) {
@@ -331,10 +376,11 @@ function renderMyWork() {
     return;
   }
 
-  const roleView = _mwRoleView(user);
-  const myTasks  = _mwGetMyTasks(user);
-  const myCases  = roleView === 'ptkd' ? _mwGetMyCases(user) : [];
-  const urgent   = _mwGetUrgent(myTasks, myCases);
+  const roleView    = _mwRoleView(user);
+  const myTasks     = _mwGetMyTasks(user);
+  const myCases     = roleView === 'ptkd' ? _mwGetMyCases(user) : [];
+  const urgent      = _mwGetUrgent(myTasks, myCases);
+  const champTasks  = _mwGetChampionTasks(myTasks);
 
   const section3 = roleView === 'ptkd'
     ? _mwBuildCaseSection(myCases)
@@ -353,6 +399,7 @@ function renderMyWork() {
       <div class="mw-sub">${esc(user.team)} · ${esc(roleLabel)} view · ${todayStr}</div>
     </div>
   </div>
+  ${_mwBuildChampionSection(champTasks)}
   ${_mwBuildUrgentSection(urgent)}
   ${_mwBuildTaskSection(myTasks)}
   ${section3}
@@ -433,6 +480,32 @@ function mwQuickSaveResult(taskId, val) {
   t.result = val;
   _mwInlineSave(t);
   // No DOM update needed — textarea already shows updated value
+}
+
+function mwRefreshChampionStatus(taskId, val) {
+  const item = document.querySelector(`#mwChampionSection .mw-champion-item[data-id="${CSS.escape(taskId)}"]`);
+  if (!item) return;
+  const hasFilled = !!(val && val.trim());
+  item.classList.toggle('is-filled', hasFilled);
+  const badge = item.querySelector('.mw-champion-status');
+  if (badge) {
+    badge.className = `mw-champion-status ${hasFilled ? 'status-ok' : 'status-todo'}`;
+    badge.textContent = hasFilled ? '✅ Đã cập nhật' : '⚠️ Chưa cập nhật';
+  }
+  // Update section-level pending count
+  const section = document.getElementById('mwChampionSection');
+  if (!section) return;
+  const items    = section.querySelectorAll('.mw-champion-item');
+  const unfilled = [...items].filter(el => !el.classList.contains('is-filled')).length;
+  const pending  = section.querySelector('.mw-champion-pending');
+  const done     = section.querySelector('.mw-champion-done');
+  if (unfilled === 0) {
+    if (pending) { pending.className = 'mw-champion-done'; pending.textContent = '✅ Đã cập nhật đầy đủ'; }
+    if (done)   done.textContent = '✅ Đã cập nhật đầy đủ';
+  } else {
+    if (pending) pending.textContent = `${unfilled} chưa cập nhật`;
+    if (done)   { done.className = 'mw-champion-pending'; done.textContent = `${unfilled} chưa cập nhật`; }
+  }
 }
 
 // ── Initiative popup ──
