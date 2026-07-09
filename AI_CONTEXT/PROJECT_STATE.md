@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-09 (Session 44 — My Work Initiative Popup)
-**Version**: v6.10 (`APP_VERSION = '6.10-mw-init-popup-20260709'`, `index.html ?v=20260709c`)
-**Remote HEAD (main)**: `ec142c2` — feat(my-work): S44a — Initiative popup overlay
+**As of**: 2026-07-09 (Session 44 — Champion Section + Initiative Popup)
+**Version**: v6.11 (`APP_VERSION = '6.11-mw-champion-20260709'`, `index.html ?v=20260709d`)
+**Remote HEAD (main)**: `51eafbd` — feat(my-work): S44b — Champion section
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -35,9 +35,9 @@
 | `backend/InitiativeService.gs` | 60 | ✅ deployed |
 | `backend/CasePipelineService.gs` | ~65 | ✅ NEW S19 — **deployed GAS** (2026-06-15) |
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
-| `assets/css/my-work.css` | ~505 | ✅ S44a: +.mw-popup-ini-item/.mw-popup-ini-header; S42: page/section/card/badge styles, dark mode, responsive |
-| `assets/js/views/my-work.js` | ~310 | ✅ S44a: mwOpenInitPopup/mwCloseInitPopup, MAX_INIT=4; S42: role detection, data getters, render, quick-save functions |
-| `assets/js/config.js` | 7 | ✅ S44a: APP_VERSION = '6.10-mw-init-popup-20260709'; S30: new GS_WEBAPP_URL |
+| `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
+| `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
+| `assets/js/config.js` | 7 | ✅ S44b: APP_VERSION = '6.11-mw-champion-20260709'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |

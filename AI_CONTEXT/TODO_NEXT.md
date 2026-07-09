@@ -1,6 +1,54 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-09 (Session 44 — My Work Initiative Popup)
-**Context**: S44a done. "Xem tất cả →" in Initiative section now opens popup overlay instead of navigating away. MAX_INIT=4 truncation in section. mwOpenInitPopup() shows ALL root initiatives. ESC/backdrop/X all close it. 15 suites 469/469 PASS. APP_VERSION=6.10-mw-init-popup-20260709.
+**Prepared**: 2026-07-09 (Session 44 — My Work Initiative Popup + Champion Section)
+**Context**: S44a+S44b done. Initiative popup (Xem tất cả → overlay, MAX_INIT=4) + Champion section (highlight=Y weekly reminder, amber theme, status badges, DOM-only refresh). 15 suites 479/479 PASS. APP_VERSION=6.11-mw-champion-20260709.
+
+---
+
+## ✅ COMPLETED S44b
+
+- [x] `my-work.js` — _mwGetChampionTasks(), _mwBuildChampionSection(), mwRefreshChampionStatus()
+- [x] `my-work.css` — .mw-champion-section + item + status + pending/done badge styles
+- [x] `config.js` — APP_VERSION='6.11-mw-champion-20260709'; cache-bust ?v=20260709d
+- [x] `verify_my_work.mjs` — MW30-MW35; **55/55 PASS** (was 45)
+- [x] Full regression: **15/15 suites 479/479 PASS**
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.11-mw-champion-20260709` |
+| My Work (PO/QLDM, user has highlight=Y tasks) | "Champion tuần này" amber section appears at top |
+| Task with result empty | ⚠️ Chưa cập nhật badge |
+| Task with result filled | ✅ Đã cập nhật badge, green border |
+| Fill result in textarea → blur | Badge flips to ✅ without re-render; task saves to GAS |
+| No highlight=Y tasks | Champion section hidden |
+| Initiative section | Shows max 4 cards; "Xem tất cả →" opens popup |
+
+---
+
+## 🔲 CANDIDATE TASKS S45
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Smoke test S44a+S44b** | See checklist above |
+| P1 | **Smoke test S43 i18n Phase 2** | Badge v6.9 → v6.11; EN mode: Status/Not Started/Active |
+| P1 | **Smoke test S41 Issue Tracker** | GAS redeploy needed (IssueService.gs) |
+| P2 | **i18n Phase 3** | Extend to other views: bld-queue, case-pipeline filter labels, action-plan |
+| P3 | **TD-012: add CI** | npm test + GitHub Actions for 15 test suites |
+
+---
+
+## NGUYÊN TẮC BRANCH (CONFIRMED S24)
+
+```
+main   →  push trực tiếp (Developer / AI) — Production + development
+fix/*  →  hotfix isolate nếu cần (tùy chọn)
+master →  ĐÃ XÓA hoàn toàn (local + remote) từ 2026-06-16 (S24)
+```
+
+**AI/Claude push thẳng lên `main`. Không tạo lại master.**
 
 ---
 
