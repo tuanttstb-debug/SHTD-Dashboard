@@ -1,35 +1,16 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-09 (Session 45 — i18n Phase 3)
-**Context**: S45 done. bilingual BLD Queue, Case Pipeline, Action Plan. 32 new keys. 16 suites 593/593 PASS. APP_VERSION=6.12-i18n-phase3-20260709.
+**Prepared**: 2026-07-09 (Session 47 — i18n Phase 4: My Work)
+**Context**: S47 done. My Work bilingual. 22 new mw.* keys. 16/16 suites PASS. HEAD f87eb3e. APP_VERSION=6.13-i18n-phase4-20260709.
 
 ---
 
-## ✅ COMPLETED S45 — i18n Phase 3
+## ✅ COMPLETED S47 — i18n Phase 4: My Work
 
-- [x] `i18n.js` — +32 keys (cp.stat.*, cp.view.*, cp.preset.*, cp.filter.*, bld.*, ap.*) VI + EN
-- [x] `index.html` — data-i18n on CP stat cards, preset spans, view toggle, scope toggle, CP filter labels, BLD filter label/refresh/history; cache-bust ?v=20260709e
-- [x] `action-plan.js` — period buttons + summary strip + all-teams option via t()
-- [x] `bld-queue.js` — count chip + empty state + filter selects via t()
-- [x] `app.js` — renderAll() re-renders AP + BLD when views visible (live lang switch)
-- [x] `config.js` — APP_VERSION='6.12-i18n-phase3-20260709'
-- [x] `verify_i18n_p3.mjs` — **62/62 PASS** (port 3044)
-- [x] Full regression: **16/16 suites 593/593 PASS**
-
----
-
-## 🔴 PRIORITY 0 — Smoke test on production
-
-| Check | Expected |
-|---|---|
-| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.12-i18n-phase3-20260709` |
-| Switch EN: Case Pipeline stat cards | "Total Cases / Total Pipeline Value / Overdue / Needs Approval" |
-| Switch EN: CP preset tabs | "In Progress / Needs Approval / Overdue / All" |
-| Switch EN: CP filter labels | "Search case / Stage / Team / PIC / Branch / Type / RAG" |
-| Switch EN: BLD Queue filter label | "Filter:" instead of "Lọc:" |
-| Switch EN: BLD count chip | "N pending approval" |
-| Switch EN: Action Plan period buttons | "This Month / This Quarter / Last Month" |
-| Switch EN: AP summary strip | "N actions · M In Progress" |
-| Switch back VI | All labels restore to Vietnamese |
+- [x] `i18n.js` — +22 mw.* keys VI + EN (greeting, dl.*, champion.*, urgent.*, tasks.*, init.*, case.*)
+- [x] `my-work.js` — all hard-coded VI strings → t()/tState(); fixed t-shadowing by renaming map params t→ct, task
+- [x] `config.js` — APP_VERSION='6.13-i18n-phase4-20260709'; cache-bust ?v=20260709f
+- [x] `verify_my_work.mjs` — +MW36-MW39 EN/VI switching; **62/62 PASS**
+- [x] Full regression: **16/16 suites PASS**
 
 ---
 
@@ -42,13 +23,37 @@
 
 ---
 
-## 🔲 CANDIDATE TASKS S47
+## ✅ COMPLETED S45 — i18n Phase 3
+
+- [x] `i18n.js` — +32 keys (cp.stat.*, cp.view.*, cp.preset.*, cp.filter.*, bld.*, ap.*) VI + EN
+- [x] `index.html` — data-i18n on CP stat cards, preset spans, view toggle, scope toggle, CP filter labels, BLD filter label/refresh/history; cache-bust ?v=20260709e
+- [x] `action-plan.js` — period buttons + summary strip + all-teams option via t()
+- [x] `bld-queue.js` — count chip + empty state + filter selects via t()
+- [x] `app.js` — renderAll() re-renders AP + BLD when views visible (live lang switch)
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.13-i18n-phase4-20260709` |
+| Switch EN: My Work greeting | "Hello, [name] 👋" |
+| Switch EN: section titles | "Action Needed / My Tasks / My Initiatives / Team Case Pipeline" |
+| Switch EN: deadline badges | "Overdue Xd / Today! / In Xd" |
+| Switch EN: champion section | "Weekly Champion / ✅ Updated / ⚠️ Not updated" |
+| Switch back VI | All labels restore to Vietnamese |
+| CI green | https://github.com/tuanttstb-debug/SHTD-Dashboard/actions |
+
+---
+
+## 🔲 CANDIDATE TASKS S48+
 
 | Priority | Task | Notes |
 |---|---|---|
-| P1 | **Smoke test S45 i18n Phase 3** | See checklist above |
-| P1 | **Smoke test S44a+S44b My Work** | Champion section + Initiative popup |
-| P2 | **Check CI run on GitHub** | Push triggered workflow — verify green badge at https://github.com/tuanttstb-debug/SHTD-Dashboard/actions |
+| P1 | **Smoke test S47 on production** | See checklist above |
+| P2 | **i18n Phase 5** — remaining views | dashboard.js, tasks.js, perf, quickview, etc. |
+| P2 | **Phase 0 security hardening** | Per arch roadmap — input sanitization, RBAC audit |
 
 ---
 

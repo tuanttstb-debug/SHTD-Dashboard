@@ -1,8 +1,51 @@
 # SESSION HANDOVER
-**Date**: 2026-07-09 (Session 46 — TD-012: CI with GitHub Actions)
+**Date**: 2026-07-09 (Session 47 — i18n Phase 4: My Work bilingual labels)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `4a8e386` — feat: TD-012 CI + npm test runner
+**origin/main HEAD**: `f87eb3e` — S47: i18n Phase 4 — My Work bilingual labels
+
+---
+
+## Tasks Completed (S47 — i18n Phase 4: My Work)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S47-T1 | `i18n.js` — 22 mw.* keys VI + 22 EN (greeting, deadline, champion, sections) | `assets/js/i18n.js` | ✅ |
+| S47-T2 | `my-work.js` — replace all hard-coded VI strings with t()/tState(); rename t→ct/task to fix shadowing | `assets/js/views/my-work.js` | ✅ |
+| S47-T3 | `config.js` — APP_VERSION='6.13-i18n-phase4-20260709'; cache-bust ?v=20260709f | `assets/js/config.js`, `index.html` | ✅ |
+| S47-T4 | `verify_my_work.mjs` — MW36-MW39 EN/VI switching tests; 62/62 PASS (was 55) | `verify_my_work.mjs` | ✅ |
+| S47-T5 | Full regression: **16/16 suites PASS** | all | ✅ |
+
+### i18n Phase 4 Architecture (S47)
+
+- **22 new keys**: `mw.greeting`, `mw.login-required`, `mw.view-all`, `mw.dl.{overdue,today,in,days}`, `mw.champion.{title,filled,unfilled,all-filled,count-unfilled,placeholder}`, `mw.urgent.{title,empty}`, `mw.tasks.{title,empty}`, `mw.init.{title,empty,popup-empty}`, `mw.case.{title,empty}`
+- **t()-shadowing fix**: `champTasks.map(t => ...)` → `map(ct => ...)`; `_mwBuildTaskCard(t)` → `_mwBuildTaskCard(task)` — critical: `t` was a local param shadowing global `t()` i18n function
+- **tState() for state options**: Select dropdown options now use `tState(s)` to translate state values in task cards
+- **setLang('en') triggers renderMyWork()**: via `renderAll()` in app.js — all MW labels switch live
+
+### Test suite snapshot (2026-07-09, S47)
+```
+verify_i18n_p3             62/62  PASS  (S45)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_my_work             62/62  PASS  (S47: +MW36-MW39; S44b: +MW30-MW35)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+TOTAL (16 suites)        PASS  0 FAIL
+```
+
+---
 
 ---
 
