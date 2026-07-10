@@ -259,7 +259,7 @@ function _itRenderTable() {
   if (!tbody) return;
 
   if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--text-3);">
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:36px;color:var(--text-3);">
       <i class="fa-solid fa-bug" style="font-size:28px;opacity:.25;display:block;margin-bottom:8px;"></i>Không có issue nào
     </td></tr>`;
   } else {
@@ -267,11 +267,12 @@ function _itRenderTable() {
       const isBreach = i.trangThai !== 'Đã xử lý' && i.deadline && new Date(i.deadline) < today;
       return `<tr class="${isBreach ? 'row-overdue' : ''}" onclick="openIssueViewPopup('${esc(i.id)}')" style="cursor:pointer;">
         <td style="font-family:monospace;font-size:11px;color:var(--text-3);">${esc(i.id)}</td>
-        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(i.tieuDe)}">${esc(i.tieuDe)}</td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(i.tieuDe)}">${esc(i.tieuDe)}</td>
         <td><span class="it-system-badge">${esc(i.heTong||'–')}</span></td>
         <td><span class="it-severity-badge it-sev-${(i.mucDo||'').toLowerCase()}">${esc(i.mucDo||'–')}</span></td>
         <td><span class="it-status-chip it-st-${_itStatusClass(i.trangThai)}">${esc(i.trangThai||'–')}</span></td>
         <td><span class="it-dept-badge">${esc(i.phongBan||'–')}</span></td>
+        <td style="font-size:12px;color:var(--text-2);">${esc(i.nguoiLog||'–')}</td>
         <td style="font-size:12px;">${esc(i.ngayPhatSinh||'–')}</td>
         <td style="font-size:12px;${isBreach ? 'color:var(--danger);font-weight:700;' : ''}">${esc(i.deadline||'–')}</td>
         <td onclick="event.stopPropagation();">
@@ -490,7 +491,7 @@ async function _itDeleteIssue(id) {
   const ok = await uiConfirm(
     'Xóa Issue',
     `Xóa issue <strong>${esc(iss.tieuDe)}</strong>?<br>Thao tác không thể hoàn tác.`,
-    'Xóa', 'Hủy'
+    'danger', 'Xóa'
   );
   if (!ok) return;
   dbIssues = dbIssues.filter(i => i.id !== id);
@@ -533,21 +534,23 @@ function openIssueViewPopup(id) {
           <button class="btn btn-ghost btn-sm" onclick="closeIssueViewPopup()"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
-      <div class="cp-view-grid">
-        ${_itVR('Loại issue',     iss.loaiIssue)}
-        ${_itVR('Loại xử lý',    iss.loaiXuLy)}
-        ${_itVR('Phòng ban',      iss.phongBan)}
-        ${_itVR('Ngày phát sinh', iss.ngayPhatSinh)}
-        ${_itVR('Deadline',       iss.deadline,  isBreach ? 'color:var(--danger);font-weight:700;' : '')}
-        ${_itVR('Ngày giải quyết',iss.ngayGiaiQuyet || '–')}
-        ${_itVR('Người log',      iss.nguoiLog)}
-        ${_itVR('Người xử lý',   iss.nguoiXuLy)}
-        ${_itVR('Ticket ngoài',   iss.ticketNgoai)}
-        ${_itVR('Ảnh hưởng NV',  iss.anhHuong)}
+      <div class="cp-view-body">
+        <div class="cp-view-grid">
+          ${_itVR('Người log',      iss.nguoiLog)}
+          ${_itVR('Người xử lý',   iss.nguoiXuLy)}
+          ${_itVR('Loại issue',     iss.loaiIssue)}
+          ${_itVR('Loại xử lý',    iss.loaiXuLy)}
+          ${_itVR('Phòng ban',      iss.phongBan)}
+          ${_itVR('Ngày phát sinh', iss.ngayPhatSinh)}
+          ${_itVR('Deadline',       iss.deadline,  isBreach ? 'color:var(--danger);font-weight:700;' : '')}
+          ${_itVR('Ngày giải quyết',iss.ngayGiaiQuyet)}
+          ${_itVR('Ticket ngoài',   iss.ticketNgoai)}
+          ${_itVR('Ảnh hưởng NV',  iss.anhHuong)}
+        </div>
+        ${iss.nguyenNhan ? `<div class="cp-view-section"><div class="cp-view-label">Nguyên nhân</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(iss.nguyenNhan)}</div></div>` : ''}
+        ${iss.deXuat     ? `<div class="cp-view-section"><div class="cp-view-label">Đề xuất</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(iss.deXuat)}</div></div>` : ''}
+        ${iss.ghiChu     ? `<div class="cp-view-section"><div class="cp-view-label">Ghi chú</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(iss.ghiChu)}</div></div>` : ''}
       </div>
-      ${iss.nguyenNhan ? `<div class="cp-view-section"><div class="cp-view-label">Nguyên nhân</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(iss.nguyenNhan)}</div></div>` : ''}
-      ${iss.deXuat     ? `<div class="cp-view-section"><div class="cp-view-label">Đề xuất</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(iss.deXuat)}</div></div>` : ''}
-      ${iss.ghiChu     ? `<div class="cp-view-section"><div class="cp-view-label">Ghi chú</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(iss.ghiChu)}</div></div>` : ''}
     </div>`;
 
   el.style.display = 'flex';

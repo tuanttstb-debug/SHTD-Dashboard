@@ -207,6 +207,32 @@
   padding: 16px;
 }
 
+/* ── View popup modal card ── */
+.cp-view-modal {
+  background: var(--surface-1, #fff);
+  border-radius: 16px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+.cp-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  position: sticky;
+  top: 0;
+  background: var(--surface-1, #fff);
+  border-radius: 16px 16px 0 0;
+  z-index: 1;
+}
+.cp-view-body {
+  padding: 20px 24px;
+}
+
 /* ── Table overrides ── */
 #itTable tbody tr:hover { background: var(--surface-2, #f8f9fa); }
 
