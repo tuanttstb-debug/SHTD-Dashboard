@@ -1,6 +1,44 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-10 (Session 50 — i18n Phase 7: Gantt, AI Chat, Branch Analysis, User Management)
-**Context**: S50 done. 4 remaining JS views bilingual. 74 new keys (gantt.*, ai.*, branch.*, um.*). 19/19 suites PASS. APP_VERSION=6.16-i18n-phase7-20260710. HEAD=e0039a4.
+**Prepared**: 2026-07-10 (Session 51 — i18n Phase 8: KPI Overview + Owner Analysis bilingual)
+**Context**: S51 done. i18n coverage COMPLETE (all views bilingual). 6 new keys (kp.*, oa.*). 20/20 suites PASS. APP_VERSION=6.17-i18n-phase8-20260710. HEAD=7f5c1db.
+
+---
+
+## ✅ COMPLETED S51 — i18n Phase 8: KPI Overview + Owner Analysis
+
+- [x] `i18n.js` — +6 keys: `kp.btn.load-raw`, `kp.btn.sync-sheet`, `kp.btn.from-sheet`, `kp.section.charts`, `kp.section.alerts`, `oa.tab.ranking` in VI and EN
+- [x] `kpi-overview.js` — 5 strings → `t()`: toolbar buttons (Load/Sync/From-Sheet) + section headers (Charts/Alerts)
+- [x] `owner-analysis.js` — 1 string → `t()`: ranking tab label "Bảng xếp hạng PTKD"
+- [x] `app.js` — `renderAll()` +2 guards: view-kpi-overview + view-owner-analysis
+- [x] `config.js` — APP_VERSION `6.16.2-fix-it-popup-20260710` → `6.17-i18n-phase8-20260710`; cache-bust `?v=20260710e` (56 refs, Python)
+- [x] `verify_i18n_p8.mjs` — NEW; **13/13 PASS** (IP8-1→IP8-8: KP buttons VI/EN, section headers VI/EN, OA tab VI/EN, renderAll live-switch, 0 JS errors)
+- [x] `run_tests.mjs` — +verify_i18n_p8.mjs as first suite; **20/20 PASS**
+- [x] **Domain data intentionally kept**: KPI names, owner names, channel terms, alert messages, chart titles — only pure UI chrome translated
+- [x] **Phase 0 security confirmed done**: AuthService.gs throws if no AUTH_SECRET; Code.gs has KNOWN_ROLES gate + Admin-only gate
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test S51 on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.17-i18n-phase8-20260710` |
+| KPI Digital Overview → switch EN | Buttons: "Load Raw File", "Sync to Sheet", "From Sheet" |
+| KPI Digital Overview → switch EN | Section headers: "Analysis Charts", "Automated KPI Alerts" |
+| Owner Analysis → switch EN | Third tab: "PTKD Rankings" |
+| Switch back VI | All labels restore to Vietnamese |
+
+---
+
+## 🔲 CANDIDATE TASKS S52+
+
+| Priority | Task | Notes |
+|---|---|---|
+| P0 | **Smoke test S51 on production** | See checklist above |
+| P1 | **AI Chat live activation** | GAS editor → Script Properties → add `GEMINI_API_KEY = <Gemini key>`. Backend wired (Code.gs ai-chat route + AiService.gs). Frontend done (Phase 7). User action only. |
+| P2 | **i18n COMPLETE** | All views bilingual after Phase 8. No further i18n phases needed. |
+
+---
 
 ---
 

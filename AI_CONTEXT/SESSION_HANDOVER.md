@@ -1,4 +1,86 @@
 # SESSION HANDOVER
+**Date**: 2026-07-10 (Session 51 — i18n Phase 8: KPI Overview + Owner Analysis bilingual)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `7f5c1db` — feat(i18n): Phase 8 — KPI Overview + Owner Analysis bilingual (6 keys)
+
+---
+
+## Tasks Completed (S51 — i18n Phase 8)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S51-T1 | `i18n.js` — +6 keys (kp.btn.*, kp.section.*, oa.tab.ranking) in VI and EN | `assets/js/i18n.js` | ✅ |
+| S51-T2 | `kpi-overview.js` — 3 toolbar buttons + 2 section headers → `t()` | `assets/js/views/kpi-overview.js` | ✅ |
+| S51-T3 | `owner-analysis.js` — ranking tab label → `t('oa.tab.ranking')` | `assets/js/views/owner-analysis.js` | ✅ |
+| S51-T4 | `app.js` — `renderAll()` +2 guards: view-kpi-overview, view-owner-analysis | `assets/js/app.js` | ✅ |
+| S51-T5 | `config.js` — APP_VERSION `6.16.2-fix-it-popup-20260710` → `6.17-i18n-phase8-20260710` | `assets/js/config.js` | ✅ |
+| S51-T6 | `index.html` — cache-bust `?v=20260710d` → `?v=20260710e` (56 refs, Python) | `index.html` | ✅ |
+| S51-T7 | `verify_i18n_p8.mjs` (NEW) — **13/13 PASS** (IP8-1→IP8-8: KP buttons VI/EN, section headers VI/EN, OA tab label VI/EN, renderAll live-switch, 0 JS errors) | `verify_i18n_p8.mjs` | ✅ |
+| S51-T8 | `run_tests.mjs` — +verify_i18n_p8.mjs as first suite; **20/20 PASS** | `run_tests.mjs` | ✅ |
+
+### i18n Phase 8 Key Notes (S51)
+
+**Domain data NOT translated** (intentional): KPI names ('KPI 2.1', 'KPI 2.2'), owner labels ('QuangNN3 – Bảo lãnh', 'DungLQ1 – Giải ngân'), channel terms ('BIZ', 'BPM', 'Digital Rate'), KPI status ('Vượt KPI', 'Đạt KPI'), all chart card titles, all alert message text, period subtitle ('Kỳ: T1–T6/2026'), owner tab labels that include person names.
+
+**Only chrome translated**: Toolbar buttons (Load/Sync/From-Sheet), section headers (Charts/Alerts), ranking tab label.
+
+**Phase 0 security verified**: `AuthService.gs` throws if no `AUTH_SECRET` (no fallback). `Code.gs` has KNOWN_ROLES gate + Admin-only gate for write actions. ✅ Done as of S30-era.
+
+**renderAll() guards (app.js)**:
+```javascript
+if (document.getElementById('view-kpi-overview')?.style.display === 'contents') renderKpiOverview();
+if (document.getElementById('view-owner-analysis')?.style.display === 'contents') renderOwnerAnalysis();
+```
+Note: `renderKpiOverview()` also internally re-renders kpi-progress + owner-analysis on revisit (kpi-overview.js:225–229). Guard for view-owner-analysis still needed for direct navigation.
+
+### Test suite snapshot (2026-07-10, S51)
+```
+verify_i18n_p8             13/13  PASS  (S51 NEW)
+verify_i18n_p7             35/35  PASS  (S50)
+verify_i18n_p6             27/27  PASS  (S49)
+verify_i18n_p5             24/24  PASS  (S48)
+verify_i18n_p3             62/62  PASS  (S45)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_my_work             55/55  PASS  (S44b)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS  (S30)
+verify_case_pipeline       22/22  PASS  (S20)
+verify_bld_queue           46/46  PASS  (S19)
+verify_milestone_task      23/23  PASS  (S27)
+verify_task_init_popup     28/28  PASS  (S25)
+verify_filter_cascade      23/23  PASS  (S23)
+verify_import_rbac         15/15  PASS  (S23)
+verify_modal_layout         9/9   PASS  (S23)
+─────────────────────────────────────────────────
+run_tests.mjs              20/20  PASS
+```
+
+### Smoke test checklist S51
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.17-i18n-phase8-20260710` |
+| KPI Digital Overview → switch EN | Buttons: "Load Raw File", "Sync to Sheet", "From Sheet" |
+| KPI Digital Overview → switch EN | Section headers: "Analysis Charts", "Automated KPI Alerts" |
+| Owner Analysis → switch EN | Third tab: "PTKD Rankings" |
+| Switch back VI | "Tải File Raw", "Biểu đồ phân tích", "Cảnh báo KPI Tự động", "Bảng xếp hạng PTKD" |
+
+---
+
+## Next session candidates (S52+)
+| Priority | Task | Notes |
+|---|---|---|
+| P0 | Smoke test S51 on production | See checklist above |
+| P1 | AI Chat live activation | GAS editor → Script Properties → `GEMINI_API_KEY = <key>` (user action). Backend is wired; frontend i18n done. |
+| P2 | i18n coverage is now COMPLETE | All views bilingual. No Phase 9 needed. |
+
+---
+
+## Previous S50 — i18n Phase 7
 **Date**: 2026-07-10 (Session 50 — i18n Phase 7: Gantt, AI Chat, Branch Analysis, User Management bilingual)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
