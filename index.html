@@ -8,24 +8,24 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/base.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/components.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/table.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260710e">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260710e">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/base.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/components.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/table.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20260710f">
 
 </head>
 <body>
@@ -192,6 +192,10 @@
         <button class="lang-btn active" id="langVI" onclick="setLang('vi')">VI</button>
         <button class="lang-btn" id="langEN" onclick="setLang('en')">EN</button>
       </div>
+      <button id="btnSync" class="qv-topbar-btn" onclick="syncDB()" style="display:none;" title="Đồng bộ dữ liệu từ Google Sheets">
+        <i class="fa-solid fa-rotate" style="color:var(--success);"></i>
+        Sync
+      </button>
       <button class="qv-topbar-btn" onclick="openQuickView()" title="Quick View (Q)">
         <i class="fa-solid fa-bolt" style="color:var(--accent);"></i>
         Quick View
@@ -442,7 +446,6 @@
           <select id="bldFilterInit" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="_bldFilterInit=this.value;renderBldQueue()">
             <option value="">Tất cả sáng kiến</option>
           </select>
-          <button class="btn btn-outline btn-sm" onclick="renderBldQueue()"><i class="fa-solid fa-rotate"></i> <span data-i18n="common.refresh">Làm mới</span></button>
         </div>
       </div>
 
@@ -611,9 +614,8 @@
 
         <!-- Table view (default) -->
         <div id="cpTableWrap">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="margin-bottom:8px;">
             <span style="font-size:12px;color:var(--text-3);" id="cpCountInfo"></span>
-            <button class="btn btn-ghost btn-sm" onclick="renderCasePipeline()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
           </div>
           <div class="table-wrap">
             <table id="cpTable">
@@ -640,9 +642,6 @@
 
         <!-- Kanban board (toggled) -->
         <div id="cpBoardWrap" style="display:none;">
-          <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:8px;">
-            <button class="btn btn-ghost btn-sm" onclick="renderCasePipeline()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
-          </div>
           <div class="cp-board-wrap">
             <div class="cp-board" id="cpBoard"></div>
           </div>
@@ -794,9 +793,8 @@
 
         <!-- Table -->
         <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="margin-bottom:8px;">
             <span style="font-size:12px;color:var(--text-3);" id="itCountInfo"></span>
-            <button class="btn btn-ghost btn-sm" onclick="renderIssueTracker()"><i class="fa-solid fa-rotate"></i> Làm mới</button>
           </div>
           <div class="table-wrap">
             <table id="itTable">
@@ -841,7 +839,6 @@
           <div class="toolbar-right">
             <button class="btn btn-danger btn-sm" onclick="uiClearCache()"><i class="fa-solid fa-eraser"></i> Xóa Cache</button>
             <button id="btnConnect" class="btn btn-outline btn-sm" onclick="connectDB()" title="Đăng nhập Google để kết nối Sheets DB"><i class="fa-brands fa-google"></i> Kết nối GG Sheets</button>
-            <button id="btnSync" class="btn btn-success-soft btn-sm" onclick="syncDB()" style="display:none;" title="Tải lại dữ liệu từ Google Sheets"><i class="fa-solid fa-rotate"></i> Sync</button>
             <input type="file" id="importFile" class="lead-only" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImport(event)">
             <button class="btn btn-outline btn-sm lead-only" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-import"></i> Import</button>
             <button class="btn btn-outline btn-sm" onclick="exportExcel()"><i class="fa-solid fa-file-export"></i> Export</button>
@@ -1674,7 +1671,7 @@
       <!-- Người log + Người xử lý -->
       <div class="form-group">
         <label class="form-label">Người log</label>
-        <input type="text" id="itfNguoiLog" class="form-control" placeholder="Tên đăng nhập">
+        <select id="itfNguoiLog" class="form-control"></select>
       </div>
       <div class="form-group">
         <label class="form-label">Người xử lý</label>
@@ -1796,44 +1793,44 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260710e"></script>
-<script src="assets/js/config.js?v=20260710e"></script>
-<script src="assets/js/constants.js?v=20260710e"></script>
-<script src="assets/js/helpers.js?v=20260710e"></script>
-<script src="assets/js/storage.js?v=20260710e"></script>
-<script src="assets/js/parsers.js?v=20260710e"></script>
-<script src="assets/js/auth.js?v=20260710e"></script>
-<script src="assets/js/api.js?v=20260710e"></script>
-<script src="assets/js/ui/toast.js?v=20260710e"></script>
-<script src="assets/js/ui/modal.js?v=20260710e"></script>
-<script src="assets/js/ui/theme.js?v=20260710e"></script>
-<script src="assets/js/ui/navigation.js?v=20260710e"></script>
-<script src="assets/js/crud.js?v=20260710e"></script>
-<script src="assets/js/bulk.js?v=20260710e"></script>
-<script src="assets/js/views/dashboard.js?v=20260710e"></script>
-<script src="assets/js/views/tasks.js?v=20260710e"></script>
-<script src="assets/js/views/gantt.js?v=20260710e"></script>
-<script src="assets/js/views/performance.js?v=20260710e"></script>
-<script src="assets/js/views/quickview.js?v=20260710e"></script>
-<script src="assets/js/report.js?v=20260710e"></script>
-<script src="assets/js/kpi-data.js?v=20260710e"></script>
-<script src="assets/js/kpi-parser.js?v=20260710e"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260710e"></script>
-<script src="assets/js/views/action-plan.js?v=20260710e"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260710e"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260710e"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260710e"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260710e"></script>
-<script src="assets/js/initiatives.js?v=20260710e"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260710e"></script>
-<script src="assets/js/views/ai-chat.js?v=20260710e"></script>
-<script src="assets/js/views/user-management.js?v=20260710e"></script>
-<script src="assets/js/views/executive-summary.js?v=20260710e"></script>
-<script src="assets/js/views/bld-queue.js?v=20260710e"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260710e"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260710e"></script>
-<script src="assets/js/views/my-work.js?v=20260710e"></script>
-<script src="assets/js/app.js?v=20260710e"></script>
+<script src="assets/js/i18n.js?v=20260710f"></script>
+<script src="assets/js/config.js?v=20260710f"></script>
+<script src="assets/js/constants.js?v=20260710f"></script>
+<script src="assets/js/helpers.js?v=20260710f"></script>
+<script src="assets/js/storage.js?v=20260710f"></script>
+<script src="assets/js/parsers.js?v=20260710f"></script>
+<script src="assets/js/auth.js?v=20260710f"></script>
+<script src="assets/js/api.js?v=20260710f"></script>
+<script src="assets/js/ui/toast.js?v=20260710f"></script>
+<script src="assets/js/ui/modal.js?v=20260710f"></script>
+<script src="assets/js/ui/theme.js?v=20260710f"></script>
+<script src="assets/js/ui/navigation.js?v=20260710f"></script>
+<script src="assets/js/crud.js?v=20260710f"></script>
+<script src="assets/js/bulk.js?v=20260710f"></script>
+<script src="assets/js/views/dashboard.js?v=20260710f"></script>
+<script src="assets/js/views/tasks.js?v=20260710f"></script>
+<script src="assets/js/views/gantt.js?v=20260710f"></script>
+<script src="assets/js/views/performance.js?v=20260710f"></script>
+<script src="assets/js/views/quickview.js?v=20260710f"></script>
+<script src="assets/js/report.js?v=20260710f"></script>
+<script src="assets/js/kpi-data.js?v=20260710f"></script>
+<script src="assets/js/kpi-parser.js?v=20260710f"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260710f"></script>
+<script src="assets/js/views/action-plan.js?v=20260710f"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260710f"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260710f"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260710f"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260710f"></script>
+<script src="assets/js/initiatives.js?v=20260710f"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260710f"></script>
+<script src="assets/js/views/ai-chat.js?v=20260710f"></script>
+<script src="assets/js/views/user-management.js?v=20260710f"></script>
+<script src="assets/js/views/executive-summary.js?v=20260710f"></script>
+<script src="assets/js/views/bld-queue.js?v=20260710f"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260710f"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260710f"></script>
+<script src="assets/js/views/my-work.js?v=20260710f"></script>
+<script src="assets/js/app.js?v=20260710f"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

@@ -166,11 +166,16 @@ async function connectDB() {
 }
 
 async function syncDB() {
-  showLoading('Đang tải dữ liệu mới nhất từ Sheets…');
+  showLoading('Đang đồng bộ dữ liệu từ Sheets…');
   try {
-    await readFromHandle();
+    await Promise.all([
+      readFromHandle(),
+      readCases(),
+      readIssues(),
+      readInitiatives(),
+    ]);
     hideLoading(); renderAll();
-    toast('Đã đồng bộ dữ liệu mới nhất!', 'success');
+    toast('Đã đồng bộ toàn bộ dữ liệu!', 'success');
   } catch(e) { hideLoading(); toast('Lỗi: ' + e.message, 'error'); }
 }
 

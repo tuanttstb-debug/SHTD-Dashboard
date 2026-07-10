@@ -396,7 +396,7 @@ function openIssueModal(id) {
 
   // Auto-fill người log for new issues
   const auth = typeof getAuthSession === 'function' ? getAuthSession() : null;
-  _itSetField('itfNguoiLog', iss?.nguoiLog || auth?.user?.username || '');
+  _populateUserSelect('itfNguoiLog', null, iss?.nguoiLog || auth?.user?.username || '');
 
   _itUpdateStatusOptions();
   _itSetField('itfTrangThai', iss?.trangThai || 'Mới');
