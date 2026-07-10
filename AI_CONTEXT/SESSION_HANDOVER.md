@@ -1,4 +1,96 @@
 # SESSION HANDOVER
+**Date**: 2026-07-10 (Session 52 — SYNC topbar + Issue Tracker Người log dropdown)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `c40dbae` — feat(S52): SYNC topbar + Issue Tracker Nguoi Log dropdown
+
+---
+
+## Tasks Completed (S52)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S52-T1 | `index.html` — Move `#btnSync` to topbar-right (before Quick View), styled with `qv-topbar-btn`; remove from Tasks toolbar | `index.html` | ✅ |
+| S52-T2 | `index.html` — Remove "Làm mới" buttons from BLD Queue, Case Pipeline (table+kanban), Issue Tracker | `index.html` | ✅ |
+| S52-T3 | `index.html` — Issue Tracker modal: `<input type="text" id="itfNguoiLog">` → `<select id="itfNguoiLog">` | `index.html` | ✅ |
+| S52-T4 | `app.js` — `syncDB()` now syncs ALL features in parallel: `readFromHandle()` + `readCases()` + `readIssues()` + `readInitiatives()` | `assets/js/app.js` | ✅ |
+| S52-T5 | `issue-tracker.js` — `openIssueModal()`: replace `_itSetField('itfNguoiLog', ...)` with `_populateUserSelect('itfNguoiLog', null, ...)` | `assets/js/views/issue-tracker.js` | ✅ |
+| S52-T6 | `config.js` — APP_VERSION `6.17-i18n-phase8-20260710` → `6.18-sync-topbar-nguoilog-20260710`; cache-bust `?v=20260710f` (56 refs, Python) | `assets/js/config.js`, `index.html` | ✅ |
+| S52-T7 | Tests: 19/20 PASS — `verify_my_work.mjs` has 3 pre-existing failures (MW22/MW23-prog-bar, progress toggle UI), unrelated to S52 | all | ⚠️ pre-existing |
+
+### S52 Architecture Notes
+
+**SYNC topbar button (`#btnSync`)**:
+- Removed from Tasks toolbar (`btn btn-success-soft btn-sm`); was at old line 844
+- Added to topbar-right BEFORE Quick View button, class `qv-topbar-btn`; icon color `var(--success)`
+- Same `id="btnSync"` → JS visibility refs in `app.js` (lines 53, 158, 186: display inline-flex/none) still work without change
+
+**syncDB() — all features in parallel**:
+```javascript
+await Promise.all([
+  readFromHandle(),  // Tasks
+  readCases(),       // Case Pipeline
+  readIssues(),      // Issue Tracker
+  readInitiatives(), // Initiatives
+]);
+```
+
+**Issue Tracker "Người log" dropdown**:
+- `<select id="itfNguoiLog">` in `index.html` (was `<input type="text">`)
+- `openIssueModal()` calls `_populateUserSelect('itfNguoiLog', null, iss?.nguoiLog || auth?.user?.username || '')`
+- `team=null` → `getUsersByTeam('')` → all active users; displays "Display_Name (Username)"; stores Username as value
+- Fallback if `_appUsers` empty: single option with currentVal (offline-safe)
+- Save logic (`_itCollect()`) uses `.value` — works identically for input/select
+
+**Per-feature "Làm mới" buttons removed** (topbar SYNC replaces them):
+- BLD Queue filter bar: entire button removed
+- Case Pipeline table: `div` simplified to just `<span id="cpCountInfo">`
+- Case Pipeline kanban: header div removed entirely
+- Issue Tracker table: `div` simplified to just `<span id="itCountInfo">`
+
+### Test suite snapshot (2026-07-10, S52)
+```
+verify_i18n_p8             13/13  PASS  (S51)
+verify_i18n_p7             35/35  PASS  (S50)
+verify_i18n_p6             27/27  PASS  (S49)
+verify_i18n_p5             24/24  PASS  (S48)
+verify_i18n_p3             62/62  PASS  (S45)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_my_work             59/62  ❌ FAIL 3 (MW22 x2 + MW23-prog-bar — PRE-EXISTING, unrelated to S52)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+run_tests.mjs              19/20  (1 pre-existing suite failure)
+```
+
+### Smoke test checklist S52
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.18-sync-topbar-nguoilog-20260710` |
+| Topbar | SYNC button appears next to Quick View (when connected) |
+| Click SYNC | Toast "Đã đồng bộ toàn bộ dữ liệu!" — all 4 feature lists refresh |
+| Issue Tracker → Thêm Issue | "Người log" field is a dropdown; logged-in user pre-selected |
+| Issue Tracker → Edit Issue | "Người log" shows the issue's existing nguoiLog value |
+| BLD Queue, Case Pipeline, Issue Tracker | No "Làm mới" button (removed) |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S51)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-10 (Session 51 — i18n Phase 8: KPI Overview + Owner Analysis bilingual)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
