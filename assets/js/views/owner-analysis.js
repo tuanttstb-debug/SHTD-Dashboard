@@ -23,7 +23,7 @@ function renderOwnerAnalysis() {
         <i class="fa-solid fa-money-bill-wave" style="margin-right:5px;color:var(--cyan);"></i>DungLQ1 – Giải ngân (Theo dõi)
       </div>
       <div class="owner-tab-kpi" id="oaTab-rank" onclick="_oaSwitch('rank')">
-        <i class="fa-solid fa-ranking-star" style="margin-right:5px;color:var(--gold);"></i>Bảng xếp hạng PTKD
+        <i class="fa-solid fa-ranking-star" style="margin-right:5px;color:var(--gold);"></i>${t('oa.tab.ranking')}
       </div>
     </div>
 

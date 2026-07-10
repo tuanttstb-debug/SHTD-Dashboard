@@ -21,9 +21,9 @@ function renderKpiOverview() {
       </div>
       <div class="toolbar-right">
         <input type="file" id="ovRawInput" accept=".xlsx,.xls" style="display:none;" onchange="kpiLoadRawFile(event)">
-        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ovRawInput').click()"><i class="fa-solid fa-file-arrow-up"></i> Load File Raw</button>
-        <button class="btn btn-outline btn-sm" id="ovSyncBtn" style="${KPI_LIVE_TS ? '' : 'display:none;'}" onclick="kpiSyncToSheet()"><i class="fa-solid fa-cloud-arrow-up"></i> Sync GG Sheet</button>
-        <button class="btn btn-outline btn-sm" onclick="kpiLoadFromSheet()"><i class="fa-solid fa-cloud-arrow-down"></i> Từ GG Sheet</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ovRawInput').click()"><i class="fa-solid fa-file-arrow-up"></i> ${t('kp.btn.load-raw')}</button>
+        <button class="btn btn-outline btn-sm" id="ovSyncBtn" style="${KPI_LIVE_TS ? '' : 'display:none;'}" onclick="kpiSyncToSheet()"><i class="fa-solid fa-cloud-arrow-up"></i> ${t('kp.btn.sync-sheet')}</button>
+        <button class="btn btn-outline btn-sm" onclick="kpiLoadFromSheet()"><i class="fa-solid fa-cloud-arrow-down"></i> ${t('kp.btn.from-sheet')}</button>
       </div>
     </div>
 
@@ -69,7 +69,7 @@ function renderKpiOverview() {
 
     <!-- Charts row -->
     <div class="section-header">
-      <span class="section-header-title">Biểu đồ phân tích</span>
+      <span class="section-header-title">${t('kp.section.charts')}</span>
       <div class="section-header-line"></div>
     </div>
     <div class="kpi-chart-grid">
@@ -95,7 +95,7 @@ function renderKpiOverview() {
 
     <!-- Alert grid -->
     <div class="section-header">
-      <span class="section-header-title">Cảnh báo KPI Tự động</span>
+      <span class="section-header-title">${t('kp.section.alerts')}</span>
       <div class="section-header-line"></div>
     </div>
     <div class="kpi-alert-grid">

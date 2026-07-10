@@ -85,6 +85,8 @@ function renderAll() {
   if (document.getElementById('view-ai-chat')?.style.display === 'contents') renderAiChat();
   if (document.getElementById('view-branch-analysis')?.style.display === 'contents') renderBranchAnalysis();
   if (document.getElementById('view-user-management')?.style.display === 'contents') renderUserManagement();
+  if (document.getElementById('view-kpi-overview')?.style.display === 'contents') renderKpiOverview();
+  if (document.getElementById('view-owner-analysis')?.style.display === 'contents') renderOwnerAnalysis();
   if (_qvIsOpen) renderQuickView();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }

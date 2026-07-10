@@ -440,6 +440,14 @@ const TRANSLATIONS = {
     'um.err.new-pw-required':       'Vui lòng nhập mật khẩu mới.',
     'um.err.new-pw-short':          'Mật khẩu mới phải có ít nhất 6 ký tự.',
     'um.err.unknown':               'Lỗi không xác định.',
+    // ── KPI Overview ──
+    'kp.btn.load-raw':              'Tải File Raw',
+    'kp.btn.sync-sheet':            'Đồng bộ GG Sheet',
+    'kp.btn.from-sheet':            'Từ GG Sheet',
+    'kp.section.charts':            'Biểu đồ phân tích',
+    'kp.section.alerts':            'Cảnh báo KPI Tự động',
+    // ── Owner Analysis ──
+    'oa.tab.ranking':               'Bảng xếp hạng PTKD',
   },
 
   en: {
@@ -873,6 +881,14 @@ const TRANSLATIONS = {
     'um.err.new-pw-required':       'Please enter a new password.',
     'um.err.new-pw-short':          'New password must be at least 6 characters.',
     'um.err.unknown':               'Unknown error.',
+    // ── KPI Overview ──
+    'kp.btn.load-raw':              'Load Raw File',
+    'kp.btn.sync-sheet':            'Sync to Sheet',
+    'kp.btn.from-sheet':            'From Sheet',
+    'kp.section.charts':            'Analysis Charts',
+    'kp.section.alerts':            'Automated KPI Alerts',
+    // ── Owner Analysis ──
+    'oa.tab.ranking':               'PTKD Rankings',
   },
 };
 
