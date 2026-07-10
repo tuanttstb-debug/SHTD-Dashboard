@@ -258,29 +258,29 @@ function _initBuildMsTaskList(ms, parentInitId) {
       <button class="btn btn-ghost btn-sm" style="color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentInitId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> ${t('it.btn.add-task')}</button>
     </div>`;
   }
-  const rows = tasks.map(t => {
-    const isExact    = t.milestone === ms.id;
-    const isCrossInit = t.initiative !== parentInitId;
+  const rows = tasks.map(tk => {
+    const isExact    = tk.milestone === ms.id;
+    const isCrossInit = tk.initiative !== parentInitId;
     let alignBadge;
     if (isCrossInit) {
-      alignBadge = `<span class="init-align-badge warn" title="Task thuộc initiative ${_esc(t.initiative||'?')} — khác initiative này">${t('it.badge.warn')}</span>`;
+      alignBadge = `<span class="init-align-badge warn" title="Task thuộc initiative ${_esc(tk.initiative||'?')} — khác initiative này">${t('it.badge.warn')}</span>`;
     } else if (!isExact) {
-      alignBadge = `<span class="init-align-badge loose" title="Đang link qua nhãn tắt '${_esc(t.milestone)}' — chưa dùng ID đầy đủ">
+      alignBadge = `<span class="init-align-badge loose" title="Đang link qua nhãn tắt '${_esc(tk.milestone)}' — chưa dùng ID đầy đủ">
         ${t('it.badge.loose')}
-        <button class="init-fix-link-btn" onclick="event.stopPropagation();_initFixLooseLink('${_esc(t.id)}','${_esc(ms.id)}','${_esc(ms.id)}')" title="Cập nhật sang ${_esc(ms.id)}">
+        <button class="init-fix-link-btn" onclick="event.stopPropagation();_initFixLooseLink('${_esc(tk.id)}','${_esc(ms.id)}','${_esc(ms.id)}')" title="Cập nhật sang ${_esc(ms.id)}">
           ${t('it.btn.fix-link')}
         </button>
       </span>`;
     } else {
       alignBadge = `<span class="init-align-badge ok">${t('it.badge.ok')}</span>`;
     }
-    return `<tr onclick="openTaskViewPopup('${_esc(t.id)}')" title="Xem task ${_esc(t.id)}">
-      <td><span class="init-task-id">${_esc(t.id)}</span></td>
-      <td><span class="init-task-name" title="${_esc(t.name)}">${_esc(t.name)}</span></td>
-      <td>${stateChip(t.state)}</td>
-      <td style="color:var(--text-3);">${_esc(t.picRes||'–')}</td>
-      <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
-      <td ${isOverdue(t.endDate,t.progress)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(t.endDate)||'–'}</td>
+    return `<tr onclick="openTaskViewPopup('${_esc(tk.id)}')" title="Xem task ${_esc(tk.id)}">
+      <td><span class="init-task-id">${_esc(tk.id)}</span></td>
+      <td><span class="init-task-name" title="${_esc(tk.name)}">${_esc(tk.name)}</span></td>
+      <td>${stateChip(tk.state)}</td>
+      <td style="color:var(--text-3);">${_esc(tk.picRes||'–')}</td>
+      <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${tk.progress}%;"></div></div><span class="prog-pct">${tk.progress}%</span></div></td>
+      <td ${isOverdue(tk.endDate,tk.progress)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(tk.endDate)||'–'}</td>
       <td onclick="event.stopPropagation()">${alignBadge}</td>
     </tr>`;
   }).join('');
