@@ -80,6 +80,7 @@ function renderAll() {
   if (document.getElementById('view-action-plan')?.style.display === 'contents') renderActionPlan();
   if (document.getElementById('view-bld-queue')?.style.display === 'contents') renderBldQueue();
   if (document.getElementById('view-executive-summary')?.style.display === 'contents') renderExecutiveSummary();
+  if (document.getElementById('view-initiative-tracker')?.style.display === 'contents') renderInitiativeTracker();
   if (_qvIsOpen) renderQuickView();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
@@ -108,7 +109,7 @@ function updateFilterDropdowns() {
   db.initiatives.forEach(i => { if (i.id !== 'BAU' && !i.parentId) initMap.set(i.id, `${i.id} – ${i.name}`); });
   db.tasks.forEach(t => { if (t.initiative && t.initiative !== 'BAU' && !initMap.has(t.initiative)) initMap.set(t.initiative, t.initiative); });
 
-  const iOpts = ['<option value="">Tất cả</option>','<option value="BAU">BAU</option>',
+  const iOpts = [`<option value="">${t('common.all')}</option>`,'<option value="BAU">BAU</option>',
     ...[...initMap.entries()].map(([id,nm]) => `<option value="${id}">${nm}</option>`)].join('');
   fiEl.innerHTML = iOpts;
   if (gi) gi.innerHTML = iOpts;
@@ -125,7 +126,7 @@ function updateFilterDropdowns() {
       const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
       return parse(a) - parse(b);
     });
-    fTuanBCEl.innerHTML = '<option value="">Tất cả</option><option value="__thisweek__">📅 Tuần này</option>'
+    fTuanBCEl.innerHTML = `<option value="">${t('common.all')}</option><option value="__thisweek__">${t('filter.thisweek')}</option>`
       + sorted.map(v => `<option value="${v}">${v}</option>`).join('');
     if (curTuan) fTuanBCEl.value = curTuan;
   }

@@ -38,7 +38,7 @@ function renderInitiativeTracker() {
     ${_initStatBar(allRoots)}
     <div class="toolbar" style="margin-bottom:16px;">
       <div class="toolbar-left">
-        <div style="font-size:17px;font-weight:800;">Theo dõi Initiative</div>
+        <div style="font-size:17px;font-weight:800;">${t('page.initiative-tracker')}</div>
         <div style="font-size:12px;color:var(--text-3);">
           ${allRoots.length} initiative · ${(db.initiatives||[]).filter(i=>i.type==='milestone').length} milestone
         </div>
@@ -46,18 +46,18 @@ function renderInitiativeTracker() {
       <div class="toolbar-right">
         <div class="scope-toggle">
           <button class="scope-btn ${currentScope==='mine'?'active':''}" onclick="setInitScope('mine')">
-            <i class="fa-solid fa-user" style="margin-right:3px;"></i>Của tôi
+            <i class="fa-solid fa-user" style="margin-right:3px;"></i>${t('task.scope.mine')}
           </button>
           <button class="scope-btn ${currentScope!=='mine'?'active':''}" onclick="setInitScope('all')">
-            Tất cả
+            ${t('task.scope.all')}
           </button>
         </div>
         <select class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('cat',this.value)">
-          <option value="">Tất cả Category</option>
+          <option value="">${t('it.filter.all-cat')}</option>
           ${_initCategoryOptions()}
         </select>
         <select class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('status',this.value)">
-          <option value="">Tất cả Trạng thái</option>
+          <option value="">${t('it.filter.all-status')}</option>
           <option value="Active">Active</option>
           <option value="Done">Done</option>
           <option value="Paused">Paused</option>
@@ -67,7 +67,7 @@ function renderInitiativeTracker() {
           <i class="fa-solid fa-rotate"></i> Sync GG Sheet
         </button>
         <button class="btn btn-primary btn-sm" onclick="_initOpenModal(null)">
-          <i class="fa-solid fa-plus"></i> Thêm Initiative
+          <i class="fa-solid fa-plus"></i> ${t('it.btn.add-init')}
         </button>
       </div>
     </div>
@@ -107,19 +107,19 @@ function _initStatBar(roots) {
   return `<div class="init-stat-bar">
     <div class="init-stat-item">
       <div class="init-stat-value">${total}</div>
-      <div class="init-stat-label">Tổng Initiative</div>
+      <div class="init-stat-label">${t('it.stat.total')}</div>
     </div>
     <div class="init-stat-item" style="border-left:3px solid var(--primary);">
       <div class="init-stat-value" style="color:var(--primary);">${active}</div>
-      <div class="init-stat-label">Đang Active</div>
+      <div class="init-stat-label">${t('it.stat.active')}</div>
     </div>
     <div class="init-stat-item" style="border-left:3px solid var(--success);">
       <div class="init-stat-value" style="color:var(--success);">${done}</div>
-      <div class="init-stat-label">Hoàn thành</div>
+      <div class="init-stat-label">${t('it.stat.done')}</div>
     </div>
     <div class="init-stat-item" style="border-left:3px solid var(--danger);">
       <div class="init-stat-value" style="color:var(--danger);">${overdue}</div>
-      <div class="init-stat-label">Quá hạn</div>
+      <div class="init-stat-label">${t('mw.dl.overdue')}</div>
     </div>
     <div class="init-stat-item" style="border-left:3px solid var(--danger);">
       <div class="init-stat-value" style="color:var(--danger);">${blocked}</div>
@@ -141,8 +141,8 @@ function _initBuildCardList() {
   if (!roots.length) {
     return `<div class="init-empty">
       <div class="init-empty-icon"><i class="fa-solid fa-diagram-project"></i></div>
-      <div class="init-empty-title">Chưa có Initiative nào</div>
-      <div style="font-size:13px;margin-top:6px;">Bấm <strong>+ Thêm Initiative</strong> hoặc <strong>Sync GG Sheet</strong> để tải dữ liệu.</div>
+      <div class="init-empty-title">${t('it.empty.title')}</div>
+      <div style="font-size:13px;margin-top:6px;">${t('it.empty.sub')}</div>
     </div>`;
   }
 
@@ -186,7 +186,7 @@ function _initBuildCard(ini) {
         <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:10px;"></i>
       </button>
       <button class="init-toggle-btn" id="btn-tk-${ini.id}" onclick="_initToggleTasks('${ini.id}')">
-        <i class="fa-solid fa-list-check"></i> Tasks liên kết
+        <i class="fa-solid fa-list-check"></i> ${t('it.tasks-linked')}
         <span class="init-toggle-count">${linkedTasks.length}</span>
         <i class="fa-solid fa-chevron-down" style="margin-left:auto;font-size:10px;"></i>
       </button>
@@ -203,7 +203,7 @@ function _initBuildCard(ini) {
 /* ── milestone list (inside card) ── */
 function _initBuildMilestoneList(parentId, milestones) {
   if (!milestones.length) {
-    return `<div style="font-size:12px;color:var(--text-3);padding:8px 0;">Chưa có milestone. <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button></div>`;
+    return `<div style="font-size:12px;color:var(--text-3);padding:8px 0;">${t('it.ms.empty')} <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> ${t('it.btn.add-ms')}</button></div>`;
   }
   const rows = milestones.map(ms => {
     const dotClass   = _initMsDotClass(ms.status);
@@ -237,7 +237,7 @@ function _initBuildMilestoneList(parentId, milestones) {
   }).join('');
 
   return rows + `<div style="margin-top:8px;padding-left:4px;display:flex;gap:8px;">
-    <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> Thêm Milestone</button>
+    <button class="btn btn-ghost btn-sm" onclick="_initOpenMilestone('${_esc(parentId)}')"><i class="fa-solid fa-plus"></i> ${t('it.btn.add-ms')}</button>
   </div>`;
 }
 
@@ -254,8 +254,8 @@ function _initBuildMsTaskList(ms, parentInitId) {
   const tasks = _initGetMsTasks(ms, parentInitId);
   if (!tasks.length) {
     return `<div style="font-size:12px;color:var(--text-3);padding:10px 4px;display:flex;align-items:center;gap:10px;">
-      <span>Chưa có task nào liên kết với milestone này.</span>
-      <button class="btn btn-ghost btn-sm" style="color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentInitId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> Thêm Task</button>
+      <span>${t('it.ms.no-tasks')}</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentInitId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> ${t('it.btn.add-task')}</button>
     </div>`;
   }
   const rows = tasks.map(t => {
@@ -263,16 +263,16 @@ function _initBuildMsTaskList(ms, parentInitId) {
     const isCrossInit = t.initiative !== parentInitId;
     let alignBadge;
     if (isCrossInit) {
-      alignBadge = `<span class="init-align-badge warn" title="Task thuộc initiative ${_esc(t.initiative||'?')} — khác initiative này">⚠ Cần xem lại</span>`;
+      alignBadge = `<span class="init-align-badge warn" title="Task thuộc initiative ${_esc(t.initiative||'?')} — khác initiative này">${t('it.badge.warn')}</span>`;
     } else if (!isExact) {
       alignBadge = `<span class="init-align-badge loose" title="Đang link qua nhãn tắt '${_esc(t.milestone)}' — chưa dùng ID đầy đủ">
-        🔵 Liên kết lỏng
+        ${t('it.badge.loose')}
         <button class="init-fix-link-btn" onclick="event.stopPropagation();_initFixLooseLink('${_esc(t.id)}','${_esc(ms.id)}','${_esc(ms.id)}')" title="Cập nhật sang ${_esc(ms.id)}">
-          Cập nhật link
+          ${t('it.btn.fix-link')}
         </button>
       </span>`;
     } else {
-      alignBadge = `<span class="init-align-badge ok">✓ Phù hợp</span>`;
+      alignBadge = `<span class="init-align-badge ok">${t('it.badge.ok')}</span>`;
     }
     return `<tr onclick="openTaskViewPopup('${_esc(t.id)}')" title="Xem task ${_esc(t.id)}">
       <td><span class="init-task-id">${_esc(t.id)}</span></td>
@@ -286,8 +286,8 @@ function _initBuildMsTaskList(ms, parentInitId) {
   }).join('');
   return `<table class="init-task-table">
     <thead><tr>
-      <th>ID</th><th>Task</th><th>Trạng thái</th>
-      <th>PIC</th><th>Tiến độ</th><th>Deadline</th><th>Đánh giá</th>
+      <th>ID</th><th>Task</th><th>${t('it.col.state')}</th>
+      <th>PIC</th><th>${t('it.col.progress')}</th><th>Deadline</th><th>${t('it.col.assessment')}</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
@@ -334,7 +334,7 @@ async function _initFixLooseLink(taskId, fullMsId, msId) {
 /* ── linked task list (inside card) ── */
 function _initBuildTaskList(initiativeId, tasks) {
   if (!tasks.length) {
-    return `<div style="font-size:12px;color:var(--text-3);padding:14px 18px;">Không có task nào liên kết với initiative này.</div>`;
+    return `<div style="font-size:12px;color:var(--text-3);padding:14px 18px;">${t('it.no-linked-tasks')}</div>`;
   }
   const rows = tasks.map(t => `
     <tr onclick="openTaskViewPopup('${t.id}')" title="Xem task ${t.id}">
@@ -349,8 +349,8 @@ function _initBuildTaskList(initiativeId, tasks) {
 
   return `<table class="init-task-table">
     <thead><tr>
-      <th>ID</th><th>Task</th><th>Milestone</th><th>Trạng thái</th>
-      <th>PIC</th><th>Tiến độ</th><th>Deadline</th>
+      <th>ID</th><th>Task</th><th>Milestone</th><th>${t('it.col.state')}</th>
+      <th>PIC</th><th>${t('it.col.progress')}</th><th>Deadline</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
@@ -393,7 +393,7 @@ function _initModalTemplate() {
   <div class="overlay" id="initModalOverlay" style="display:none;">
     <div class="modal" style="max-width:620px;">
       <div class="modal-header">
-        <div class="modal-title" id="initModalTitle">Thêm Initiative</div>
+        <div class="modal-title" id="initModalTitle">${t('it.modal.add-title')}</div>
         <button class="icon-btn" onclick="_initCloseModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
@@ -407,11 +407,11 @@ function _initModalTemplate() {
           <div class="form-group">
             <label class="form-label">Parent Initiative</label>
             <select class="form-control" id="initFParent">
-              <option value="">(Đây là Initiative gốc)</option>
+              <option value="">${t('it.modal.root-opt')}</option>
             </select>
           </div>
           <div class="form-group full">
-            <label class="form-label">Tên Initiative / Milestone <span style="color:var(--danger)">*</span></label>
+            <label class="form-label">${t('it.modal.name-label')} <span style="color:var(--danger)">*</span></label>
             <input class="form-control" id="initFName" placeholder="Tên đầy đủ…">
           </div>
           <div class="form-group">
@@ -441,11 +441,11 @@ function _initModalTemplate() {
             <input class="form-control" id="initFDeadline" placeholder="VD: 30-Jun-26">
           </div>
           <div class="form-group">
-            <label class="form-label">% Hoàn thành</label>
+            <label class="form-label">${t('it.modal.pct-label')}</label>
             <input class="form-control" id="initFPct" type="number" min="0" max="100" placeholder="0–100">
           </div>
           <div class="form-group">
-            <label class="form-label">Trạng thái</label>
+            <label class="form-label">${t('it.modal.state-label')}</label>
             <select class="form-control" id="initFStatus">
               <option value="Active">Active</option>
               <option value="Done">Done</option>
@@ -454,7 +454,7 @@ function _initModalTemplate() {
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Milestone Đang track</label>
+            <label class="form-label">${t('it.modal.ms-track')}</label>
             <input class="form-control" id="initFMsTrack" placeholder="Tên milestone hiện tại…">
           </div>
           <div class="form-group">
@@ -462,22 +462,22 @@ function _initModalTemplate() {
             <input class="form-control" id="initFMsDl" placeholder="VD: 15-Apr-26">
           </div>
           <div class="form-group full">
-            <label class="form-label">Mục tiêu / KPI đầu ra</label>
+            <label class="form-label">${t('it.modal.kpi-label')}</label>
             <textarea class="form-control" id="initFKpi" rows="2" placeholder="Mô tả KPI / kết quả mong đợi…"></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">Ghi chú</label>
+            <label class="form-label">${t('it.modal.notes-label')}</label>
             <textarea class="form-control" id="initFNotes" rows="2" placeholder="Ghi chú…"></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">Link tài liệu</label>
+            <label class="form-label">${t('it.modal.doc-label')}</label>
             <input class="form-control" id="initFDoc" placeholder="https://…">
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="_initCloseModal()">Hủy</button>
-        <button class="btn btn-primary" onclick="_initSave()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+        <button class="btn btn-ghost" onclick="_initCloseModal()">${t('common.cancel')}</button>
+        <button class="btn btn-primary" onclick="_initSave()"><i class="fa-solid fa-floppy-disk"></i> ${t('common.save')}</button>
       </div>
     </div>
   </div>`;
@@ -489,13 +489,13 @@ function _initOpenModal(id) {
 
   // Populate parent dropdown (root initiatives only)
   const selParent = document.getElementById('initFParent');
-  selParent.innerHTML = '<option value="">(Đây là Initiative gốc)</option>'
+  selParent.innerHTML = `<option value="">${t('it.modal.root-opt')}</option>`
     + (db.initiatives||[]).filter(i => (i.type ? i.type === 'initiative' : !i.parentId) && (id === null || i.id !== id))
         .map(i => `<option value="${_esc(i.id)}">${_esc(i.id)} – ${_esc(i.name)}</option>`).join('');
 
   if (id === null) {
     // Add mode
-    document.getElementById('initModalTitle').textContent = 'Thêm Initiative / Milestone';
+    document.getElementById('initModalTitle').textContent = t('it.modal.add-title');
     document.getElementById('initOrigId').value = '';
     ['initFId','initFName','initFStart','initFDeadline','initFMsTrack','initFMsDl','initFKpi','initFNotes','initFDoc'].forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
     const _initTd = new Date();
@@ -511,7 +511,7 @@ function _initOpenModal(id) {
     // Edit mode
     const ini = (db.initiatives||[]).find(i => i.id === id);
     if (!ini) return;
-    document.getElementById('initModalTitle').textContent = 'Chỉnh sửa – ' + id;
+    document.getElementById('initModalTitle').textContent = t('it.modal.edit-prefix') + id;
     document.getElementById('initOrigId').value  = id;
     document.getElementById('initFId').value     = ini.id;
     document.getElementById('initFName').value   = ini.name;
@@ -568,17 +568,17 @@ async function _initSave() {
   const name   = (document.getElementById('initFName').value || '').trim();
   const errEl  = document.getElementById('initErrId');
 
-  if (!newId) { errEl.textContent = 'ID không được để trống.'; return; }
+  if (!newId) { errEl.textContent = t('it.err.id-empty'); return; }
 
   // Duplicate check trước name để UX rõ ràng hơn
   if (!origId || origId !== newId) {
     if ((db.initiatives||[]).some(x => x.id === newId)) {
-      errEl.textContent = 'ID đã tồn tại.'; return;
+      errEl.textContent = t('it.err.id-exists'); return;
     }
   }
   errEl.textContent = '';
 
-  if (!name) { toast('Tên Initiative không được để trống.', 'warning'); return; }
+  if (!name) { toast(t('it.err.name-empty'), 'warning'); return; }
 
   let parentId = document.getElementById('initFParent').value || null;
   // Auto-derive parent from ID pattern when dropdown wasn't set explicitly.
@@ -620,10 +620,10 @@ async function _initSave() {
     } else {
       await syncInitiativeEdit(ini);
     }
-    toast('Đã cập nhật initiative!', 'success');
+    toast(t('it.toast.updated'), 'success');
   } else {
     await syncInitiativeAdd(ini);
-    toast('Đã thêm initiative!', 'success');
+    toast(t('it.toast.added'), 'success');
   }
   renderInitiativeTracker();
   if (_shouldReturnToView) openInitViewPopup(ini.id);
@@ -632,20 +632,20 @@ async function _initSave() {
 async function _initDelete(id) {
   const linkedTasks = (db.tasks||[]).filter(t => t.initiative === id);
   const milestones  = (db.initiatives||[]).filter(i => i.parentId === id);
-  let warning = `Xóa <strong>${id}</strong>?`;
-  if (linkedTasks.length) warning += `<br><span style="color:var(--danger);">⚠️ ${linkedTasks.length} task đang liên kết sẽ không còn trỏ về initiative này.</span>`;
-  if (milestones.length)  warning += `<br><span style="color:var(--warning,orange);">⚠️ ${milestones.length} milestone con sẽ bị xóa theo.</span>`;
+  let warning = `${t('common.delete')} <strong>${id}</strong>?`;
+  if (linkedTasks.length) warning += `<br><span style="color:var(--danger);">⚠️ ${linkedTasks.length} ${t('it.delete.warn-tasks')}</span>`;
+  if (milestones.length)  warning += `<br><span style="color:var(--warning,orange);">⚠️ ${milestones.length} ${t('it.delete.warn-ms')}</span>`;
 
-  const ok = await uiConfirm('Xóa Initiative', warning, 'danger', 'Xóa');
+  const ok = await uiConfirm(t('it.delete.confirm'), warning, 'danger', t('common.delete'));
   if (!ok) return;
 
   // Also delete child milestones
   const toDelete = [id, ...milestones.map(m => m.id)];
   toDelete.forEach(delId => { db.initiatives = db.initiatives.filter(x => x.id !== delId); });
   persist();
-  writeInitiatives().catch(e => toast('⚠️ Xóa GG Sheets lỗi: ' + e.message, 'warning', 5000));
+  writeInitiatives().catch(e => toast(t('it.toast.delete-error') + e.message, 'warning', 5000));
 
-  toast('Đã xóa initiative.', 'success');
+  toast(t('it.toast.deleted'), 'success');
   renderInitiativeTracker();
 }
 
@@ -681,7 +681,7 @@ function openInitViewPopup(id) {
 
   document.getElementById('initViewTitle').textContent = ini.name || ini.id;
   document.getElementById('initViewSubtitle').textContent =
-    `ID: ${ini.id}${isMilestone ? '  ·  Milestone của ' + ini.parentId : ''}${ini.category ? '  ·  ' + ini.category : ''}`;
+    `ID: ${ini.id}${isMilestone ? '  ·  ' + t('it.view.ms-of') + ini.parentId : ''}${ini.category ? '  ·  ' + ini.category : ''}`;
 
   const row = (icon, label, val) => val
     ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-${icon}"></i>${label}</span><span class="cp-view-val">${val}</span></div>`
@@ -703,17 +703,17 @@ function openInitViewPopup(id) {
       </div>
       <div class="cp-view-grid">
         ${row('user-check', 'Accountable', _esc(ini.accountable || ''))}
-        ${row('calendar-plus', 'Bắt đầu', _esc(ini.startDate || ''))}
+        ${row('calendar-plus', t('it.view.start'), _esc(ini.startDate || ''))}
         ${row('calendar-xmark', 'Deadline', _esc(ini.deadline || ''))}
-        ${row('percent', '% Hoàn thành', ini.pct !== undefined ? ini.pct + '%' : '')}
+        ${row('percent', t('it.view.pct'), ini.pct !== undefined ? ini.pct + '%' : '')}
         ${!isMilestone && milestones.length ? row('list-ol', 'Milestones', milestones.length + ' milestone') : ''}
-        ${!isMilestone && linkedTasks.length ? row('list-check', 'Tasks liên kết', linkedTasks.length + ' task') : ''}
+        ${!isMilestone && linkedTasks.length ? row('list-check', t('it.view.linked-tasks'), linkedTasks.length + ' task') : ''}
         ${ini.milestoneTracking ? row('flag', 'Milestone đang track', _esc(ini.milestoneTracking)) : ''}
         ${ini.milestoneDeadline ? row('clock', 'Deadline Milestone', _esc(ini.milestoneDeadline)) : ''}
-        ${ini.docLink ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-link"></i>Tài liệu</span><span class="cp-view-val"><a href="${_esc(ini.docLink)}" target="_blank" rel="noopener" style="color:var(--primary);">Mở link</a></span></div>` : ''}
+        ${ini.docLink ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-link"></i>${t('it.view.doc')}</span><span class="cp-view-val"><a href="${_esc(ini.docLink)}" target="_blank" rel="noopener" style="color:var(--primary);">${t('it.view.open-link')}</a></span></div>` : ''}
       </div>
-      ${section('bullseye', 'Mục tiêu / KPI đầu ra', ini.kpiTarget)}
-      ${section('note-sticky', 'Ghi chú', ini.notes)}
+      ${section('bullseye', t('it.view.kpi'), ini.kpiTarget)}
+      ${section('note-sticky', t('it.view.notes'), ini.notes)}
     </div>`;
 
   _initHistoryLoaded = false;
@@ -737,13 +737,13 @@ async function _loadInitHistory() {
   const el = document.getElementById('initViewHistory');
   if (!el) return;
   el.innerHTML = '<div style="padding:28px 16px;text-align:center;color:var(--text-3);">'
-               + '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải lịch sử...</div>';
+               + `<i class="fa-solid fa-spinner fa-spin"></i> ${t('it.history.loading')}</div>`;
 
   const rows = await _gasAuditRead(ini.id);
   _initHistoryLoaded = true;
 
   const synthetic = ini.startDate
-    ? [ini.startDate, '', 'Dữ liệu ban đầu', '', '__create__', ini.id + (ini.name ? ' | ' + ini.name : '')]
+    ? [ini.startDate, '', t('it.history.initial'), '', '__create__', ini.id + (ini.name ? ' | ' + ini.name : '')]
     : null;
 
   el.innerHTML = _buildHistoryTable(rows, synthetic);
