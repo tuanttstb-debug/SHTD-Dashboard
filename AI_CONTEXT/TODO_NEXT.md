@@ -1,6 +1,37 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-09 (Session 48 — i18n Phase 5: Quick View + Executive Summary)
-**Context**: S48 done. QV + ES bilingual. 21 new keys (qv.*/es.*). 17/17 suites PASS. APP_VERSION=6.14-i18n-phase5-20260709.
+**Prepared**: 2026-07-10 (Session 49 — i18n Phase 6: Initiative Tracker)
+**Context**: S49 done. IT + dashboard/app.js bilingual. 52 new it.* keys. 18/18 suites PASS. APP_VERSION=6.15-i18n-phase6-20260710.
+
+---
+
+## ✅ COMPLETED S49 — i18n Phase 6: Initiative Tracker
+
+- [x] `i18n.js` — +52 `it.*` keys + `db.modal.project-prefix` in VI and EN blocks
+- [x] `initiative-tracker.js` — all ~52 hard-coded VI strings → `t()` calls across all 13 functions
+- [x] `dashboard.js` — fix `'Dự án: '` prefix → `t('db.modal.project-prefix')`
+- [x] `app.js` — `renderAll()` guard for IT view + `updateFilterDropdowns()` filterInit+filterTuanBC via `t()`
+- [x] `config.js` — `APP_VERSION='6.15-i18n-phase6-20260710'`; cache-bust `?v=20260710` (56 refs)
+- [x] `verify_i18n_p6.mjs` — NEW; **27/27 PASS** (IP6-1 → IP6-15; stat bar VI/EN, scope, filter opts, add btn, empty state, filterInit/filterTuanBC, restore VI, 0 JS errors)
+- [x] `run_tests.mjs` — +verify_i18n_p6.mjs as first suite; **18/18 PASS**
+- [x] **Key reuse**: `mw.dl.overdue` (IT "Overdue"), `task.scope.mine/all` (IT scope), `common.cancel/save/delete` (IT modal/confirm) — no duplicate keys created
+- [x] **Kept as-is** (English banking terms): "Blocked" stat, "Milestones" toggle, category values from GAS
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test S49 on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.15-i18n-phase6-20260710` |
+| Initiative Tracker → switch EN | Stat bar: "Total Initiatives / Active / Done / Overdue" |
+| Scope buttons (EN) | "Mine / All" |
+| Filter dropdowns (EN) | "All Categories / All Statuses" |
+| Add button (EN) | "Add Initiative" |
+| Empty state (EN, clear all inits) | "No Initiatives" |
+| Switch back VI | All labels restore to Vietnamese |
+| Tasks view → filterInit dropdown (EN) | "All" |
+| Tasks view → filterTuanBC dropdown (EN) | "All" / "📅 This Week" |
+| Dashboard → initiative table row click (EN) | Modal title "Project: …" (not "Dự án: …") |
 
 ---
 
@@ -78,12 +109,12 @@
 
 ---
 
-## 🔲 CANDIDATE TASKS S49+
+## 🔲 CANDIDATE TASKS S50+
 
 | Priority | Task | Notes |
 |---|---|---|
-| P1 | **Smoke test S48 on production** | See checklist above |
-| P2 | **i18n Phase 6** — remaining views | dashboard.js, tasks.js, perf table, initiative-tracker |
+| P1 | **Smoke test S49 on production** | See checklist above |
+| P2 | **i18n Phase 7** — remaining views | `gantt.js`, `kpi-overview.js`, `kpi-progress.js`, `owner-analysis.js` — low-priority, less user-facing |
 | P2 | **Phase 0 security hardening** | Per arch roadmap — input sanitization, RBAC audit |
 
 ---

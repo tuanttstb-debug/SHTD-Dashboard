@@ -1,4 +1,95 @@
 # SESSION HANDOVER
+**Date**: 2026-07-10 (Session 49 — i18n Phase 6: Initiative Tracker + dashboard/app filter labels)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `cbe20a1` — feat(i18n): S49 — i18n Phase 6: Initiative Tracker + dashboard/app filter labels bilingual
+
+---
+
+## Tasks Completed (S49 — i18n Phase 6: Initiative Tracker)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S49-T1 | `i18n.js` — +52 new `it.*` keys + `db.modal.project-prefix` in VI and EN blocks | `assets/js/i18n.js` | ✅ |
+| S49-T2 | `initiative-tracker.js` — all ~52 hard-coded VI strings replaced with `t()` calls across all functions | `assets/js/views/initiative-tracker.js` | ✅ |
+| S49-T3 | `dashboard.js` — 1 fix: `'Dự án: '` prefix → `t('db.modal.project-prefix')` | `assets/js/views/dashboard.js` | ✅ |
+| S49-T4 | `app.js` — `renderAll()` guard for IT view + 2 hard-coded `'Tất cả'` in `updateFilterDropdowns()` | `assets/js/app.js` | ✅ |
+| S49-T5 | `config.js` — `APP_VERSION='6.15-i18n-phase6-20260710'`; cache-bust `?v=20260710` (56 refs) | `assets/js/config.js`, `index.html` | ✅ |
+| S49-T6 | `verify_i18n_p6.mjs` (NEW) — 27/27 PASS (IP6-1 to IP6-15: stat bar VI/EN, scope btns, filter opts, add btn, empty state, filterInit/filterTuanBC, restore VI, 0 JS errors) | `verify_i18n_p6.mjs` | ✅ |
+| S49-T7 | `run_tests.mjs` — added `verify_i18n_p6.mjs` as first suite (now 18 suites) | `run_tests.mjs` | ✅ |
+| S49-T8 | Full regression: **18/18 suites PASS** | all | ✅ |
+
+### i18n Phase 6 Architecture (S49)
+
+**Functions wired in `initiative-tracker.js`**:
+- `renderInitiativeTracker()` toolbar: title, scope buttons, filter dropdowns, add button
+- `_initStatBar()`: 4 stat labels (`it.stat.total/active/done` + `mw.dl.overdue`); "Blocked" kept as-is
+- `_initBuildCardList()`: empty state title + subtitle
+- `_initBuildCard()`: "Tasks liên kết" toggle label
+- `_initBuildMilestoneList()`: empty text + both "Thêm Milestone" buttons
+- `_initBuildMsTaskList()`: empty + add-task; alignment badges (warn/loose/ok); fix-link; table headers
+- `_initBuildTaskList()`: empty + table headers (Trạng thái/Tiến độ)
+- `_initModalTemplate()`: all labels + footer Hủy/Lưu via `common.cancel/save`
+- `_initOpenModal()`: root-opt, add/edit titles
+- `_initSave()`: 3 validation strings + 2 success toasts
+- `_initDelete()`: warning/warn-tasks/warn-ms + confirm dialog + error/success toasts
+- `openInitViewPopup()`: subtitle + all 7 row labels
+- `_loadInitHistory()`: loading text + synthetic row action
+
+**Key reuse** (avoids duplicate keys):
+- `mw.dl.overdue` → IT stat bar "Quá hạn / Overdue"
+- `task.scope.mine/all` → IT scope buttons
+- `common.cancel/save/delete` → IT modal footer + confirm
+
+**renderAll() guard** (app.js):
+```javascript
+if (document.getElementById('view-initiative-tracker')?.style.display === 'contents') renderInitiativeTracker();
+```
+
+### Test suite snapshot (2026-07-10, S49)
+```
+verify_i18n_p6             27/27  PASS  (S49 NEW)
+verify_i18n_p5             24/24  PASS  (S48)
+verify_i18n_p3             62/62  PASS  (S45)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_my_work             62/62  PASS  (S47)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+TOTAL (18 suites)        PASS  0 FAIL
+```
+
+### Smoke test checklist (S49 — manual, production)
+| Check | Expected |
+|---|---|
+| Hard-reload | Badge shows `v6.15-i18n-phase6-20260710` |
+| Initiative Tracker → switch EN | Stat bar: "Total Initiatives / Active / Done / Overdue" |
+| Scope buttons (EN) | "Mine / All" |
+| Filter dropdowns (EN) | "All Categories / All Statuses" |
+| Add button (EN) | "Add Initiative" |
+| Empty state (EN) | "No Initiatives" |
+| Switch back VI | All labels restore to Vietnamese |
+| Tasks view → filterInit (EN) | "All" |
+| Tasks view → filterTuanBC (EN) | "All" / "📅 This Week" |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S48)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-09 (Session 48 — i18n Phase 5: Quick View + Executive Summary bilingual)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
