@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-10 (Session 49 — i18n Phase 6: Initiative Tracker)
-**Version**: v6.15 (`APP_VERSION = '6.15-i18n-phase6-20260710'`, `index.html ?v=20260710`)
-**Remote HEAD (main)**: `cbe20a1` — feat(i18n): S49 — i18n Phase 6: Initiative Tracker + dashboard/app filter labels bilingual
+**As of**: 2026-07-10 (Session 50 — i18n Phase 7: Gantt, AI Chat, Branch Analysis, User Management)
+**Version**: v6.16 (`APP_VERSION = '6.16-i18n-phase7-20260710'`, `index.html ?v=20260710b`)
+**Remote HEAD (main)**: `e0039a4` — feat: i18n Phase 7 — Gantt, AI Chat, Branch Analysis, User Management bilingual
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -48,7 +48,7 @@
 | `assets/js/auth.js` | ~265 | ✅ S23: +canImport() → Admin || Teamlead |
 | `assets/js/crud.js` | ~295 | ✅ S38: `_editOrigTask` snapshot + `_hasTaskChanged()` + conflict check in `handleSubmit` (readFromHandle before save, VERSION_CONFLICT dialog); S31: deleteTask adds to deletedIds; S29: atomic GAS writes |
 | `assets/js/views/tasks.js` | ~400 | ✅ S43: renderFilterChips uses t()+tState(); renderTaskTable count/empty use t(); _populateFilterPic "Tất cả"→t('common.all'); S32: sortBy() clears selectedIds; S31: onFilterChange clears; S24: PA1; S23: +_populateFilterPic |
-| `assets/js/i18n.js` | ~490 | ✅ S49: +52 it.* keys + db.modal.project-prefix VI+EN; S48: +qv.*(12)+es.*(9)+mw.*(22); S43: STATE_KEY+tState()+50 keys; S39: Phase 1 |
+| `assets/js/i18n.js` | ~570 | ✅ S50: +74 gantt.*/ai.*/branch.*/um.* keys VI+EN; S49: +52 it.* keys; S48: +qv.*(12)+es.*(9)+mw.*(22); S43: STATE_KEY+tState()+50 keys; S39: Phase 1 |
 | `assets/js/helpers.js` | ~80 | ✅ S43: stateChip() uses tState() for language-aware label |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
@@ -60,7 +60,7 @@
 | `assets/js/bulk.js` | ~62 | ✅ S31: `bulkDelete()` pushes ids to `db.deletedIds`; S30: atomic per-row writes; NO syncAction |
 | `assets/js/views/bld-queue.js` | ~390 | ✅ S29: task BLD approval → `await syncAction()`; Case BLD still syncCaseAction |
 | `assets/js/storage.js` | ~30 | ✅ S31: `loadDb()` now loads `db.deletedIds` from localStorage if present |
-| `assets/js/app.js` | ~350 | ✅ S49: renderAll() +IT guard; updateFilterDropdowns() filterInit+filterTuanBC via t(); S48: ES+QV guards; S31: handleImport skips deletedIds |
+| `assets/js/app.js` | ~360 | ✅ S50: renderAll() +4 guards (gantt/ai-chat/branch-analysis/user-management); S49: +IT guard; S48: ES+QV guards; S31: handleImport skips deletedIds |
 | `assets/js/views/quickview.js` | ~480 | ✅ S48: t()-shadowing fix (map t→tk in 4 callbacks); renderQuickView() calls _qvPopulateFilters()+_qvUpdateTime() for live lang switch |
 | `assets/js/views/executive-summary.js` | ~310 | ✅ S48: 6 t() calls wired (chart empty, attention empty, cfg labels, more-link, init table empty, status tags via t('es.risk.*')) |
 | `verify_i18n_p5.mjs` | ~194 | ✅ S48: NEW — 24/24 PASS; covers QV filter/subtitle/labels, ES attention/init-table, EN/VI switch |
@@ -77,6 +77,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **i18n Phase 7 — Gantt, AI Chat, Branch, UM** | ✅ | S50: +74 keys; gantt subtitle/empty; ai-chat header/suggestions (_getAiSuggestions() fn); branch zones/stats/cols; UM ~45 strings + _umUsers cache skip + _umRestoreFilterUi(); 35/35 + 19/19 regression |
 | **i18n Phase 6 — Initiative Tracker** | ✅ | S49: all ~52 IT hard-coded VI strings → t(); dashboard 'Dự án: ' fix; app.js filterInit/filterTuanBC; 27/27 PASS + 18/18 regression |
 | **i18n Phase 5 — Quick View + Executive Summary** | ✅ | S48: QV filter/subtitle/labels + ES attention/init-table/status-tags bilingual; t()-shadowing fix (map t→tk); renderQuickView() live lang switch; 24/24 PASS + 17/17 regression |
 | **Milestone auto-gen ID + Add Task** | ✅ | S27: "Thêm Milestone" tự gen ID `{parentId}-M{n}` + pre-fill category; "+ Task" btn trên mỗi milestone → task modal pre-filled (initiative, milestone, category, PIC, team, auto-gen ID) |

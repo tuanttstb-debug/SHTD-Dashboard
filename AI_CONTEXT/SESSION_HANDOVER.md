@@ -1,4 +1,100 @@
 # SESSION HANDOVER
+**Date**: 2026-07-10 (Session 50 — i18n Phase 7: Gantt, AI Chat, Branch Analysis, User Management bilingual)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `e0039a4` — feat: i18n Phase 7 — Gantt, AI Chat, Branch Analysis, User Management bilingual
+
+---
+
+## Tasks Completed (S50 — i18n Phase 7)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S50-T1 | `i18n.js` — +74 new keys (gantt.*, ai.*, branch.*, um.*) in VI and EN blocks | `assets/js/i18n.js` | ✅ |
+| S50-T2 | `gantt.js` — subtitle + empty state → `t()` calls | `assets/js/views/gantt.js` | ✅ |
+| S50-T3 | `ai-chat.js` — static `_aiSuggestions` → `_getAiSuggestions()` function; 8 UI strings → `t()` | `assets/js/views/ai-chat.js` | ✅ |
+| S50-T4 | `branch-analysis.js` — zone tabs, stat cards, table headers → `t()` (12 strings) | `assets/js/views/branch-analysis.js` | ✅ |
+| S50-T5 | `user-management.js` — ~45 strings → `t()`; `renderUserManagement()` skips `_umLoad()` if `_umUsers.length>0` (lang-switch cache); `+_umRestoreFilterUi()` helper | `assets/js/views/user-management.js` | ✅ |
+| S50-T6 | `app.js` — `renderAll()` +4 guards (gantt, ai-chat, branch-analysis, user-management) | `assets/js/app.js` | ✅ |
+| S50-T7 | `config.js` — APP_VERSION `6.15` → `6.16-i18n-phase7-20260710`; cache-bust `?v=20260710b` (56 refs) | `assets/js/config.js`, `index.html` | ✅ |
+| S50-T8 | `verify_i18n_p7.mjs` (NEW) — **35/35 PASS** (IP7-1 → IP7-20; Gantt subtitle/empty, AI Chat header/suggest, Branch zone/stat/col, UM filter/empty/badge, renderAll live-switch, 0 JS errors) | `verify_i18n_p7.mjs` | ✅ |
+| S50-T9 | `run_tests.mjs` — +verify_i18n_p7.mjs as first suite; **19/19 PASS** | `run_tests.mjs` | ✅ |
+
+### i18n Phase 7 Architecture (S50)
+
+**Critical lesson**: `let _umUsers = []` in user-management.js is a script-scope binding — NOT a property of `window`. Test code that does `window._umUsers = users` creates a SEPARATE variable. Must use `_umUsers.length = 0; _umUsers.push(...users)` to mutate the actual array.
+
+**`renderUserManagement()` lang-switch cache** (skips GAS refetch):
+```javascript
+if (_umUsers.length > 0) {
+  _umPopulateFilters();   // rebuild team dropdown (uses _umFilterTeam state)
+  _umRestoreFilterUi();   // restore filter input values from state vars
+  _umRender();            // render table with current filters
+} else {
+  await _umLoad();        // initial load — hits GAS
+}
+```
+
+**`_getAiSuggestions()` function** replaces static `_aiSuggestions` array so suggestions re-evaluate on each render (picks up current language).
+
+**renderAll() guards added (app.js)**:
+```javascript
+if (document.getElementById('view-gantt')?.style.display === 'contents') renderGantt();
+if (document.getElementById('view-ai-chat')?.style.display === 'contents') renderAiChat();
+if (document.getElementById('view-branch-analysis')?.style.display === 'contents') renderBranchAnalysis();
+if (document.getElementById('view-user-management')?.style.display === 'contents') renderUserManagement();
+```
+
+**Reused existing keys**: `common.all`, `common.cancel`, `common.search`, `page.user-management`
+
+**Skipped (domain data, not UI chrome)**: `kpi-overview.js`, `owner-analysis.js`, `kpi-progress.js` (clean), `rm-analysis.js` (clean)
+
+### Test suite snapshot (2026-07-10, S50)
+```
+verify_i18n_p7             35/35  PASS  (S50 NEW)
+verify_i18n_p6             27/27  PASS  (S49)
+verify_i18n_p5             24/24  PASS  (S48)
+verify_i18n_p3             62/62  PASS  (S45)
+verify_i18n_p2             36/36  PASS  (S43)
+verify_my_work             62/62  PASS  (S47)
+verify_issue_tracker       61/61  PASS  (S41)
+verify_mobile_s37          21/21  PASS  (S37)
+verify_case_pipeline_s36   28/28  PASS  (S36)
+verify_action_plan         24/24  PASS  (S34)
+verify_history             47/47  PASS  (S33)
+verify_atomic_write        41/41  PASS
+verify_case_pipeline       22/22  PASS
+verify_bld_queue           46/46  PASS
+verify_milestone_task      23/23  PASS
+verify_task_init_popup     28/28  PASS
+verify_filter_cascade      23/23  PASS
+verify_import_rbac         15/15  PASS
+verify_modal_layout         9/9   PASS
+─────────────────────────────────────────────────
+TOTAL (19 suites)        PASS  0 FAIL
+```
+
+### Smoke test checklist (S50 — manual, production)
+| Check | Expected |
+|---|---|
+| Hard-reload | Badge shows `v6.16-i18n-phase7-20260710` |
+| Gantt view → switch EN | Subtitle: "Timeline view — 2026" |
+| Gantt view → no tasks with dates | Empty state: "No tasks with both Start Date and Deadline" |
+| AI Chat → switch EN | Header sub: "Ask about tasks, KPIs, initiatives · Powered by Gemini" |
+| AI Chat suggestions (EN) | "Summarize all currently Blocked tasks" |
+| Branch Analysis tabs (EN) | Zone tabs: "All / North Region / South Region / Central Region" |
+| Branch stat cards (EN) | "Met KPI / Below KPI / Total Branches" |
+| User Management → switch EN | Filter label: "Status"; options: "Active / Inactive" |
+| UM status badge (EN) | Active row: "Active"; Locked row: "Inactive" |
+| Switch back VI | All labels restore to Vietnamese |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S49)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-10 (Session 49 — i18n Phase 6: Initiative Tracker + dashboard/app filter labels)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

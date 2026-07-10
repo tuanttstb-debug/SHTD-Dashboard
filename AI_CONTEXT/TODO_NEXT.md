@@ -1,6 +1,52 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-10 (Session 49 — i18n Phase 6: Initiative Tracker)
-**Context**: S49 done. IT + dashboard/app.js bilingual. 52 new it.* keys. 18/18 suites PASS. APP_VERSION=6.15-i18n-phase6-20260710.
+**Prepared**: 2026-07-10 (Session 50 — i18n Phase 7: Gantt, AI Chat, Branch Analysis, User Management)
+**Context**: S50 done. 4 remaining JS views bilingual. 74 new keys (gantt.*, ai.*, branch.*, um.*). 19/19 suites PASS. APP_VERSION=6.16-i18n-phase7-20260710. HEAD=e0039a4.
+
+---
+
+## ✅ COMPLETED S50 — i18n Phase 7: Gantt, AI Chat, Branch Analysis, User Management
+
+- [x] `i18n.js` — +74 keys (gantt.*, ai.*, branch.*, um.*) VI + EN
+- [x] `gantt.js` — subtitle + empty state → `t()` (2 strings)
+- [x] `ai-chat.js` — static `_aiSuggestions` → `_getAiSuggestions()` fn; 8 UI strings → `t()`; renamed loop var `t` → `turn` (t()-shadowing fix)
+- [x] `branch-analysis.js` — zone tabs, stat cards, table headers → `t()` (12 strings); zoneLabel short → `t('branch.zone.*-short')`
+- [x] `user-management.js` — ~45 strings → `t()`; `renderUserManagement()` skips `_umLoad()` if `_umUsers.length > 0` (lang-switch cache); `+_umRestoreFilterUi()` to restore filter DOM; renamed map param `t` → `tk` (t()-shadowing fix)
+- [x] `app.js` — `renderAll()` +4 guards: gantt, ai-chat, branch-analysis, user-management
+- [x] `config.js` — APP_VERSION `6.15` → `6.16-i18n-phase7-20260710`; cache-bust `?v=20260710b` (56 refs, Python)
+- [x] `verify_i18n_p7.mjs` — NEW; **35/35 PASS** (IP7-1→IP7-20: Gantt subtitle/empty, AI Chat header/suggest, Branch zone/stat/col, UM filter/empty/badge, renderAll live-switch, 0 JS errors)
+- [x] `run_tests.mjs` — +verify_i18n_p7.mjs as first suite; **19/19 PASS**
+- [x] **Key lesson**: `let _umUsers = []` (script-scope lexical) ≠ `window._umUsers`. Tests must use `_umUsers.length = 0; _umUsers.push(...users)` not `window._umUsers = users`.
+- [x] **Reused**: `common.all`, `common.cancel`, `common.search`, `page.user-management`
+- [x] **Skipped** (domain data): `kpi-overview.js`, `owner-analysis.js`; `kpi-progress.js`, `rm-analysis.js` (already clean)
+
+---
+
+## 🔴 PRIORITY 0 — Smoke test S50 on production
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.16-i18n-phase7-20260710` |
+| Gantt view → switch EN | Subtitle: "Timeline view — 2026" |
+| Gantt view → no tasks with dates | Empty state: "No tasks with both Start Date and Deadline" |
+| AI Chat → switch EN | Header sub: "Ask about tasks, KPIs, initiatives · Powered by Gemini" |
+| AI Chat suggestions (EN) | First: "Summarize all currently Blocked tasks" |
+| Branch Analysis tabs (EN) | "All / North Region / South Region / Central Region" |
+| Branch stat cards (EN) | "Met KPI / Below KPI / Total Branches" |
+| User Management → switch EN | Filter label: "Status"; options: "Active / Inactive" |
+| UM status badge (EN) | Active row: "Active"; Locked row: "Inactive" |
+| Switch back VI | All labels restore to Vietnamese |
+
+---
+
+## 🔲 CANDIDATE TASKS S51+
+
+| Priority | Task | Notes |
+|---|---|---|
+| P0 | **Smoke test S50 on production** | See checklist above |
+| P1 | **Phase 0 security hardening** | Per arch roadmap — input sanitization, RBAC audit |
+| P2 | **i18n Phase 8** | `kpi-overview.js`, `owner-analysis.js` — domain KPI data mixed with chrome; needs careful separation |
+
+---
 
 ---
 
