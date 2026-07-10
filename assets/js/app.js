@@ -81,6 +81,10 @@ function renderAll() {
   if (document.getElementById('view-bld-queue')?.style.display === 'contents') renderBldQueue();
   if (document.getElementById('view-executive-summary')?.style.display === 'contents') renderExecutiveSummary();
   if (document.getElementById('view-initiative-tracker')?.style.display === 'contents') renderInitiativeTracker();
+  if (document.getElementById('view-gantt')?.style.display === 'contents') renderGantt();
+  if (document.getElementById('view-ai-chat')?.style.display === 'contents') renderAiChat();
+  if (document.getElementById('view-branch-analysis')?.style.display === 'contents') renderBranchAnalysis();
+  if (document.getElementById('view-user-management')?.style.display === 'contents') renderUserManagement();
   if (_qvIsOpen) renderQuickView();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }

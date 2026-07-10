@@ -4,12 +4,14 @@
 var _aiHistory = [];
 var _aiTyping = false;
 
-var _aiSuggestions = [
-  'Tóm tắt các task đang bị Blocked hiện tại',
-  'Task nào có RAG đỏ và chưa hoàn thành?',
-  'Tiến độ các Initiative đang như thế nào?',
-  'Tuần này có bao nhiêu task hoàn thành?',
-];
+function _getAiSuggestions() {
+  return [
+    t('ai.suggest.1'),
+    t('ai.suggest.2'),
+    t('ai.suggest.3'),
+    t('ai.suggest.4'),
+  ];
+}
 
 function renderAiChat() {
   var root = document.getElementById('aiChatRoot');
@@ -20,20 +22,20 @@ function renderAiChat() {
       '<div class="ai-chat-header-icon"><i class="fa-solid fa-robot"></i></div>' +
       '<div class="ai-chat-header-info">' +
         '<div class="ai-chat-header-title">AI Assistant</div>' +
-        '<div class="ai-chat-header-sub">Hỏi về task, KPI, initiative của Trung tâm · Powered by Gemini</div>' +
+        '<div class="ai-chat-header-sub">' + t('ai.header.sub') + '</div>' +
       '</div>' +
-      '<button class="ai-chat-clear-btn" onclick="clearAiChat()" title="Xóa cuộc trò chuyện">' +
-        '<i class="fa-solid fa-trash-can"></i> Xóa</button>' +
+      '<button class="ai-chat-clear-btn" onclick="clearAiChat()" title="' + t('ai.clear-btn') + '">' +
+        '<i class="fa-solid fa-trash-can"></i> ' + t('ai.clear-btn') + '</button>' +
     '</div>' +
     '<div class="ai-chat-messages" id="aiMessages"></div>' +
     '<div class="ai-chat-input-bar">' +
       '<textarea class="ai-chat-input" id="aiInput" rows="1" ' +
-        'placeholder="Hỏi về task, KPI, initiative..." ' +
+        'placeholder="' + t('ai.input.ph') + '" ' +
         'onkeydown="handleAiKey(event)" oninput="autoResizeAiInput(this)"></textarea>' +
       '<button class="ai-chat-send-btn" id="aiSendBtn" onclick="sendAiMessage()" title="Gửi (Enter)">' +
         '<i class="fa-solid fa-paper-plane"></i></button>' +
     '</div>' +
-    '<div class="ai-chat-hint">Enter để gửi · Shift+Enter xuống dòng</div>';
+    '<div class="ai-chat-hint">' + t('ai.hint') + '</div>';
 
   _renderAiMessages();
 }
@@ -43,12 +45,13 @@ function _renderAiMessages() {
   if (!container) return;
 
   if (_aiHistory.length === 0) {
+    var suggestions = _getAiSuggestions();
     container.innerHTML =
       '<div class="ai-chat-empty">' +
         '<div class="ai-chat-empty-icon"><i class="fa-solid fa-robot"></i></div>' +
-        '<div class="ai-chat-empty-text">Hỏi tôi bất cứ điều gì về dữ liệu của Trung tâm SP&GPTD</div>' +
+        '<div class="ai-chat-empty-text">' + t('ai.empty.text') + '</div>' +
         '<div class="ai-chat-suggestions">' +
-          _aiSuggestions.map(function(s) {
+          suggestions.map(function(s) {
             return '<button class="ai-chat-suggestion" onclick="sendAiSuggestion(' + "'" + s + "'" + ')">' + esc(s) + '</button>';
           }).join('') +
         '</div>' +
@@ -117,8 +120,8 @@ async function sendAiMessage() {
   document.getElementById('aiSendBtn').disabled = true;
 
   // Build history payload (role + text only, no time field)
-  var historyPayload = _aiHistory.slice(0, -1).map(function(t) {
-    return { role: t.role, text: t.text };
+  var historyPayload = _aiHistory.slice(0, -1).map(function(turn) {
+    return { role: turn.role, text: turn.text };
   });
 
   try {
@@ -126,7 +129,7 @@ async function sendAiMessage() {
     if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định');
     _aiHistory.push({ role: 'model', text: res.reply, time: _fmtAiTime() });
   } catch (err) {
-    _aiHistory.push({ role: 'model', text: 'Xin lỗi, có lỗi xảy ra: ' + err.message, time: _fmtAiTime() });
+    _aiHistory.push({ role: 'model', text: t('ai.err.prefix') + err.message, time: _fmtAiTime() });
   } finally {
     _aiTyping = false;
     var btn = document.getElementById('aiSendBtn');

@@ -8,10 +8,10 @@ function renderBranchAnalysis(zone) {
 
   const { branches } = KPI_DATA;
   const zones = [
-    { key: '',        label: 'Tất cả', count: branches.length },
-    { key: 'north',   label: 'Miền Bắc', count: branches.filter(b => b.zone === 'north').length },
-    { key: 'south',   label: 'Miền Nam', count: branches.filter(b => b.zone === 'south').length },
-    { key: 'central', label: 'Miền Trung', count: branches.filter(b => b.zone === 'central').length },
+    { key: '',        label: t('common.all'),            count: branches.length },
+    { key: 'north',   label: t('branch.zone.north'),     count: branches.filter(b => b.zone === 'north').length },
+    { key: 'south',   label: t('branch.zone.south'),     count: branches.filter(b => b.zone === 'south').length },
+    { key: 'central', label: t('branch.zone.central'),   count: branches.filter(b => b.zone === 'central').length },
   ];
   const filtered = _branchZone ? branches.filter(b => b.zone === _branchZone) : [...branches];
   filtered.sort((a, b) => b.biz - a.biz);
@@ -32,15 +32,15 @@ function renderBranchAnalysis(zone) {
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
       <div class="kpi-accent-card accent-success" style="text-align:center;">
-        <div style="font-size:10px;color:var(--text-3);">Đạt KPI (≥${filtered[0]?.kpi ?? 40}%)</div>
+        <div style="font-size:10px;color:var(--text-3);">${t('branch.stat.meet')} (≥${filtered[0]?.kpi ?? 40}%)</div>
         <div style="font-size:28px;font-weight:800;color:var(--success);">${meet}</div>
       </div>
       <div class="kpi-accent-card accent-danger" style="text-align:center;">
-        <div style="font-size:10px;color:var(--text-3);">Chưa đạt KPI</div>
+        <div style="font-size:10px;color:var(--text-3);">${t('branch.stat.below')}</div>
         <div style="font-size:28px;font-weight:800;color:var(--danger);">${below}</div>
       </div>
       <div class="kpi-accent-card" style="text-align:center;">
-        <div style="font-size:10px;color:var(--text-3);">Tổng chi nhánh</div>
+        <div style="font-size:10px;color:var(--text-3);">${t('branch.stat.total')}</div>
         <div style="font-size:28px;font-weight:800;">${filtered.length}</div>
       </div>
     </div>
@@ -51,21 +51,21 @@ function renderBranchAnalysis(zone) {
           <thead>
             <tr>
               <th style="width:36px;">#</th>
-              <th>Mã CN</th>
-              <th>Tên chi nhánh</th>
-              <th>Khu vực</th>
+              <th>${t('branch.col.code')}</th>
+              <th>${t('branch.col.name')}</th>
+              <th>${t('branch.col.zone')}</th>
               <th style="text-align:right;">GD Biz</th>
               <th style="text-align:right;">GD BPM</th>
-              <th style="text-align:right;">Tổng GD</th>
+              <th style="text-align:right;">${t('branch.col.total-gd')}</th>
               <th style="text-align:center;">Tỷ lệ Digital</th>
               <th style="text-align:center;">KPI</th>
-              <th style="text-align:center;">Trạng thái</th>
+              <th style="text-align:center;">${t('branch.col.status')}</th>
             </tr>
           </thead>
           <tbody>
             ${filtered.map((b, i) => {
               const status = b.rate >= b.kpi ? 'ahead' : b.rate >= b.kpi * 0.75 ? 'on-track' : b.rate >= b.kpi * 0.5 ? 'behind' : 'critical';
-              const zoneLabel = { north: 'Bắc', south: 'Nam', central: 'Trung' }[b.zone] || b.zone;
+              const zoneLabel = { north: t('branch.zone.north-short'), south: t('branch.zone.south-short'), central: t('branch.zone.central-short') }[b.zone] || b.zone;
               return `<tr>
                 <td style="color:var(--text-3);font-size:11px;">${i + 1}</td>
                 <td><span class="type-pill">${b.code}</span></td>

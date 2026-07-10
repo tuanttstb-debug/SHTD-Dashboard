@@ -26,11 +26,11 @@ async function renderUserManagement() {
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <div style="font-size:17px;font-weight:800;">Quản lý người dùng</div>
+        <div style="font-size:17px;font-weight:800;">${t('page.user-management')}</div>
       </div>
       <div class="toolbar-right">
         <button class="btn btn-primary btn-sm" onclick="openUserModal(null)">
-          <i class="fa-solid fa-user-plus"></i> Thêm User mới
+          <i class="fa-solid fa-user-plus"></i> ${t('um.btn.add')}
         </button>
       </div>
     </div>
@@ -38,31 +38,31 @@ async function renderUserManagement() {
     <!-- Filter bar -->
     <div class="filter-bar">
       <div class="filter-group" style="min-width:150px;max-width:220px;">
-        <div class="filter-label">Tìm kiếm</div>
+        <div class="filter-label">${t('common.search')}</div>
         <input type="text" id="umSearch" class="form-control" oninput="umSearchChange()"
-          placeholder="Username / Tên / Email…" style="font-size:12px;padding:7px 10px;">
+          placeholder="${t('um.filter.search-ph')}" style="font-size:12px;padding:7px 10px;">
       </div>
       <div class="filter-group">
         <div class="filter-label">Team</div>
         <select id="umFilterTeam" class="form-control" onchange="umFilterChange()" style="font-size:12px;padding:7px 10px;">
-          <option value="">Tất cả</option>
+          <option value="">${t('common.all')}</option>
         </select>
       </div>
       <div class="filter-group">
         <div class="filter-label">Role</div>
         <select id="umFilterRole" class="form-control" onchange="umFilterChange()" style="font-size:12px;padding:7px 10px;">
-          <option value="">Tất cả</option>
+          <option value="">${t('common.all')}</option>
           <option value="Admin">Admin</option>
           <option value="Teamlead">Teamlead</option>
           <option value="User">User</option>
         </select>
       </div>
       <div class="filter-group">
-        <div class="filter-label">Trạng thái</div>
+        <div class="filter-label">${t('um.col.status')}</div>
         <select id="umFilterStatus" class="form-control" onchange="umFilterChange()" style="font-size:12px;padding:7px 10px;">
-          <option value="">Tất cả</option>
-          <option value="active">Hoạt động</option>
-          <option value="inactive">Đã khóa</option>
+          <option value="">${t('common.all')}</option>
+          <option value="active">${t('um.status.active')}</option>
+          <option value="inactive">${t('um.status.inactive')}</option>
         </select>
       </div>
       <div style="display:flex;align-items:flex-end;">
@@ -78,19 +78,25 @@ async function renderUserManagement() {
       <div class="table-wrap" id="umTableWrap" style="max-height:calc(100vh - 370px);overflow-y:auto;">
         <div style="padding:40px;text-align:center;color:var(--text-3);">
           <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;"></i>
-          <div style="margin-top:10px;">Đang tải danh sách người dùng…</div>
+          <div style="margin-top:10px;">${t('um.loading')}</div>
         </div>
       </div>
       <div class="pagination" id="umPagination" style="padding:10px 20px;"></div>
     </div>`;
 
-  await _umLoad();
+  if (_umUsers.length > 0) {
+    _umPopulateFilters();
+    _umRestoreFilterUi();
+    _umRender();
+  } else {
+    await _umLoad();
+  }
 }
 
 async function _umLoad() {
   try {
     const res = await gasPost({ action: 'user-list' });
-    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi tải danh sách user.');
+    if (res.status !== 'ok') throw new Error(res.error || t('um.err.load'));
     _umHeaders = res.data.header;
     _umUsers   = res.data.rows.map(function(row) {
       const obj = {};
@@ -142,12 +148,20 @@ function _umGetFiltered() {
 function _umPopulateFilters() {
   const sel = document.getElementById('umFilterTeam');
   if (!sel) return;
-  const prev  = sel.value;
   const teams = [...new Set(_umUsers.map(function(u) { return u.Team; }).filter(Boolean))].sort();
-  sel.innerHTML = '<option value="">Tất cả</option>' +
-    teams.map(function(t) { return `<option value="${esc(t)}">${esc(t)}</option>`; }).join('');
-  if (teams.includes(prev)) sel.value = prev;
+  sel.innerHTML = `<option value="">${t('common.all')}</option>` +
+    teams.map(function(tk) { return `<option value="${esc(tk)}">${esc(tk)}</option>`; }).join('');
+  if (teams.includes(_umFilterTeam)) sel.value = _umFilterTeam;
   _umFilterTeam = sel.value;
+}
+
+function _umRestoreFilterUi() {
+  const s = document.getElementById('umSearch');
+  if (s) s.value = _umSearch;
+  const fr = document.getElementById('umFilterRole');
+  if (fr) fr.value = _umFilterRole;
+  const fs = document.getElementById('umFilterStatus');
+  if (fs) fs.value = _umFilterStatus;
 }
 
 // ── Search / filter events ──
@@ -197,10 +211,10 @@ function umSortBy(key) {
 function _umRenderFilterChips() {
   const chips = [];
   const labels = {
-    umSearch:       function(v) { return `Tìm: "${v}"`; },
+    umSearch:       function(v) { return `${t('um.chip.search')}: "${v}"`; },
     umFilterTeam:   function(v) { return `Team: ${v}`; },
     umFilterRole:   function(v) { return `Role: ${v}`; },
-    umFilterStatus: function(v) { return v === 'active' ? 'Hoạt động' : 'Đã khóa'; },
+    umFilterStatus: function(v) { return v === 'active' ? t('um.status.active') : t('um.status.inactive'); },
   };
   Object.entries(labels).forEach(function(entry) {
     const id = entry[0]; const label = entry[1];
@@ -243,7 +257,7 @@ function _umRender() {
   if (!paged.length) {
     wrap.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-3);">
       <i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;"></i>
-      Không tìm thấy người dùng nào. Thử thay đổi bộ lọc.
+      ${t('um.empty')}
     </div>`;
     _umRenderPagination(totalPages, total);
     return;
@@ -252,9 +266,9 @@ function _umRender() {
   const rows = paged.map(function(u) {
     const isActive  = _umIsActive(u);
     const statusHtml = isActive
-      ? `<span class="um-status active"><i class="fa-solid fa-circle-check"></i> Hoạt động</span>`
-      : `<span class="um-status inactive"><i class="fa-solid fa-circle-xmark"></i> Đã khóa</span>`;
-    const toggleLabel = isActive ? 'Khóa tài khoản' : 'Mở khóa';
+      ? `<span class="um-status active"><i class="fa-solid fa-circle-check"></i> ${t('um.status.active')}</span>`
+      : `<span class="um-status inactive"><i class="fa-solid fa-circle-xmark"></i> ${t('um.status.inactive')}</span>`;
+    const toggleLabel = isActive ? t('um.confirm.lock-title') : t('um.btn.unlock');
     const toggleIcon  = isActive ? 'fa-lock' : 'fa-lock-open';
 
     return `<tr>
@@ -271,7 +285,7 @@ function _umRender() {
           <button class="btn btn-ghost btn-sm" title="Chỉnh sửa" onclick="openUserModal('${esc(u.Username)}')">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
-          <button class="btn btn-ghost btn-sm" title="Reset mật khẩu" onclick="openResetPwModal('${esc(u.Username)}')">
+          <button class="btn btn-ghost btn-sm" title="${t('um.modal.reset-pw-title')}" onclick="openResetPwModal('${esc(u.Username)}')">
             <i class="fa-solid fa-key"></i>
           </button>
           <button class="btn btn-ghost btn-sm" title="${toggleLabel}" onclick="handleToggleActive('${esc(u.Username)}',${isActive})">
@@ -287,14 +301,14 @@ function _umRender() {
       <thead>
         <tr>
           <th style="${thStyle}" onclick="umSortBy('Username')">Username${sortIcon('Username')}</th>
-          <th style="${thStyle}" onclick="umSortBy('Display_Name')">Tên hiển thị${sortIcon('Display_Name')}</th>
+          <th style="${thStyle}" onclick="umSortBy('Display_Name')">${t('um.col.display-name')}${sortIcon('Display_Name')}</th>
           <th style="${thStyle}" onclick="umSortBy('Role')">Role${sortIcon('Role')}</th>
           <th style="${thStyle}" onclick="umSortBy('Team')">Team${sortIcon('Team')}</th>
           <th>Email</th>
-          <th style="${thStyle}" onclick="umSortBy('Active')">Trạng thái${sortIcon('Active')}</th>
-          <th style="${thStyle}" onclick="umSortBy('Created_At')">Ngày tạo${sortIcon('Created_At')}</th>
-          <th style="${thStyle}" onclick="umSortBy('Last_Login')">Đăng nhập cuối${sortIcon('Last_Login')}</th>
-          <th>Thao tác</th>
+          <th style="${thStyle}" onclick="umSortBy('Active')">${t('um.col.status')}${sortIcon('Active')}</th>
+          <th style="${thStyle}" onclick="umSortBy('Created_At')">${t('um.col.created')}${sortIcon('Created_At')}</th>
+          <th style="${thStyle}" onclick="umSortBy('Last_Login')">${t('um.col.last-login')}${sortIcon('Last_Login')}</th>
+          <th>${t('um.col.actions')}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -309,7 +323,7 @@ function _umRenderPagination(totalPages, total) {
 
   const start = (_umPage - 1) * UM_PAGE_SIZE + 1;
   const end   = Math.min(_umPage * UM_PAGE_SIZE, total);
-  const info  = total > 0 ? `<span class="page-info">${start}–${end} / ${total} người dùng</span>` : '';
+  const info  = total > 0 ? `<span class="page-info">${start}–${end} / ${total} ${t('um.pag.users')}</span>` : '';
 
   if (totalPages <= 1) {
     el.innerHTML = info;
@@ -365,7 +379,7 @@ function openUserModal(username) {
       <div class="modal-header">
         <div class="modal-title">
           <i class="fa-solid fa-${isEdit ? 'pen-to-square' : 'user-plus'}" style="margin-right:6px;"></i>
-          ${isEdit ? 'Chỉnh sửa User' : 'Thêm User mới'}
+          ${t(isEdit ? 'um.modal.edit-title' : 'um.modal.add-title')}
         </div>
         <button class="icon-btn" onclick="_umCloseModal('umUserOverlay')"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -378,7 +392,7 @@ function openUserModal(username) {
         </div>
 
         <div class="form-group">
-          <label class="form-label">Tên hiển thị <span style="color:var(--danger)">*</span></label>
+          <label class="form-label">${t('um.form.display-name')} <span style="color:var(--danger)">*</span></label>
           <input class="form-control" id="umDisplayName" type="text" placeholder="VD: Nguyễn Văn A"
             value="${isEdit ? esc(user.Display_Name) : ''}">
         </div>
@@ -407,31 +421,31 @@ function openUserModal(username) {
 
         ${!isEdit ? `
         <div class="form-group">
-          <label class="form-label">Mật khẩu <span style="color:var(--danger)">*</span>
-            <span style="font-weight:400;color:var(--text-3);">(tối thiểu 6 ký tự)</span>
+          <label class="form-label">${t('um.form.password')} <span style="color:var(--danger)">*</span>
+            <span style="font-weight:400;color:var(--text-3);">${t('um.form.pw-hint')}</span>
           </label>
           <input class="form-control" id="umPassword" type="password" autocomplete="new-password">
         </div>
         <div class="form-group">
-          <label class="form-label">Nhập lại mật khẩu <span style="color:var(--danger)">*</span></label>
+          <label class="form-label">${t('um.form.confirm-pw')} <span style="color:var(--danger)">*</span></label>
           <input class="form-control" id="umPassword2" type="password" autocomplete="new-password">
         </div>` : ''}
 
         ${isEdit ? `
         <div class="form-group">
-          <label class="form-label">Trạng thái</label>
+          <label class="form-label">${t('um.col.status')}</label>
           <select class="form-control" id="umActive">
-            <option value="true"  ${(user.Active===true||String(user.Active).toLowerCase()==='true') ? 'selected':''}>Hoạt động</option>
-            <option value="false" ${(user.Active===false||String(user.Active).toLowerCase()==='false') ? 'selected':''}>Đã khóa</option>
+            <option value="true"  ${(user.Active===true||String(user.Active).toLowerCase()==='true') ? 'selected':''}>${t('um.status.active')}</option>
+            <option value="false" ${(user.Active===false||String(user.Active).toLowerCase()==='false') ? 'selected':''}>${t('um.status.inactive')}</option>
           </select>
         </div>` : ''}
 
         <div id="umUserError" style="display:none;color:var(--danger);font-size:13px;padding:8px 12px;background:var(--danger-bg);border-radius:8px;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="_umCloseModal('umUserOverlay')">Hủy</button>
+        <button class="btn btn-ghost" onclick="_umCloseModal('umUserOverlay')">${t('common.cancel')}</button>
         <button class="btn btn-primary" id="umSaveBtn" onclick="handleSaveUser()">
-          <i class="fa-solid fa-floppy-disk"></i> ${isEdit ? 'Lưu thay đổi' : 'Tạo User'}
+          <i class="fa-solid fa-floppy-disk"></i> ${t(isEdit ? 'um.btn.save' : 'um.btn.create')}
         </button>
       </div>
     </div>`;
@@ -462,18 +476,18 @@ async function handleSaveUser() {
   const team        = (document.getElementById('umTeam')?.value || '').trim();
   const email       = (document.getElementById('umEmail')?.value || '').trim();
 
-  if (!username)    { setErr('Username là bắt buộc.'); return; }
-  if (!displayName) { setErr('Tên hiển thị là bắt buộc.'); return; }
-  if (!role)        { setErr('Vui lòng chọn Role.'); return; }
+  if (!username)    { setErr(t('um.err.username-required')); return; }
+  if (!displayName) { setErr(t('um.err.display-required')); return; }
+  if (!role)        { setErr(t('um.err.role-required')); return; }
 
   let payload;
 
   if (!isEdit) {
     const pw  = document.getElementById('umPassword')?.value  || '';
     const pw2 = document.getElementById('umPassword2')?.value || '';
-    if (!pw)           { setErr('Mật khẩu là bắt buộc.'); return; }
-    if (pw.length < 6) { setErr('Mật khẩu phải có ít nhất 6 ký tự.'); return; }
-    if (pw !== pw2)    { setErr('Mật khẩu nhập lại không khớp.'); return; }
+    if (!pw)           { setErr(t('um.err.pw-required')); return; }
+    if (pw.length < 6) { setErr(t('um.err.pw-short')); return; }
+    if (pw !== pw2)    { setErr(t('um.err.pw-mismatch')); return; }
 
     payload = { action: 'user-create', user: { username, displayName, role, team, email, password: pw, active: true } };
   } else {
@@ -483,19 +497,19 @@ async function handleSaveUser() {
   }
 
   btn.disabled  = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu…';
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t('um.saving')}`;
 
   try {
     const res = await gasPost(payload);
-    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
+    if (res.status !== 'ok') throw new Error(res.error || t('um.err.unknown'));
     _umCloseModal('umUserOverlay');
-    toast(isEdit ? '✅ Đã cập nhật User thành công!' : '✅ Đã tạo User mới thành công!', 'success');
+    toast(t(isEdit ? 'um.toast.updated' : 'um.toast.created'), 'success');
     await _umLoad();
   } catch (e) {
     setErr(e.message);
   } finally {
     btn.disabled  = false;
-    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ${isEdit ? 'Lưu thay đổi' : 'Tạo User'}`;
+    btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> ${t(isEdit ? 'um.btn.save' : 'um.btn.create')}`;
   }
 }
 
@@ -514,29 +528,29 @@ function openResetPwModal(username) {
   overlay.innerHTML = `
     <div class="modal" style="max-width:380px;">
       <div class="modal-header">
-        <div class="modal-title"><i class="fa-solid fa-key" style="margin-right:6px;"></i>Reset mật khẩu</div>
+        <div class="modal-title"><i class="fa-solid fa-key" style="margin-right:6px;"></i>${t('um.modal.reset-pw-title')}</div>
         <button class="icon-btn" onclick="_umCloseModal('umResetPwOverlay')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
         <div style="font-size:13px;color:var(--text-2);">
-          Reset mật khẩu cho: <strong>${esc(username)}</strong>
+          ${t('um.modal.reset-pw-for')}<strong>${esc(username)}</strong>
         </div>
         <div class="form-group">
-          <label class="form-label">Mật khẩu mới <span style="color:var(--danger)">*</span>
-            <span style="font-weight:400;color:var(--text-3);">(tối thiểu 6 ký tự)</span>
+          <label class="form-label">${t('um.form.new-pw')} <span style="color:var(--danger)">*</span>
+            <span style="font-weight:400;color:var(--text-3);">${t('um.form.pw-hint')}</span>
           </label>
           <input class="form-control" id="umRpNew" type="password" autocomplete="new-password">
         </div>
         <div class="form-group">
-          <label class="form-label">Nhập lại mật khẩu mới <span style="color:var(--danger)">*</span></label>
+          <label class="form-label">${t('um.form.confirm-new-pw')} <span style="color:var(--danger)">*</span></label>
           <input class="form-control" id="umRpNew2" type="password" autocomplete="new-password">
         </div>
         <div id="umRpError" style="display:none;color:var(--danger);font-size:13px;padding:8px 12px;background:var(--danger-bg);border-radius:8px;"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="_umCloseModal('umResetPwOverlay')">Hủy</button>
+        <button class="btn btn-ghost" onclick="_umCloseModal('umResetPwOverlay')">${t('common.cancel')}</button>
         <button class="btn btn-primary" id="umRpBtn" onclick="handleResetPassword('${esc(username)}')">
-          <i class="fa-solid fa-rotate-right"></i> Reset mật khẩu
+          <i class="fa-solid fa-rotate-right"></i> ${t('um.btn.reset-pw')}
         </button>
       </div>
     </div>`;
@@ -553,42 +567,41 @@ async function handleResetPassword(username) {
   const pw  = document.getElementById('umRpNew')?.value  || '';
   const pw2 = document.getElementById('umRpNew2')?.value || '';
 
-  if (!pw)           { setErr('Vui lòng nhập mật khẩu mới.'); return; }
-  if (pw.length < 6) { setErr('Mật khẩu mới phải có ít nhất 6 ký tự.'); return; }
-  if (pw !== pw2)    { setErr('Mật khẩu nhập lại không khớp.'); return; }
+  if (!pw)           { setErr(t('um.err.new-pw-required')); return; }
+  if (pw.length < 6) { setErr(t('um.err.new-pw-short')); return; }
+  if (pw !== pw2)    { setErr(t('um.err.pw-mismatch')); return; }
 
   btn.disabled  = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu…';
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t('um.saving')}`;
 
   try {
     const res = await gasPost({ action: 'user-reset-password', username, newPassword: pw });
-    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
+    if (res.status !== 'ok') throw new Error(res.error || t('um.err.unknown'));
     _umCloseModal('umResetPwOverlay');
-    toast('✅ Đã reset mật khẩu cho ' + username, 'success');
+    toast(t('um.toast.reset-pw-prefix') + username, 'success');
   } catch (e) {
     setErr(e.message);
   } finally {
     btn.disabled  = false;
-    btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Reset mật khẩu';
+    btn.innerHTML = `<i class="fa-solid fa-rotate-right"></i> ${t('um.btn.reset-pw')}`;
   }
 }
 
 // ── Toggle active ──
 
 async function handleToggleActive(username, currentActive) {
-  const action = currentActive ? 'khóa' : 'mở khóa';
   const ok = await uiConfirm(
-    (currentActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'),
-    `Bạn có chắc muốn ${action} tài khoản <strong>${esc(username)}</strong>?`,
+    t(currentActive ? 'um.confirm.lock-title' : 'um.confirm.unlock-title'),
+    `${t(currentActive ? 'um.confirm.lock-body' : 'um.confirm.unlock-body')} <strong>${esc(username)}</strong>?`,
     currentActive ? 'warn' : 'info',
-    (currentActive ? 'Khóa' : 'Mở khóa')
+    t(currentActive ? 'um.btn.lock' : 'um.btn.unlock')
   );
   if (!ok) return;
 
   try {
     const res = await gasPost({ action: 'user-update', user: { username, active: !currentActive } });
-    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định.');
-    toast(`✅ Đã ${action} tài khoản ${username}.`, 'success');
+    if (res.status !== 'ok') throw new Error(res.error || t('um.err.unknown'));
+    toast(t(currentActive ? 'um.toast.locked' : 'um.toast.unlocked') + ' ' + username + '.', 'success');
     await _umLoad();
   } catch (e) {
     toast('❌ ' + e.message, 'error');

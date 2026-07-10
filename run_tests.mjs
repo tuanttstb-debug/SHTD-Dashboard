@@ -11,6 +11,7 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  'verify_i18n_p7.mjs',         // ~36 tests S50
   'verify_i18n_p6.mjs',         // ~26 tests S49
   'verify_i18n_p5.mjs',         // ~24 tests S48
   'verify_i18n_p3.mjs',         // 62 tests  S45

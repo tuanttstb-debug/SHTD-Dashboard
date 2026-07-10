@@ -1,6 +1,6 @@
 function renderGantt() {
   const el = document.getElementById('ganttSubtitle');
-  if (el) el.textContent = `Hiển thị tiến độ theo thời gian — ${new Date().getFullYear()}`;
+  if (el) el.textContent = `${t('gantt.subtitle')} — ${new Date().getFullYear()}`;
   const wrap = document.getElementById('ganttWrap');
   const filterT = document.getElementById('ganttFilterTeam')?.value||'';
   const filterI = document.getElementById('ganttFilterInit')?.value||'';
@@ -9,7 +9,7 @@ function renderGantt() {
   if (filterI) tasks = tasks.filter(t => t.initiative === filterI);
   tasks = tasks.sort((a,b) => a.startDate > b.startDate ? 1 : -1).slice(0, 50);
 
-  if (!tasks.length) { wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-3);">Không có task nào có đủ Start Date & Deadline</div>'; return; }
+  if (!tasks.length) { wrap.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-3);">${t('gantt.empty')}</div>`; return; }
 
   const allDates = tasks.flatMap(t => [new Date(t.startDate), new Date(t.endDate)]);
   let minD = new Date(Math.min(...allDates)); minD.setDate(1);
