@@ -1,9 +1,10 @@
 function openPerfTaskPopup(key) {
-  const labelMap = { initiative: 'Dự án', picRes: 'Nhân sự', team: 'Team' };
-  const tasks = db.tasks.filter(t => {
-    const v = perfTab === 'picRes' ? (t.picRes || 'Chưa gán')
-            : perfTab === 'initiative' ? (t.initiative || 'BAU')
-            : (t.team || 'N/A');
+  const labelMap = { initiative: t('perf.label.project'), picRes: t('perf.label.pic'), team: 'Team' };
+  const _unassigned = t('perf.unassigned');
+  const tasks = db.tasks.filter(task => {
+    const v = perfTab === 'picRes' ? (task.picRes || _unassigned)
+            : perfTab === 'initiative' ? (task.initiative || 'BAU')
+            : (task.team || 'N/A');
     return (v || '').trim() === key;
   });
 
@@ -13,7 +14,7 @@ function openPerfTaskPopup(key) {
   const body = document.getElementById('detailTbody');
   if (body) {
     body.innerHTML = tasks.length === 0
-      ? `<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-3);">Không có task nào.</td></tr>`
+      ? `<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-3);">${t('perf.empty')}</td></tr>`
       : tasks.map(t => `<tr onclick="editTask('${esc(t.id)}')" style="cursor:pointer;">
           <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${esc(t.id)}</span></td>
           <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${esc(t.name)}">${esc(t.name)}</td>
@@ -38,30 +39,31 @@ function switchPerfTab(key) {
 }
 
 function renderPerfTable() {
-  const labels = { initiative:'Dự án (Initiative)', picRes:'Nhân sự (PIC Responsible)', team:'Team chính' };
+  const labels = { initiative: t('perf.group.project'), picRes: t('perf.group.pic'), team: t('perf.group.team') };
   document.getElementById('perfHead').textContent = labels[perfTab]||'';
+  const _perfUnassigned = t('perf.unassigned');
   const summary = {};
-  db.tasks.forEach(t => {
-    let k = perfTab === 'picRes' ? (t.picRes||'Chưa gán') : perfTab === 'initiative' ? (t.initiative||'BAU') : (t.team||'N/A');
-    k = (k||'').trim() || 'Chưa gán';
+  db.tasks.forEach(task => {
+    let k = perfTab === 'picRes' ? (task.picRes||_perfUnassigned) : perfTab === 'initiative' ? (task.initiative||'BAU') : (task.team||'N/A');
+    k = (k||'').trim() || _perfUnassigned;
     if (!summary[k]) summary[k] = { total:0, done:0, totProg:0, green:0, amber:0, red:0, overdue:0 };
     summary[k].total++;
-    if (parseInt(t.progress) >= 100 || t.state === 'Hoàn thành') summary[k].done++;
-    summary[k].totProg += parseInt(t.progress)||0;
-    if (t.status === 'Green') summary[k].green++;
-    else if (t.status === 'Amber') summary[k].amber++;
+    if (parseInt(task.progress) >= 100 || task.state === 'Hoàn thành') summary[k].done++;
+    summary[k].totProg += parseInt(task.progress)||0;
+    if (task.status === 'Green') summary[k].green++;
+    else if (task.status === 'Amber') summary[k].amber++;
     else summary[k].red++;
-    if (isOverdue(t.endDate, t.progress)) summary[k].overdue++;
+    if (isOverdue(task.endDate, task.progress)) summary[k].overdue++;
   });
 
   const tbody = document.getElementById('perfTbody');
   if (!Object.keys(summary).length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3);">Chưa có dữ liệu</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3);">${t('perf.no-data')}</td></tr>`;
     return;
   }
   tbody.innerHTML = Object.entries(summary).sort((a,b) => b[1].total - a[1].total).map(([k,v]) => {
     const avg = Math.round(v.totProg/v.total);
-    return `<tr onclick="openPerfTaskPopup('${esc(k)}')" style="cursor:pointer;" title="Click để xem danh sách task">
+    return `<tr onclick="openPerfTaskPopup('${esc(k)}')" style="cursor:pointer;" title="${t('perf.row-hint')}">
       <td style="font-weight:600;">${k}</td>
       <td>${v.total}</td>
       <td>${v.done}</td>
