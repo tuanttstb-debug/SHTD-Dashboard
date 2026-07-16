@@ -1,7 +1,7 @@
 # PROJECT STATE
-**As of**: 2026-07-10 (Session 51 — i18n Phase 8: KPI Overview + Owner Analysis bilingual)
-**Version**: v6.17 (`APP_VERSION = '6.17-i18n-phase8-20260710'`, `index.html ?v=20260710e`)
-**Remote HEAD (main)**: `7f5c1db` — feat(i18n): Phase 8 — KPI Overview + Owner Analysis bilingual (6 keys)
+**As of**: 2026-07-16 (Session 53 — RenameUserService migration PhuongNPL_C → PhuongNPL)
+**Version**: v6.18 (`APP_VERSION = '6.18-sync-topbar-nguoilog-20260710'`, `index.html ?v=20260710f`)
+**Remote HEAD (main)**: `(xem git log)` — feat(S53): RenameUserService migration PhuongNPL_C → PhuongNPL
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
@@ -39,6 +39,7 @@
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
 | `assets/js/config.js` | 7 | ✅ S51: APP_VERSION = '6.17-i18n-phase8-20260710'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
+| `backend/RenameUserService.gs` | ~90 | ✅ S53: NEW — `dryRunRenamePhuong()` / `commitRenamePhuong()` — rename PhuongNPL_C → PhuongNPL trên 5 sheets (User_Master, Task_Master, Case_Pipeline, Issue_Tracker, Initiative_Master); Audit_Log KHÔNG chạm |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
 | `assets/css/responsive.css` | ~65 | ✅ S37: `.topbar{position:fixed;top:0;left:0;right:0;z-index:150}` on mobile; `content{padding-top:74/68px}`; `thead{top:62/56px}`; `.toolbar{flex-direction:column}` + full-width left/right; `.path-hint{display:none}` |
 | `assets/css/forms.css` | ~25 | ✅ S23: .form-grid → minmax(0,1fr) minmax(0,1fr); .form-group min-width:0; .form-control width:100% min-width:0 |

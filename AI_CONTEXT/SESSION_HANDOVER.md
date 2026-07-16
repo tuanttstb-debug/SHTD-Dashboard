@@ -1,4 +1,65 @@
 # SESSION HANDOVER
+**Date**: 2026-07-16 (Session 53 — RenameUserService: migration PhuongNPL_C → PhuongNPL)
+**Model**: Claude Sonnet 4.6
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `(xem sau commit)`
+
+---
+
+## Tasks Completed (S53)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S53-T1 | `backend/RenameUserService.gs` (NEW) — migration script đổi tên user `PhuongNPL_C` → `PhuongNPL` trên toàn bộ DB; `dryRunRenamePhuong()` + `commitRenamePhuong()` | `backend/RenameUserService.gs` | ✅ |
+
+### Undocumented commit phát hiện trong session
+
+Commit `3a86a78` — `feat(perf): wire i18n t() calls in performance.js; update test EVD screenshots` — đã được push sau S52 handover nhưng chưa được ghi vào SESSION_HANDOVER. Không ảnh hưởng tới chức năng hiện tại.
+
+### S53 Architecture Notes
+
+**RenameUserService.gs — Sheets được cập nhật:**
+
+| Sheet | Cột kiểm tra |
+|---|---|
+| `User_Master` | `Username` |
+| `Task_Master` | `PIC Accountable`, `PIC Responsible`, `PIC Support` |
+| `Case_Pipeline` | `PIC` |
+| `Issue_Tracker` | `Người log`, `Người xử lý` |
+| `Initiative_Master` | `Accountable` |
+| `Audit_Log` | **KHÔNG chạm** (lịch sử giữ nguyên) |
+
+**Column matching**: normalized `startsWith` — bắt được header dài như `"PIC Accountable (Teamlead – chịu trách nhiệm)"`.
+
+**Value matching**: exact case-insensitive — tránh partial replace (ví dụ `PhuongNPL_C2` không bị thay).
+
+**Usage (GAS Editor)**:
+```
+1. dryRunRenamePhuong()  → xem Logger output, kiểm tra số cell sẽ thay đổi
+2. commitRenamePhuong()  → ghi thực sự vào Sheets
+3. Yêu cầu user PhuongNPL_C đăng xuất + đăng nhập lại với username mới PhuongNPL
+```
+
+**Không cần GAS redeploy** — script chạy trực tiếp trong GAS Editor, không phải Web App route.
+
+**Không cần cache-bust / APP_VERSION bump** — không thay đổi frontend.
+
+### Smoke test checklist S53
+| Check | Expected |
+|---|---|
+| `dryRunRenamePhuong()` | Logger hiện đúng số cell; không có WARN "không tìm thấy" cho các sheet chính |
+| `commitRenamePhuong()` | Logger "Migration hoàn tất", số cell > 0 |
+| User_Master sheet | `PhuongNPL_C` → `PhuongNPL` trong cột Username |
+| Task_Master sheet | Các task có picAcc/picRes/picSupport = PhuongNPL_C đã đổi thành PhuongNPL |
+| Sau khi user re-login | Dropdown PIC hiện "... (PhuongNPL)" thay vì "(PhuongNPL_C)" |
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S52)
+
+---
+
+# SESSION HANDOVER
 **Date**: 2026-07-10 (Session 52 — SYNC topbar + Issue Tracker Người log dropdown)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

@@ -1,8 +1,56 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-10 (Session 52 — SYNC topbar + Issue Tracker Người log dropdown)
-**Context**: S52 done. HEAD=c40dbae. APP_VERSION=6.18-sync-topbar-nguoilog-20260710. 19/20 suites PASS (1 pre-existing failure in verify_my_work). i18n COMPLETE.
+**Prepared**: 2026-07-16 (Session 53 — RenameUserService migration PhuongNPL_C → PhuongNPL)
+**Context**: S53 done. HEAD=xem git log. APP_VERSION=6.18-sync-topbar-nguoilog-20260710 (không đổi). 19/20 suites PASS (1 pre-existing failure in verify_my_work). i18n COMPLETE.
 
 ---
+
+## ✅ COMPLETED S53 — RenameUserService migration
+
+- [x] `backend/RenameUserService.gs` (NEW) — `dryRunRenamePhuong()` + `commitRenamePhuong()`
+  - Sheets: User_Master (Username), Task_Master (PIC Acc/Res/Sup), Case_Pipeline (PIC), Issue_Tracker (Người log/xử lý), Initiative_Master (Accountable)
+  - Audit_Log KHÔNG chạm
+  - Column match: normalized startsWith; Value match: exact case-insensitive
+  - Chạy trực tiếp trong GAS Editor, không cần redeploy Web App
+
+---
+
+## 🔴 PRIORITY 0 — Chạy RenameUserService trên production
+
+| Bước | Action |
+|---|---|
+| 1 | Mở GAS Editor → thêm file `RenameUserService.gs` (copy từ repo) |
+| 2 | Chạy `dryRunRenamePhuong()` → kiểm tra Logger: đúng số cell, không WARN trên các sheet chính |
+| 3 | Chạy `commitRenamePhuong()` → xác nhận Logger "Migration hoàn tất" |
+| 4 | Yêu cầu user `PhuongNPL_C` đăng xuất + đăng nhập lại với username `PhuongNPL` |
+| 5 | Verify: dropdown PIC trong Task modal hiện `PhuongNPL` thay vì `PhuongNPL_C` |
+
+---
+
+## 🔴 PRIORITY 1 — Smoke test S52 on production (còn pending)
+
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge shows `v6.18-sync-topbar-nguoilog-20260710` |
+| Topbar (when connected) | SYNC button visible next to Quick View |
+| Click SYNC | Syncs Tasks + Cases + Issues + Initiatives; toast "Đã đồng bộ toàn bộ dữ liệu!" |
+| Issue Tracker → Thêm Issue | "Người log" is a dropdown; logged-in user pre-selected |
+| BLD Queue / Case Pipeline / Issue Tracker | "Làm mới" button no longer present |
+
+---
+
+## 🔲 CANDIDATE TASKS S54+
+
+| Priority | Task | Notes |
+|---|---|---|
+| P1 | **Fix verify_my_work pre-existing failures (MW22/MW23)** | MW22: progress `mw-prog-visible` toggle class; MW23-prog-bar: progress bar fill null. Failures từ S44b era trở đi. |
+| P2 | **AI Chat live activation** | GAS editor → Script Properties → `GEMINI_API_KEY = <key>`. Backend wired; frontend i18n done. User action only. |
+| P3 | **i18n COMPLETE** | Tất cả views bilingual sau Phase 8. Không cần Phase 9. |
+
+---
+
+---
+
+## ✅ COMPLETED S52 — SYNC topbar + Issue Tracker Người log dropdown
 
 ## ✅ COMPLETED S52 — SYNC topbar + Issue Tracker Người log dropdown
 
