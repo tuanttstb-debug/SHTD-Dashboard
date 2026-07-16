@@ -1,7 +1,7 @@
 # PROJECT STATE
 **As of**: 2026-07-16 (Session 53 — RenameUserService migration PhuongNPL_C → PhuongNPL)
 **Version**: v6.18 (`APP_VERSION = '6.18-sync-topbar-nguoilog-20260710'`, `index.html ?v=20260710f`)
-**Remote HEAD (main)**: `(xem git log)` — feat(S53): RenameUserService migration PhuongNPL_C → PhuongNPL
+**Remote HEAD (main)**: `8437f2d` — feat(S53): RenameUserService — migration PhuongNPL_C → PhuongNPL
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 
