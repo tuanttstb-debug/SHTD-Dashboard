@@ -2,7 +2,19 @@
 **Date**: 2026-07-28 (Session 54 — Dev Plan: "Plan phát triển bản thân")
 **Model**: Claude Opus 4.8
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main HEAD**: `<new>` — feat(S54): Dev Plan — Plan phát triển bản thân
+**origin/main HEAD**: `e1134ce` — fix(S54): Dev Plan hiển thị đầy đủ ở My Work (+ handover docs commit sau đó)
+**Version**: v6.19.1 (`6.19.1-dev-plan-mywork-20260728`, `?v=20260728b`)
+
+---
+
+## 🧭 HANDOVER SUMMARY (S54) — đọc nhanh
+
+- **Task completed**: Tính năng mới "Plan phát triển bản thân" (Left menu, G+V) — sheet `Dev_Plan` + service GAS + view CRUD + section nhắc ở "Công việc của tôi". GAS **đã deploy**. Fix S54.1: My Work hiển thị đầy đủ dev item của tôi.
+- **Files changed**: NEW `backend/DevPlanService.gs`, `assets/js/views/dev-plan.js`, `assets/css/dev-plan.css`, `verify_dev_plan.mjs`. MOD `backend/Code.gs`, `constants.js`, `api.js`, `app.js`, `views/my-work.js`, `ui/navigation.js`, `i18n.js`, `config.js`, `index.html`, `run_tests.mjs`. (Chi tiết bảng bên dưới.)
+- **Decisions**: sheet riêng (không đụng Task_Master); xem-tất-cả / sửa-của-mình (gate client+server); nhắc = item chưa xong (stale >7 ngày gắn badge, sort đầu); trạng thái dùng bộ VN của app; PIC=dropdown (non-admin khóa vào mình), phối hợp=text; phím tắt **G+V** (G+P đã là Performance).
+- **Blocker**: (1) 🔴 `backend/RenameUserService.gs` bị nối đoạn PowerShell chứa **API key lộ** ở cuối file — chưa commit; cần dọn + thu hồi key. (2) Dev Plan chạy thật cần user hard-reload nhận `v6.19.1`.
+- **Next step**: hard-reload verify badge `v6.19.1`; smoke test đa-user (A tạo → B xem read-only, sửa bị chặn); dọn RenameUserService + thu hồi key; (tùy chọn) Excel export / audit history / nhắc theo tháng cho Dev Plan.
+- **Regression risk**: 🟢 THẤP — full suite **21/21 PASS**. Điểm cần để ý: `renderMyWork` giờ phụ thuộc `dbDev` + hàm `_devIsStaleReview/_devIsDone` (guard `typeof`, an toàn nếu dev-plan.js lỗi); ESC handler gọi `closeDevModal/closeDevViewPopup`; `syncDB` thêm `readDev` vào `Promise.all` (readDev tự catch, không làm hỏng sync). Không đụng schema Task/Case/Issue/Initiative.
 
 ---
 

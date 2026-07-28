@@ -8,6 +8,25 @@
 
 ---
 
+## 🆕 DELTA — Session 54 (2026-07-28)
+
+### TD-SEC-01: API key lộ trong `backend/RenameUserService.gs` 🔴 CRITICAL
+**Issue**: Working tree của `backend/RenameUserService.gs` bị nối thêm 1 đoạn PowerShell (function `claude-mkp`) chứa `MKP_API_KEY = "sk-6IeUw..."` + proxy nội bộ ở cuối file `.gs` (nội dung rác, không hợp lệ trong GAS).
+**Impact**: Key có thể bị commit nhầm/lộ; file `.gs` hỏng nếu paste nguyên vào GAS.
+**Status**: S54 KHÔNG stage/commit file này (đã cô lập). Chưa dọn.
+**Action**: Xóa đoạn từ `$env:MKP_API_BASE...` đến hết file; **thu hồi/đổi key** phía nhà cung cấp; kiểm tra git history xem key từng bị commit chưa.
+
+### TD-DEV-01: Dev Plan — write fire-and-forget, không optimistic-lock ⚪ LOW
+**Issue**: `_gasDevUpsert/_gasDevDelete` là local-first + fire-and-forget (giống Issue Tracker), không read-then-patch / không version conflict như Task_Master.
+**Impact**: Thấp — mỗi user chỉ sửa item của mình (ownership gate), xác suất ghi đè đồng thời gần như không. Admin sửa cho người khác thì có rủi ro nhỏ.
+**Action**: Chấp nhận cho MVP; nếu cần multi-editor an toàn → thêm serverTs/last-write check.
+
+### TD-DEV-02: State module-global cho Dev Plan (nối dài TD-004) ⚪ LOW
+**Issue**: `_devFilterPic/_devFilterState/_devSearch/_devSort/_devEditId/_devViewId` là biến module-level (giống `_it*`, `_cp*`). Tích lũy thêm global mutable state.
+**Action**: Gộp vào TD-004 (v7 modularization). Không cần xử lý riêng.
+
+---
+
 ## ~~TD-001: Monolithic Single-File Architecture~~ ✅ RESOLVED 2026-06-04
 
 **Resolution**: Phase B complete. `index.html` reduced from 4076 → 736 lines (HTML-only shell).
