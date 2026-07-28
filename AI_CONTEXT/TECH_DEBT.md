@@ -8,6 +8,19 @@
 
 ---
 
+## 🆕 DELTA — Session 55 (2026-07-28)
+
+### TD-UI-01: `.cp-stat-card` dùng chung 2 view (Case Pipeline + Initiative) ⚪ LOW
+**Issue**: S55 reuse thẳng class `.cp-stat-card`/`.cp-stat-icon`/`.cp-stat-num`/`.cp-stat-label` (định nghĩa trong `case-pipeline.css`) cho stat bar của Initiative Tracker. Sửa style Case Pipeline sẽ ảnh hưởng Initiative.
+**Impact**: Thấp — đây là chủ đích "đồng nhất UI" (design-system component dùng chung). Rủi ro chỉ là coupling ngầm về vị trí file (component nằm ở `case-pipeline.css` thay vì file token/shared).
+**Action**: Khi v7 modularize CSS → tách các class stat-card ra file shared (`components.css` hoặc `stat-card.css`) và đổi tên trung tính (vd `.stat-card`). Không cần xử lý ngay.
+
+### TD-DEV-03 (nối TD-004): state module-global cho Initiative ⚪ LOW
+**Issue**: `_initShowDone` thêm vào cụm `_initFilter*`/`_initScope` module-level mutable state (giống `_cp*`, `_dev*`).
+**Action**: Gộp vào TD-004 (v7 modularization). Không xử lý riêng.
+
+---
+
 ## 🆕 DELTA — Session 54 (2026-07-28)
 
 ### TD-SEC-01: API key lộ trong `backend/RenameUserService.gs` ✅ RESOLVED 2026-07-28 (còn 1 khuyến nghị)

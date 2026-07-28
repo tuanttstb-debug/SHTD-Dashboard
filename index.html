@@ -8,25 +8,25 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/base.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/components.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/table.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260728b">
-<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260728b">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/base.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/components.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/table.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20260728c">
+<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260728c">
 
 </head>
 <body>
@@ -1526,6 +1526,23 @@
   </div>
 </div>
 
+<!-- ===== INITIATIVE SUMMARY POPUP ===== -->
+<div class="overlay" id="initSummaryOverlay" style="display:none;z-index:1100;">
+  <div class="modal" style="max-width:760px;width:95%;max-height:85vh;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="initSummaryTitle">Chi tiết</div>
+        <div class="modal-subtitle" id="initSummarySubtitle" style="margin-top:2px;font-size:13px;color:var(--text-2);"></div>
+      </div>
+      <div class="modal-close" onclick="closeInitSummaryPopup()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div id="initSummaryBody" style="overflow-y:auto;padding:16px 20px;flex:1;"></div>
+    <div class="modal-footer" style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+      <button class="btn btn-outline" onclick="closeInitSummaryPopup()">Đóng</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== CASE VIEW POPUP ===== -->
 <div class="overlay" id="cpViewOverlay" style="display:none;align-items:center;justify-content:center;">
   <div class="modal" style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column;">
@@ -1874,45 +1891,45 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260728b"></script>
-<script src="assets/js/config.js?v=20260728b"></script>
-<script src="assets/js/constants.js?v=20260728b"></script>
-<script src="assets/js/helpers.js?v=20260728b"></script>
-<script src="assets/js/storage.js?v=20260728b"></script>
-<script src="assets/js/parsers.js?v=20260728b"></script>
-<script src="assets/js/auth.js?v=20260728b"></script>
-<script src="assets/js/api.js?v=20260728b"></script>
-<script src="assets/js/ui/toast.js?v=20260728b"></script>
-<script src="assets/js/ui/modal.js?v=20260728b"></script>
-<script src="assets/js/ui/theme.js?v=20260728b"></script>
-<script src="assets/js/ui/navigation.js?v=20260728b"></script>
-<script src="assets/js/crud.js?v=20260728b"></script>
-<script src="assets/js/bulk.js?v=20260728b"></script>
-<script src="assets/js/views/dashboard.js?v=20260728b"></script>
-<script src="assets/js/views/tasks.js?v=20260728b"></script>
-<script src="assets/js/views/gantt.js?v=20260728b"></script>
-<script src="assets/js/views/performance.js?v=20260728b"></script>
-<script src="assets/js/views/quickview.js?v=20260728b"></script>
-<script src="assets/js/report.js?v=20260728b"></script>
-<script src="assets/js/kpi-data.js?v=20260728b"></script>
-<script src="assets/js/kpi-parser.js?v=20260728b"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260728b"></script>
-<script src="assets/js/views/action-plan.js?v=20260728b"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260728b"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260728b"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260728b"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260728b"></script>
-<script src="assets/js/initiatives.js?v=20260728b"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260728b"></script>
-<script src="assets/js/views/ai-chat.js?v=20260728b"></script>
-<script src="assets/js/views/user-management.js?v=20260728b"></script>
-<script src="assets/js/views/executive-summary.js?v=20260728b"></script>
-<script src="assets/js/views/bld-queue.js?v=20260728b"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260728b"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260728b"></script>
-<script src="assets/js/views/my-work.js?v=20260728b"></script>
-<script src="assets/js/views/dev-plan.js?v=20260728b"></script>
-<script src="assets/js/app.js?v=20260728b"></script>
+<script src="assets/js/i18n.js?v=20260728c"></script>
+<script src="assets/js/config.js?v=20260728c"></script>
+<script src="assets/js/constants.js?v=20260728c"></script>
+<script src="assets/js/helpers.js?v=20260728c"></script>
+<script src="assets/js/storage.js?v=20260728c"></script>
+<script src="assets/js/parsers.js?v=20260728c"></script>
+<script src="assets/js/auth.js?v=20260728c"></script>
+<script src="assets/js/api.js?v=20260728c"></script>
+<script src="assets/js/ui/toast.js?v=20260728c"></script>
+<script src="assets/js/ui/modal.js?v=20260728c"></script>
+<script src="assets/js/ui/theme.js?v=20260728c"></script>
+<script src="assets/js/ui/navigation.js?v=20260728c"></script>
+<script src="assets/js/crud.js?v=20260728c"></script>
+<script src="assets/js/bulk.js?v=20260728c"></script>
+<script src="assets/js/views/dashboard.js?v=20260728c"></script>
+<script src="assets/js/views/tasks.js?v=20260728c"></script>
+<script src="assets/js/views/gantt.js?v=20260728c"></script>
+<script src="assets/js/views/performance.js?v=20260728c"></script>
+<script src="assets/js/views/quickview.js?v=20260728c"></script>
+<script src="assets/js/report.js?v=20260728c"></script>
+<script src="assets/js/kpi-data.js?v=20260728c"></script>
+<script src="assets/js/kpi-parser.js?v=20260728c"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260728c"></script>
+<script src="assets/js/views/action-plan.js?v=20260728c"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260728c"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260728c"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260728c"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260728c"></script>
+<script src="assets/js/initiatives.js?v=20260728c"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260728c"></script>
+<script src="assets/js/views/ai-chat.js?v=20260728c"></script>
+<script src="assets/js/views/user-management.js?v=20260728c"></script>
+<script src="assets/js/views/executive-summary.js?v=20260728c"></script>
+<script src="assets/js/views/bld-queue.js?v=20260728c"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260728c"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260728c"></script>
+<script src="assets/js/views/my-work.js?v=20260728c"></script>
+<script src="assets/js/views/dev-plan.js?v=20260728c"></script>
+<script src="assets/js/app.js?v=20260728c"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

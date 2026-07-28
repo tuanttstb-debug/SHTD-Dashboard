@@ -1,5 +1,31 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-28 (Session 54 — Dev Plan "Plan phát triển bản thân")
+**Prepared**: 2026-07-28 (Session 55 — Initiative Tracker tidy-up)
+**Context**: S55 done. v6.20-init-tidy-20260728, `?v=20260728c`. Thuần frontend (không GAS deploy). **22/22 suites PASS** (verify_initiative_tracker **19/19** + regression). Code + docs pushed.
+
+---
+
+## ✅ COMPLETED S55 — Initiative Tracker tidy-up
+- [x] Tách Initiative Done → section thu gọn "Đã hoàn thành (N)" ở cuối (collapse mặc định, lazy render)
+- [x] Ô số tổng đồng nhất `.cp-stat-card` (icon+số+nhãn), grid 5 ô responsive như Case Pipeline
+- [x] View popup mỗi ô số → `#initSummaryOverlay` short-list table (ID/Tên/Accountable/Deadline/%/Trạng thái), row → chi tiết
+- [x] Ô số + popup đếm theo **scope + Category** (không áp Status); filter Status cụ thể → tôn trọng, không tách Done
+- [x] i18n +5 keys, config v6.20, cache-bust `?v=20260728c` (Python), ESC chain, `verify_initiative_tracker.mjs` 19/19, `verify_i18n_p6` selector fix
+
+## 🟡 PRIORITY 1 — Smoke test Initiative Tracker (v6.20) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.20-init-tidy-20260728` |
+| Theo dõi Initiative (G+?/menu) | 5 ô số kiểu icon+số+nhãn, cân đối như Case Pipeline |
+| Click từng ô (Tổng/Active/Done/Overdue/Blocked) | Popup short-list đúng tập; row click → chi tiết initiative |
+| Danh sách chính | Chỉ Active/Paused/Blocked; section "Đã hoàn thành (N)" ở cuối, mặc định thu gọn |
+| Bấm section "Đã hoàn thành" | Mở ra, hiện card Done; bấm lại → thu gọn |
+| Filter Status = Done | Hiện đúng nhóm Done trong list chính (không tách section) |
+| Đổi scope Của tôi / Tất cả, filter Category | Ô số + popup cập nhật theo phạm vi |
+
+---
+
+## 📎 (S54) — Dev Plan
+**Prepared cũ**: 2026-07-28 (Session 54 — Dev Plan "Plan phát triển bản thân")
 **Context**: S54 + S54.1 done. APP_VERSION=6.19.1-dev-plan-mywork-20260728, ?v=20260728b. HEAD `e1134ce`. **21/21 suites PASS** (verify_dev_plan **40/40** + toàn bộ regression). GAS **đã deploy** (create/delete verified). Code + docs pushed.
 
 ---

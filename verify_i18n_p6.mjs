@@ -81,7 +81,7 @@ await inject(page, { withInits: true });
 // ── IP6-1: IT stat bar — VI labels ───────────────────────────────────────────
 console.log('\nIP6-1: IT stat bar labels in VI');
 const statLabelsVI = await page.$$eval(
-  '#initiativeTrackerRoot .init-stat-label', els => els.map(el => el.textContent.trim())
+  '#initiativeTrackerRoot .cp-stat-label', els => els.map(el => el.textContent.trim())
 );
 ok('Stat: "Tổng Initiative"', statLabelsVI[0] === 'Tổng Initiative');
 ok('Stat: "Đang Active"',     statLabelsVI[1] === 'Đang Active');
@@ -93,7 +93,7 @@ console.log('\nIP6-2: IT stat bar labels in EN');
 await page.evaluate(() => { setLang('en'); });
 await page.waitForTimeout(300);
 const statLabelsEN = await page.$$eval(
-  '#initiativeTrackerRoot .init-stat-label', els => els.map(el => el.textContent.trim())
+  '#initiativeTrackerRoot .cp-stat-label', els => els.map(el => el.textContent.trim())
 );
 ok('Stat EN: "Total Initiatives"', statLabelsEN[0] === 'Total Initiatives');
 ok('Stat EN: "Active"',            statLabelsEN[1] === 'Active');
@@ -213,7 +213,7 @@ await page.evaluate(() => {
 });
 await page.waitForTimeout(300);
 const statLabelsRestore = await page.$$eval(
-  '#initiativeTrackerRoot .init-stat-label', els => els.map(el => el.textContent.trim())
+  '#initiativeTrackerRoot .cp-stat-label', els => els.map(el => el.textContent.trim())
 );
 ok('Stat restored VI: "Tổng Initiative"', statLabelsRestore[0] === 'Tổng Initiative');
 ok('filterInit VI restored: "Tất cả"',

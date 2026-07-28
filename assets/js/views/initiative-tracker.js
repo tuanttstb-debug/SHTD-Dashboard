@@ -3,7 +3,8 @@
 /* ── filter state ── */
 let _initFilterCat    = '';
 let _initFilterStatus = '';
-let _initScope        = null; // null = uninit | 'mine' | 'all'
+let _initScope        = null;  // null = uninit | 'mine' | 'all'
+let _initShowDone     = false; // collapsible "Đã hoàn thành" section (default collapsed)
 
 function _getInitScope() {
   if (_initScope === null) {
@@ -35,7 +36,7 @@ function renderInitiativeTracker() {
   const currentScope = _initScope; // read after possible fallback
 
   root.innerHTML = `
-    ${_initStatBar(allRoots)}
+    ${_initStatBar()}
     <div class="toolbar" style="margin-bottom:16px;">
       <div class="toolbar-left">
         <div style="font-size:17px;font-weight:800;">${t('page.initiative-tracker')}</div>
@@ -91,54 +92,70 @@ function _initRealRoots() {
   return all.filter(i => !i.parentId && i.id !== 'BAU' && i.status !== undefined);
 }
 
-/* ── stat bar ── */
-function _initStatBar(roots) {
-  const total   = roots.length;
-  const active  = roots.filter(i => i.status === 'Active').length;
-  const done    = roots.filter(i => i.status === 'Done').length;
-  const blocked = roots.filter(i => i.status === 'Blocked').length;
-  const today   = new Date();
-  const overdue = roots.filter(i => {
+/* ── stat base: roots trong phạm vi scope + category (KHÔNG áp filter status,
+   vì chính các ô số là bảng phân rã theo status) — dùng chung cho stat bar + popup ── */
+function _initStatBase() {
+  const scope = _getInitScope();
+  return _initRealRoots().filter(i => {
+    if (_initFilterCat && i.category !== _initFilterCat)   return false;
+    if (scope === 'mine' && !isCurrentUser(i.accountable)) return false;
+    return true;
+  });
+}
+
+/* ── đếm overdue trong 1 tập roots ── */
+function _initCountOverdue(roots) {
+  const today = new Date();
+  return roots.filter(i => {
     if (!i.deadline || i.status === 'Done') return false;
     const d = _initParseDate(i.deadline);
     return d && d < today && i.pct < 100;
-  }).length;
+  });
+}
 
-  return `<div class="init-stat-bar">
-    <div class="init-stat-item">
-      <div class="init-stat-value">${total}</div>
-      <div class="init-stat-label">${t('it.stat.total')}</div>
-    </div>
-    <div class="init-stat-item" style="border-left:3px solid var(--primary);">
-      <div class="init-stat-value" style="color:var(--primary);">${active}</div>
-      <div class="init-stat-label">${t('it.stat.active')}</div>
-    </div>
-    <div class="init-stat-item" style="border-left:3px solid var(--success);">
-      <div class="init-stat-value" style="color:var(--success);">${done}</div>
-      <div class="init-stat-label">${t('it.stat.done')}</div>
-    </div>
-    <div class="init-stat-item" style="border-left:3px solid var(--danger);">
-      <div class="init-stat-value" style="color:var(--danger);">${overdue}</div>
-      <div class="init-stat-label">${t('mw.dl.overdue')}</div>
-    </div>
-    <div class="init-stat-item" style="border-left:3px solid var(--danger);">
-      <div class="init-stat-value" style="color:var(--danger);">${blocked}</div>
-      <div class="init-stat-label">Blocked</div>
-    </div>
+/* ── stat bar (đồng nhất UI với Case Pipeline: .cp-stat-card, clickable → popup) ── */
+function _initStatBar() {
+  const base    = _initStatBase();
+  const total   = base.length;
+  const active  = base.filter(i => i.status === 'Active').length;
+  const done    = base.filter(i => i.status === 'Done').length;
+  const blocked = base.filter(i => i.status === 'Blocked').length;
+  const overdue = _initCountOverdue(base).length;
+
+  const card = (type, icon, iconBg, iconColor, num, label, numColor) => `
+    <div class="cp-stat-card" onclick="openInitSummaryPopup('${type}')" style="cursor:pointer;" title="Xem danh sách">
+      <div class="cp-stat-icon" style="background:${iconBg};color:${iconColor};"><i class="fa-solid ${icon}"></i></div>
+      <div class="cp-stat-body">
+        <div class="cp-stat-num"${numColor ? ` style="color:${numColor};"` : ''}>${num}</div>
+        <div class="cp-stat-label">${label}</div>
+      </div>
+    </div>`;
+
+  return `<div class="init-summary-grid">
+    ${card('total',   'fa-diagram-project',      'var(--primary-xlight)', 'var(--primary)', total,   t('it.stat.total'),  '')}
+    ${card('active',  'fa-play-circle',          'var(--primary-xlight)', 'var(--primary)', active,  t('it.stat.active'), 'var(--primary)')}
+    ${card('done',    'fa-circle-check',         'var(--success-bg)',     'var(--success)', done,    t('it.stat.done'),   'var(--success)')}
+    ${card('overdue', 'fa-triangle-exclamation', 'var(--danger-bg)',      'var(--danger)',  overdue, t('mw.dl.overdue'),  'var(--danger)')}
+    ${card('blocked', 'fa-ban',                  'var(--danger-bg)',      'var(--danger)',  blocked, t('it.stat.blocked'),'var(--danger)')}
   </div>`;
 }
 
 /* ── card list ── */
 function _initBuildCardList() {
-  const scope = _getInitScope();
-  const roots = _initRealRoots().filter(i => {
-    if (_initFilterCat    && i.category !== _initFilterCat)    return false;
-    if (_initFilterStatus && i.status   !== _initFilterStatus) return false;
-    if (scope === 'mine' && !isCurrentUser(i.accountable))     return false;
-    return true;
-  });
+  const base = _initStatBase();
 
-  if (!roots.length) {
+  // Khi user chọn filter status cụ thể → tôn trọng lựa chọn: hiện đúng nhóm đó,
+  // không tách section "Đã hoàn thành". Ngược lại: tách Done ra section thu gọn ở cuối.
+  let mainRoots, doneRoots;
+  if (_initFilterStatus) {
+    mainRoots = base.filter(i => i.status === _initFilterStatus);
+    doneRoots = [];
+  } else {
+    mainRoots = base.filter(i => i.status !== 'Done');
+    doneRoots = base.filter(i => i.status === 'Done');
+  }
+
+  if (!mainRoots.length && !doneRoots.length) {
     return `<div class="init-empty">
       <div class="init-empty-icon"><i class="fa-solid fa-diagram-project"></i></div>
       <div class="init-empty-title">${t('it.empty.title')}</div>
@@ -146,7 +163,40 @@ function _initBuildCardList() {
     </div>`;
   }
 
-  return roots.map(ini => _initBuildCard(ini)).join('');
+  let html = '';
+  if (mainRoots.length) {
+    html += mainRoots.map(ini => _initBuildCard(ini)).join('');
+  } else if (doneRoots.length) {
+    // Không còn initiative đang hoạt động, nhưng có mục đã hoàn thành phía dưới
+    html += `<div style="text-align:center;padding:28px 16px;color:var(--text-3);font-size:13px;">
+      <i class="fa-solid fa-circle-check" style="color:var(--success);margin-right:6px;"></i>${t('it.done.all-done')}</div>`;
+  }
+  if (doneRoots.length) {
+    html += _initBuildDoneSection(doneRoots);
+  }
+  return html;
+}
+
+/* ── collapsible "Đã hoàn thành" section (mặc định thu gọn; card render lazy) ── */
+function _initBuildDoneSection(doneRoots) {
+  const open = _initShowDone;
+  return `<div class="init-done-section">
+    <button class="init-done-header ${open ? 'open' : ''}" onclick="_initToggleDone()">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>${t('it.done.title')}</span>
+      <span class="init-done-count">${doneRoots.length}</span>
+      <i class="fa-solid fa-chevron-down init-done-caret" style="margin-left:auto;font-size:11px;"></i>
+    </button>
+    <div class="init-done-body ${open ? 'open' : ''}" id="initDoneBody">
+      ${open ? doneRoots.map(ini => _initBuildCard(ini)).join('') : ''}
+    </div>
+  </div>`;
+}
+
+function _initToggleDone() {
+  _initShowDone = !_initShowDone;
+  const list = document.getElementById('initCardList');
+  if (list) list.innerHTML = _initBuildCardList();
 }
 
 /* ── single initiative card ── */
@@ -752,6 +802,72 @@ async function _loadInitHistory() {
 function closeInitViewPopup() {
   document.getElementById('initViewOverlay').style.display = 'none';
   _initViewId = null;
+}
+
+/* ── Stat-box Summary Popup (short-list table, đồng nhất với Case Pipeline) ── */
+function openInitSummaryPopup(type) {
+  const base = _initStatBase();
+  let roots, title;
+
+  if (type === 'total')        { roots = base;                                        title = t('it.stat.total'); }
+  else if (type === 'active')  { roots = base.filter(i => i.status === 'Active');     title = t('it.stat.active'); }
+  else if (type === 'done')    { roots = base.filter(i => i.status === 'Done');       title = t('it.stat.done'); }
+  else if (type === 'blocked') { roots = base.filter(i => i.status === 'Blocked');    title = t('it.stat.blocked'); }
+  else if (type === 'overdue') { roots = _initCountOverdue(base);                     title = t('mw.dl.overdue'); }
+  else return;
+
+  const titleEl = document.getElementById('initSummaryTitle');
+  const subEl   = document.getElementById('initSummarySubtitle');
+  const body    = document.getElementById('initSummaryBody');
+  if (!titleEl || !body) return;
+
+  titleEl.textContent = title;
+  subEl.textContent   = `${roots.length} initiative`;
+
+  if (!roots.length) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-3);">
+      <i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:10px;"></i>
+      ${t('it.sum.empty')}
+    </div>`;
+  } else {
+    body.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);color:var(--text-2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+            <th style="padding:8px 6px;text-align:left;font-weight:600;">ID</th>
+            <th style="padding:8px 6px;text-align:left;font-weight:600;">${t('it.sum.col.name')}</th>
+            <th style="padding:8px 6px;text-align:left;font-weight:600;">Accountable</th>
+            <th style="padding:8px 6px;font-weight:600;">Deadline</th>
+            <th style="padding:8px 6px;text-align:center;font-weight:600;">%</th>
+            <th style="padding:8px 6px;text-align:center;font-weight:600;">${t('it.col.state')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${roots.map(i => {
+            const statusKey = (i.status || 'active').toLowerCase();
+            const od = i.deadline && i.status !== 'Done' && i.pct < 100 && (() => { const d = _initParseDate(i.deadline); return d && d < new Date(); })();
+            return `<tr onclick="closeInitSummaryPopup();openInitViewPopup('${_esc(i.id)}')"
+                        style="cursor:pointer;border-bottom:1px solid var(--border);"
+                        onmouseover="this.style.background='var(--bg)'"
+                        onmouseout="this.style.background=''">
+              <td style="padding:8px 6px;font-family:var(--mono);color:var(--primary);font-weight:700;white-space:nowrap;">${_esc(i.id)}</td>
+              <td style="padding:8px 6px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${_esc(i.name || '')}">${_esc(i.name || '–')}</td>
+              <td style="padding:8px 6px;white-space:nowrap;font-size:12px;">${_esc(i.accountable || '–')}</td>
+              <td style="padding:8px 6px;white-space:nowrap;font-size:12px;${od ? 'color:var(--danger);font-weight:600;' : ''}">${_esc(i.deadline || '–')}</td>
+              <td style="padding:8px 6px;text-align:center;font-family:var(--mono);font-weight:700;">${i.pct != null ? i.pct : 0}%</td>
+              <td style="padding:8px 6px;text-align:center;"><span class="init-status-chip ${statusKey}">${_initStatusIcon(i.status)} ${_esc(i.status || 'Active')}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  document.getElementById('initSummaryOverlay').style.display = 'flex';
+}
+
+function closeInitSummaryPopup() {
+  const el = document.getElementById('initSummaryOverlay');
+  if (el) el.style.display = 'none';
 }
 
 function initViewOpenEdit() {

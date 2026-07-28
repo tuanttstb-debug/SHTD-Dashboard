@@ -1,9 +1,10 @@
 # PROJECT STATE
-**As of**: 2026-07-28 (Session 54 — Dev Plan "Plan phát triển bản thân")
-**Version**: v6.19.1 (`APP_VERSION = '6.19.1-dev-plan-mywork-20260728'`, `index.html ?v=20260728b`)
-**Remote HEAD (main)**: `e1134ce` — fix(S54): Dev Plan hiển thị đầy đủ ở My Work (+ handover docs commit sau)
+**As of**: 2026-07-28 (Session 55 — Initiative Tracker tidy-up)
+**Version**: v6.20 (`APP_VERSION = '6.20-init-tidy-20260728'`, `index.html ?v=20260728c`)
+**Remote HEAD (main)**: `b5e29f5` + commit S55 (feat initiative tidy + handover docs, cùng push)
 
-> **S54 NEW**: Left menu "Plan phát triển bản thân" (nhóm Tổng quan, G+V). Sheet `Dev_Plan` (12 cột) + `DevPlanService.gs` + 3 route `dev-*` (ownership gate). View `dev-plan.js` + section ở My Work. GAS **đã deploy** (dev-read/upsert/delete live, URL không đổi). Tests: **40/40** (verify_dev_plan) → **21/21 suites PASS**.
+> **S55 NEW**: "Theo dõi Initiative" — (1) tách Done ra section thu gọn "Đã hoàn thành (N)" ở cuối (collapse mặc định, lazy render; gọn khi ~70 initiative); (2) ô số tổng đồng nhất `.cp-stat-card` (icon+số+nhãn) grid 5 ô như Case Pipeline; (3) mỗi ô số → view popup `#initSummaryOverlay` short-list table (row → chi tiết). Ô số + popup đếm theo **scope + Category** (không áp Status). Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19** → **22/22 suites PASS**.
+> **S54 NEW**: Left menu "Plan phát triển bản thân" (nhóm Tổng quan, G+V). Sheet `Dev_Plan` (12 cột) + `DevPlanService.gs` + 3 route `dev-*` (ownership gate). View `dev-plan.js` + section ở My Work. GAS **đã deploy** (dev-read/upsert/delete live, URL không đổi). Tests: **40/40** (verify_dev_plan).
 > **S54.1 fix**: My Work giờ hiện **toàn bộ dev item đang làm của tôi** (trước chỉ hiện item quá hạn review >7 ngày → item vừa tạo bị ẩn cả tuần). Item quá hạn gắn badge "Cần review" + xếp đầu. `readDev()` re-render My Work khi load xong.
 > **⚠️** `backend/RenameUserService.gs` bị nối đoạn PowerShell chứa API key ở cuối (không do S54) — chưa commit; cần dọn + thu hồi key.
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
@@ -57,7 +58,7 @@
 | `assets/js/helpers.js` | ~80 | ✅ S43: stateChip() uses tState() for language-aware label |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
-| `assets/js/views/initiative-tracker.js` | ~760 | ✅ S49: all ~52 hard-coded VI strings → t() calls across all functions; S29: _initSave async; S27: ms auto-gen ID; S25: view popups |
+| `assets/js/views/initiative-tracker.js` | ~900 | ✅ S55: `_initStatBase`/`_initCountOverdue`; stat bar → `.cp-stat-card`; tách Done (`_initBuildDoneSection`/`_initToggleDone`); `openInitSummaryPopup`/`closeInitSummaryPopup`; S49: ~52 VI strings → t(); S29: _initSave async; S27: ms auto-gen ID; S25: view popups |
 | `assets/js/api.js` | ~390 | ✅ S31: `syncAction` merge skips `db.deletedIds`; `readFromHandle` prunes stale deletedIds; S30: atomic helpers; S24: PA2 _resolvePickerCase |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S31: `navigateTo('tasks')` now calls `selectedIds.clear()` before render; removed 7 duplicate filter listeners from `setupListeners`; S24: +closeCaseViewPopup() in Escape handler |
@@ -114,7 +115,7 @@
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
-| Initiative Tracker | ✅ | S14 milestone drill-down; S20: syncInitiativeAction() — showLoading + syncDot + GAS fallback toast |
+| Initiative Tracker | ✅ | S55: tách Done (section thu gọn), stat cards đồng nhất `.cp-stat-card`, summary popup mỗi ô số (scope+category); S14 milestone drill-down; S20: syncInitiativeAction() |
 | **Action Plan v2** | ✅ | S34: role-aware default (Admin=all teams grouped accordion; User/TL=own team kanban); mixed Tasks+Cases kanban; Blocked/overdue auto-add; Initiatives section; 24/24 tests pass |
 | **Audit history tab** | ✅ | S33: Task/Initiative/Case view popups — History tab, lazy load from GAS audit-read; startDate defaults today on Add |
 | **AI Assistant** | ⚠️ | Frontend complete; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |

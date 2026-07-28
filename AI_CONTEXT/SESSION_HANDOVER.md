@@ -1,4 +1,38 @@
 # SESSION HANDOVER
+**Date**: 2026-07-28 (Session 55 — Initiative Tracker tidy-up: tách Done + đồng nhất stat cards + summary popup)
+**Model**: Claude Opus 4.8
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD (trước S55)**: `b5e29f5` — docs(security): TD-SEC-01 resolved
+**Version**: v6.20 (`6.20-init-tidy-20260728`, `?v=20260728c`)
+
+---
+
+## 🧭 HANDOVER SUMMARY (S55) — đọc nhanh
+
+- **Task completed**: Cập nhật tính năng "Theo dõi Initiative" theo 3 yêu cầu user: (1) **tách Initiative đã hoàn thành** khỏi danh sách chính → section thu gọn "Đã hoàn thành (N)" ở cuối (mặc định collapse, card render lazy — gọn khi có ~70 initiative); (2) **đồng nhất UI** các ô số tổng → dùng chung component `.cp-stat-card` (icon + số + nhãn) như Case Pipeline, grid 5 ô responsive; (3) **view popup** cho mỗi ô số → `#initSummaryOverlay` short-list table (ID/Tên/Accountable/Deadline/%/Trạng thái), row click → chi tiết initiative.
+- **Files changed**: MOD `assets/js/views/initiative-tracker.js`, `assets/css/initiative.css`, `index.html` (+`#initSummaryOverlay`, cache-bust 58 refs), `assets/js/ui/navigation.js` (ESC), `assets/js/i18n.js` (+5 keys VI/EN), `assets/js/config.js` (v6.20). NEW `verify_initiative_tracker.mjs`. MOD `run_tests.mjs`, `verify_i18n_p6.mjs` (selector `.init-stat-label`→`.cp-stat-label`).
+- **Decision**: (a) Tách Done = section thu gọn ở cuối (không ẩn hẳn) — chọn A qua phỏng vấn. (b) Ô số + popup đếm theo **scope (mine/all) + Category filter**, KHÔNG áp filter Status (vì các ô CHÍNH LÀ bảng phân rã theo status → nếu áp sẽ tự về 0). (c) Khi user chọn filter Status cụ thể → tôn trọng, hiện đúng nhóm, không tách Done. (d) Reuse thẳng class `.cp-stat-card` (định nghĩa ở case-pipeline.css, load global) thay vì tạo class riêng → đồng nhất tối đa, thêm mỗi `.init-summary-grid` (5 cột).
+- **Blocker**: Không có. GAS **không cần deploy** (thuần frontend, không đụng backend/schema). User cần **hard-reload** để nhận `v6.20`.
+- **Next step**: Smoke test production (badge v6.20; menu Theo dõi Initiative → 5 ô số icon; click từng ô mở popup short-list; section "Đã hoàn thành" collapse/expand; filter Status vẫn hiện đúng nhóm). Xem checklist trong TODO_NEXT.
+- **Regression risk**: 🟢 THẤP — full suite **22/22 PASS** (thêm `verify_initiative_tracker` 19/19). `verify_i18n_p6` chỉ đổi selector theo markup mới (label/thứ tự/text không đổi). Không đụng schema, backend, hay CRUD initiative. Điểm để ý: `.cp-stat-card` giờ được 2 view dùng chung — nếu sau này sửa style Case Pipeline sẽ ảnh hưởng Initiative (chủ đích design-system).
+
+## Tasks Completed (S55 — Initiative Tracker tidy-up)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S55-T1 | `_initStatBase()` (scope+category) + `_initCountOverdue()`; rewrite `_initStatBar()` → `.cp-stat-card` grid 5 ô clickable | `views/initiative-tracker.js` | ✅ |
+| S55-T2 | `_initBuildCardList()` tách main (non-Done) vs `_initBuildDoneSection()` collapsible + `_initToggleDone()` (lazy render); tôn trọng filter Status | `views/initiative-tracker.js` | ✅ |
+| S55-T3 | `openInitSummaryPopup(type)` / `closeInitSummaryPopup()` — short-list table 5 loại (total/active/done/overdue/blocked) | `views/initiative-tracker.js` | ✅ |
+| S55-T4 | `#initSummaryOverlay` markup (mirror `cpSummaryOverlay`) | `index.html` | ✅ |
+| S55-T5 | `.init-summary-grid` (5→3→2→1 cột) + `.init-done-section/header/count/caret/body` | `assets/css/initiative.css` | ✅ |
+| S55-T6 | ESC chain +`closeInitSummaryPopup()` | `assets/js/ui/navigation.js` | ✅ |
+| S55-T7 | i18n +5 keys VI+EN (`it.stat.blocked`, `it.done.title`, `it.done.all-done`, `it.sum.empty`, `it.sum.col.name`) | `assets/js/i18n.js` | ✅ |
+| S55-T8 | `config.js` v6.20; cache-bust `?v=20260728c` (58 refs, Python) | `config.js`, `index.html` | ✅ |
+| S55-T9 | `verify_initiative_tracker.mjs` (NEW, port 3044) — **19/19 PASS**; +run_tests.mjs; `verify_i18n_p6.mjs` selector fix → **22/22 suites PASS** | tests | ✅ |
+
+---
+
+# SESSION HANDOVER (S54)
 **Date**: 2026-07-28 (Session 54 — Dev Plan: "Plan phát triển bản thân")
 **Model**: Claude Opus 4.8
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
