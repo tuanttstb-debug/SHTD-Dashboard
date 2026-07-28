@@ -87,6 +87,10 @@ const page     = await browser.newPage();
 const jsErrors = [];
 page.on('pageerror', e => jsErrors.push(e.message));
 
+// Cách ly khỏi Google Apps Script thật — mọi loader background (readDev/readCases/…)
+// bị chặn để không ghi đè mock dbDev giữa test (dev-read đã deploy lên production).
+await page.route('**://script.google.com/**', route => route.abort());
+
 console.log('\n══════════════════════════════════════════════');
 console.log('  S54 Dev Plan — Playwright EVD');
 console.log('══════════════════════════════════════════════\n');
@@ -96,6 +100,9 @@ await page.waitForTimeout(500);
 
 /* ── Inject mock data + auth + navigate ── */
 await page.evaluate(({ dev, user }) => {
+  // Cách ly khỏi network thật: chặn các loader background ghi đè mock dbDev
+  // (GAS dev-read đã deploy → readDev() thật sẽ clobber dbDev giữa chừng).
+  window.readDev = async () => {};
   dbDev = dev;
   localStorage.setItem('shtd_auth_v1', JSON.stringify({
     token: 'mock-token',
@@ -228,29 +235,34 @@ const afterDel = await page.evaluate(() => dbDev.some(d => d.id === 'DEV-26-004'
 log('DP11-deleted', !afterDel, 'DEV-26-004 đã bị xóa khỏi dbDev');
 await page.evaluate(() => { if (window._origUiConfirm) window.uiConfirm = window._origUiConfirm; });
 
-/* ── DP12 — MY WORK REMINDER ── */
+/* ── DP12 — MY WORK: hiện toàn bộ dev item ĐANG LÀM của tôi ── */
 await page.evaluate(() => navigateTo('my-work'));
 await page.waitForTimeout(400);
-const devrvSection = await page.$('#mwDevReviewSection');
-log('DP12-section', !!devrvSection, 'My Work có section nhắc review Dev Plan');
+log('DP12-section', !!(await page.$('#mwDevReviewSection')), 'My Work có section Plan phát triển bản thân');
+// Của tôi & chưa xong: 001 (stale) + item vừa tạo ở DP8 (fresh). 002 done, 004 đã xóa, 003 người khác.
 const devrvItems = await page.$$eval('.mw-devrv-item', els => els.length);
-// DEV-26-001 stale (001); 004 đã xóa → còn 1 item stale
-log('DP12-stale-count', devrvItems === 1, `Số item cần review ở My Work = ${devrvItems} (expected 1)`);
-if (devrvItems > 0) {
-  await page.evaluate(() => {
-    const p = document.querySelector('.mw-devrv-prog'); if (p) p.value = '55';
-    const id = document.querySelector('.mw-devrv-item')?.getAttribute('data-id');
-    if (id) mwDevReviewSave(id);
-  });
-  await page.waitForTimeout(300);
-  const afterReview = await page.$$eval('.mw-devrv-item', els => els.length);
-  log('DP12-review-removes', afterReview === 0, `Sau khi review → item rời danh sách (còn ${afterReview})`);
-  const prog001 = await page.evaluate(() => dbDev.find(d => d.id === 'DEV-26-001')?.progress);
-  log('DP12-progress-saved', prog001 === '55', `Tiến độ đã lưu = ${prog001}% (expected 55)`);
-} else {
-  log('DP12-review-removes', false, 'Không có item để review (unexpected)');
-  log('DP12-progress-saved', false, 'Không có item để review (unexpected)');
-}
+log('DP12-active-count', devrvItems === 2, `Số dev item đang làm hiện ở My Work = ${devrvItems} (expected 2: 001 + item mới)`);
+const staleBadges = await page.$$eval('.mw-devrv-badge', els => els.length);
+log('DP12-stale-badge', staleBadges === 1, `Badge "Cần review" = ${staleBadges} (expected 1: chỉ 001 quá hạn)`);
+const freshShown = await page.$$eval('.mw-devrv-name', els => els.some(e => e.textContent.includes('Task test từ Playwright')));
+log('DP12-fresh-shown', freshShown, 'Item vừa tạo (fresh) VẪN hiện ở My Work');
+
+// Review item stale (001, xếp đầu) → cập nhật % + reset mốc → badge biến mất, item vẫn còn
+await page.evaluate(() => {
+  const p = document.querySelector('.mw-devrv-item.is-stale .mw-devrv-prog')
+         || document.querySelector('.mw-devrv-prog');
+  if (p) p.value = '55';
+  const id = (document.querySelector('.mw-devrv-item.is-stale')
+           || document.querySelector('.mw-devrv-item'))?.getAttribute('data-id');
+  if (id) mwDevReviewSave(id);
+});
+await page.waitForTimeout(300);
+const afterBadges = await page.$$eval('.mw-devrv-badge', els => els.length);
+log('DP12-badge-cleared', afterBadges === 0, `Sau review → badge "Cần review" hết (còn ${afterBadges})`);
+const stillShown = await page.$$eval('.mw-devrv-item', els => els.length);
+log('DP12-still-shown', stillShown === 2, `Item đã review VẪN trong danh sách (còn ${stillShown})`);
+const prog001 = await page.evaluate(() => dbDev.find(d => d.id === 'DEV-26-001')?.progress);
+log('DP12-progress-saved', prog001 === '55', `Tiến độ đã lưu = ${prog001}% (expected 55)`);
 await shot(page, '05_mywork_reminder');
 
 /* ── DP13 — i18n EN ── */

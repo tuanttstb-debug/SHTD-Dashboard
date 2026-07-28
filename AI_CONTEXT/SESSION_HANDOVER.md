@@ -33,12 +33,18 @@ Tính năng mới ở Left menu (nhóm Tổng quan): **Plan phát triển bản 
 - **PIC** = dropdown user (non-admin khóa vào chính mình); **Đơn vị phối hợp** = text tự do.
 - **Xem người khác** = dropdown filter PIC (mặc định=tôi, "Tất cả" nhóm theo PIC tái hiện layout Excel).
 
-### 🔴 BLOCKING — GAS redeploy (Dev Plan chưa chạy thật đến khi làm bước này)
-1. GAS editor → thêm file `DevPlanService.gs` (copy từ repo)
-2. Cập nhật `Code.gs` (đã có 3 route dev-*)
-3. Deploy → Manage deployments → New version (URL không đổi)
-4. Sheet `Dev_Plan` tự tạo ở lần `dev-read` đầu tiên
-> Trước khi redeploy: readDev/_gasDevUpsert nhận lỗi "action không hợp lệ" nhưng đã **catch an toàn** — dữ liệu vẫn lưu localStorage, không crash.
+### ✅ GAS redeploy — ĐÃ XONG (user, 2026-07-28)
+`DevPlanService.gs` + `Code.gs` deployed, URL không đổi. Create/delete verified live. Sheet `Dev_Plan` auto-created.
+
+### 🔧 S54.1 fix — Dev Plan hiển thị ở "Công việc của tôi" (2026-07-28)
+**Triệu chứng user báo**: tạo/xóa OK nhưng item không hiện ở My Work.
+**Nguyên nhân**: `_mwGetDevReview` cũ chỉ lấy item **stale** (chưa review >7 ngày). Item vừa tạo có `lastReview=now` → không stale → ẩn suốt tuần đầu.
+**Sửa**:
+- `my-work.js` — `_mwGetDevReview` giờ trả **mọi dev item đang làm (chưa Hoàn thành) của tôi**, sort stale-first; item stale gắn badge "Cần review" (`.mw-devrv-badge` + class `.is-stale`).
+- `app.js` — `readDev().then(...)` re-render My Work/Dev Plan khi load xong server (tránh landing render trước khi dữ liệu về).
+- `i18n.js` — `dev.review.title` đổi thành "Kế hoạch phát triển bản thân của tôi"; +`dev.review.badge`.
+- `config.js` — `6.19.1-dev-plan-mywork-20260728`; cache-bust `?v=20260728b`.
+- `verify_dev_plan.mjs` — DP12 cập nhật semantics (hiện tất cả active, badge stale); +route-abort `script.google.com` để test cách ly network (dev-read đã live sẽ clobber mock). **40/40 PASS**, deterministic.
 
 ### ⚠️ CẢNH BÁO BẢO MẬT (không do S54 tạo ra)
 `backend/RenameUserService.gs` trong working tree bị **nối thêm 1 đoạn PowerShell chứa API key + proxy** ở cuối file (không hợp lệ trong file .gs). S54 **KHÔNG commit** file này. Cần: xóa đoạn thừa + **thu hồi/đổi API key** đã lộ (`sk-6IeUw...`).

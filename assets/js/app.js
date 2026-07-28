@@ -39,7 +39,10 @@ async function startApp() {
     readInitiatives(); // non-blocking
     readCases();       // non-blocking — load Case_Pipeline sau tasks
     readIssues();      // non-blocking — load Issue_Tracker
-    readDev();         // non-blocking — load Dev_Plan
+    readDev().then(() => {   // non-blocking — load Dev_Plan; refresh My Work if visible
+      if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
+      if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
+    });
     loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
   }
 }

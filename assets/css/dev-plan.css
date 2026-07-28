@@ -199,14 +199,26 @@
   .dev-form-full { grid-column: 1; }
 }
 
-/* ── My Work — dev review reminder section ── */
-.mw-devrv-section { border-left: 3px solid var(--warning, #f59e0b); }
+/* ── My Work — dev plan section ── */
 .mw-devrv-list { display: flex; flex-direction: column; gap: 10px; }
 .mw-devrv-item {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
+}
+.mw-devrv-item.is-stale { border-left: 3px solid var(--warning, #f59e0b); }
+.mw-devrv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(245,158,11,.14);
+  color: var(--warning, #f59e0b);
+  white-space: nowrap;
 }
 .mw-devrv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .mw-devrv-name { font-weight: 600; color: var(--text-1); flex: 1; min-width: 120px; }

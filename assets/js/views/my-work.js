@@ -165,24 +165,33 @@ function _mwBuildChampionSection(champTasks) {
 function _mwGetDevReview(user) {
   if (!user || typeof dbDev === 'undefined') return [];
   const uname = (user.username || '').toLowerCase();
+  const isDone = d => typeof _devIsDone === 'function' ? _devIsDone(d) : d.state === 'Hoàn thành';
+  const isStale = d => typeof _devIsStaleReview === 'function' ? _devIsStaleReview(d) : false;
   return (dbDev || [])
-    .filter(d => (d.pic || '').toLowerCase() === uname)
-    .filter(d => typeof _devIsStaleReview === 'function' ? _devIsStaleReview(d) : false)
-    .sort((a, b) => (a.endDate || '9999') < (b.endDate || '9999') ? -1 : 1);
+    .filter(d => (d.pic || '').toLowerCase() === uname)  // của tôi
+    .filter(d => !isDone(d))                              // đang làm (chưa hoàn thành)
+    .sort((a, b) => {
+      const as = isStale(a) ? 0 : 1;                     // cần review lên đầu
+      const bs = isStale(b) ? 0 : 1;
+      if (as !== bs) return as - bs;
+      return (a.endDate || '9999') < (b.endDate || '9999') ? -1 : 1;
+    });
 }
 
 function _mwBuildDevReviewSection(devItems) {
   if (!devItems || devItems.length === 0) return '';
 
   const items = devItems.map(d => {
-    const id   = esc(d.id);
-    const prog = Math.min(Math.max(parseInt(d.progress) || 0, 0), 100);
+    const id    = esc(d.id);
+    const prog  = Math.min(Math.max(parseInt(d.progress) || 0, 0), 100);
+    const stale = typeof _devIsStaleReview === 'function' && _devIsStaleReview(d);
     return `
-<div class="mw-devrv-item" data-id="${id}">
+<div class="mw-devrv-item${stale ? ' is-stale' : ''}" data-id="${id}">
   <div class="mw-devrv-head">
     <span class="mw-init-id">${id}</span>
     <span class="mw-devrv-name" title="${esc(d.name)}">${esc(d.name)}</span>
     ${stateChip(d.state)}
+    ${stale ? `<span class="mw-devrv-badge"><i class="fa-solid fa-bell"></i> ${t('dev.review.badge')}</span>` : ''}
     ${_mwDeadlineBadge(d.endDate)}
   </div>
   <div class="mw-devrv-controls">
