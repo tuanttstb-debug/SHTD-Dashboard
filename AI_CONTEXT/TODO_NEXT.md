@@ -21,8 +21,8 @@
 - [x] `i18n.js` `dev.review.title` + `dev.review.badge`; v6.19.1 / ?v=20260728b
 - [x] `verify_dev_plan.mjs` DP12 semantics mới + route-abort `script.google.com` (cách ly network) → **40/40 PASS** deterministic
 
-## 🔴 PRIORITY 0 — Dọn RenameUserService.gs + thu hồi key lộ (CHƯA XONG)
-- `backend/RenameUserService.gs` bị nối 1 đoạn PowerShell (function `claude-mkp`) chứa `MKP_API_KEY` ở cuối file → xóa đoạn thừa (từ dòng `$env:MKP_API_BASE...` xuống hết) + **đổi/thu hồi key `sk-6IeUw...`**. S54 KHÔNG commit file này (working tree còn bẩn). Xem TD-SEC-01.
+## ✅ DONE — Dọn RenameUserService.gs + kiểm tra key lộ (2026-07-28)
+- Đã xóa đoạn PowerShell thừa khỏi `backend/RenameUserService.gs` → file GAS sạch. Xác minh key **chưa từng lên git** (`git log -S` = 0; working copy == committed). Chỉ còn khuyến nghị: đổi/thu hồi key phía provider (precaution). Xem TD-SEC-01.
 
 ## 🟡 PRIORITY 1 — Smoke test Dev Plan trên production
 | Check | Expected |

@@ -10,11 +10,10 @@
 
 ## 🆕 DELTA — Session 54 (2026-07-28)
 
-### TD-SEC-01: API key lộ trong `backend/RenameUserService.gs` 🔴 CRITICAL
-**Issue**: Working tree của `backend/RenameUserService.gs` bị nối thêm 1 đoạn PowerShell (function `claude-mkp`) chứa `MKP_API_KEY = "sk-6IeUw..."` + proxy nội bộ ở cuối file `.gs` (nội dung rác, không hợp lệ trong GAS).
-**Impact**: Key có thể bị commit nhầm/lộ; file `.gs` hỏng nếu paste nguyên vào GAS.
-**Status**: S54 KHÔNG stage/commit file này (đã cô lập). Chưa dọn.
-**Action**: Xóa đoạn từ `$env:MKP_API_BASE...` đến hết file; **thu hồi/đổi key** phía nhà cung cấp; kiểm tra git history xem key từng bị commit chưa.
+### TD-SEC-01: API key lộ trong `backend/RenameUserService.gs` ✅ RESOLVED 2026-07-28 (còn 1 khuyến nghị)
+**Issue**: Working tree của `backend/RenameUserService.gs` bị nối thêm 1 đoạn PowerShell (function `claude-mkp`) chứa `MKP_API_KEY` + proxy nội bộ ở cuối file `.gs` (nội dung rác, không hợp lệ trong GAS).
+**Resolution**: Đã xóa đoạn thừa (dòng `$env:MKP_API_BASE...` → hết file); file trở về đúng bản GAS sạch. **Xác minh key CHƯA từng bị commit/push**: `git log --all -S "<key>"` → 0 kết quả; working copy sau khi dọn == bản committed (không có diff). Vậy key chỉ tồn tại ở file cục bộ, KHÔNG lên GitHub.
+**Khuyến nghị còn lại (⚪ precaution)**: Vẫn nên **đổi/thu hồi key** phía nhà cung cấp vì đã hiển thị cục bộ (có thể đã dùng trong shell). Không bắt buộc về mặt lộ repo.
 
 ### TD-DEV-01: Dev Plan — write fire-and-forget, không optimistic-lock ⚪ LOW
 **Issue**: `_gasDevUpsert/_gasDevDelete` là local-first + fire-and-forget (giống Issue Tracker), không read-then-patch / không version conflict như Task_Master.
