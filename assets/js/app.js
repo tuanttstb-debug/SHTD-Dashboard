@@ -27,6 +27,7 @@ async function startApp() {
   loadCache();
   loadCasesFromCache();
   loadIssuesFromCache();
+  loadDevFromCache();
   setupListeners();
   renderAll();
   navigateTo('my-work');
@@ -38,6 +39,7 @@ async function startApp() {
     readInitiatives(); // non-blocking
     readCases();       // non-blocking — load Case_Pipeline sau tasks
     readIssues();      // non-blocking — load Issue_Tracker
+    readDev();         // non-blocking — load Dev_Plan
     loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
   }
 }
@@ -87,6 +89,7 @@ function renderAll() {
   if (document.getElementById('view-user-management')?.style.display === 'contents') renderUserManagement();
   if (document.getElementById('view-kpi-overview')?.style.display === 'contents') renderKpiOverview();
   if (document.getElementById('view-owner-analysis')?.style.display === 'contents') renderOwnerAnalysis();
+  if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
   if (_qvIsOpen) renderQuickView();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
@@ -172,6 +175,7 @@ async function syncDB() {
       readFromHandle(),
       readCases(),
       readIssues(),
+      readDev(),
       readInitiatives(),
     ]);
     hideLoading(); renderAll();
@@ -185,7 +189,7 @@ async function uiClearCache() {
     'warn', 'Ngắt kết nối');
   if (!ok) return;
   localStorage.removeItem('shtd_v2');
-  db.tasks = []; db.initiatives = []; dbCases = [];
+  db.tasks = []; db.initiatives = []; dbCases = []; dbDev = [];
   document.getElementById('btnConnect').innerHTML = '<i class="fa-brands fa-google"></i> Kết nối GG Sheets';
   document.getElementById('btnConnect').className = 'btn btn-outline btn-sm';
   document.getElementById('btnSync').style.display = 'none';

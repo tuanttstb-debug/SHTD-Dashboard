@@ -160,6 +160,65 @@ function _mwBuildChampionSection(champTasks) {
 </div>`;
 }
 
+// ── Dev Plan review reminder (Plan phát triển bản thân) ──
+
+function _mwGetDevReview(user) {
+  if (!user || typeof dbDev === 'undefined') return [];
+  const uname = (user.username || '').toLowerCase();
+  return (dbDev || [])
+    .filter(d => (d.pic || '').toLowerCase() === uname)
+    .filter(d => typeof _devIsStaleReview === 'function' ? _devIsStaleReview(d) : false)
+    .sort((a, b) => (a.endDate || '9999') < (b.endDate || '9999') ? -1 : 1);
+}
+
+function _mwBuildDevReviewSection(devItems) {
+  if (!devItems || devItems.length === 0) return '';
+
+  const items = devItems.map(d => {
+    const id   = esc(d.id);
+    const prog = Math.min(Math.max(parseInt(d.progress) || 0, 0), 100);
+    return `
+<div class="mw-devrv-item" data-id="${id}">
+  <div class="mw-devrv-head">
+    <span class="mw-init-id">${id}</span>
+    <span class="mw-devrv-name" title="${esc(d.name)}">${esc(d.name)}</span>
+    ${stateChip(d.state)}
+    ${_mwDeadlineBadge(d.endDate)}
+  </div>
+  <div class="mw-devrv-controls">
+    <label class="mw-devrv-lbl">${t('dev.col.progress')}</label>
+    <input class="mw-devrv-prog" id="mwDevrvP-${id}" type="number" min="0" max="100" value="${prog}">
+    <input class="mw-devrv-note" id="mwDevrvN-${id}" type="text"
+      placeholder="${t('dev.col.note')}…" value="${esc(d.note || '')}">
+    <button class="btn btn-primary btn-sm" onclick="mwDevReviewSave('${id}')">
+      <i class="fa-solid fa-check"></i> ${t('dev.review.save')}
+    </button>
+  </div>
+</div>`;
+  }).join('');
+
+  return `
+<div class="mw-section mw-devrv-section" id="mwDevReviewSection">
+  <div class="mw-section-header">
+    <div class="mw-section-icon champion"><i class="fa-solid fa-seedling"></i></div>
+    <span class="mw-section-title">${t('dev.review.title')}</span>
+    <span class="mw-count">${devItems.length}</span>
+    <span class="mw-section-link" onclick="navigateTo('dev-plan')">${t('mw.view-all')}</span>
+  </div>
+  <div class="mw-devrv-list">${items}</div>
+</div>`;
+}
+
+function mwDevReviewSave(id) {
+  const pEl = document.getElementById('mwDevrvP-' + id);
+  const nEl = document.getElementById('mwDevrvN-' + id);
+  const prog = pEl ? pEl.value : null;
+  const note = nEl ? nEl.value : null;
+  if (typeof devQuickReview === 'function') devQuickReview(id, prog, note);
+  toast(t('dev.review.saved'), 'success');
+  renderMyWork(); // item đã review → rời khỏi danh sách nhắc
+}
+
 // ── Build HTML ──
 
 function _mwRagDots(taskId, currentRag) {
@@ -381,6 +440,7 @@ function renderMyWork() {
   const myCases     = roleView === 'ptkd' ? _mwGetMyCases(user) : [];
   const urgent      = _mwGetUrgent(myTasks, myCases);
   const champTasks  = _mwGetChampionTasks(myTasks);
+  const devReview   = _mwGetDevReview(user);
 
   const section3 = roleView === 'ptkd'
     ? _mwBuildCaseSection(myCases)
@@ -400,6 +460,7 @@ function renderMyWork() {
     </div>
   </div>
   ${_mwBuildChampionSection(champTasks)}
+  ${_mwBuildDevReviewSection(devReview)}
   ${_mwBuildUrgentSection(urgent)}
   ${_mwBuildTaskSection(myTasks)}
   ${section3}

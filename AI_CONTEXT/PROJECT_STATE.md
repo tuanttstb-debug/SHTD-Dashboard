@@ -1,7 +1,10 @@
 # PROJECT STATE
-**As of**: 2026-07-16 (Session 53 — RenameUserService migration PhuongNPL_C → PhuongNPL)
-**Version**: v6.18 (`APP_VERSION = '6.18-sync-topbar-nguoilog-20260710'`, `index.html ?v=20260710f`)
-**Remote HEAD (main)**: `8437f2d` — feat(S53): RenameUserService — migration PhuongNPL_C → PhuongNPL
+**As of**: 2026-07-28 (Session 54 — Dev Plan "Plan phát triển bản thân")
+**Version**: v6.19 (`APP_VERSION = '6.19-dev-plan-20260728'`, `index.html ?v=20260728`)
+**Remote HEAD (main)**: `<new>` — feat(S54): Dev Plan — Plan phát triển bản thân
+
+> **S54 NEW**: Left menu "Plan phát triển bản thân" (nhóm Tổng quan, G+V). Sheet `Dev_Plan` (12 cột) + `DevPlanService.gs` + 3 route `dev-*` (ownership gate). View `dev-plan.js` + nhắc review ở My Work. **⏳ Cần GAS redeploy** để chạy thật. Tests: 37/37 (verify_dev_plan) → **21/21 suites PASS**.
+> **⚠️** `backend/RenameUserService.gs` bị nối đoạn PowerShell chứa API key ở cuối (không do S54) — chưa commit; cần dọn + thu hồi key.
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
 **GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
 

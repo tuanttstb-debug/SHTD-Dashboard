@@ -1,0 +1,222 @@
+/* ── Dev Plan (Plan phát triển bản thân) — dev- prefix ── */
+
+.dev-page { padding: 4px 2px 40px; }
+
+.dev-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.dev-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.dev-title i { color: var(--success); }
+.dev-sub { font-size: 13px; color: var(--text-3); margin-top: 3px; }
+
+/* ── Stat bar ── */
+.dev-stat-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 640px) { .dev-stat-bar { grid-template-columns: 1fr 1fr; } }
+
+.dev-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.dev-stat-num { font-size: 24px; font-weight: 800; line-height: 1.1; color: var(--text-1); }
+.dev-stat-lbl { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.dev-stat.is-active .dev-stat-num { color: var(--primary); }
+.dev-stat.is-done   .dev-stat-num { color: var(--success); }
+.dev-stat.is-stale  { border-color: var(--warning, #f59e0b); }
+.dev-stat.is-stale  .dev-stat-num { color: var(--warning, #f59e0b); }
+
+/* ── Toolbar ── */
+.dev-toolbar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.dev-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.dev-filter-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.dev-filter-search { flex: 1; min-width: 180px; }
+.form-control-sm { padding: 6px 10px; font-size: 13px; height: auto; }
+
+/* ── Table ── */
+.dev-table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+.dev-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 900px;
+  background: var(--surface);
+}
+.dev-table thead th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.dev-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.dev-row:hover { background: var(--surface-2, #f8f9fa); }
+.dev-row.is-done { opacity: .62; }
+
+.dev-group-row td {
+  background: var(--surface-2, #f3f4f6);
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 8px 12px;
+}
+.dev-group-row i { color: var(--primary); margin-right: 6px; }
+.dev-group-count {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--primary-xlight);
+  color: var(--primary);
+  font-size: 11px;
+}
+
+.dev-stt { color: var(--text-3); font-variant-numeric: tabular-nums; }
+.dev-cell-name { font-weight: 600; color: var(--text-1); line-height: 1.35; }
+.dev-cell-id { font-size: 10px; font-family: monospace; color: var(--text-3); margin-top: 2px; }
+.dev-cell-target { max-width: 260px; color: var(--text-2); }
+.dev-cell-muted { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.dev-cell-note {
+  max-width: 160px;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Progress bar ── */
+.dev-prog {
+  height: 7px;
+  border-radius: 99px;
+  background: var(--surface-2, #e5e7eb);
+  overflow: hidden;
+}
+.dev-prog-fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--primary);
+  transition: width .2s;
+}
+.dev-prog-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+.dev-prog-lbl { font-size: 11px; font-weight: 700; color: var(--text-2); }
+.dev-review-flag { color: var(--warning, #f59e0b); font-size: 11px; }
+
+.dev-readonly { color: var(--text-3); opacity: .5; font-size: 12px; }
+
+.dev-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-3);
+  font-size: 14px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.dev-empty i { display: block; font-size: 30px; opacity: .25; margin-bottom: 10px; color: var(--success); }
+
+/* ── Modal ── */
+#devModal {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.dev-modal-box {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 26px 30px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+.dev-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.dev-modal-title { font-size: 18px; font-weight: 800; }
+.dev-modal-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.dev-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+.dev-form-full { grid-column: 1 / -1; }
+.dev-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── View overlay (reuse cp-view-* card) ── */
+#devViewOverlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 1050;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .dev-form-grid { grid-template-columns: 1fr; }
+  .dev-form-full { grid-column: 1; }
+}
+
+/* ── My Work — dev review reminder section ── */
+.mw-devrv-section { border-left: 3px solid var(--warning, #f59e0b); }
+.mw-devrv-list { display: flex; flex-direction: column; gap: 10px; }
+.mw-devrv-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.mw-devrv-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.mw-devrv-name { font-weight: 600; color: var(--text-1); flex: 1; min-width: 120px; }
+.mw-devrv-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mw-devrv-lbl { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .4px; }
+.mw-devrv-prog { width: 72px; padding: 5px 8px; font-size: 13px; }
+.mw-devrv-note { flex: 1; min-width: 160px; padding: 5px 10px; font-size: 13px; }
+.mw-devrv-prog, .mw-devrv-note {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--text-1);
+}

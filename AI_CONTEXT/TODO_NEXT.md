@@ -1,6 +1,34 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-16 (Session 53 — RenameUserService migration PhuongNPL_C → PhuongNPL)
-**Context**: S53 done. HEAD=8437f2d. APP_VERSION=6.18-sync-topbar-nguoilog-20260710 (không đổi). 19/20 suites PASS (1 pre-existing failure in verify_my_work). i18n COMPLETE.
+**Prepared**: 2026-07-28 (Session 54 — Dev Plan "Plan phát triển bản thân")
+**Context**: S54 done. APP_VERSION=6.19-dev-plan-20260728, ?v=20260728. **21/21 suites PASS** (verify_dev_plan 37/37 mới + toàn bộ regression). Dev Plan code xong + push; **CẦN GAS redeploy** để chạy thật.
+
+---
+
+## ✅ COMPLETED S54 — Dev Plan (Plan phát triển bản thân)
+
+- [x] `backend/DevPlanService.gs` (NEW) — sheet `Dev_Plan` 12 cột; `devRead/devUpsertRow/devDeleteRow/devGetPicById`
+- [x] `backend/Code.gs` — +3 route `dev-read/dev-upsert/dev-delete` + ownership gate (PIC==tokenData.u hoặc Admin)
+- [x] `constants.js` (`dbDev`,`DEV_STATES`,`DEV_COLS`), `api.js` (Dev API), `app.js` (startup+syncDB+renderAll+clear)
+- [x] `views/dev-plan.js` + `css/dev-plan.css` (NEW) — toolbar filter PIC/state/search, bảng nhóm-theo-PIC, CRUD modal, view popup, ownership
+- [x] `my-work.js` — section nhắc review Dev Plan (>7 ngày chưa update); quick save % + note reset mốc
+- [x] `navigation.js` (G+V, dispatch, ESC), `index.html` (nav, view, modal, overlay, KB, script), `i18n.js` (dev.* VI+EN)
+- [x] `config.js` v6.19; cache-bust ?v=20260728 (58 refs, Python)
+- [x] `verify_dev_plan.mjs` 37/37 + `run_tests.mjs` → 21/21 suites PASS
+
+## 🔴 PRIORITY 0 — GAS redeploy (BLOCKING cho Dev Plan chạy thật)
+
+| Bước | Action |
+|---|---|
+| 1 | GAS editor → New file → paste `backend/DevPlanService.gs` |
+| 2 | Cập nhật `Code.gs` (đã có 3 route dev-*) |
+| 3 | Deploy → Manage deployments → New version (URL không đổi) |
+| 4 | Mở "Plan phát triển bản thân" → thêm 1 item test → sheet `Dev_Plan` tự tạo |
+| 5 | Login user khác → xác nhận xem được (read-only), sửa của mình OK |
+
+## 🔴 PRIORITY 0b — Dọn RenameUserService.gs + thu hồi key lộ
+- `backend/RenameUserService.gs` bị nối 1 đoạn PowerShell (function `claude-mkp`) chứa `MKP_API_KEY` ở cuối file → xóa đoạn thừa (từ dòng `$env:MKP_API_BASE...` trở xuống) + **đổi/thu hồi key `sk-6IeUw...`**. S54 chưa commit file này.
+
+---
 
 ---
 

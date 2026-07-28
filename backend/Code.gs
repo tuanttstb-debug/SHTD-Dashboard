@@ -220,6 +220,46 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    // ── Dev Plan (Plan phát triển bản thân) ──
+    // Ownership: chỉ PIC (chủ dòng) hoặc Admin được ghi/xóa.
+    if (action === 'dev-read') {
+      return _jsonResponse({ status: 'ok', values: devRead() });
+    }
+
+    if (action === 'dev-upsert') {
+      if (!body.row || !Array.isArray(body.row) || !body.devId) {
+        throw new Error('dev-upsert: thiếu row hoặc devId.');
+      }
+      if (tokenData.r !== 'Admin') {
+        var me         = String(tokenData.u || '').toLowerCase();
+        var existingPic = devGetPicById(body.devId);           // null nếu dòng mới
+        var newPic      = String(body.row[3] || '').toLowerCase(); // cột D = PIC
+        if (existingPic !== null && String(existingPic).toLowerCase() !== me) {
+          return _jsonResponse({ status: 'error', error: 'FORBIDDEN_NOT_OWNER' });
+        }
+        if (newPic !== me) {
+          return _jsonResponse({ status: 'error', error: 'FORBIDDEN_PIC_MISMATCH' });
+        }
+      }
+      devUpsertRow(body.row, body.devId);
+      auditLog(tokenData, 'dev-upsert', body.devId + (body.devName ? ' | ' + body.devName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'dev-delete') {
+      if (!body.devId) throw new Error('dev-delete: thiếu devId.');
+      if (tokenData.r !== 'Admin') {
+        var meDel        = String(tokenData.u || '').toLowerCase();
+        var existingPicD = devGetPicById(body.devId);
+        if (existingPicD !== null && String(existingPicD).toLowerCase() !== meDel) {
+          return _jsonResponse({ status: 'error', error: 'FORBIDDEN_NOT_OWNER' });
+        }
+      }
+      devDeleteRow(body.devId);
+      auditLog(tokenData, 'dev-delete', body.devId + (body.devName ? ' | ' + body.devName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

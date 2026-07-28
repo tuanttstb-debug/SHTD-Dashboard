@@ -98,3 +98,21 @@ const CASE_COLS = [
   'Start Date', 'Deadline', 'RAG',
   'Cần BLĐ?', 'Highlight dashboard?', 'Ghi chú', 'Ý kiến BLĐ'
 ];
+
+// ── Dev Plan (Plan phát triển bản thân) ──
+let dbDev = [];
+
+// Trạng thái — dùng lại bộ tiếng Việt của app (đồng nhất stateChip/tState)
+const DEV_STATES = [
+  'Chưa bắt đầu', 'Đang thực hiện', 'Hoàn thành chuẩn bị',
+  'Hoàn thành', 'Tạm dừng', 'Blocked'
+];
+
+// Số ngày chưa review thì nhắc ở "Công việc của tôi"
+const DEV_REVIEW_STALE_DAYS = 7;
+
+const DEV_COLS = [
+  'ID', 'Nội dung công việc', 'Sản phẩm/Kết quả mục tiêu', 'PIC',
+  'Đơn vị phối hợp/phụ thuộc', 'Thời gian bắt đầu', 'Thời gian dự kiến kết thúc',
+  'Trạng thái', 'Tỷ lệ hoàn thành', 'Ghi chú', 'Review cuối', 'Người tạo'
+];

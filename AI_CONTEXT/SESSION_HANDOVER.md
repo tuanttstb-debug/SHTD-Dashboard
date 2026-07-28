@@ -1,4 +1,53 @@
 # SESSION HANDOVER
+**Date**: 2026-07-28 (Session 54 — Dev Plan: "Plan phát triển bản thân")
+**Model**: Claude Opus 4.8
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD**: `<new>` — feat(S54): Dev Plan — Plan phát triển bản thân
+
+---
+
+## Tasks Completed (S54 — Dev Plan)
+
+Tính năng mới ở Left menu (nhóm Tổng quan): **Plan phát triển bản thân** — mỗi cá nhân tự thêm công việc học tập / tự đào tạo.
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S54-T1 | `backend/DevPlanService.gs` (NEW) — sheet `Dev_Plan` 12 cột A→L; `devRead/devUpsertRow/devDeleteRow/devGetPicById` (auto-create sheet) | `backend/DevPlanService.gs` | ✅ |
+| S54-T2 | `backend/Code.gs` — +3 route `dev-read/dev-upsert/dev-delete` + **ownership gate** (PIC==tokenData.u hoặc Admin) | `backend/Code.gs` | ✅ |
+| S54-T3 | `constants.js` — `dbDev`, `DEV_STATES`, `DEV_COLS`, `DEV_REVIEW_STALE_DAYS=7` | `assets/js/constants.js` | ✅ |
+| S54-T4 | `api.js` — Dev API: `rowToDev/devToRow/genDevId/_gasDevUpsert/_gasDevDelete/readDev/persistDev/loadDevFromCache` | `assets/js/api.js` | ✅ |
+| S54-T5 | `app.js` — `loadDevFromCache()`+`readDev()` startup; `readDev()` vào `syncDB()` Promise.all; renderAll guard; clear-cache reset `dbDev` | `assets/js/app.js` | ✅ |
+| S54-T6 | `views/dev-plan.js` (NEW) — toolbar (filter PIC mặc định=tôi + Tất cả, filter trạng thái, search), bảng nhóm-theo-PIC STT động, stateChip+progress, CRUD modal, view popup, ownership gate client, `devQuickReview()` cho My Work | `assets/js/views/dev-plan.js` | ✅ |
+| S54-T7 | `dev-plan.css` (NEW) — page/stat/toolbar/table/modal/overlay + `.mw-devrv-*` (section nhắc ở My Work); dark-mode qua tokens | `assets/css/dev-plan.css` | ✅ |
+| S54-T8 | `my-work.js` — `_mwGetDevReview/_mwBuildDevReviewSection/mwDevReviewSave`: nhắc item chưa update >7 ngày; cập nhật % + ghi chú → reset mốc review | `assets/js/views/my-work.js` | ✅ |
+| S54-T9 | `navigation.js` — dispatch renderDevPlan, ESC close, keymap **G+V**; `index.html` — nav item (fa-seedling), view section, `#devModal`, `#devViewOverlay`, KB G+V, script tag | `assets/js/ui/navigation.js`, `index.html` | ✅ |
+| S54-T10 | `i18n.js` — nav/page.dev-plan + ~34 `dev.*` keys VI+EN | `assets/js/i18n.js` | ✅ |
+| S54-T11 | `config.js` — APP_VERSION `6.19-dev-plan-20260728`; cache-bust `?v=20260728` (58 refs, Python) | `assets/js/config.js`, `index.html` | ✅ |
+| S54-T12 | `verify_dev_plan.mjs` (NEW, port 3043) — **37/37 PASS**; `run_tests.mjs` +suite → **21/21 suites PASS** | tests | ✅ |
+
+### Quyết định thiết kế (chốt với user qua phỏng vấn)
+- **Lưu trữ**: sheet riêng `Dev_Plan` (không đụng Task_Master).
+- **Quyền**: mọi user XEM plan của nhau (read-only); chỉ PIC/Admin SỬA-XÓA (gate cả client + server). Mặc định login = list của tôi.
+- **Nhắc nhở**: item chưa xong VÀ (chưa review bao giờ HOẶC >7 ngày chưa động) → hiện ở "Công việc của tôi"; cập nhật = reset mốc `lastReview`.
+- **Trạng thái**: dùng bộ tiếng Việt của app (stateChip/tState).
+- **PIC** = dropdown user (non-admin khóa vào chính mình); **Đơn vị phối hợp** = text tự do.
+- **Xem người khác** = dropdown filter PIC (mặc định=tôi, "Tất cả" nhóm theo PIC tái hiện layout Excel).
+
+### 🔴 BLOCKING — GAS redeploy (Dev Plan chưa chạy thật đến khi làm bước này)
+1. GAS editor → thêm file `DevPlanService.gs` (copy từ repo)
+2. Cập nhật `Code.gs` (đã có 3 route dev-*)
+3. Deploy → Manage deployments → New version (URL không đổi)
+4. Sheet `Dev_Plan` tự tạo ở lần `dev-read` đầu tiên
+> Trước khi redeploy: readDev/_gasDevUpsert nhận lỗi "action không hợp lệ" nhưng đã **catch an toàn** — dữ liệu vẫn lưu localStorage, không crash.
+
+### ⚠️ CẢNH BÁO BẢO MẬT (không do S54 tạo ra)
+`backend/RenameUserService.gs` trong working tree bị **nối thêm 1 đoạn PowerShell chứa API key + proxy** ở cuối file (không hợp lệ trong file .gs). S54 **KHÔNG commit** file này. Cần: xóa đoạn thừa + **thu hồi/đổi API key** đã lộ (`sk-6IeUw...`).
+
+---
+
+## DATE FROM PREVIOUS SESSION HANDOVER (S53)
+
+# SESSION HANDOVER
 **Date**: 2026-07-16 (Session 53 — RenameUserService: migration PhuongNPL_C → PhuongNPL)
 **Model**: Claude Sonnet 4.6
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

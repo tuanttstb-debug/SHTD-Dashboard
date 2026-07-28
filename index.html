@@ -8,24 +8,25 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/base.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/components.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/table.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260710f">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260728">
+<link rel="stylesheet" href="assets/css/base.css?v=20260728">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260728">
+<link rel="stylesheet" href="assets/css/components.css?v=20260728">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260728">
+<link rel="stylesheet" href="assets/css/table.css?v=20260728">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260728">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260728">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260728">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260728">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260728">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260728">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260728">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260728">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260728">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260728">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260728">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20260728">
+<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260728">
 
 </head>
 <body>
@@ -85,6 +86,10 @@
       <div class="nav-item" data-view="my-work">
         <i class="fa-solid fa-house-user nav-icon"></i>
         <span class="nav-label" data-i18n="nav.my-work">Công việc của tôi</span>
+      </div>
+      <div class="nav-item" data-view="dev-plan">
+        <i class="fa-solid fa-seedling nav-icon"></i>
+        <span class="nav-label" data-i18n="nav.dev-plan">Plan phát triển bản thân</span>
       </div>
       <div class="nav-item" data-view="dashboard">
         <i class="fa-solid fa-chart-pie nav-icon"></i>
@@ -216,6 +221,9 @@
 
     <!-- ===== MY WORK ===== -->
     <section class="view-section" id="view-my-work" style="display:none;"></section>
+
+    <!-- ===== DEV PLAN (Plan phát triển bản thân) ===== -->
+    <section class="view-section" id="view-dev-plan" style="display:none;"></section>
 
     <!-- ===== DASHBOARD ===== -->
     <section class="view-section active" id="view-dashboard">
@@ -1695,6 +1703,78 @@
 <!-- ===== ISSUE VIEW OVERLAY ===== -->
 <div id="itViewOverlay" onclick="if(event.target===this)closeIssueViewPopup()"></div>
 
+<!-- ===== DEV PLAN MODAL ===== -->
+<div id="devModal">
+  <div class="dev-modal-box">
+    <div class="dev-modal-header">
+      <div>
+        <div class="dev-modal-title" id="devModalTitle" data-i18n="dev.modal.add">Thêm công việc phát triển</div>
+        <div class="dev-modal-sub" data-i18n="dev.subtitle">Học tập · Tự đào tạo · Phát triển bản thân</div>
+      </div>
+      <div class="modal-close" onclick="closeDevModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <input type="hidden" id="devOrigId">
+    <div class="dev-form-grid">
+
+      <!-- Nội dung công việc (full) -->
+      <div class="form-group dev-form-full">
+        <label class="form-label" data-i18n="dev.col.name">Nội dung công việc <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="devfName" class="form-control" placeholder="VD: Nghiên cứu API / Data Flow / Core banking…">
+      </div>
+
+      <!-- Sản phẩm/Kết quả mục tiêu (full) -->
+      <div class="form-group dev-form-full">
+        <label class="form-label" data-i18n="dev.col.target">Sản phẩm / Kết quả mục tiêu</label>
+        <textarea id="devfTarget" class="form-control" rows="2" placeholder="Kết quả cụ thể muốn đạt được…"></textarea>
+      </div>
+
+      <!-- PIC + Đơn vị phối hợp -->
+      <div class="form-group">
+        <label class="form-label" data-i18n="dev.col.pic">PIC</label>
+        <select id="devfPic" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="dev.col.coord">Đơn vị phối hợp / phụ thuộc</label>
+        <input type="text" id="devfCoord" class="form-control" placeholder="VD: Dev1, BIZ… (tùy chọn)">
+      </div>
+
+      <!-- Bắt đầu + Kết thúc -->
+      <div class="form-group">
+        <label class="form-label" data-i18n="dev.col.start">Thời gian bắt đầu</label>
+        <input type="date" id="devfStart" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="dev.col.end">Thời gian dự kiến kết thúc</label>
+        <input type="date" id="devfEnd" class="form-control">
+      </div>
+
+      <!-- Trạng thái + Tỷ lệ -->
+      <div class="form-group">
+        <label class="form-label" data-i18n="dev.col.state">Trạng thái</label>
+        <select id="devfState" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="dev.col.progress">Tỷ lệ hoàn thành (%)</label>
+        <input type="number" id="devfProgress" class="form-control" min="0" max="100" value="0">
+      </div>
+
+      <!-- Ghi chú (full) -->
+      <div class="form-group dev-form-full">
+        <label class="form-label" data-i18n="dev.col.note">Ghi chú</label>
+        <textarea id="devfNote" class="form-control" rows="2" placeholder="Thông tin bổ sung…"></textarea>
+      </div>
+
+    </div><!-- /.dev-form-grid -->
+    <div class="dev-form-actions">
+      <button class="btn btn-ghost" onclick="closeDevModal()" data-i18n="common.cancel">Hủy</button>
+      <button class="btn btn-primary" onclick="devSaveItem()"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="common.save">Lưu</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEV PLAN VIEW OVERLAY ===== -->
+<div id="devViewOverlay" onclick="if(event.target===this)closeDevViewPopup()"></div>
+
 <!-- ===== MY WORK INITIATIVE POPUP ===== -->
 <div class="overlay" id="mwInitPopup" style="display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)mwCloseInitPopup()">
   <div class="modal" style="max-width:560px;width:95%;max-height:85vh;display:flex;flex-direction:column;">
@@ -1786,6 +1866,7 @@
         <div class="kb-row"><span class="kb-desc">Đến AI Assistant</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">A</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Case Pipeline</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">C</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Issue Tracker</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">I</span></div></div>
+        <div class="kb-row"><span class="kb-desc">Đến Plan phát triển bản thân</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">V</span></div></div>
         <div class="kb-row"><span class="kb-desc">Đến Công việc của tôi</span><div class="kb-keys"><span class="kbd">G</span><span class="kbd">M</span></div></div>
       </div>
     </div>
@@ -1793,44 +1874,45 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260710f"></script>
-<script src="assets/js/config.js?v=20260710f"></script>
-<script src="assets/js/constants.js?v=20260710f"></script>
-<script src="assets/js/helpers.js?v=20260710f"></script>
-<script src="assets/js/storage.js?v=20260710f"></script>
-<script src="assets/js/parsers.js?v=20260710f"></script>
-<script src="assets/js/auth.js?v=20260710f"></script>
-<script src="assets/js/api.js?v=20260710f"></script>
-<script src="assets/js/ui/toast.js?v=20260710f"></script>
-<script src="assets/js/ui/modal.js?v=20260710f"></script>
-<script src="assets/js/ui/theme.js?v=20260710f"></script>
-<script src="assets/js/ui/navigation.js?v=20260710f"></script>
-<script src="assets/js/crud.js?v=20260710f"></script>
-<script src="assets/js/bulk.js?v=20260710f"></script>
-<script src="assets/js/views/dashboard.js?v=20260710f"></script>
-<script src="assets/js/views/tasks.js?v=20260710f"></script>
-<script src="assets/js/views/gantt.js?v=20260710f"></script>
-<script src="assets/js/views/performance.js?v=20260710f"></script>
-<script src="assets/js/views/quickview.js?v=20260710f"></script>
-<script src="assets/js/report.js?v=20260710f"></script>
-<script src="assets/js/kpi-data.js?v=20260710f"></script>
-<script src="assets/js/kpi-parser.js?v=20260710f"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260710f"></script>
-<script src="assets/js/views/action-plan.js?v=20260710f"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260710f"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260710f"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260710f"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260710f"></script>
-<script src="assets/js/initiatives.js?v=20260710f"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260710f"></script>
-<script src="assets/js/views/ai-chat.js?v=20260710f"></script>
-<script src="assets/js/views/user-management.js?v=20260710f"></script>
-<script src="assets/js/views/executive-summary.js?v=20260710f"></script>
-<script src="assets/js/views/bld-queue.js?v=20260710f"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260710f"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260710f"></script>
-<script src="assets/js/views/my-work.js?v=20260710f"></script>
-<script src="assets/js/app.js?v=20260710f"></script>
+<script src="assets/js/i18n.js?v=20260728"></script>
+<script src="assets/js/config.js?v=20260728"></script>
+<script src="assets/js/constants.js?v=20260728"></script>
+<script src="assets/js/helpers.js?v=20260728"></script>
+<script src="assets/js/storage.js?v=20260728"></script>
+<script src="assets/js/parsers.js?v=20260728"></script>
+<script src="assets/js/auth.js?v=20260728"></script>
+<script src="assets/js/api.js?v=20260728"></script>
+<script src="assets/js/ui/toast.js?v=20260728"></script>
+<script src="assets/js/ui/modal.js?v=20260728"></script>
+<script src="assets/js/ui/theme.js?v=20260728"></script>
+<script src="assets/js/ui/navigation.js?v=20260728"></script>
+<script src="assets/js/crud.js?v=20260728"></script>
+<script src="assets/js/bulk.js?v=20260728"></script>
+<script src="assets/js/views/dashboard.js?v=20260728"></script>
+<script src="assets/js/views/tasks.js?v=20260728"></script>
+<script src="assets/js/views/gantt.js?v=20260728"></script>
+<script src="assets/js/views/performance.js?v=20260728"></script>
+<script src="assets/js/views/quickview.js?v=20260728"></script>
+<script src="assets/js/report.js?v=20260728"></script>
+<script src="assets/js/kpi-data.js?v=20260728"></script>
+<script src="assets/js/kpi-parser.js?v=20260728"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260728"></script>
+<script src="assets/js/views/action-plan.js?v=20260728"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260728"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260728"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260728"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260728"></script>
+<script src="assets/js/initiatives.js?v=20260728"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260728"></script>
+<script src="assets/js/views/ai-chat.js?v=20260728"></script>
+<script src="assets/js/views/user-management.js?v=20260728"></script>
+<script src="assets/js/views/executive-summary.js?v=20260728"></script>
+<script src="assets/js/views/bld-queue.js?v=20260728"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260728"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260728"></script>
+<script src="assets/js/views/my-work.js?v=20260728"></script>
+<script src="assets/js/views/dev-plan.js?v=20260728"></script>
+<script src="assets/js/app.js?v=20260728"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

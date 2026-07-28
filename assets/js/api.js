@@ -691,3 +691,94 @@ function loadIssuesFromCache() {
     if (cached) dbIssues = JSON.parse(cached);
   } catch(e) {}
 }
+
+/* ══════════════════════════════════════════
+   DEV PLAN API  (Plan phát triển bản thân)
+══════════════════════════════════════════ */
+
+function rowToDev(r) {
+  return {
+    id:         String(r[0]  || '').trim(),
+    name:       String(r[1]  || '').trim(),
+    target:     String(r[2]  || '').trim(),
+    pic:        String(r[3]  || '').trim(),
+    coordUnit:  String(r[4]  || '').trim(),
+    startDate:  String(r[5]  || '').trim(),
+    endDate:    String(r[6]  || '').trim(),
+    state:      String(r[7]  || '').trim(),
+    progress:   String(r[8]  || '').trim(),
+    note:       String(r[9]  || '').trim(),
+    lastReview: String(r[10] || '').trim(),
+    createdBy:  String(r[11] || '').trim(),
+  };
+}
+
+function devToRow(d) {
+  return [
+    d.id, d.name, d.target, d.pic, d.coordUnit,
+    d.startDate, d.endDate, d.state, d.progress,
+    d.note, d.lastReview, d.createdBy,
+  ];
+}
+
+function genDevId() {
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const prefix = 'DEV-' + yy + '-';
+  const existing = (dbDev || []).filter(d => d.id.startsWith(prefix));
+  if (!existing.length) return prefix + '001';
+  const max = Math.max(...existing.map(d => parseInt((d.id.split('-')[2]) || '0', 10)));
+  return prefix + String(max + 1).padStart(3, '0');
+}
+
+async function _gasDevUpsert(d) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'dev-upsert', devId: d.id, devName: d.name, row: devToRow(d) });
+    if (json.status !== 'ok') throw new Error(json.error || 'dev-upsert lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS lỗi: ' + e.message + ' — đã lưu cục bộ.', 'warning', 6000);
+  }
+}
+
+async function _gasDevDelete(devId, devName) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'dev-delete', devId, devName: devName || '' });
+    if (json.status !== 'ok') throw new Error(json.error || 'dev-delete lỗi');
+    if (dot) dot.className = 'status-dot connected';
+  } catch(e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS lỗi: ' + e.message + ' — đã xóa cục bộ.', 'warning', 6000);
+  }
+}
+
+async function readDev() {
+  if (!GS_WEBAPP_URL) return;
+  try {
+    const json = await gasPost({ action: 'dev-read' });
+    if (json.status !== 'ok') return;
+    const rows = json.values || [];
+    if (rows.length <= 1) { dbDev = []; persistDev(); return; }
+    dbDev = rows.slice(1).map(rowToDev).filter(d => d.id);
+    persistDev();
+  } catch(e) {
+    console.warn('readDev error:', e.message);
+  }
+}
+
+function persistDev() {
+  try { localStorage.setItem('shtd_dev_v1', JSON.stringify(dbDev)); } catch(e) {}
+}
+
+function loadDevFromCache() {
+  try {
+    const cached = localStorage.getItem('shtd_dev_v1');
+    if (cached) dbDev = JSON.parse(cached);
+  } catch(e) {}
+}

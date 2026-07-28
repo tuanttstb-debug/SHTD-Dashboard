@@ -38,7 +38,7 @@ function setupListeners() {
     const inInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
 
     if (e.key === 'Escape') {
-      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCpSummaryPopup(); closeCaseViewPopup(); closeTaskViewPopup(); closeInitViewPopup(); _initCloseModal(); closeIssueModal(); closeIssueViewPopup(); mwCloseInitPopup();
+      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCpSummaryPopup(); closeCaseViewPopup(); closeTaskViewPopup(); closeInitViewPopup(); _initCloseModal(); closeIssueModal(); closeIssueViewPopup(); mwCloseInitPopup(); closeDevModal(); closeDevViewPopup();
     }
     if (e.ctrlKey && e.key === 'n' && !inInput) { e.preventDefault(); openTaskModal(); }
     if (e.ctrlKey && e.key === 'd') { e.preventDefault(); toggleDark(); }
@@ -47,7 +47,7 @@ function setupListeners() {
 
     if (e.key === 'g' && !inInput) { gKey = 'g'; return; }
     if (gKey === 'g' && !inInput) {
-      const map = { m:'my-work', d:'dashboard', e:'executive-summary', b:'bld-queue', c:'case-pipeline', i:'issue-tracker', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
+      const map = { m:'my-work', d:'dashboard', e:'executive-summary', b:'bld-queue', c:'case-pipeline', i:'issue-tracker', v:'dev-plan', t:'tasks', g:'gantt', p:'performance', k:'kpi-overview', a:'ai-chat' };
       if (map[e.key]) navigateTo(map[e.key]);
       gKey = null;
     }
@@ -91,6 +91,7 @@ function navigateTo(view) {
   if (view === 'rm-analysis')          renderRmAnalysis();
   if (view === 'initiative-tracker')   renderInitiativeTracker();
   if (view === 'issue-tracker')        renderIssueTracker();
+  if (view === 'dev-plan')             renderDevPlan();
   if (view === 'ai-chat')              renderAiChat();
   if (view === 'user-management')      renderUserManagement();
   if (view === 'my-work')              renderMyWork();
