@@ -305,7 +305,9 @@ function openDevModal(id) {
   set('devfName',      d?.name      || '');
   set('devfTarget',    d?.target    || '');
   set('devfCoord',     d?.coordUnit || '');
-  set('devfStart',     d?.startDate || '');
+  const _devTd = new Date();
+  const _devTodayISO = `${_devTd.getFullYear()}-${String(_devTd.getMonth()+1).padStart(2,'0')}-${String(_devTd.getDate()).padStart(2,'0')}`;
+  set('devfStart',     d?.startDate || _devTodayISO);
   set('devfEnd',       d?.endDate   || '');
   set('devfNote',      d?.note      || '');
 

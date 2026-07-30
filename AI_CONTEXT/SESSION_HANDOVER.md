@@ -1,4 +1,37 @@
 # SESSION HANDOVER
+**Date**: 2026-07-30 (Session 56 — Đồng nhất date input: Initiative/Milestone → date picker; Dev Plan mặc định start = hôm nay)
+**Model**: Claude Opus 4.8
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD (trước S56)**: `8f83cd5` — feat(S55): Initiative Tracker tidy-up
+**Version**: v6.21 (`6.21-date-picker-20260730`, `?v=20260730`)
+
+---
+
+## 🧭 HANDOVER SUMMARY (S56) — đọc nhanh
+
+- **Task completed**: Rà soát tổng thể cách nhập ngày tháng trên tất cả modal thêm/sửa và đồng nhất nguyên tắc: **mọi field ngày = native date picker (`<input type="date">`)** và **Start Date mặc định = hôm nay khi Add**. Sửa đúng module bị lỗi (Initiative Tracker nhập ngày free-text) + 1 lỗ hổng nhất quán (Dev Plan là picker nhưng không mặc định hôm nay).
+- **Audit kết quả**: 5 modal có date field. Task (`fStart/fEnd`), Case (`cpfStartDate/cpfDeadline`), Issue (`itfNgayPS/itfDeadline/itfNgayGQ`) — **đã đúng** (picker + start default hôm nay). Dev Plan (`devfStart/devfEnd`) — picker nhưng **thiếu default hôm nay**. Initiative/Milestone (`initFStart/initFDeadline/initFMsDl`) — **free-text** (lưu `DD-MMM-YY`) → chính là bug user báo.
+- **Files changed**: MOD `assets/js/views/initiative-tracker.js` (3 field → `type="date"`; Add default start = hôm nay ISO; Edit populate qua `_initToISO`; Save qua `_initFromISO`; +helper `_initToISO`/`_initFromISO`), `assets/js/views/dev-plan.js` (devfStart default hôm nay khi Add), `assets/js/config.js` (v6.21), `index.html` (cache-bust `?v=20260730`, 58 refs).
+- **Decision**: (a) **Giữ nguyên storage `DD-MMM-YY`** cho Initiative, chỉ convert ở biên input (picker cần ISO `YYYY-MM-DD`) — KHÔNG migrate sang ISO. Lý do: 0 rủi ro (không đụng sheet/backend/display/history/export); tái dùng `_initParseDate` + `_MMM` sẵn có. Bỏ phương án migrate toàn bộ sang ISO (rủi ro cao, cần migrate dữ liệu). (b) Phạm vi = Initiative/Milestone + Dev Plan default (nhất quán 5 modal), không chỉ module bị báo lỗi. (c) **Chỉ Start Date default hôm nay**; Deadline / Deadline Milestone để trống (là hạn chót, không default).
+- **Blocker**: Không. Thuần frontend — **không cần GAS deploy**. User cần **hard-reload** để nhận `v6.21`.
+- **Next step**: Smoke test production (badge v6.21; Initiative → Thêm: Start Date là picker mặc định hôm nay, Deadline là picker trống; lưu → sheet vẫn `DD-MMM-YY`; mở Sửa → picker hiện đúng ngày; Dev Plan → Thêm: start = hôm nay). Checklist trong TODO_NEXT.
+- **Regression risk**: 🟢 THẤP — khu trú trong 2 file view. `verify_initiative_tracker` **19/19**, `verify_dev_plan` **40/40**, round-trip E2E riêng **11/11** (type=date, default hôm nay, ISO↔DD-MMM-YY, 0 JS error). Điểm để ý: nếu 1 initiative có ngày lưu ở định dạng lạ (không `DD-MMM-YY` cũng không ISO) → `_initToISO` trả `''` → picker để trống khi mở Sửa (chỉ ảnh hưởng hiển thị; không mất dữ liệu vì giá trị cũ chỉ bị ghi đè khi user chủ động chọn ngày + Lưu).
+- **⚠️ Phát hiện phụ (không do S56)**: `verify_my_work` + `verify_issue_tracker` **flaky** khi chạy batch `run_tests.mjs` (pass khi chạy riêng). Do fixed `waitForTimeout()` + Chromium mới (Chrome 148 vừa cài). Xem TECH_DEBT TD-TEST-01.
+
+## Tasks Completed (S56 — Đồng nhất date input)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S56-T1 | Initiative modal: 3 field ngày (`initFStart`/`initFDeadline`/`initFMsDl`) → `<input type="date">` | `views/initiative-tracker.js` | ✅ |
+| S56-T2 | Add mode: Start Date default = hôm nay (ISO); Deadline/MsDl để trống | `views/initiative-tracker.js` | ✅ |
+| S56-T3 | Edit populate `DD-MMM-YY → ISO` (`_initToISO`); Save `ISO → DD-MMM-YY` (`_initFromISO`); +2 helper cạnh `_initParseDate` | `views/initiative-tracker.js` | ✅ |
+| S56-T4 | Dev Plan: `devfStart` mặc định hôm nay khi Add (trước để trống) | `views/dev-plan.js` | ✅ |
+| S56-T5 | `config.js` v6.21; cache-bust `?v=20260730` (58 refs, Python) | `config.js`, `index.html` | ✅ |
+| S56-T6 | Verify: `verify_initiative_tracker` 19/19, `verify_dev_plan` 40/40, round-trip E2E 11/11 | tests | ✅ |
+
+---
+
+# SESSION HANDOVER (S55)
 **Date**: 2026-07-28 (Session 55 — Initiative Tracker tidy-up: tách Done + đồng nhất stat cards + summary popup)
 **Model**: Claude Opus 4.8
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

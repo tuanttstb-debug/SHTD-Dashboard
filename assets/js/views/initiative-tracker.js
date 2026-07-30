@@ -484,11 +484,11 @@ function _initModalTemplate() {
           </div>
           <div class="form-group">
             <label class="form-label">Start Date</label>
-            <input class="form-control" id="initFStart" placeholder="VD: 15-Jan-26">
+            <input type="date" class="form-control" id="initFStart">
           </div>
           <div class="form-group">
             <label class="form-label">Deadline / Target</label>
-            <input class="form-control" id="initFDeadline" placeholder="VD: 30-Jun-26">
+            <input type="date" class="form-control" id="initFDeadline">
           </div>
           <div class="form-group">
             <label class="form-label">${t('it.modal.pct-label')}</label>
@@ -509,7 +509,7 @@ function _initModalTemplate() {
           </div>
           <div class="form-group">
             <label class="form-label">Deadline Milestone</label>
-            <input class="form-control" id="initFMsDl" placeholder="VD: 15-Apr-26">
+            <input type="date" class="form-control" id="initFMsDl">
           </div>
           <div class="form-group full">
             <label class="form-label">${t('it.modal.kpi-label')}</label>
@@ -550,7 +550,7 @@ function _initOpenModal(id) {
     ['initFId','initFName','initFStart','initFDeadline','initFMsTrack','initFMsDl','initFKpi','initFNotes','initFDoc'].forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
     const _initTd = new Date();
     const _initStartEl = document.getElementById('initFStart');
-    if (_initStartEl) _initStartEl.value = `${String(_initTd.getDate()).padStart(2,'0')}-${_MMM[_initTd.getMonth()]}-${String(_initTd.getFullYear()).slice(-2)}`;
+    if (_initStartEl) _initStartEl.value = `${_initTd.getFullYear()}-${String(_initTd.getMonth()+1).padStart(2,'0')}-${String(_initTd.getDate()).padStart(2,'0')}`;
     document.getElementById('initFPct').value = '0';
     document.getElementById('initFStatus').value = 'Active';
     document.getElementById('initFCat').value = '';
@@ -567,12 +567,12 @@ function _initOpenModal(id) {
     document.getElementById('initFName').value   = ini.name;
     document.getElementById('initFCat').value    = ini.category || '';
     _populateUserSelect('initFAcc', null, ini.accountable || '');
-    document.getElementById('initFStart').value  = ini.startDate || '';
-    document.getElementById('initFDeadline').value = ini.deadline || '';
+    document.getElementById('initFStart').value  = _initToISO(ini.startDate);
+    document.getElementById('initFDeadline').value = _initToISO(ini.deadline);
     document.getElementById('initFPct').value    = ini.pct !== undefined ? ini.pct : 0;
     document.getElementById('initFStatus').value = ini.status || 'Active';
     document.getElementById('initFMsTrack').value = ini.milestoneTracking || '';
-    document.getElementById('initFMsDl').value   = ini.milestoneDeadline || '';
+    document.getElementById('initFMsDl').value   = _initToISO(ini.milestoneDeadline);
     document.getElementById('initFKpi').value    = ini.kpiTarget || '';
     document.getElementById('initFNotes').value  = ini.notes || '';
     document.getElementById('initFDoc').value    = ini.docLink || '';
@@ -647,11 +647,11 @@ async function _initSave() {
     name,
     category:          document.getElementById('initFCat').value,
     accountable:       document.getElementById('initFAcc').value.trim(),
-    startDate:         document.getElementById('initFStart').value.trim(),
-    deadline:          document.getElementById('initFDeadline').value.trim(),
+    startDate:         _initFromISO(document.getElementById('initFStart').value),
+    deadline:          _initFromISO(document.getElementById('initFDeadline').value),
     pct:               Math.min(100, Math.max(0, pctRaw)),
     milestoneTracking: parentId ? '' : document.getElementById('initFMsTrack').value.trim(),
-    milestoneDeadline: parentId ? '' : document.getElementById('initFMsDl').value.trim(),
+    milestoneDeadline: parentId ? '' : _initFromISO(document.getElementById('initFMsDl').value),
     status:            document.getElementById('initFStatus').value || (parentId ? 'Chưa bắt đầu' : 'Active'),
     kpiTarget:         parentId ? '' : document.getElementById('initFKpi').value.trim(),
     notes:             document.getElementById('initFNotes').value.trim(),
@@ -921,6 +921,22 @@ function openTaskModalForMilestone(msId, iniId) {
   const msLabel = _msShortLabel(msId);
   const subEl = document.getElementById('modalSubtitle');
   if (subEl) subEl.textContent = `Initiative: ${iniId}  ·  Milestone: ${msLabel}`;
+}
+
+// Stored DD-MMM-YY (or any _initParseDate-able value) → YYYY-MM-DD for <input type="date">.
+// Returns '' when empty/unparseable so the picker shows blank.
+function _initToISO(str) {
+  const d = _initParseDate(str);
+  if (!d) return '';
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// YYYY-MM-DD from <input type="date"> → stored DD-MMM-YY. Passes through anything non-ISO.
+function _initFromISO(str) {
+  const s = (str || '').trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return s;
+  return `${m[3]}-${_MMM[parseInt(m[2],10)-1]}-${m[1].slice(-2)}`;
 }
 
 function _initParseDate(str) {

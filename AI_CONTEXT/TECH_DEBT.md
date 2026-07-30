@@ -8,6 +8,16 @@
 
 ---
 
+## 🆕 DELTA — Session 56 (2026-07-30)
+
+### TD-TEST-01: `verify_my_work` + `verify_issue_tracker` flaky trong batch runner 🟢 MEDIUM
+**Issue**: Khi chạy `node run_tests.mjs` (22 suite liên tiếp), `verify_my_work.mjs` và `verify_issue_tracker.mjs` **fail không ổn định** — nhưng **pass khi chạy riêng lẻ** (`verify_issue_tracker` = 61/61; `verify_my_work` fail *khác nhau* mỗi lần: lần MW7–17, lần MW6). Không phải regression code.
+**Nguyên nhân**: 2 suite dùng `waitForTimeout()` cố định + ẩn `loginOverlay` + async re-render `readDev()`/`readInitiatives()` (thêm ở S54.1). `issue_tracker` fail kiểu `loginOverlay intercepts pointer events` timeout. Khuếch đại bởi Chromium mới: máy chưa cài browser Playwright; `npx playwright install chromium` kéo **Chrome 148** (playwright v1223), mới hơn nhiều so với thời điểm viết test.
+**Impact**: Trung bình — gây "false red" trong CI/batch, dễ hiểu nhầm là regression. Chức năng thực tế OK.
+**Action**: Thay `waitForTimeout()` cố định bằng `waitForSelector`/`expect.poll`-style wait trong 2 suite. Trước mắt: khi batch báo 2 suite này fail → **chạy lại riêng lẻ để xác nhận** trước khi coi là regression. (Ngoài ra `verify_my_work` còn có MW22/MW23 fail pre-existing từ thời S44b — progress-bar toggle.)
+
+---
+
 ## 🆕 DELTA — Session 55 (2026-07-28)
 
 ### TD-UI-01: `.cp-stat-card` dùng chung 2 view (Case Pipeline + Initiative) ⚪ LOW

@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-07-28 (Session 55 — Initiative Tracker tidy-up)
-**Version**: v6.20 (`APP_VERSION = '6.20-init-tidy-20260728'`, `index.html ?v=20260728c`)
-**Remote HEAD (main)**: `b5e29f5` + commit S55 (feat initiative tidy + handover docs, cùng push)
+**As of**: 2026-07-30 (Session 56 — Đồng nhất date input)
+**Version**: v6.21 (`APP_VERSION = '6.21-date-picker-20260730'`, `index.html ?v=20260730`)
+**Remote HEAD (main)**: `8f83cd5` (S55) + commit S56 (feat date-picker + handover docs, cùng push)
 
+> **S56 NEW**: Đồng nhất date input trên mọi modal thêm/sửa. Initiative/Milestone (`initFStart/initFDeadline/initFMsDl`) từ **free-text → `<input type="date">`**; **giữ nguyên storage `DD-MMM-YY`** (convert ở biên: `_initToISO` khi mở Sửa, `_initFromISO` khi Lưu → 0 rủi ro sheet/backend/history/export). Dev Plan `devfStart` giờ **mặc định hôm nay** khi Add. Quy tắc chốt: mọi date field = native picker; **chỉ Start Date default hôm nay**, Deadline để trống. Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19**, `verify_dev_plan` **40/40**, round-trip E2E **11/11**.
 > **S55 NEW**: "Theo dõi Initiative" — (1) tách Done ra section thu gọn "Đã hoàn thành (N)" ở cuối (collapse mặc định, lazy render; gọn khi ~70 initiative); (2) ô số tổng đồng nhất `.cp-stat-card` (icon+số+nhãn) grid 5 ô như Case Pipeline; (3) mỗi ô số → view popup `#initSummaryOverlay` short-list table (row → chi tiết). Ô số + popup đếm theo **scope + Category** (không áp Status). Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19** → **22/22 suites PASS**.
 > **S54 NEW**: Left menu "Plan phát triển bản thân" (nhóm Tổng quan, G+V). Sheet `Dev_Plan` (12 cột) + `DevPlanService.gs` + 3 route `dev-*` (ownership gate). View `dev-plan.js` + section ở My Work. GAS **đã deploy** (dev-read/upsert/delete live, URL không đổi). Tests: **40/40** (verify_dev_plan).
 > **S54.1 fix**: My Work giờ hiện **toàn bộ dev item đang làm của tôi** (trước chỉ hiện item quá hạn review >7 ngày → item vừa tạo bị ẩn cả tuần). Item quá hạn gắn badge "Cần review" + xếp đầu. `readDev()` re-render My Work khi load xong.
@@ -42,7 +43,7 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S51: APP_VERSION = '6.17-i18n-phase8-20260710'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S56: APP_VERSION = '6.21-date-picker-20260730'; S30: new GS_WEBAPP_URL |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `backend/RenameUserService.gs` | ~90 | ✅ S53: NEW — `dryRunRenamePhuong()` / `commitRenamePhuong()` — rename PhuongNPL_C → PhuongNPL trên 5 sheets (User_Master, Task_Master, Case_Pipeline, Issue_Tracker, Initiative_Master); Audit_Log KHÔNG chạm |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
@@ -58,7 +59,7 @@
 | `assets/js/helpers.js` | ~80 | ✅ S43: stateChip() uses tState() for language-aware label |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
-| `assets/js/views/initiative-tracker.js` | ~900 | ✅ S55: `_initStatBase`/`_initCountOverdue`; stat bar → `.cp-stat-card`; tách Done (`_initBuildDoneSection`/`_initToggleDone`); `openInitSummaryPopup`/`closeInitSummaryPopup`; S49: ~52 VI strings → t(); S29: _initSave async; S27: ms auto-gen ID; S25: view popups |
+| `assets/js/views/initiative-tracker.js` | ~920 | ✅ S56: 3 date field → `<input type="date">`; giữ storage `DD-MMM-YY` qua `_initToISO`/`_initFromISO`; Add default Start = hôm nay ISO; S55: stat bar → `.cp-stat-card`, tách Done, summary popup; S49: ~52 VI → t(); S27: ms auto-gen ID; S25: view popups |
 | `assets/js/api.js` | ~390 | ✅ S31: `syncAction` merge skips `db.deletedIds`; `readFromHandle` prunes stale deletedIds; S30: atomic helpers; S24: PA2 _resolvePickerCase |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S31: `navigateTo('tasks')` now calls `selectedIds.clear()` before render; removed 7 duplicate filter listeners from `setupListeners`; S24: +closeCaseViewPopup() in Escape handler |
@@ -115,7 +116,7 @@
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
-| Initiative Tracker | ✅ | S55: tách Done (section thu gọn), stat cards đồng nhất `.cp-stat-card`, summary popup mỗi ô số (scope+category); S14 milestone drill-down; S20: syncInitiativeAction() |
+| Initiative Tracker | ✅ | S56: date field → native date picker (giữ storage `DD-MMM-YY`), Start default hôm nay; S55: tách Done, stat cards `.cp-stat-card`, summary popup; S14 milestone drill-down; S20: syncInitiativeAction() |
 | **Action Plan v2** | ✅ | S34: role-aware default (Admin=all teams grouped accordion; User/TL=own team kanban); mixed Tasks+Cases kanban; Blocked/overdue auto-add; Initiatives section; 24/24 tests pass |
 | **Audit history tab** | ✅ | S33: Task/Initiative/Case view popups — History tab, lazy load from GAS audit-read; startDate defaults today on Add |
 | **AI Assistant** | ⚠️ | Frontend complete; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |

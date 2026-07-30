@@ -1,6 +1,29 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-28 (Session 55 — Initiative Tracker tidy-up)
-**Context**: S55 done. v6.20-init-tidy-20260728, `?v=20260728c`. Thuần frontend (không GAS deploy). **22/22 suites PASS** (verify_initiative_tracker **19/19** + regression). Code + docs pushed.
+**Prepared**: 2026-07-30 (Session 56 — Đồng nhất date input)
+**Context**: S56 done. v6.21-date-picker-20260730, `?v=20260730`. Thuần frontend (không GAS deploy). `verify_initiative_tracker` **19/19** + `verify_dev_plan` **40/40** + round-trip E2E **11/11**. Code + docs pushed.
+
+---
+
+## ✅ COMPLETED S56 — Đồng nhất date input (Initiative/Milestone picker + Dev Plan default)
+- [x] Initiative modal: `initFStart`/`initFDeadline`/`initFMsDl` free-text → `<input type="date">`
+- [x] Giữ storage `DD-MMM-YY`, convert ở biên: `_initToISO` (populate Sửa), `_initFromISO` (Lưu) — 0 rủi ro sheet/backend/history/export
+- [x] Add mode: Start Date default = hôm nay (ISO); Deadline/MsDl để trống
+- [x] Dev Plan: `devfStart` default hôm nay khi Add (trước để trống)
+- [x] config v6.21, cache-bust `?v=20260730` (58 refs, Python)
+- [x] Verify: verify_initiative_tracker 19/19, verify_dev_plan 40/40, round-trip E2E 11/11, 0 JS error
+
+## 🟡 PRIORITY 1 — Smoke test date picker (v6.21) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.21-date-picker-20260730` |
+| Initiative → Thêm | "Start Date" là lịch chọn ngày, mặc định **hôm nay**; "Deadline" + "Deadline Milestone" là lịch, **để trống** |
+| Lưu initiative mới | Sheet `Initiative_Master` vẫn lưu ngày dạng `DD-MMM-YY` (VD `30-Jul-26`); card/list hiển thị đúng |
+| Mở Sửa initiative cũ | Picker hiện đúng ngày đã lưu (convert `DD-MMM-YY → ISO`) |
+| Thêm Milestone | Deadline Milestone dùng picker; ID auto-gen như cũ |
+| Dev Plan → Thêm | "Ngày bắt đầu" mặc định = **hôm nay** |
+
+## 🟢 PRIORITY 2 — Fix flaky test suites (TD-TEST-01)
+Thay `waitForTimeout()` cố định bằng `waitForSelector`/`expect.poll` trong `verify_my_work.mjs` + `verify_issue_tracker.mjs` (flaky khi chạy batch, pass khi chạy riêng — xem TECH_DEBT).
 
 ---
 
