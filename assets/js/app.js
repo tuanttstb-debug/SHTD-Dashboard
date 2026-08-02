@@ -28,6 +28,7 @@ async function startApp() {
   loadCasesFromCache();
   loadIssuesFromCache();
   loadDevFromCache();
+  loadNotifsFromCache();
   setupListeners();
   renderAll();
   navigateTo('my-work');
@@ -44,6 +45,8 @@ async function startApp() {
       if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
     });
     loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
+    readNotifications();                                   // non-blocking — chuông nhắc việc
+    setInterval(readNotifications, 5 * 60 * 1000);         // poll mỗi 5 phút
   }
 }
 
@@ -94,6 +97,7 @@ function renderAll() {
   if (document.getElementById('view-owner-analysis')?.style.display === 'contents') renderOwnerAnalysis();
   if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
   if (_qvIsOpen) renderQuickView();
+  if (typeof renderNotifBell === 'function') renderNotifBell();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
 
@@ -180,6 +184,7 @@ async function syncDB() {
       readIssues(),
       readDev(),
       readInitiatives(),
+      readNotifications(),
     ]);
     hideLoading(); renderAll();
     toast('Đã đồng bộ toàn bộ dữ liệu!', 'success');
@@ -192,7 +197,8 @@ async function uiClearCache() {
     'warn', 'Ngắt kết nối');
   if (!ok) return;
   localStorage.removeItem('shtd_v2');
-  db.tasks = []; db.initiatives = []; dbCases = []; dbDev = [];
+  localStorage.removeItem('shtd_notifs_v1');
+  db.tasks = []; db.initiatives = []; dbCases = []; dbDev = []; dbNotifs = [];
   document.getElementById('btnConnect').innerHTML = '<i class="fa-brands fa-google"></i> Kết nối GG Sheets';
   document.getElementById('btnConnect').className = 'btn btn-outline btn-sm';
   document.getElementById('btnSync').style.display = 'none';

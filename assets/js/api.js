@@ -782,3 +782,50 @@ function loadDevFromCache() {
     if (cached) dbDev = JSON.parse(cached);
   } catch(e) {}
 }
+
+/* ══════════════════════════════════════════
+   NOTIFICATIONS API  (chuông nhắc việc)
+   Nguồn: GAS notif-read (server sinh định kỳ + real-time).
+   Read-state per-user lưu ở server; client poll + optimistic mark-read.
+══════════════════════════════════════════ */
+
+async function readNotifications() {
+  if (!GS_WEBAPP_URL || !getAuthSession()) return;
+  try {
+    const json = await gasPost({ action: 'notif-read' });
+    if (json.status !== 'ok') return;
+    dbNotifs = Array.isArray(json.notifs) ? json.notifs : [];
+    persistNotifs();
+    if (typeof renderNotifBell === 'function') renderNotifBell();
+  } catch(e) {
+    console.warn('readNotifications error:', e.message);
+  }
+}
+
+// mark-read: optimistic (cập nhật cục bộ + render ngay), rồi đồng bộ server.
+async function markNotifRead(ids, all) {
+  const idSet = new Set(all ? [] : (ids || []).map(String));
+  dbNotifs.forEach(n => { if (all || idSet.has(String(n.id))) n.read = true; });
+  persistNotifs();
+  if (typeof renderNotifBell === 'function') renderNotifBell();
+  if (!GS_WEBAPP_URL || !getAuthSession()) return;
+  try {
+    const body = all ? { action: 'notif-mark-read', all: true }
+                     : { action: 'notif-mark-read', ids: (ids || []).map(String) };
+    const json = await gasPost(body);
+    if (json.status !== 'ok') throw new Error(json.error || 'notif-mark-read lỗi');
+  } catch(e) {
+    console.warn('markNotifRead error:', e.message);
+  }
+}
+
+function persistNotifs() {
+  try { localStorage.setItem('shtd_notifs_v1', JSON.stringify(dbNotifs)); } catch(e) {}
+}
+
+function loadNotifsFromCache() {
+  try {
+    const cached = localStorage.getItem('shtd_notifs_v1');
+    if (cached) dbNotifs = JSON.parse(cached);
+  } catch(e) {}
+}

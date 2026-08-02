@@ -48,6 +48,22 @@ const TRANSLATIONS = {
     'page.ai-chat':            'AI Assistant – Trợ lý thông minh',
     'page.user-management':    'Quản lý User',
 
+    // ── Notifications (chuông nhắc việc) ──
+    'notif.title':          'Thông báo',
+    'notif.empty':          'Không có thông báo mới',
+    'notif.markall':        'Đánh dấu tất cả đã đọc',
+    'notif.group.overdue':  'Quá hạn',
+    'notif.group.today':    'Đến hạn hôm nay',
+    'notif.group.soon':     'Sắp đến hạn',
+    'notif.group.created':  'Công việc mới',
+    'notif.group.closed':   'Đã hoàn thành',
+    'notif.suf.due-3d':     'còn 3 ngày',
+    'notif.suf.due-1d':     'còn 1 ngày',
+    'notif.suf.due-today':  'đến hạn hôm nay',
+    'notif.suf.overdue':    'đã quá hạn',
+    'notif.suf.created':    'mới được giao',
+    'notif.suf.closed':     'đã hoàn thành',
+
     // ── Dev Plan (Plan phát triển bản thân) ──
     'dev.title':              'Plan phát triển bản thân',
     'dev.subtitle':           'Học tập · Tự đào tạo · Phát triển bản thân',
@@ -533,6 +549,22 @@ const TRANSLATIONS = {
     'page.initiative-tracker': 'Initiative Tracker',
     'page.ai-chat':            'AI Assistant',
     'page.user-management':    'User Management',
+
+    // ── Notifications ──
+    'notif.title':          'Notifications',
+    'notif.empty':          'No new notifications',
+    'notif.markall':        'Mark all read',
+    'notif.group.overdue':  'Overdue',
+    'notif.group.today':    'Due today',
+    'notif.group.soon':     'Due soon',
+    'notif.group.created':  'New work',
+    'notif.group.closed':   'Completed',
+    'notif.suf.due-3d':     'in 3 days',
+    'notif.suf.due-1d':     'in 1 day',
+    'notif.suf.due-today':  'due today',
+    'notif.suf.overdue':    'overdue',
+    'notif.suf.created':    'newly assigned',
+    'notif.suf.closed':     'completed',
 
     // ── Dev Plan (Personal Development Plan) ──
     'dev.title':              'Personal Development Plan',

@@ -99,6 +99,9 @@ const CASE_COLS = [
   'Cần BLĐ?', 'Highlight dashboard?', 'Ghi chú', 'Ý kiến BLĐ'
 ];
 
+// ── Notifications (chuông nhắc việc) ──
+let dbNotifs = [];
+
 // ── Dev Plan (Plan phát triển bản thân) ──
 let dbDev = [];
 

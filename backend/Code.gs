@@ -158,8 +158,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.taskId) {
         throw new Error('task-upsert: thiếu row hoặc taskId.');
       }
+      var _priorTask = notifPrior_('task', body.taskId);
       sheetUpsertTask(body.row, body.taskId);
       auditLog(tokenData, 'task-upsert', body.taskId + (body.taskName ? ' | ' + body.taskName : ''));
+      notifOnWrite('task', body.taskId, body.row, _priorTask);
       return _jsonResponse({ status: 'ok', serverTs: _getTaskTs() });
     }
 
@@ -174,8 +176,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.caseId) {
         throw new Error('case-upsert: thiếu row hoặc caseId.');
       }
+      var _priorCase = notifPrior_('case', body.caseId);
       caseUpsertRow(body.row, body.caseId);
       auditLog(tokenData, 'case-upsert', body.caseId + (body.caseName ? ' | ' + body.caseName : ''));
+      notifOnWrite('case', body.caseId, body.row, _priorCase);
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -190,8 +194,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.initId) {
         throw new Error('initiative-upsert: thiếu row hoặc initId.');
       }
+      var _priorInit = notifPrior_('initiative', body.initId);
       initiativeUpsertRow(body.row, body.initId);
       auditLog(tokenData, 'initiative-upsert', body.initId + (body.initName ? ' | ' + body.initName : ''));
+      notifOnWrite('initiative', body.initId, body.row, _priorInit);
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -208,8 +214,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.issueId) {
         throw new Error('issue-upsert: thiếu row hoặc issueId.');
       }
+      var _priorIssue = notifPrior_('issue', body.issueId);
       issueUpsertRow(body.row, body.issueId);
       auditLog(tokenData, 'issue-upsert', body.issueId + (body.issueName ? ' | ' + body.issueName : ''));
+      notifOnWrite('issue', body.issueId, body.row, _priorIssue);
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -241,8 +249,10 @@ function doPost(e) {
           return _jsonResponse({ status: 'error', error: 'FORBIDDEN_PIC_MISMATCH' });
         }
       }
+      var _priorDev = notifPrior_('dev', body.devId);
       devUpsertRow(body.row, body.devId);
       auditLog(tokenData, 'dev-upsert', body.devId + (body.devName ? ' | ' + body.devName : ''));
+      notifOnWrite('dev', body.devId, body.row, _priorDev);
       return _jsonResponse({ status: 'ok' });
     }
 
@@ -257,6 +267,16 @@ function doPost(e) {
       }
       devDeleteRow(body.devId);
       auditLog(tokenData, 'dev-delete', body.devId + (body.devName ? ' | ' + body.devName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    // ── Notifications (chuông + read-state per-user) ──
+    if (action === 'notif-read') {
+      return _jsonResponse({ status: 'ok', notifs: notifRead(tokenData.u) });
+    }
+
+    if (action === 'notif-mark-read') {
+      notifMarkRead(tokenData.u, Array.isArray(body.ids) ? body.ids : [], body.all === true);
       return _jsonResponse({ status: 'ok' });
     }
 

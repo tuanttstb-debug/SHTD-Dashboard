@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-07-30 (Session 56 — Đồng nhất date input)
-**Version**: v6.21 (`APP_VERSION = '6.21-date-picker-20260730'`, `index.html ?v=20260730`)
-**Remote HEAD (main)**: `8f83cd5` (S55) + commit S56 (feat date-picker + handover docs, cùng push)
+**As of**: 2026-08-02 (Session 57 — 🔔 Notification bell)
+**Version**: v6.22 (`APP_VERSION = '6.22-notifications-20260802'`, `index.html ?v=20260802`)
+**Remote HEAD (main)**: `2ba246e` (S56) + commit S57 (feat notifications + handover docs, cùng push)
 
+> **S57 NEW**: Chuông 🔔 topbar — nhắc **sắp/đến/quá hạn** (3d/1d/hôm nay/quá hạn) + **tạo** + **đóng** cho Task/Case/Issue/Initiative+Milestone/Dev Plan. Click noti → deep-link mở popup công việc. **Email digest 1/ngày** (MailApp). Read-state per-user ở sheet `Notifications`. GAS = (1) trigger `notifScan()` ~8h ghi sheet + gửi email; (2) real-time `notifOnWrite()` trong doPost (created/closed). Chuông client poll `notif-read` (load/Sync/5'). **⚠️ Cần GAS redeploy + `installNotifTrigger()` 1 lần.** Tests: `verify_notifications` **21/21**.
 > **S56 NEW**: Đồng nhất date input trên mọi modal thêm/sửa. Initiative/Milestone (`initFStart/initFDeadline/initFMsDl`) từ **free-text → `<input type="date">`**; **giữ nguyên storage `DD-MMM-YY`** (convert ở biên: `_initToISO` khi mở Sửa, `_initFromISO` khi Lưu → 0 rủi ro sheet/backend/history/export). Dev Plan `devfStart` giờ **mặc định hôm nay** khi Add. Quy tắc chốt: mọi date field = native picker; **chỉ Start Date default hôm nay**, Deadline để trống. Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19**, `verify_dev_plan` **40/40**, round-trip E2E **11/11**.
 > **S55 NEW**: "Theo dõi Initiative" — (1) tách Done ra section thu gọn "Đã hoàn thành (N)" ở cuối (collapse mặc định, lazy render; gọn khi ~70 initiative); (2) ô số tổng đồng nhất `.cp-stat-card` (icon+số+nhãn) grid 5 ô như Case Pipeline; (3) mỗi ô số → view popup `#initSummaryOverlay` short-list table (row → chi tiết). Ô số + popup đếm theo **scope + Category** (không áp Status). Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19** → **22/22 suites PASS**.
 > **S54 NEW**: Left menu "Plan phát triển bản thân" (nhóm Tổng quan, G+V). Sheet `Dev_Plan` (12 cột) + `DevPlanService.gs` + 3 route `dev-*` (ownership gate). View `dev-plan.js` + section ở My Work. GAS **đã deploy** (dev-read/upsert/delete live, URL không đổi). Tests: **40/40** (verify_dev_plan).
@@ -43,7 +44,10 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S56: APP_VERSION = '6.21-date-picker-20260730'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S57: APP_VERSION = '6.22-notifications-20260802'; S30: new GS_WEBAPP_URL |
+| `backend/NotificationService.gs` | ~470 | ✅ S57: NEW — sheet `Notifications` + `notifScan()` (trigger ~8h) + `notifOnWrite`/`notifPrior_` (real-time) + `notifRead`/`notifMarkRead` + email digest + `installNotifTrigger`/`notifSelfTest`. **Cần deploy GAS + cài trigger** |
+| `assets/js/views/notifications.js` | ~185 | ✅ S57: NEW — bell badge + dropdown nhóm + deep-link dispatcher (`open*ViewPopup`) + mark-all + outside-click/ESC |
+| `assets/css/notifications.css` | ~160 | ✅ S57: NEW — bell/badge/panel/item, dark-mode |
 | `backend/MigrationService.gs` | ~55 | ✅ S40: NEW — `dryRunTeamBL()` / `commitTeamBL()` for Task_Master+Case_Pipeline+User_Master BL1/BL2→BL migration |
 | `backend/RenameUserService.gs` | ~90 | ✅ S53: NEW — `dryRunRenamePhuong()` / `commitRenamePhuong()` — rename PhuongNPL_C → PhuongNPL trên 5 sheets (User_Master, Task_Master, Case_Pipeline, Issue_Tracker, Initiative_Master); Audit_Log KHÔNG chạm |
 | `assets/css/layout.css` | ~132 | ✅ S35: `.sidebar { height:100vh }` + `.nav-menu { min-height:0 }` + sidebar scrollbar CSS — fixes left menu scroll on desktop |
@@ -84,6 +88,7 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **🔔 Notification bell** | ✅ (cần GAS deploy) | S57: nhắc sắp/quá hạn + tạo + đóng cho 5 entity; deep-link popup; email digest 1/ngày; read-state per-user (sheet `Notifications`); trigger `notifScan()` ~8h + real-time `notifOnWrite()`. 21/21 tests. **Chạy thật cần redeploy GAS + `installNotifTrigger()`** |
 | **i18n Phase 8 — KPI Overview + Owner Analysis** | ✅ | S51: +6 keys (kp.btn.*, kp.section.*, oa.tab.ranking); toolbar buttons + section headers + ranking tab; domain KPI data intentionally kept; 13/13 + 20/20 regression |
 | **i18n Phase 7 — Gantt, AI Chat, Branch, UM** | ✅ | S50: +74 keys; gantt subtitle/empty; ai-chat header/suggestions (_getAiSuggestions() fn); branch zones/stats/cols; UM ~45 strings + _umUsers cache skip + _umRestoreFilterUi(); 35/35 + 19/19 regression |
 | **i18n Phase 6 — Initiative Tracker** | ✅ | S49: all ~52 IT hard-coded VI strings → t(); dashboard 'Dự án: ' fix; app.js filterInit/filterTuanBC; 27/27 PASS + 18/18 regression |

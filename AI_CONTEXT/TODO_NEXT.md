@@ -1,5 +1,47 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-07-30 (Session 56 — Đồng nhất date input)
+**Prepared**: 2026-08-02 (Session 57 — 🔔 Notification bell)
+**Context**: S57 done. v6.22-notifications-20260802, `?v=20260802`. `verify_notifications` **21/21**. Code + docs pushed. **Chạy thật CẦN GAS redeploy + cài trigger.**
+
+---
+
+## ✅ COMPLETED S57 — Notification bell 🔔
+- [x] `backend/NotificationService.gs` (NEW) — sheet `Notifications` (11 cột), `notifScan()` (quét deadline mọi sheet, sinh due-3d/1d/today/overdue, gửi email digest), `notifOnWrite`/`notifPrior_` (real-time created/closed trong doPost), `notifRead`/`notifMarkRead`, `installNotifTrigger`/`notifSelfTest`
+- [x] `Code.gs` — route `notif-read`/`notif-mark-read` (per-user); hook `notifOnWrite` vào 5 upsert (task/case/initiative/issue/dev), đọc prior trước khi ghi
+- [x] `api.js` (readNotifications/markNotifRead/persist/load) + `constants.js` (`dbNotifs`)
+- [x] `views/notifications.js` + `notifications.css` (NEW) — bell badge, dropdown nhóm, deep-link `open*ViewPopup`, mark-all, outside-click/ESC
+- [x] `app.js` (poll load/Sync/5', renderAll, clearCache), `i18n.js` (+14 key VI/EN), `navigation.js` (ESC), `index.html` (bell + cache-bust `?v=20260802`), `config.js` v6.22
+- [x] `verify_notifications.mjs` (NEW, 21/21) + `run_tests.mjs`
+
+## 🔴 PRIORITY 0 — GAS redeploy + bật trigger (BLOCKING để chuông chạy thật)
+| Bước | Action |
+|---|---|
+| 1 | GAS Editor → thêm file `NotificationService.gs` (copy từ repo) |
+| 2 | Cập nhật `Code.gs` trong GAS (đã có route notif-* + hook notifOnWrite) |
+| 3 | Deploy → Manage deployments → chọn deployment hiện tại → New version (URL **không đổi**) |
+| 4 | Chạy `notifSelfTest()` trong editor → xem Logger: tổng candidate + phân loại theo type (dry-run, không ghi/không email) |
+| 5 | Chạy `installNotifTrigger()` **1 lần** → tạo trigger `notifScan` chạy ~8h/ngày |
+| 6 | (Tùy chọn) chạy `notifScan()` thủ công 1 lần để sinh noti + gửi digest ngay |
+| 7 | Đảm bảo `User_Master` có cột **Email** điền cho user cần nhận email; user thiếu email → chỉ nhận chuông |
+
+## 🟡 PRIORITY 1 — Smoke test chuông trên production (sau khi deploy GAS)
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.22-notifications-20260802`; icon 🔔 ở topbar |
+| Tạo 1 task giao cho user khác | User đó bấm 🔔 thấy noti "Công việc mới"; click → mở popup task |
+| Task/Case/... sắp đến hạn (3/1/0 ngày) hoặc quá hạn | Sau `notifScan` (hoặc sáng hôm sau) → noti trong nhóm tương ứng |
+| Đóng 1 task (chuyển Hoàn thành) | Accountable/Responsible nhận noti "Đã hoàn thành" |
+| Click 1 noti | Mark-read (badge giảm) + mở popup đúng công việc |
+| "Đánh dấu tất cả đã đọc" | Badge ẩn; trên máy khác cùng user cũng hết badge (read-state server) |
+| Email digest (sáng ~8h) | 1 email gộp: sắp/quá hạn + việc mới + việc đóng |
+
+## 🟢 PRIORITY 2 — Fix flaky/stale tests (TD-TEST-01 + H13)
+- `verify_my_work.mjs` + `verify_issue_tracker.mjs`: thay `waitForTimeout()` cố định bằng `waitForSelector`/`expect.poll` (flaky batch, pass khi chạy riêng).
+- `verify_history.mjs` **H13**: assertion cũ kỳ vọng initiative start = `DD-MMM-YY`; S56 đã đổi sang date-picker ISO → cập nhật kỳ vọng thành ISO hôm nay.
+
+---
+
+## 📎 (S56) — Đồng nhất date input
+**Prepared cũ**: 2026-07-30 (Session 56 — Đồng nhất date input)
 **Context**: S56 done. v6.21-date-picker-20260730, `?v=20260730`. Thuần frontend (không GAS deploy). `verify_initiative_tracker` **19/19** + `verify_dev_plan` **40/40** + round-trip E2E **11/11**. Code + docs pushed.
 
 ---

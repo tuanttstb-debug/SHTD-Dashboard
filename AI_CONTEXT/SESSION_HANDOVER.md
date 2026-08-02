@@ -1,4 +1,36 @@
 # SESSION HANDOVER
+**Date**: 2026-08-02 (Session 57 — 🔔 Notification bell: nhắc việc sắp/quá hạn + tạo + đóng, cho Task/Case/Issue/Initiative+Milestone/Dev Plan)
+**Model**: Claude Opus 4.8
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD (trước S57)**: `2ba246e` — test(S56) refresh EVD
+**Version**: v6.22 (`6.22-notifications-20260802`, `?v=20260802`)
+
+---
+
+## 🧭 HANDOVER SUMMARY (S57) — đọc nhanh
+
+- **Task completed**: Chuông thông báo 🔔 ở topbar. Nhắc **sắp/đến/quá hạn** (trước 3 ngày, trước 1 ngày, hôm nay, quá hạn) + **task được tạo** + **task được đóng**, áp cho cả **Task / Case / Issue / Initiative + Milestone / Dev Plan**. Click 1 noti → mark-read + **deep-link mở popup** công việc để thao tác nhanh. **Email digest 1/ngày** cho mỗi user (Gmail/MailApp). Read-state per-user lưu **server (sheet Notifications)**.
+- **Kiến trúc**: GAS **không push thẳng vào browser** → mô hình = (1) trigger `notifScan()` chạy ~8h/ngày quét deadline mọi sheet → ghi bản ghi vào sheet `Notifications` (idempotent) + gửi email digest; (2) real-time `notifOnWrite()` gọi trong `doPost` khi upsert (created = dòng mới; closed = status chuyển sang done) → ghi noti ngay. Chuông client **poll** `notif-read` (lúc load, khi Sync, mỗi 5 phút) → badge + dropdown; `notif-mark-read` cập nhật ReadTs.
+- **Recipients**: Task = PIC Accountable + Responsible; Case = PIC; Issue = Người xử lý (fallback Người log); Initiative/Milestone = Accountable; Dev = PIC. (Support KHÔNG nhận; không có kênh team-wide/admin-all — theo phỏng vấn.)
+- **Files NEW**: `backend/NotificationService.gs`, `assets/js/views/notifications.js`, `assets/css/notifications.css`, `verify_notifications.mjs`. **MOD**: `backend/Code.gs` (+route `notif-read`/`notif-mark-read`; hook `notifOnWrite` vào 5 upsert), `assets/js/api.js` (readNotifications/markNotifRead/persist/load), `app.js` (startup poll + interval 5', renderAll bell, syncDB, clearCache reset), `constants.js` (`dbNotifs`), `i18n.js` (+14 key VI/EN), `ui/navigation.js` (ESC), `index.html` (bell markup + css/script + cache-bust `?v=20260802`), `config.js` (v6.22), `run_tests.mjs`.
+- **Blocker**: 🔴 **Cần GAS redeploy** (thêm `NotificationService.gs` + `Code.gs` mới) + chạy **`installNotifTrigger()`** 1 lần để bật quét hằng ngày. Trước đó chạy **`notifSelfTest()`** (dry-run) để soi số noti. Email cần user trong `User_Master` có cột **Email**; user thiếu email → chỉ nhận chuông.
+- **Regression risk**: 🟢 THẤP — thuần additive (file mới + hook có try/catch nội bộ). `verify_notifications` **21/21**. Full batch: 20/23 — 3 fail đều **KHÔNG do S57**: `my_work` + `issue_tracker` = flaky batch (TD-TEST-01, pass khi chạy riêng), `history` H13 = assertion cũ post-S56 (initiative start giờ là ISO date-picker, test còn kỳ vọng `DD-MMM-YY`).
+- **Quyết định mặc định**: bell poll load/Sync/5'; auto-purge noti đã đọc >30 ngày; Excel import (bulk write) KHÔNG sinh created/closed; "closed" gửi Accountable+Responsible; overdue = 1 dòng chuông/việc, lặp trong digest khi còn chưa đọc & còn quá hạn.
+
+## Tasks Completed (S57 — Notification bell)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S57-T1 | `NotificationService.gs` — sheet `Notifications` (11 cột) + `notifScan()` (trigger ~8h) + `notifOnWrite()`/`notifPrior_()` (real-time created/closed) + `notifRead`/`notifMarkRead` + email digest + `installNotifTrigger`/`notifSelfTest` | `backend/NotificationService.gs` | ✅ |
+| S57-T2 | `Code.gs` — route `notif-read`/`notif-mark-read` (per-user, tokenData.u); hook `notifOnWrite` vào task/case/initiative/issue/dev-upsert (đọc prior trước ghi) | `backend/Code.gs` | ✅ |
+| S57-T3 | `api.js` — `readNotifications`/`markNotifRead` (optimistic) + persist/load cache; `constants.js` +`dbNotifs` | `assets/js/api.js`, `constants.js` | ✅ |
+| S57-T4 | `views/notifications.js` (NEW) — bell badge, dropdown nhóm (overdue/today/soon/created/closed), deep-link dispatcher → `open*ViewPopup`, mark-all, outside-click/ESC | `assets/js/views/notifications.js` | ✅ |
+| S57-T5 | `notifications.css` (NEW); `index.html` bell markup topbar + link/script + cache-bust `?v=20260802`; `i18n.js` +14 key VI/EN; `navigation.js` ESC; `app.js` poll/interval/renderAll/sync/clear; `config.js` v6.22 | nhiều | ✅ |
+| S57-T6 | `verify_notifications.mjs` (NEW, port 3045) — **21/21 PASS**; +`run_tests.mjs` | tests | ✅ |
+
+---
+
+# SESSION HANDOVER (S56)
 **Date**: 2026-07-30 (Session 56 — Đồng nhất date input: Initiative/Milestone → date picker; Dev Plan mặc định start = hôm nay)
 **Model**: Claude Opus 4.8
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

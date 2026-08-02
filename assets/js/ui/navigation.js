@@ -38,7 +38,7 @@ function setupListeners() {
     const inInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
 
     if (e.key === 'Escape') {
-      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCpSummaryPopup(); closeInitSummaryPopup(); closeCaseViewPopup(); closeTaskViewPopup(); closeInitViewPopup(); _initCloseModal(); closeIssueModal(); closeIssueViewPopup(); mwCloseInitPopup(); closeDevModal(); closeDevViewPopup();
+      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCpSummaryPopup(); closeInitSummaryPopup(); closeCaseViewPopup(); closeTaskViewPopup(); closeInitViewPopup(); _initCloseModal(); closeIssueModal(); closeIssueViewPopup(); mwCloseInitPopup(); closeDevModal(); closeDevViewPopup(); closeNotifPanel();
     }
     if (e.ctrlKey && e.key === 'n' && !inInput) { e.preventDefault(); openTaskModal(); }
     if (e.ctrlKey && e.key === 'd') { e.preventDefault(); toggleDark(); }
