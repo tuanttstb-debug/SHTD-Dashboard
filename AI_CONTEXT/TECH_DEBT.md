@@ -8,6 +8,21 @@
 
 ---
 
+## 🆕 DELTA — Session 57 (2026-08-02)
+
+### TD-TEST-02: `verify_history` H13 — assertion cũ sau khi S56 đổi date input 🟢 MEDIUM
+**Issue**: `verify_history.mjs` **H13** kỳ vọng ô "Start Date" của modal Initiative khi Thêm mới = định dạng `DD-MMM-YY` (vd `02-Aug-26`). Nhưng **S56** đã đổi field này sang native date-picker (`<input type="date">`, giá trị ISO `2026-08-02`). → H13 fail cả khi chạy riêng (không phải flaky), là **assertion lỗi thời**, KHÔNG phải regression code.
+**Impact**: Trung bình — 1 "false red" trong batch runner, dễ nhầm là regression.
+**Action**: Cập nhật H13 kỳ vọng thành ISO hôm nay (`YYYY-MM-DD`) — cùng đợt fix TD-TEST-01. Trước mắt: coi H13 là đã biết, không block.
+
+### Ghi chú S57 (Notification bell) — không phát sinh nợ mới đáng kể
+- Real-time created/closed đọc trạng thái trước ghi (`notifPrior_`) = **thêm 1 lần đọc sheet mỗi upsert**. Chấp nhận cho single-row write; nếu sau này tần suất ghi cao → có thể tối ưu.
+- `_notifAppendIfNew_` quét cột NotifID mỗi lần (real-time) — O(n) mỗi event; scan hàng loạt đã index sẵn nên không ảnh hưởng. Sheet auto-purge noti đã đọc >30 ngày giữ n nhỏ.
+- Bulk Excel import (`write`/`case-pipeline-write`) **cố ý KHÔNG** sinh created/closed (tránh spam). Nếu cần noti cho import → xử lý riêng.
+- GAS đã deploy 2026-08-02, trigger `notifScan` ~8h/ngày đã bật; smoke test production OK.
+
+---
+
 ## 🆕 DELTA — Session 56 (2026-07-30)
 
 ### TD-TEST-01: `verify_my_work` + `verify_issue_tracker` flaky trong batch runner 🟢 MEDIUM

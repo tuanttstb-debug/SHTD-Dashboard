@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-08-02 (Session 57 — 🔔 Notification bell)
-**Context**: S57 done. v6.22-notifications-20260802, `?v=20260802`. `verify_notifications` **21/21**. Code + docs pushed. **Chạy thật CẦN GAS redeploy + cài trigger.**
+**Context**: S57 done + **deployed**. v6.22-notifications-20260802, `?v=20260802`. `verify_notifications` **21/21**. Code + docs pushed. **GAS redeploy XONG (2026-08-02, URL không đổi) + `installNotifTrigger()` bật; smoke test production OK.**
 
 ---
 
@@ -12,29 +12,13 @@
 - [x] `app.js` (poll load/Sync/5', renderAll, clearCache), `i18n.js` (+14 key VI/EN), `navigation.js` (ESC), `index.html` (bell + cache-bust `?v=20260802`), `config.js` v6.22
 - [x] `verify_notifications.mjs` (NEW, 21/21) + `run_tests.mjs`
 
-## 🔴 PRIORITY 0 — GAS redeploy + bật trigger (BLOCKING để chuông chạy thật)
-| Bước | Action |
-|---|---|
-| 1 | GAS Editor → thêm file `NotificationService.gs` (copy từ repo) |
-| 2 | Cập nhật `Code.gs` trong GAS (đã có route notif-* + hook notifOnWrite) |
-| 3 | Deploy → Manage deployments → chọn deployment hiện tại → New version (URL **không đổi**) |
-| 4 | Chạy `notifSelfTest()` trong editor → xem Logger: tổng candidate + phân loại theo type (dry-run, không ghi/không email) |
-| 5 | Chạy `installNotifTrigger()` **1 lần** → tạo trigger `notifScan` chạy ~8h/ngày |
-| 6 | (Tùy chọn) chạy `notifScan()` thủ công 1 lần để sinh noti + gửi digest ngay |
-| 7 | Đảm bảo `User_Master` có cột **Email** điền cho user cần nhận email; user thiếu email → chỉ nhận chuông |
+## ✅ DONE — GAS redeploy + bật trigger + smoke test (2026-08-02)
+- [x] GAS Editor: thêm `NotificationService.gs` + cập nhật `Code.gs`; Deploy New version (URL **không đổi**)
+- [x] `installNotifTrigger()` bật trigger `notifScan` ~8h/ngày
+- [x] Smoke test production OK: chuông hiện, noti đúng nhóm, click deep-link mở popup, mark-read/mark-all chạy
+- [ ] **Còn lại**: điền cột **Email** trong `User_Master` cho user cần nhận email digest (thiếu email → chỉ nhận chuông); theo dõi digest sáng đầu tiên
 
-## 🟡 PRIORITY 1 — Smoke test chuông trên production (sau khi deploy GAS)
-| Check | Expected |
-|---|---|
-| Hard-reload (Ctrl+Shift+R) | Badge `v6.22-notifications-20260802`; icon 🔔 ở topbar |
-| Tạo 1 task giao cho user khác | User đó bấm 🔔 thấy noti "Công việc mới"; click → mở popup task |
-| Task/Case/... sắp đến hạn (3/1/0 ngày) hoặc quá hạn | Sau `notifScan` (hoặc sáng hôm sau) → noti trong nhóm tương ứng |
-| Đóng 1 task (chuyển Hoàn thành) | Accountable/Responsible nhận noti "Đã hoàn thành" |
-| Click 1 noti | Mark-read (badge giảm) + mở popup đúng công việc |
-| "Đánh dấu tất cả đã đọc" | Badge ẩn; trên máy khác cùng user cũng hết badge (read-state server) |
-| Email digest (sáng ~8h) | 1 email gộp: sắp/quá hạn + việc mới + việc đóng |
-
-## 🟢 PRIORITY 2 — Fix flaky/stale tests (TD-TEST-01 + H13)
+## 🟢 PRIORITY 2 — Fix flaky/stale tests (TD-TEST-01 + TD-TEST-02/H13)
 - `verify_my_work.mjs` + `verify_issue_tracker.mjs`: thay `waitForTimeout()` cố định bằng `waitForSelector`/`expect.poll` (flaky batch, pass khi chạy riêng).
 - `verify_history.mjs` **H13**: assertion cũ kỳ vọng initiative start = `DD-MMM-YY`; S56 đã đổi sang date-picker ISO → cập nhật kỳ vọng thành ISO hôm nay.
 
