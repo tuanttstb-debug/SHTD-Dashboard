@@ -66,6 +66,12 @@ Use this for any data table (Dev Plan, Issue Tracker, Case Pipeline table, Tasks
   remaining space and **wrap**.
 - **Do NOT** set a large `min-width` on the table itself, and **do NOT** put
   `white-space:nowrap` on free-text cells — those are exactly what forces overflow.
+- **⚠️ Gotcha (S58.1):** `assets/css/table.css` has a **global `table { white-space:nowrap }`**.
+  Any new table inherits it, so with `table-layout:fixed` the text overflows and
+  **overlaps the next column** unless you explicitly set `white-space: normal` on the
+  wrapping cells. Keep short cells (dates) on one line with a higher-specificity rule
+  like `.x-table td.x-cell-date { white-space: nowrap }` (a bare `.x-cell-date` loses
+  to `.x-table td`).
 - Keep short values (dates) on one line with a dedicated class
   (`.x-cell-date { white-space:nowrap }`), not a blanket `nowrap`.
 - Rule of thumb: sum of fixed-px columns should leave **≥ 40%** of the table for
