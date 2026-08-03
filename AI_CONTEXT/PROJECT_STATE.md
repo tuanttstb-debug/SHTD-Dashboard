@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-08-03 (Session 58 — UI layout fit + Dev Plan table fix)
-**Version**: v6.24 (`APP_VERSION = '6.24-devplan-ui-fix-20260803'`, `index.html ?v=20260803b`)
-**Remote HEAD (main)**: `dae5f3f` (S57) + commit S58 + S58.1 (fix UI layout + Dev Plan table + UI_CONCEPT.md)
+**As of**: 2026-08-03 (Session 58 — UI layout fit + Dev Plan table + My Work width/urgent)
+**Version**: v6.25 (`APP_VERSION = '6.25-mywork-width-urgent-20260803'`, `index.html ?v=20260803c`)
+**Remote HEAD (main)**: `dae5f3f` (S57) + commits S58 / S58.1 / S58.2
 
+> **S58.2**: **My Work** — page width về **chuẩn** (`.mw-page` bỏ double-padding + cap 1200px → full-width như mọi view; AI Chat 860px giữ nguyên vì cố ý). **"Cần làm ngay" chia 2 cột: Quá hạn (diff<0) | Sắp đến hạn (diff≥0, hôm nay+≤7d)** — mỗi cột count + sort soonest-first + empty "Không có"; mobile stack 1 cột. +i18n `mw.urgent.col.soon/none`. Audit toàn hệ thống: chỉ My Work lệch chuẩn. v6.25. Tests: urgent MW12/MW13 PASS (suite flaky TD-TEST-01, không do S58.2).
 > **S58.1 FIX**: Dev Plan bảng — sửa **đè chữ** (name đè target) + **nút Sửa/Xóa đè cột Ghi chú** + textarea modal **auto-grow theo nội dung** + **page width đồng bộ** .content. Gốc: global `table{white-space:nowrap}` (table.css:61) làm cell `table-layout:fixed` (S58) vẫn tràn. Sửa: `.dev-table td{white-space:normal}` (+ `.dev-table td.dev-cell-date` nowrap giữ ngày 1 dòng), header wrap, buttons compact + cột actions 58→78px, `.dev-autogrow` + `_devAutoGrow()`, `.dev-page` padding 2px→0. v6.24. Tests `verify_dev_plan` **40/40**.
 > **S58 NEW**: **UI layout fit** — (1) **Dev Plan** bảng danh sách hết tràn ngang: bỏ `min-width:900px` → `table-layout:fixed; width:100%`, cell free-text wrap, `.dev-cell-date` giữ 1 dòng, thu gọn width cột → fit 1 màn hình (scroll ngang chỉ là fallback <720px). (2) **Action Plan** kanban giãn lấp đầy: `.kanban-col` `flex:0 0 260px` → `flex:1 1 0; min-width:240px`. (3) **`AI_CONTEXT/UI_CONCEPT.md` (NEW)** — contract layout để tính năng sau tự tối ưu (fit-one-screen table, stretch-to-fill board, thang width modal, breakpoint chuẩn, checklist pre-merge). Thuần frontend — **không cần GAS deploy**. `.kanban-*` chỉ Action Plan dùng (Case Pipeline = `.cp-col`). Tests: `verify_dev_plan` **40/40**, `verify_action_plan` **24/24**.
 > **S57 NEW**: Chuông 🔔 topbar — nhắc **sắp/đến/quá hạn** (3d/1d/hôm nay/quá hạn) + **tạo** + **đóng** cho Task/Case/Issue/Initiative+Milestone/Dev Plan. Click noti → deep-link mở popup công việc. **Email digest 1/ngày** (MailApp). Read-state per-user ở sheet `Notifications`. GAS = (1) trigger `notifScan()` ~8h ghi sheet + gửi email; (2) real-time `notifOnWrite()` trong doPost (created/closed). Chuông client poll `notif-read` (load/Sync/5'). **✅ GAS đã deploy (2026-08-02, URL không đổi) + `installNotifTrigger()` đã bật; smoke test production OK.** Tests: `verify_notifications` **21/21**.
@@ -46,7 +47,9 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S58.1: APP_VERSION = '6.24-devplan-ui-fix-20260803'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S58.2: APP_VERSION = '6.25-mywork-width-urgent-20260803'; S30: new GS_WEBAPP_URL |
+| `assets/css/my-work.css` | ~600 | ✅ S58.2: `.mw-page` full-width (bỏ padding 20/24 + max-width 1200) + `.mw-urgent-cols` grid 2 cột (Quá hạn|Sắp đến hạn); S44b base |
+| `assets/js/views/my-work.js` | ~410 | ✅ S58.2: `_mwBuildUrgentSection` chia 2 cột overdue/soon + `_mwUrgentTaskItem/CaseItem`; S54.1: dev review all active; S44b base |
 | `assets/css/dev-plan.css` | ~250 | ✅ S58.1: `.dev-table td{white-space:normal}` (override global nowrap) + `td.dev-cell-date` nowrap + header wrap + `.btn-sm` compact + `.dev-autogrow` + `.dev-page` pad 2px→0; S58: `table-layout:fixed; width:100%`; S54: base |
 | `assets/js/views/dev-plan.js` | ~490 | ✅ S58.1: header name/target auto-width + actions 78px + `_devAutoGrow()`; S58: thu gọn width cột + `.dev-cell-date`; S54.1: My Work all active; S54: base |
 | `assets/css/kpi.css` | ~90+ | ✅ S58: `.kanban-col` `flex:1 1 0; min-width:240px` (giãn lấp đầy, was 0 0 260px) — chỉ Action Plan dùng |

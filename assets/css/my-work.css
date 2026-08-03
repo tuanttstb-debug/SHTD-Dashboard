@@ -3,9 +3,10 @@
    Role-aware: PO (BL/CV1/CV2/Số) · PTKD · QLDM
 ────────────────────────────────────────── */
 
+/* UI_CONCEPT: standard page width — no extra wrapper padding / max-width cap, so
+   My Work lines up with every other feature (content owns width via .content 20/24). */
 .mw-page {
-  padding: 20px 24px;
-  max-width: 1200px;
+  padding: 0 0 32px;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -101,7 +102,37 @@
 .mw-dl-badge.dl-soon    { background: rgba(245,158,11,.09); color: #d97706; }
 .mw-dl-badge.dl-ok      { background: rgba(34,197,94,.08);  color: #16a34a; }
 
-/* ── Section 1: Urgent compact list ── */
+/* ── Section 1: Urgent — 2 columns (Quá hạn | Sắp đến hạn) for fast review ── */
+.mw-urgent-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.mw-urgent-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mw-urgent-col-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  padding: 2px 2px 4px;
+}
+.mw-urgent-col-head.overdue { color: #ef4444; }
+.mw-urgent-col-head.soon    { color: #f59e0b; }
+.mw-urgent-col-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--surface2, #f1f5f9);
+  color: var(--text-2);
+}
+.mw-urgent-empty-col { padding: 14px; font-size: 12px; }
+
 .mw-urgent-list {
   display: flex;
   flex-direction: column;
@@ -568,10 +599,11 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .mw-page { padding: 14px; gap: 20px; }
+  .mw-page { padding: 0 0 16px; gap: 20px; }
   .mw-task-grid  { grid-template-columns: 1fr; }
   .mw-init-grid  { grid-template-columns: 1fr; }
   .mw-case-grid  { grid-template-columns: 1fr; }
+  .mw-urgent-cols { grid-template-columns: 1fr; }
   .mw-urgent-name { max-width: 150px; }
 }
 @media (max-width: 480px) {

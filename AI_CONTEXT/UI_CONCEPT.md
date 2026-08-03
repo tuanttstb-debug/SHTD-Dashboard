@@ -134,6 +134,12 @@ Prefer these existing values over introducing a new one.
   cross-view standard (Case Pipeline, Initiative Tracker).
 - Form grids must use `minmax(0,1fr)` columns + `min-width:0` on children so long
   values never blow out the grid (UI_AUDIT lesson).
+- **Page container width (standard):** a view renders into `.content` (padding
+  `20px 24px`). Do **NOT** wrap it in a container that adds its own horizontal
+  padding or a `max-width` cap — that makes the page narrower/misaligned vs every
+  other feature. If a wrapper is needed, keep horizontal padding `0` and
+  `max-width:none` (e.g. `.x-page { padding: 0 0 32px }`). The only legitimate
+  content-width cap is a reading-optimized surface like the AI chat column (~860px).
 
 ---
 

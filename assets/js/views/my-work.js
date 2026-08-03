@@ -291,13 +291,10 @@ function _mwBuildTaskCard(task) {
 </div>`;
 }
 
-function _mwBuildUrgentSection(urgent) {
-  const total = urgent.tasks.length + urgent.cases.length;
-
-  const taskItems = urgent.tasks.map(t => {
-    const diff = _mwDiffDays(t.endDate);
-    const cls  = diff < 0 ? 'is-overdue' : diff === 0 ? 'is-today' : 'is-soon';
-    return `
+function _mwUrgentTaskItem(t) {
+  const diff = _mwDiffDays(t.endDate);
+  const cls  = diff < 0 ? 'is-overdue' : diff === 0 ? 'is-today' : 'is-soon';
+  return `
 <div class="mw-urgent-item ${cls}" onclick="openTaskViewPopup('${esc(t.id)}')">
   <span class="mw-urgent-type type-task">Task</span>
   <span class="mw-urgent-id">${esc(t.id)}</span>
@@ -305,32 +302,71 @@ function _mwBuildUrgentSection(urgent) {
   ${_mwDeadlineBadge(t.endDate)}
   ${stateChip(t.state)}
 </div>`;
-  });
+}
 
-  const caseItems = urgent.cases.map(c => {
-    const diff = _mwDiffDays(c.deadline);
-    const cls  = diff < 0 ? 'is-overdue' : diff === 0 ? 'is-today' : 'is-soon';
-    return `
+function _mwUrgentCaseItem(c) {
+  const diff = _mwDiffDays(c.deadline);
+  const cls  = diff < 0 ? 'is-overdue' : diff === 0 ? 'is-today' : 'is-soon';
+  return `
 <div class="mw-urgent-item ${cls}" onclick="cpOpenDetail('${esc(c.id)}')">
   <span class="mw-urgent-type type-case">Case</span>
   <span class="mw-urgent-id">${esc(c.id)}</span>
   <span class="mw-urgent-name">${esc(c.caseName)}</span>
   ${_mwDeadlineBadge(c.deadline)}
 </div>`;
+}
+
+// "Cần làm ngay" split into 2 columns for fast review: Quá hạn (diff<0) | Sắp đến hạn
+// (diff>=0, today + upcoming ≤7d). Each column keeps its own count + soonest-first sort.
+function _mwBuildUrgentSection(urgent) {
+  const overdue = [];
+  const soon    = [];
+  urgent.tasks.forEach(t => {
+    const diff = _mwDiffDays(t.endDate);
+    (diff < 0 ? overdue : soon).push({ diff, html: _mwUrgentTaskItem(t) });
   });
+  urgent.cases.forEach(c => {
+    const diff = _mwDiffDays(c.deadline);
+    (diff < 0 ? overdue : soon).push({ diff, html: _mwUrgentCaseItem(c) });
+  });
+  overdue.sort((a, b) => a.diff - b.diff);   // most overdue first
+  soon.sort((a, b)    => a.diff - b.diff);   // soonest first
+  const total = overdue.length + soon.length;
 
-  const body = total === 0
-    ? `<div class="mw-empty"><i class="fa-solid fa-circle-check" style="color:#22c55e;margin-right:6px;"></i>${t('mw.urgent.empty')}</div>`
-    : `<div class="mw-urgent-list">${[...taskItems, ...caseItems].join('')}</div>`;
-
-  return `
-<div class="mw-section" id="mwSectionUrgent">
+  const header = `
   <div class="mw-section-header">
     <div class="mw-section-icon urgent"><i class="fa-solid fa-triangle-exclamation"></i></div>
     <span class="mw-section-title">${t('mw.urgent.title')}</span>
     <span class="mw-count" id="mwUrgentCount">${total}</span>
+  </div>`;
+
+  if (total === 0) {
+    return `
+<div class="mw-section" id="mwSectionUrgent">
+  ${header}
+  <div class="mw-empty"><i class="fa-solid fa-circle-check" style="color:#22c55e;margin-right:6px;"></i>${t('mw.urgent.empty')}</div>
+</div>`;
+  }
+
+  const col = (cls, icon, label, list) => `
+    <div class="mw-urgent-col">
+      <div class="mw-urgent-col-head ${cls}">
+        <i class="fa-solid ${icon}"></i>
+        <span>${label}</span>
+        <span class="mw-urgent-col-count">${list.length}</span>
+      </div>
+      ${list.length === 0
+        ? `<div class="mw-empty mw-urgent-empty-col">${t('mw.urgent.col.none')}</div>`
+        : `<div class="mw-urgent-list">${list.map(x => x.html).join('')}</div>`}
+    </div>`;
+
+  return `
+<div class="mw-section" id="mwSectionUrgent">
+  ${header}
+  <div class="mw-urgent-cols">
+    ${col('overdue', 'fa-circle-exclamation', t('mw.dl.overdue'), overdue)}
+    ${col('soon',    'fa-clock',              t('mw.urgent.col.soon'), soon)}
   </div>
-  ${body}
 </div>`;
 }
 

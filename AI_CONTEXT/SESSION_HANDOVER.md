@@ -26,6 +26,17 @@
 | S58-T4 | `config.js` v6.23; cache-bust `?v=20260803` (60 refs, Python) | `config.js`, `index.html` | ✅ |
 | S58-T5 | Verify: `verify_dev_plan` 40/40, `verify_action_plan` 24/24 | tests | ✅ |
 
+### 🔧 S58.2 — My Work: page width chuẩn + "Cần làm ngay" chia 2 cột (v6.25, 2026-08-03)
+**Yêu cầu user**: (1) rà soát toàn bộ tính năng về **độ rộng chuẩn**; (2) đưa **"Công việc của tôi"** về UI width chuẩn; (3) tách **"Cần làm ngay"** thành **2 cột: Quá hạn | Sắp đến hạn** để review nhanh.
+**Audit width (toàn hệ thống)**: chỉ **My Work** lệch chuẩn — `.mw-page { padding:20px 24px; max-width:1200px }` **cộng dồn** padding lên `.content` (đã 20/24) + cap 1200px → hẹp & lệch so với mọi view khác (Tasks/Case/Issue/Initiative/Dev Plan… render thẳng vào `.content` = full width). AI Chat cap `max-width:860px` là **cố ý** (readability chat) → giữ nguyên. Kết luận: chỉ cần sửa My Work.
+**Sửa**:
+- `my-work.css` — `.mw-page` `padding:0 0 32px; max-width:none` (bỏ double-padding + cap) → khớp width chuẩn; mobile `.mw-page{padding:0 0 16px}`. +`.mw-urgent-cols` (grid 2 cột 1fr/1fr, stack <768px) + `.mw-urgent-col-head.overdue/.soon` + `.mw-urgent-col-count` + `.mw-urgent-empty-col`.
+- `my-work.js` — `_mwBuildUrgentSection` viết lại: partition urgent thành **overdue (diff<0)** vs **soon (diff≥0: hôm nay + ≤7d)**, mỗi cột có count + sort soonest-first + empty-state "Không có"; tách `_mwUrgentTaskItem`/`_mwUrgentCaseItem`. Giữ `#mwSectionUrgent`/`#mwUrgentCount`/`.mw-urgent-item`/`.mw-urgent-list` (test không đổi).
+- `i18n.js` — +`mw.urgent.col.soon` ("Sắp đến hạn"/"Due soon"), `mw.urgent.col.none` ("Không có"/"None"); cột Quá hạn reuse `mw.dl.overdue`.
+- `config.js` v6.25-mywork-width-urgent-20260803; cache-bust `?v=20260803c`.
+**Quyết định mặc định**: item **hôm nay (diff=0)** xếp vào cột **Sắp đến hạn** (chưa quá hạn); mobile 2 cột → 1 cột.
+**Verify**: `verify_my_work` — urgent MW12 (overdue) + MW13 (soon) PASS; screenshot xác nhận 2 cột Quá hạn|Sắp đến hạn + page full-width. ⚠️ Suite **flaky** (TD-TEST-01: races do `waitForTimeout` — mỗi lần fail 1 tập khác nhau: MW6/MW7-9/MW11/MW22…), KHÔNG do S58.2. Thuần frontend — **không GAS deploy**.
+
 ### 🔧 S58.1 fix — Dev Plan bảng: đè chữ + nút đè ghi chú + textarea auto-grow + page width (v6.24, 2026-08-03)
 **Triệu chứng user báo**: (1) nội dung công việc dài **bị đè chữ** (name đè sang target); (2) nút Sửa/Xóa **đè lên cột Ghi chú**; (3) muốn ô nhập liệu **đổi chiều cao theo nội dung**; (4) **độ rộng page** đồng bộ với các tính năng khác.
 **Nguyên nhân gốc**: `assets/css/table.css:61` có rule GLOBAL `table { white-space:nowrap }`. S58 khóa width cột (`table-layout:fixed`) nhưng cell vẫn `nowrap` → text dài **tràn khỏi cell, đè cột kế bên**; note dài tràn xuống dưới nút actions; cột actions 58px < ~76px cần cho 2 nút `btn-sm`.

@@ -4,6 +4,14 @@
 
 ---
 
+## ✅ COMPLETED S58.2 — My Work: page width chuẩn + "Cần làm ngay" 2 cột
+- [x] **Audit width toàn hệ thống**: chỉ My Work lệch chuẩn (`.mw-page` double-padding + cap 1200px). AI Chat 860px = cố ý (chat readability), giữ nguyên. Các view khác đã full-width chuẩn.
+- [x] `my-work.css` — `.mw-page` `padding:0 0 32px; max-width:none` (mobile `0 0 16px`) → width chuẩn khớp Tasks/Case/Issue/Dev Plan
+- [x] **"Cần làm ngay" chia 2 cột**: Quá hạn (diff<0) | Sắp đến hạn (diff≥0: hôm nay + ≤7d); mỗi cột count + sort soonest-first + empty "Không có"; mobile stack 1 cột
+- [x] `my-work.js` `_mwBuildUrgentSection` viết lại + `_mwUrgentTaskItem/CaseItem`; giữ selector test (`#mwSectionUrgent`/`#mwUrgentCount`/`.mw-urgent-item`)
+- [x] `i18n.js` +`mw.urgent.col.soon` / `mw.urgent.col.none` (VI+EN); config v6.25; cache-bust `?v=20260803c`
+- [x] Verify: urgent MW12/MW13 PASS + screenshot 2 cột; suite flaky (TD-TEST-01) không do thay đổi này
+
 ## ✅ COMPLETED S58.1 — Dev Plan table fix (đè chữ + nút đè ghi chú + textarea auto-grow + page width)
 - [x] Sửa **đè chữ**: `.dev-table td { white-space: normal }` override global `table{white-space:nowrap}` (table.css:61) → cell free-text wrap trong width cột (S58 fixed-layout nhưng cell vẫn nowrap → tràn đè cột kế)
 - [x] Ngày giữ 1 dòng: `.dev-table td.dev-cell-date { white-space:nowrap }` (tăng specificity thắng `.dev-table td`)
