@@ -4,6 +4,14 @@
 
 ---
 
+## ✅ COMPLETED S58.1 — Dev Plan table fix (đè chữ + nút đè ghi chú + textarea auto-grow + page width)
+- [x] Sửa **đè chữ**: `.dev-table td { white-space: normal }` override global `table{white-space:nowrap}` (table.css:61) → cell free-text wrap trong width cột (S58 fixed-layout nhưng cell vẫn nowrap → tràn đè cột kế)
+- [x] Ngày giữ 1 dòng: `.dev-table td.dev-cell-date { white-space:nowrap }` (tăng specificity thắng `.dev-table td`)
+- [x] Header wrap gọn (`thead th` nowrap→normal); nút Sửa/Xóa hết đè Ghi chú: `.btn-sm` compact + cột actions 58→78px + `.dev-cell-actions`
+- [x] **Textarea auto-grow theo nội dung**: `_devAutoGrow()` + `.dev-autogrow` (resize:vertical, overflow hidden) cho `#devfTarget`/`#devfNote` (gọi khi mở modal + oninput)
+- [x] **Page width đồng bộ**: `.dev-page` padding `4px 2px`→`4px 0` (khớp .content 20/24 như Tasks/Case/Issue)
+- [x] config v6.24-devplan-ui-fix-20260803; cache-bust `?v=20260803b`; `verify_dev_plan` 40/40; EVD refresh
+
 ## ✅ COMPLETED S58 — UI layout fit (Dev Plan + Action Plan + UI_CONCEPT.md)
 - [x] Dev Plan bảng danh sách: bỏ `min-width:900px` → `table-layout:fixed; width:100%`; cell free-text (name/target/note/coord) wrap; `.dev-cell-date` giữ ngày 1 dòng; thu gọn width cột px → **fit 1 màn hình**, scroll ngang chỉ fallback <720px
 - [x] Action Plan kanban: `.kanban-col` `flex:0 0 260px` → `flex:1 1 0; min-width:240px` → 4 cột **giãn lấp đầy** (verify `.kanban-*` chỉ Action Plan; Case Pipeline = `.cp-col`)

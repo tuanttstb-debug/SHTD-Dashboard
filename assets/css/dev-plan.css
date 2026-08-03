@@ -1,6 +1,8 @@
 /* ── Dev Plan (Plan phát triển bản thân) — dev- prefix ── */
 
-.dev-page { padding: 4px 2px 40px; }
+/* UI_CONCEPT: page width aligned to the system standard (.content padding 20/24) —
+   no extra horizontal inset, so Dev Plan lines up with Tasks/Case/Issue. */
+.dev-page { padding: 4px 0 40px; }
 
 .dev-page-header {
   display: flex;
@@ -77,13 +79,16 @@
   text-transform: uppercase;
   letter-spacing: .4px;
   border-bottom: 2px solid var(--border);
-  white-space: nowrap;
+  white-space: normal;          /* let long headers wrap instead of overflowing */
+  vertical-align: bottom;
   position: sticky;
   top: 0;
   background: var(--surface);
   z-index: 1;
 }
-.dev-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
+/* Override the global `table { white-space:nowrap }` (table.css) so cell text wraps
+   inside its fixed column width instead of spilling over the next column. */
+.dev-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
 .dev-row:hover { background: var(--surface-2, #f8f9fa); }
 .dev-row.is-done { opacity: .62; }
 
@@ -109,9 +114,10 @@
 .dev-cell-name { font-weight: 600; color: var(--text-1); line-height: 1.35; }
 .dev-cell-id { font-size: 10px; font-family: monospace; color: var(--text-3); margin-top: 2px; }
 .dev-cell-target { color: var(--text-2); }
-/* dates stay on one line (short); coord unit may wrap */
+/* dates stay on one line (short); coord unit may wrap.
+   `.dev-table td.dev-cell-date` needs the extra specificity to beat `.dev-table td`. */
 .dev-cell-muted { font-size: 12px; color: var(--text-3); }
-.dev-cell-date  { white-space: nowrap; }
+.dev-table td.dev-cell-date { white-space: nowrap; }
 .dev-cell-note { color: var(--text-2); }
 
 /* ── Progress bar ── */
@@ -131,6 +137,11 @@
 .dev-prog-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
 .dev-prog-lbl { font-size: 11px; font-weight: 700; color: var(--text-2); }
 .dev-review-flag { color: var(--warning, #f59e0b); font-size: 11px; }
+
+/* Compact icon buttons in the table so Edit + Delete sit side-by-side without
+   spilling onto the note column. */
+.dev-table td .btn-sm { padding: 5px 8px; }
+.dev-cell-actions { white-space: nowrap; }
 
 .dev-readonly { color: var(--text-3); opacity: .5; font-size: 12px; }
 
@@ -173,6 +184,10 @@
 }
 .dev-modal-title { font-size: 18px; font-weight: 800; }
 .dev-modal-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+/* Textareas grow with content (see _devAutoGrow); no inner scrollbar, still
+   draggable vertically for manual override. */
+.dev-autogrow { resize: vertical; overflow-y: hidden; min-height: 62px; line-height: 1.45; }
+
 .dev-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
 .dev-form-full { grid-column: 1 / -1; }
 .dev-form-actions {

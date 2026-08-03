@@ -26,6 +26,16 @@
 | S58-T4 | `config.js` v6.23; cache-bust `?v=20260803` (60 refs, Python) | `config.js`, `index.html` | ✅ |
 | S58-T5 | Verify: `verify_dev_plan` 40/40, `verify_action_plan` 24/24 | tests | ✅ |
 
+### 🔧 S58.1 fix — Dev Plan bảng: đè chữ + nút đè ghi chú + textarea auto-grow + page width (v6.24, 2026-08-03)
+**Triệu chứng user báo**: (1) nội dung công việc dài **bị đè chữ** (name đè sang target); (2) nút Sửa/Xóa **đè lên cột Ghi chú**; (3) muốn ô nhập liệu **đổi chiều cao theo nội dung**; (4) **độ rộng page** đồng bộ với các tính năng khác.
+**Nguyên nhân gốc**: `assets/css/table.css:61` có rule GLOBAL `table { white-space:nowrap }`. S58 khóa width cột (`table-layout:fixed`) nhưng cell vẫn `nowrap` → text dài **tràn khỏi cell, đè cột kế bên**; note dài tràn xuống dưới nút actions; cột actions 58px < ~76px cần cho 2 nút `btn-sm`.
+**Sửa**:
+- `dev-plan.css` — `.dev-table td { white-space: normal }` (override global nowrap) + `word-break/overflow-wrap` → cell free-text wrap trong width cột; `.dev-table td.dev-cell-date { white-space:nowrap }` (tăng specificity thắng `.dev-table td`) → ngày giữ 1 dòng; `.dev-table thead th` nowrap→normal (header wrap gọn); `.dev-table td .btn-sm { padding:5px 8px }` + `.dev-cell-actions{white-space:nowrap}`; `.dev-autogrow{resize:vertical;overflow-y:hidden;min-height:62px}`; `.dev-page` padding `4px 2px`→`4px 0` (đồng bộ width với .content 20/24 như Tasks/Case/Issue).
+- `dev-plan.js` — header widths: name/target **bỏ width** (auto chia đều remainder + wrap), các cột hẹp fixed px, actions 58→78px; +class `dev-cell-actions`; +helper `_devAutoGrow(el)` gọi khi mở modal cho target/note.
+- `index.html` — `#devfTarget`/`#devfNote` +class `dev-autogrow` +`oninput="_devAutoGrow(this)"`.
+- `config.js` v6.24-devplan-ui-fix-20260803; cache-bust `?v=20260803b` (60 refs).
+**Verify**: `verify_dev_plan` **40/40**; screenshot EVD refresh xác nhận hết đè chữ + nút clear + ngày 1 dòng. Thuần frontend — **không cần GAS deploy**.
+
 ---
 
 # SESSION HANDOVER (S57)

@@ -202,19 +202,20 @@ function _devRenderTable() {
     groups.get(key).push(d);
   });
 
-  // UI_CONCEPT fit-one-screen: table-layout is fixed (see dev-plan.css), so these
-  // widths are the fixed columns and Name/Target share the remaining space + wrap.
+  // UI_CONCEPT fit-one-screen: table-layout is fixed (see dev-plan.css). Only the
+  // narrow columns get a fixed width; Name + Target have no width so they absorb the
+  // remaining space equally and wrap — this always fits without over-100% scaling.
   const headHtml = `<tr>
     <th style="width:40px;">STT</th>
-    <th style="width:20%;">${t('dev.col.name')}</th>
-    <th style="width:22%;">${t('dev.col.target')}</th>
-    <th style="width:96px;">${t('dev.col.coord')}</th>
-    <th style="width:82px;">${t('dev.col.start')}</th>
-    <th style="width:82px;">${t('dev.col.end')}</th>
-    <th style="width:112px;">${t('dev.col.state')}</th>
-    <th style="width:96px;">${t('dev.col.progress')}</th>
-    <th style="width:12%;">${t('dev.col.note')}</th>
-    <th style="width:58px;"></th>
+    <th>${t('dev.col.name')}</th>
+    <th>${t('dev.col.target')}</th>
+    <th style="width:90px;">${t('dev.col.coord')}</th>
+    <th style="width:92px;">${t('dev.col.start')}</th>
+    <th style="width:92px;">${t('dev.col.end')}</th>
+    <th style="width:104px;">${t('dev.col.state')}</th>
+    <th style="width:90px;">${t('dev.col.progress')}</th>
+    <th style="width:130px;">${t('dev.col.note')}</th>
+    <th style="width:78px;"></th>
   </tr>`;
 
   let body = '';
@@ -266,7 +267,7 @@ function _devRowHtml(d, stt) {
       </div>
     </td>
     <td class="dev-cell-note" title="${esc(d.note)}">${esc(d.note || '–')}</td>
-    <td onclick="event.stopPropagation();">${actions}</td>
+    <td class="dev-cell-actions" onclick="event.stopPropagation();">${actions}</td>
   </tr>`;
 }
 
@@ -334,7 +335,17 @@ function openDevModal(id) {
   }
 
   document.getElementById('devModal').style.display = 'flex';
+  // Auto-grow textareas to fit their content (esp. when editing existing long text)
+  _devAutoGrow(document.getElementById('devfTarget'));
+  _devAutoGrow(document.getElementById('devfNote'));
   setTimeout(() => document.getElementById('devfName')?.focus(), 50);
+}
+
+// Grow a textarea's height to match its content (called on open + oninput)
+function _devAutoGrow(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
 }
 
 function closeDevModal() {
