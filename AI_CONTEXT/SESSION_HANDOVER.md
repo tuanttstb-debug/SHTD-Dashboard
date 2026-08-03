@@ -1,4 +1,34 @@
 # SESSION HANDOVER
+**Date**: 2026-08-03 (Session 58 — UI layout fit: Dev Plan table hết tràn ngang + Action Plan giãn cột lấp đầy + UI_CONCEPT.md)
+**Model**: Claude Opus 4.8
+**Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main HEAD (trước S58)**: `dae5f3f` — docs(S57) handover delta
+**Version**: v6.23 (`6.23-ui-layout-fit-20260803`, `?v=20260803`)
+
+---
+
+## 🧭 HANDOVER SUMMARY (S58) — đọc nhanh
+
+- **Task completed**: (1) **Dev Plan** — bảng danh sách chính bị **tràn ngang phải kéo sang phải** (do `.dev-table { min-width:900px }` + cell `nowrap`). Sửa: `table-layout:fixed; width:100%` (bảng không bao giờ vượt container) + cho cell free-text (name/target/note/coord) **wrap**, ngày giữ 1 dòng qua `.dev-cell-date`, thu gọn width các cột px để Name/Target có chỗ → **fit 1 màn hình**, scroll ngang chỉ còn là fallback <720px (mobile). (2) **Action Plan** — kanban `.kanban-col { flex:0 0 260px }` để **thừa khoảng trống bên phải**. Sửa: `flex:1 1 0; min-width:240px` → 4 cột **giãn lấp đầy** chiều ngang. (3) **UI_CONCEPT.md (NEW)** — contract layout để tính năng sau tự tối ưu từ đầu (2 failure mode, golden rules, công thức bảng fit-one-screen + board stretch-to-fill, thang width modal, breakpoint chuẩn, checklist pre-merge).
+- **Phạm vi an toàn**: `.kanban-*` chỉ Action Plan dùng (Case Pipeline kanban dùng `.cp-col` → KHÔNG ảnh hưởng). Dev Plan test chỉ assert selector (`.dev-table`/`.dev-row`/`.dev-cell-*`), không assert width → đổi layout an toàn.
+- **Files MOD**: `assets/css/dev-plan.css`, `assets/js/views/dev-plan.js`, `assets/css/kpi.css` (`.kanban-col`), `assets/js/config.js` (v6.23), `index.html` (cache-bust `?v=20260803`, 60 refs). **NEW**: `AI_CONTEXT/UI_CONCEPT.md`.
+- **Blocker**: Không. **Thuần frontend — KHÔNG cần GAS deploy.** User cần **hard-reload** để nhận v6.23.
+- **Regression risk**: 🟢 THẤP — `verify_dev_plan` **40/40**, `verify_action_plan` **24/24** (chạy view thật headless, pass). Fix là CSS deterministic (`table-layout:fixed` + `flex:1 1 0`), độc lập viewport.
+- **Next step**: Smoke test production (badge v6.23; Dev Plan không còn scroll ngang, xem đủ trên 1 màn; Action Plan 4 cột lấp đầy width). Vẫn còn: điền Email `User_Master` (S57 digest); P2 fix flaky `my_work`/`issue_tracker` + stale `history` H13.
+
+## Tasks Completed (S58 — UI layout fit)
+
+| # | Task | Files | Status |
+|---|---|---|---|
+| S58-T1 | Dev Plan bảng fit-one-screen: bỏ `min-width:900px` → `table-layout:fixed; width:100%`; cell free-text wrap; `.dev-cell-date` giữ 1 dòng; thu gọn width cột | `assets/css/dev-plan.css`, `assets/js/views/dev-plan.js` | ✅ |
+| S58-T2 | Action Plan kanban giãn lấp đầy: `.kanban-col` `flex:0 0 260px` → `flex:1 1 0; min-width:240px` | `assets/css/kpi.css` | ✅ |
+| S58-T3 | `AI_CONTEXT/UI_CONCEPT.md` (NEW) — contract layout cho tính năng sau (fit-one-screen, stretch-to-fill, width modal, breakpoint, checklist) | `AI_CONTEXT/UI_CONCEPT.md` | ✅ |
+| S58-T4 | `config.js` v6.23; cache-bust `?v=20260803` (60 refs, Python) | `config.js`, `index.html` | ✅ |
+| S58-T5 | Verify: `verify_dev_plan` 40/40, `verify_action_plan` 24/24 | tests | ✅ |
+
+---
+
+# SESSION HANDOVER (S57)
 **Date**: 2026-08-02 (Session 57 — 🔔 Notification bell: nhắc việc sắp/quá hạn + tạo + đóng, cho Task/Case/Issue/Initiative+Milestone/Dev Plan)
 **Model**: Claude Opus 4.8
 **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard

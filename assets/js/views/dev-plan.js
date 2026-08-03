@@ -202,17 +202,19 @@ function _devRenderTable() {
     groups.get(key).push(d);
   });
 
+  // UI_CONCEPT fit-one-screen: table-layout is fixed (see dev-plan.css), so these
+  // widths are the fixed columns and Name/Target share the remaining space + wrap.
   const headHtml = `<tr>
-    <th style="width:44px;">STT</th>
-    <th>${t('dev.col.name')}</th>
-    <th>${t('dev.col.target')}</th>
-    <th style="width:130px;">${t('dev.col.coord')}</th>
-    <th style="width:96px;">${t('dev.col.start')}</th>
-    <th style="width:96px;">${t('dev.col.end')}</th>
-    <th style="width:130px;">${t('dev.col.state')}</th>
-    <th style="width:120px;">${t('dev.col.progress')}</th>
-    <th style="width:150px;">${t('dev.col.note')}</th>
-    <th style="width:78px;"></th>
+    <th style="width:40px;">STT</th>
+    <th style="width:20%;">${t('dev.col.name')}</th>
+    <th style="width:22%;">${t('dev.col.target')}</th>
+    <th style="width:96px;">${t('dev.col.coord')}</th>
+    <th style="width:82px;">${t('dev.col.start')}</th>
+    <th style="width:82px;">${t('dev.col.end')}</th>
+    <th style="width:112px;">${t('dev.col.state')}</th>
+    <th style="width:96px;">${t('dev.col.progress')}</th>
+    <th style="width:12%;">${t('dev.col.note')}</th>
+    <th style="width:58px;"></th>
   </tr>`;
 
   let body = '';
@@ -253,8 +255,8 @@ function _devRowHtml(d, stt) {
     </td>
     <td class="dev-cell-target" title="${esc(d.target)}">${esc(d.target || '–')}</td>
     <td class="dev-cell-muted">${esc(d.coordUnit || '–')}</td>
-    <td class="dev-cell-muted">${esc(d.startDate || '–')}</td>
-    <td class="dev-cell-muted">${esc(d.endDate || '–')}</td>
+    <td class="dev-cell-muted dev-cell-date">${esc(d.startDate || '–')}</td>
+    <td class="dev-cell-muted dev-cell-date">${esc(d.endDate || '–')}</td>
     <td>${stateChip(d.state)}</td>
     <td>
       <div class="dev-prog"><div class="dev-prog-fill" style="width:${prog}%"></div></div>

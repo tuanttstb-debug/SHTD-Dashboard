@@ -1,5 +1,29 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-02 (Session 57 — 🔔 Notification bell)
+**Prepared**: 2026-08-03 (Session 58 — UI layout fit)
+**Context**: S58 done. v6.23-ui-layout-fit-20260803, `?v=20260803`. Thuần frontend (không GAS deploy). `verify_dev_plan` **40/40** + `verify_action_plan` **24/24**. Code + docs pushed.
+
+---
+
+## ✅ COMPLETED S58 — UI layout fit (Dev Plan + Action Plan + UI_CONCEPT.md)
+- [x] Dev Plan bảng danh sách: bỏ `min-width:900px` → `table-layout:fixed; width:100%`; cell free-text (name/target/note/coord) wrap; `.dev-cell-date` giữ ngày 1 dòng; thu gọn width cột px → **fit 1 màn hình**, scroll ngang chỉ fallback <720px
+- [x] Action Plan kanban: `.kanban-col` `flex:0 0 260px` → `flex:1 1 0; min-width:240px` → 4 cột **giãn lấp đầy** (verify `.kanban-*` chỉ Action Plan; Case Pipeline = `.cp-col`)
+- [x] `AI_CONTEXT/UI_CONCEPT.md` (NEW) — contract layout cho tính năng sau (2 failure mode, golden rules, công thức table/board, thang width modal, breakpoint, checklist pre-merge)
+- [x] `config.js` v6.23; cache-bust `?v=20260803` (60 refs, Python)
+- [x] Verify: verify_dev_plan 40/40, verify_action_plan 24/24, 0 JS error
+
+## 🟡 PRIORITY 1 — Smoke test UI layout (v6.23) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.23-ui-layout-fit-20260803` |
+| Plan phát triển bản thân (G+V) | Bảng danh sách **không còn scroll ngang**; xem đủ mọi cột trên 1 màn hình; text dài wrap |
+| Dev Plan trên màn hẹp (~<720px) | Mới xuất hiện scroll ngang (fallback mobile) — chấp nhận được |
+| Action Plan | 4 cột kanban **giãn lấp đầy** chiều ngang, không còn khoảng trống lớn bên phải |
+| Áp dụng UI_CONCEPT.md | Tính năng/bảng/board mới bám checklist §7 (fit-one-screen + stretch-to-fill) |
+
+---
+
+## 📎 (S57) — Notification bell 🔔
+**Prepared cũ**: 2026-08-02 (Session 57 — 🔔 Notification bell)
 **Context**: S57 done + **deployed**. v6.22-notifications-20260802, `?v=20260802`. `verify_notifications` **21/21**. Code + docs pushed. **GAS redeploy XONG (2026-08-02, URL không đổi) + `installNotifTrigger()` bật; smoke test production OK.**
 
 ---

@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-08-02 (Session 57 — 🔔 Notification bell)
-**Version**: v6.22 (`APP_VERSION = '6.22-notifications-20260802'`, `index.html ?v=20260802`)
-**Remote HEAD (main)**: `2ba246e` (S56) + commit S57 (feat notifications + handover docs, cùng push)
+**As of**: 2026-08-03 (Session 58 — UI layout fit)
+**Version**: v6.23 (`APP_VERSION = '6.23-ui-layout-fit-20260803'`, `index.html ?v=20260803`)
+**Remote HEAD (main)**: `dae5f3f` (S57) + commit S58 (fix UI layout + UI_CONCEPT.md, cùng push)
 
+> **S58 NEW**: **UI layout fit** — (1) **Dev Plan** bảng danh sách hết tràn ngang: bỏ `min-width:900px` → `table-layout:fixed; width:100%`, cell free-text wrap, `.dev-cell-date` giữ 1 dòng, thu gọn width cột → fit 1 màn hình (scroll ngang chỉ là fallback <720px). (2) **Action Plan** kanban giãn lấp đầy: `.kanban-col` `flex:0 0 260px` → `flex:1 1 0; min-width:240px`. (3) **`AI_CONTEXT/UI_CONCEPT.md` (NEW)** — contract layout để tính năng sau tự tối ưu (fit-one-screen table, stretch-to-fill board, thang width modal, breakpoint chuẩn, checklist pre-merge). Thuần frontend — **không cần GAS deploy**. `.kanban-*` chỉ Action Plan dùng (Case Pipeline = `.cp-col`). Tests: `verify_dev_plan` **40/40**, `verify_action_plan` **24/24**.
 > **S57 NEW**: Chuông 🔔 topbar — nhắc **sắp/đến/quá hạn** (3d/1d/hôm nay/quá hạn) + **tạo** + **đóng** cho Task/Case/Issue/Initiative+Milestone/Dev Plan. Click noti → deep-link mở popup công việc. **Email digest 1/ngày** (MailApp). Read-state per-user ở sheet `Notifications`. GAS = (1) trigger `notifScan()` ~8h ghi sheet + gửi email; (2) real-time `notifOnWrite()` trong doPost (created/closed). Chuông client poll `notif-read` (load/Sync/5'). **✅ GAS đã deploy (2026-08-02, URL không đổi) + `installNotifTrigger()` đã bật; smoke test production OK.** Tests: `verify_notifications` **21/21**.
 > **S56 NEW**: Đồng nhất date input trên mọi modal thêm/sửa. Initiative/Milestone (`initFStart/initFDeadline/initFMsDl`) từ **free-text → `<input type="date">`**; **giữ nguyên storage `DD-MMM-YY`** (convert ở biên: `_initToISO` khi mở Sửa, `_initFromISO` khi Lưu → 0 rủi ro sheet/backend/history/export). Dev Plan `devfStart` giờ **mặc định hôm nay** khi Add. Quy tắc chốt: mọi date field = native picker; **chỉ Start Date default hôm nay**, Deadline để trống. Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19**, `verify_dev_plan` **40/40**, round-trip E2E **11/11**.
 > **S55 NEW**: "Theo dõi Initiative" — (1) tách Done ra section thu gọn "Đã hoàn thành (N)" ở cuối (collapse mặc định, lazy render; gọn khi ~70 initiative); (2) ô số tổng đồng nhất `.cp-stat-card` (icon+số+nhãn) grid 5 ô như Case Pipeline; (3) mỗi ô số → view popup `#initSummaryOverlay` short-list table (row → chi tiết). Ô số + popup đếm theo **scope + Category** (không áp Status). Thuần frontend — **không cần GAS deploy**. Tests: `verify_initiative_tracker` **19/19** → **22/22 suites PASS**.
@@ -44,7 +45,11 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S57: APP_VERSION = '6.22-notifications-20260802'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S58: APP_VERSION = '6.23-ui-layout-fit-20260803'; S30: new GS_WEBAPP_URL |
+| `assets/css/dev-plan.css` | ~235 | ✅ S58: `.dev-table` `table-layout:fixed; width:100%` (bỏ min-width:900px), cell wrap, `.dev-cell-date` nowrap → fit-one-screen; S54: base |
+| `assets/js/views/dev-plan.js` | ~480 | ✅ S58: thu gọn width cột header + `.dev-cell-date` cho ngày; S54.1: My Work hiện all active; S54: base |
+| `assets/css/kpi.css` | ~90+ | ✅ S58: `.kanban-col` `flex:1 1 0; min-width:240px` (giãn lấp đầy, was 0 0 260px) — chỉ Action Plan dùng |
+| `AI_CONTEXT/UI_CONCEPT.md` | NEW | ✅ S58: contract layout (fit-one-screen table, stretch-to-fill board, width modal, breakpoint, checklist pre-merge) |
 | `backend/NotificationService.gs` | ~470 | ✅ S57: NEW — sheet `Notifications` + `notifScan()` (trigger ~8h) + `notifOnWrite`/`notifPrior_` (real-time) + `notifRead`/`notifMarkRead` + email digest + `installNotifTrigger`/`notifSelfTest`. **✅ Deployed + trigger bật (2026-08-02)** |
 | `assets/js/views/notifications.js` | ~185 | ✅ S57: NEW — bell badge + dropdown nhóm + deep-link dispatcher (`open*ViewPopup`) + mark-all + outside-click/ESC |
 | `assets/css/notifications.css` | ~160 | ✅ S57: NEW — bell/badge/panel/item, dark-mode |

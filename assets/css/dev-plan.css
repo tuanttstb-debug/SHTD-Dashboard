@@ -54,15 +54,20 @@
 .dev-filter-search { flex: 1; min-width: 180px; }
 .form-control-sm { padding: 6px 10px; font-size: 13px; height: auto; }
 
-/* ── Table ── */
+/* ── Table ──
+   UI_CONCEPT: fit-one-screen. `table-layout:fixed` + width:100% keeps the table
+   inside its container (never forces a horizontal page scroll on desktop); long
+   text columns wrap instead of demanding width. `.dev-table-scroll` overflow-x
+   stays only as a fallback for very narrow (mobile) viewports. */
 .dev-table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
 .dev-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  min-width: 900px;
+  table-layout: fixed;
   background: var(--surface);
 }
+@media (max-width: 720px) { .dev-table { min-width: 720px; } }
 .dev-table thead th {
   padding: 10px 12px;
   text-align: left;
@@ -78,7 +83,7 @@
   background: var(--surface);
   z-index: 1;
 }
-.dev-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.dev-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
 .dev-row:hover { background: var(--surface-2, #f8f9fa); }
 .dev-row.is-done { opacity: .62; }
 
@@ -103,15 +108,11 @@
 .dev-stt { color: var(--text-3); font-variant-numeric: tabular-nums; }
 .dev-cell-name { font-weight: 600; color: var(--text-1); line-height: 1.35; }
 .dev-cell-id { font-size: 10px; font-family: monospace; color: var(--text-3); margin-top: 2px; }
-.dev-cell-target { max-width: 260px; color: var(--text-2); }
-.dev-cell-muted { font-size: 12px; color: var(--text-3); white-space: nowrap; }
-.dev-cell-note {
-  max-width: 160px;
-  color: var(--text-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.dev-cell-target { color: var(--text-2); }
+/* dates stay on one line (short); coord unit may wrap */
+.dev-cell-muted { font-size: 12px; color: var(--text-3); }
+.dev-cell-date  { white-space: nowrap; }
+.dev-cell-note { color: var(--text-2); }
 
 /* ── Progress bar ── */
 .dev-prog {
