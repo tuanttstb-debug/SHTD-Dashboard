@@ -1,3 +1,22 @@
+# SESSION HANDOVER — 2026-08-03 ROLLUP (S58 → S58.2)
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước session**: `dae5f3f` (S57) → **sau session**: `233b9be` + commit handover này
+**Version**: v6.22 → **v6.25** (`6.25-mywork-width-urgent-20260803`, `?v=20260803c`)
+
+> Session UI/UX: chuẩn hoá độ rộng trang + sửa tràn/đè giao diện, tạo doc governance layout. 5 commit, thuần frontend, **không GAS deploy**.
+
+- **✅ Task completed**:
+  - **S58** — Dev Plan bảng hết tràn ngang (`table-layout:fixed`), Action Plan kanban giãn cột lấp đầy (`flex:1 1 0`), tạo **`AI_CONTEXT/UI_CONCEPT.md`** (contract layout).
+  - **S58.1** — Dev Plan bảng: hết **đè chữ** + nút Sửa/Xóa hết đè Ghi chú (override global `table{white-space:nowrap}`), ngày 1 dòng, textarea modal **auto-grow**, page width về chuẩn.
+  - **S58.2** — Audit width toàn hệ thống (chỉ My Work lệch chuẩn) → **My Work về full-width chuẩn**; **"Cần làm ngay" chia 2 cột Quá hạn | Sắp đến hạn**.
+- **✅ Files changed**: `assets/css/{dev-plan,kpi,my-work}.css`, `assets/js/views/{dev-plan,my-work}.js`, `assets/js/i18n.js`, `assets/js/config.js`, `index.html` (cache-bust 60 refs), **NEW** `AI_CONTEXT/UI_CONCEPT.md`; docs `SESSION_HANDOVER/PROJECT_STATE/TODO_NEXT/TECH_DEBT`. EVD refresh: `test-results/{dev_plan,action-plan,my_work}`.
+- **✅ Decision made**: (a) "Độ rộng chuẩn" = full `.content` width (không wrapper padding/max-width) như Tasks/Case/Issue; **AI Chat 860px giữ nguyên** (cố ý, readability chat). (b) Bảng dùng `table-layout:fixed`; cell free-text **phải** set `white-space:normal` để thắng global nowrap. (c) Board ≤5 cột dùng `flex:1 1 0` giãn đầy, không fixed-px. (d) "Cần làm ngay": item **hôm nay (diff=0)** thuộc cột **Sắp đến hạn** (chưa quá hạn); mobile 2→1 cột. (e) Textarea auto-grow theo nội dung (không scrollbar trong, vẫn resize tay).
+- **⛔ Blocker**: Không. Thuần frontend; user chỉ cần **hard-reload** nhận v6.25.
+- **➡️ Next step**: (1) Smoke test production v6.25 (My Work full-width + 2 cột Quá hạn/Sắp đến hạn; Dev Plan không tràn; Action Plan lấp đầy). (2) Fix flaky tests **TD-TEST-01** (my_work/issue_tracker) + stale **TD-TEST-02/H13**. (3) Leftover S57: điền cột **Email** `User_Master` cho digest. (4) Áp `UI_CONCEPT.md` checklist cho tính năng mới.
+- **🟢 Regression risk**: THẤP — thuần CSS/layout + additive JS. `verify_dev_plan` **40/40**, `verify_action_plan` **24/24**; `verify_my_work` urgent **MW12/MW13 PASS** + screenshot xác nhận (suite flaky TD-TEST-01, không do session này). Selector test giữ nguyên. Điểm để ý: bảng mới **bắt buộc** override `white-space` (global nowrap) — xem UI_CONCEPT §2.
+
+---
+
 # SESSION HANDOVER
 **Date**: 2026-08-03 (Session 58 — UI layout fit: Dev Plan table hết tràn ngang + Action Plan giãn cột lấp đầy + UI_CONCEPT.md)
 **Model**: Claude Opus 4.8

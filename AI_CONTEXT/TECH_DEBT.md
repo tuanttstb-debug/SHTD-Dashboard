@@ -8,6 +8,20 @@
 
 ---
 
+## 🆕 DELTA — Session 58 (2026-08-03)
+
+### TD-UI-02: Global `table { white-space:nowrap }` (table.css:61) là bẫy ngầm cho bảng mới 🟢 MEDIUM
+**Issue**: `assets/css/table.css:61` set `white-space:nowrap` cho **mọi** `<table>`. Bảng mới dùng `table-layout:fixed` (fit-one-screen) sẽ **tràn/đè chữ sang cột kế** nếu không chủ động set `white-space:normal` trên cell free-text (đúng lỗi S58 → S58.1 phải sửa). Ngược lại, cell ngày cần nowrap phải tăng specificity (`.x-table td.x-cell-date`) mới thắng `.x-table td`.
+**Impact**: Trung bình — dễ tái phát ở mọi feature bảng tương lai; triệu chứng là "đè chữ" khó đoán nếu không biết nguồn global.
+**Action**: Đã ghi vào **`UI_CONCEPT.md` §2** (gotcha + công thức). Dài hạn (v7 CSS modularize): cân nhắc bỏ `white-space:nowrap` khỏi selector `table` chung, chuyển nowrap về từng cột cần. Không xử lý ngay.
+
+### Ghi chú S58 (UI layout) — governance mới, giảm nợ UI
+- **NEW `AI_CONTEXT/UI_CONCEPT.md`** = contract layout (fit-one-screen table, stretch-to-fill board, thang width modal, page-container width chuẩn, breakpoint, checklist pre-merge). Mọi feature/bảng/board mới bám checklist §7 → giảm phát sinh nợ UI kiểu tràn ngang / thừa khoảng trống / lệch width.
+- **Width chuẩn hoá**: `.mw-page` (My Work) + `.dev-page` (Dev Plan) bỏ wrapper padding/max-width → khớp `.content`. AI Chat `max-width:860px` giữ lại (cố ý). Không còn view lệch width chuẩn tính đến S58.2.
+- Textarea auto-grow (`_devAutoGrow` ở dev-plan) là pattern cục bộ; nếu tái dùng nhiều nơi → tách helper chung. Chưa cần.
+
+---
+
 ## 🆕 DELTA — Session 57 (2026-08-02)
 
 ### TD-TEST-02: `verify_history` H13 — assertion cũ sau khi S56 đổi date input 🟢 MEDIUM
