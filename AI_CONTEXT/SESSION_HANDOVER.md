@@ -1,3 +1,31 @@
+# SESSION HANDOVER (S59) — 2026-08-04
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước session**: `472c7dd` (S58) → **sau session**: `aedd1ff` + commit handover này
+**Version**: v6.25 → **v6.26** (`6.26-gas-migrate-tpbank-20260804`, `?v=20260804`)
+
+> Session hạ tầng: **chuyển GAS backend (script + Sheet DB + email) từ tài khoản Google cá nhân sang tài khoản cơ quan `cb_sptd_7@tpbank.vn`** để đảm bảo ANBM (thông tin nội bộ + email nhắc việc phát đi từ domain TPBank). Thuần đổi config — không đổi schema/logic/feature.
+
+- **✅ Task completed (S59)**:
+  - Migrate BE về Google Workspace cơ quan: user tự **copy GAS project + Sheet DB** sang tài khoản `cb_sptd_7@tpbank.vn` (test OK phía GAS) → tôi cập nhật config repo trỏ sang deployment + Sheet mới.
+  - Chạy **full test suite local (23 suite)** + chạy riêng 3 suite fail để chứng minh **0 regression** do migration.
+- **✅ Files changed** (4 file source, đã push `aedd1ff`):
+  - `backend/Config.gs` — `SPREADSHEET_ID` → Sheet copy cơ quan `1t4tkaw4K6u3fQiAxkavWXAZAlwiYqht1OQjkWw8Zq4g`.
+  - `assets/js/config.js` — `GS_WEBAPP_URL` → deployment GAS mới (`AKfycbw1BgeNZuo8…DSg`); `APP_VERSION='6.26-gas-migrate-tpbank-20260804'`.
+  - `assets/js/constants.js` — `GS_SHEET_ID` đồng bộ Sheet mới (frontend không dùng logic, đổi để tránh "mìn" link mở Sheet cá nhân cũ).
+  - `index.html` — cache-bust `?v=20260803c` → `?v=20260804` (60 refs).
+  - (Loại khỏi commit: `test-results/*.png` ảnh test tự sinh + các file `Innovation*` chưa track.)
+- **✅ Decision made**:
+  - (a) **Kịch bản A** (nhẹ nhất) sau phỏng vấn 4 câu: `cb_sptd_7` là **Google Workspace** + toàn quyền admin + yêu cầu ANBM = "email gửi từ @tpbank.vn" (data ở lại Google Sheets **được chấp nhận**) + frontend **giữ public** GitHub Pages. → Không re-platform.
+  - (b) **Copy Sheet (không transfer ownership)**: Google chặn transfer chủ sở hữu consumer↔Workspace → Sheet có **ID mới** → phải sửa `SPREADSHEET_ID`. GAS standalone cũng recreate từ repo (không transfer).
+  - (c) **Email**: KHÔNG sửa code — `MailApp.sendEmail` (`NotificationService.gs:479`) không set `from` nên tự gửi từ tài khoản sở hữu script → chuyển account là đủ để email phát từ `@tpbank.vn`. Quota 100→1500/ngày.
+  - (d) **ANBM caveat (ghi rõ với user)**: đổi account ≠ đưa data khỏi Google — data vẫn trên Google Cloud (do account cơ quan sở hữu/kiểm soát). Nếu sau này ANBM siết "không data trên hạ tầng ngoài" → mới cần re-platform (kịch bản B2).
+  - (e) Commit chỉ 4 file source; nợ test TD-TEST-01/02 KHÔNG gộp vào commit migration.
+- **⛔ Blocker**: Không có blocker code. **2 việc thủ công phía GAS** user cần làm (ngoài git) để khép migration: (1) **tắt trigger `notifScan` ở project cá nhân CŨ** (nếu còn bật → email digest gửi **2 lần**); (2) **đối chiếu `AUTH_SECRET`** project mới ↔ cũ (nếu khác → mọi token đang login vô hiệu → user phải login lại; password KHÔNG ảnh hưởng vì hash không dùng secret).
+- **➡️ Next step**: (1) User hard-reload production → xác nhận badge `v6.26` + login/CRUD OK trên Sheet mới + `notifSelfTest` gửi email đến từ `@tpbank.vn`. (2) Làm 2 việc thủ công GAS ở trên. (3) Sau vài ngày ổn định → **gỡ quyền tài khoản cá nhân khỏi Sheet + xóa deployment GAS cũ** (khép ANBM). (4) Giữ deployment + Sheet cũ tới khi verify xong để **rollback** (revert `config.js` là quay lại). (5) (Nợ cũ) fix flaky/stale test TD-TEST-01/02; điền cột Email `User_Master` cho digest.
+- **🟢 Regression risk**: 🟢 **THẤP** — thuần đổi 4 giá trị config (URL/Sheet ID/version/cache-bust), không đụng schema/logic. Full suite **20/23**; cả 3 suite fail đều **pre-existing, KHÔNG do migration** — chứng minh bằng `git stash` bỏ thay đổi → `verify_my_work` code gốc còn **tệ hơn** (50/62 vs 51/62). `verify_import_rbac` **15/15 khi chạy riêng** (đua batch). `verify_history` **H13** stale (ISO vs DD-MMM-YY, TD-TEST-02). Các test mock network nên không đụng GAS thật — chỉ xác nhận frontend load/render y hệt với `?v=` + config mới.
+
+---
+
 # SESSION HANDOVER — 2026-08-03 ROLLUP (S58 → S58.2)
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước session**: `dae5f3f` (S57) → **sau session**: `233b9be` + commit handover này

@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-08-03 (Session 58 — UI layout fit + Dev Plan table + My Work width/urgent)
-**Version**: v6.25 (`APP_VERSION = '6.25-mywork-width-urgent-20260803'`, `index.html ?v=20260803c`)
-**Remote HEAD (main)**: `dae5f3f` (S57) + commits S58 / S58.1 / S58.2
+**As of**: 2026-08-04 (Session 59 — Migrate GAS backend to corporate TPBank account)
+**Version**: v6.26 (`APP_VERSION = '6.26-gas-migrate-tpbank-20260804'`, `index.html ?v=20260804`)
+**Remote HEAD (main)**: `aedd1ff` (S59) + commit handover này
 
+> **S59 (hạ tầng)**: Chuyển toàn bộ **GAS backend (script + Sheet DB + email nhắc việc)** từ tài khoản Google **cá nhân → tài khoản cơ quan `cb_sptd_7@tpbank.vn`** (Google Workspace) để đảm bảo ANBM. Thuần đổi config, **không đổi schema/logic/feature**. Sửa 4 file: `Config.gs` (SPREADSHEET_ID → Sheet copy cơ quan `1t4tkaw4…Zq4g`), `config.js` (GS_WEBAPP_URL → deployment mới `AKfycbw1…DSg`; v6.26), `constants.js` (GS_SHEET_ID sync), `index.html` (cache-bust `?v=20260804`). Email digest giờ phát từ `@tpbank.vn` (MailApp dùng account sở hữu script — không sửa code). **Quyết định**: kịch bản A (Workspace, data ở lại Google được chấp nhận, frontend giữ public); Sheet **copy** (ID mới) vì không transfer ownership consumer↔Workspace được. **Còn thủ công phía GAS**: tắt trigger `notifScan` project cá nhân cũ (tránh email 2 lần) + đối chiếu `AUTH_SECRET`. **Rollback**: giữ deployment+Sheet cũ, revert `config.js`. Tests: full suite 20/23, 3 fail đều pre-existing (chứng minh qua git stash) — 0 regression do migration.
 > **S58.2**: **My Work** — page width về **chuẩn** (`.mw-page` bỏ double-padding + cap 1200px → full-width như mọi view; AI Chat 860px giữ nguyên vì cố ý). **"Cần làm ngay" chia 2 cột: Quá hạn (diff<0) | Sắp đến hạn (diff≥0, hôm nay+≤7d)** — mỗi cột count + sort soonest-first + empty "Không có"; mobile stack 1 cột. +i18n `mw.urgent.col.soon/none`. Audit toàn hệ thống: chỉ My Work lệch chuẩn. v6.25. Tests: urgent MW12/MW13 PASS (suite flaky TD-TEST-01, không do S58.2).
 > **S58.1 FIX**: Dev Plan bảng — sửa **đè chữ** (name đè target) + **nút Sửa/Xóa đè cột Ghi chú** + textarea modal **auto-grow theo nội dung** + **page width đồng bộ** .content. Gốc: global `table{white-space:nowrap}` (table.css:61) làm cell `table-layout:fixed` (S58) vẫn tràn. Sửa: `.dev-table td{white-space:normal}` (+ `.dev-table td.dev-cell-date` nowrap giữ ngày 1 dòng), header wrap, buttons compact + cột actions 58→78px, `.dev-autogrow` + `_devAutoGrow()`, `.dev-page` padding 2px→0. v6.24. Tests `verify_dev_plan` **40/40**.
 > **S58 NEW**: **UI layout fit** — (1) **Dev Plan** bảng danh sách hết tràn ngang: bỏ `min-width:900px` → `table-layout:fixed; width:100%`, cell free-text wrap, `.dev-cell-date` giữ 1 dòng, thu gọn width cột → fit 1 màn hình (scroll ngang chỉ là fallback <720px). (2) **Action Plan** kanban giãn lấp đầy: `.kanban-col` `flex:0 0 260px` → `flex:1 1 0; min-width:240px`. (3) **`AI_CONTEXT/UI_CONCEPT.md` (NEW)** — contract layout để tính năng sau tự tối ưu (fit-one-screen table, stretch-to-fill board, thang width modal, breakpoint chuẩn, checklist pre-merge). Thuần frontend — **không cần GAS deploy**. `.kanban-*` chỉ Action Plan dùng (Case Pipeline = `.cp-col`). Tests: `verify_dev_plan` **40/40**, `verify_action_plan` **24/24**.
@@ -13,7 +14,9 @@
 > **S54.1 fix**: My Work giờ hiện **toàn bộ dev item đang làm của tôi** (trước chỉ hiện item quá hạn review >7 ngày → item vừa tạo bị ẩn cả tuần). Item quá hạn gắn badge "Cần review" + xếp đầu. `readDev()` re-render My Work khi load xong.
 > **⚠️** `backend/RenameUserService.gs` bị nối đoạn PowerShell chứa API key ở cuối (không do S54) — chưa commit; cần dọn + thu hồi key.
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
-**GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec`
+**GAS URL (current)**: `https://script.google.com/macros/s/AKfycbw1BgeNZuo8WVBpwjB0zj7HC-yr5DEHZtO3saHEnJ1g7m7XJdPhif9hmYKPNhk6cg9DSg/exec` (S59 — tài khoản cơ quan `cb_sptd_7@tpbank.vn`)
+**GAS URL (cũ, giữ để rollback)**: `…AKfycbydyik…97f2/exec` (tài khoản cá nhân — xóa deployment sau khi verify ổn định)
+**Owner tài khoản GAS/Sheet**: `cb_sptd_7@tpbank.vn` (Google Workspace TPBank) — trước S59 là mail cá nhân
 
 ---
 
@@ -47,7 +50,7 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S58.2: APP_VERSION = '6.25-mywork-width-urgent-20260803'; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S59: APP_VERSION = '6.26-gas-migrate-tpbank-20260804'; GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg`; S30: new GS_WEBAPP_URL |
 | `assets/css/my-work.css` | ~600 | ✅ S58.2: `.mw-page` full-width (bỏ padding 20/24 + max-width 1200) + `.mw-urgent-cols` grid 2 cột (Quá hạn|Sắp đến hạn); S44b base |
 | `assets/js/views/my-work.js` | ~410 | ✅ S58.2: `_mwBuildUrgentSection` chia 2 cột overdue/soon + `_mwUrgentTaskItem/CaseItem`; S54.1: dev review all active; S44b base |
 | `assets/css/dev-plan.css` | ~250 | ✅ S58.1: `.dev-table td{white-space:normal}` (override global nowrap) + `td.dev-cell-date` nowrap + header wrap + `.btn-sm` compact + `.dev-autogrow` + `.dev-page` pad 2px→0; S58: `table-layout:fixed; width:100%`; S54: base |
@@ -199,7 +202,7 @@ debug_login.mjs           ← S18 login diagnostics
 | `GS_WEBAPP_URL` | In `assets/js/config.js`; **updated S30** — new deployment với atomic action handlers |
 | Task backend | ✅ Deployed — 24 cột (S18) |
 | Case Pipeline backend | ✅ **Deployed** 2026-06-15 — Code.gs routes + CasePipelineService.gs live; GS_WEBAPP_URL không đổi |
-| `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` |
+| `GS_SHEET_ID` | `1t4tkaw4K6u3fQiAxkavWXAZAlwiYqht1OQjkWw8Zq4g` (S59 — Sheet copy tài khoản cơ quan; ID cũ `1cpg1p_8…56Hk` giữ để rollback) |
 | Task sheet | `Task_Master!A1:X` (24 cột) |
 | Case sheet | `Case_Pipeline` (20 cột A→T; tự tạo khi chưa có) |
 

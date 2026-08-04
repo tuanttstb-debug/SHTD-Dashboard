@@ -1,6 +1,29 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-03 (Session 58 — UI layout fit)
-**Context**: S58 done. v6.23-ui-layout-fit-20260803, `?v=20260803`. Thuần frontend (không GAS deploy). `verify_dev_plan` **40/40** + `verify_action_plan` **24/24**. Code + docs pushed.
+**Prepared**: 2026-08-04 (Session 59 — Migrate GAS backend to corporate TPBank account)
+**Context**: S59 done. v6.26-gas-migrate-tpbank-20260804, `?v=20260804`. HEAD `aedd1ff`. Thuần đổi config (URL/Sheet ID/version/cache-bust) — không đổi schema/logic. Full suite 20/23 (3 fail pre-existing, 0 regression). Code pushed.
+
+---
+
+## ✅ COMPLETED S59 — Migrate GAS backend về tài khoản cơ quan (TPBank)
+- [x] Phỏng vấn 4 câu → chốt **kịch bản A**: `cb_sptd_7@tpbank.vn` = Google Workspace + toàn quyền admin + ANBM = "email từ @tpbank.vn" (data ở lại Google Sheets được) + frontend giữ public
+- [x] User copy GAS project + Sheet DB sang tài khoản cơ quan (test OK phía GAS)
+- [x] `backend/Config.gs` — `SPREADSHEET_ID` → Sheet copy `1t4tkaw4…Zq4g`
+- [x] `assets/js/config.js` — `GS_WEBAPP_URL` → deployment mới `AKfycbw1…DSg`; `APP_VERSION` v6.26
+- [x] `assets/js/constants.js` — `GS_SHEET_ID` sync; `index.html` — cache-bust `?v=20260804` (60 refs)
+- [x] Full test suite 23 + chạy riêng 3 suite fail; `git stash` chứng minh 3 fail là pre-existing (my_work code gốc 50/62 < 51/62; import_rbac 15/15 riêng; history H13 stale) → 0 regression
+- [x] Commit `aedd1ff` (chỉ 4 file source; loại test-results PNG) + push main
+
+## 🔴 PRIORITY 0 — Việc thủ công phía GAS để KHÉP migration (ngoài git)
+| Bước | Action | Vì sao |
+|---|---|---|
+| 1 | User **hard-reload** production → badge `v6.26`; login + CRUD 1 task; `notifSelfTest()` | Xác nhận trỏ đúng GAS + Sheet cơ quan; email đến từ `@tpbank.vn` |
+| 2 | **Tắt trigger `notifScan` ở project GAS cá nhân CŨ** | Còn bật → email digest gửi **2 lần** |
+| 3 | **Đối chiếu `AUTH_SECRET`** project mới ↔ cũ | Khác → mọi token login vô hiệu, user phải login lại (password KHÔNG ảnh hưởng) |
+| 4 | Sau vài ngày ổn định → **gỡ quyền tài khoản cá nhân khỏi Sheet + xóa deployment GAS cũ** | Khép ANBM; giữ tới lúc đó để **rollback** (revert `config.js`) |
+| 5 | (Nợ S57) điền cột **Email** `User_Master` cho user cần nhận digest | Thiếu email → chỉ nhận chuông |
+
+## 🟢 PRIORITY 2 — Fix flaky/stale tests (TD-TEST-01 + TD-TEST-02/H13)
+Không do S59. `verify_my_work`/`verify_issue_tracker`/`verify_import_rbac` flaky batch (thay `waitForTimeout` bằng `waitForSelector`/poll); `verify_history` H13 kỳ vọng `DD-MMM-YY` → cập nhật thành ISO hôm nay.
 
 ---
 

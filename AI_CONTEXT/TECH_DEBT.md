@@ -8,6 +8,18 @@
 
 ---
 
+## 🆕 DELTA — Session 59 (2026-08-04)
+
+### Ghi chú S59 (migrate GAS về tài khoản cơ quan) — không phát sinh nợ code, nhưng có 2 điểm cần theo dõi
+- **Trạng thái dual-deployment tạm thời** ⚪ LOW: đang giữ **cả deployment + Sheet cũ (cá nhân) lẫn mới (cơ quan)** để rollback. Rủi ro nếu **cả 2 trigger `notifScan` cùng bật** → email digest gửi 2 lần; và nếu ai đó còn ghi vào Sheet cũ → data phân mảnh. **Action**: sau vài ngày ổn định phải **xóa deployment cũ + gỡ quyền account cá nhân khỏi Sheet cũ** (xem TODO_NEXT P0). Đây là nợ có thời hạn, không để tồn lâu.
+- **ANBM caveat — data vẫn trên Google Cloud** 🟢 MEDIUM (nợ kiến trúc, không phải bug): đổi owner sang account cơ quan **không** đưa data ra khỏi hạ tầng Google; chỉ đạt "email từ @tpbank.vn" + kiểm soát bằng Workspace admin (2FA/DLP/retention). Nếu chính sách ANBM về sau siết "dữ liệu nội bộ không đặt trên hạ tầng ngoài" → phải **re-platform** (kịch bản B2: web service + DB nội bộ). Đã ghi rõ với user; hiện chấp nhận.
+- **Web App "Anyone, even anonymous"** ⚪ LOW: frontend public (GitHub Pages) gọi Web App ẩn danh — phụ thuộc policy Workspace ngân hàng cho phép. Auth thực sự nằm ở token HMAC (`AUTH_SECRET`) chứ không ở access-control của GAS. Nếu ANBM yêu cầu chặn ẩn danh → phải đưa frontend vào nội bộ/VPN/SSO (đã hỏi user S59, chọn giữ public).
+
+### TD-TEST-01 mở rộng — `verify_import_rbac` cũng flaky batch
+S59 batch run: `verify_import_rbac` fail (set role "User" + loạt `ERR_FAILED`) nhưng **15/15 khi chạy riêng**. Cùng bản chất đua batch như `my_work`/`issue_tracker`. Gộp vào TD-TEST-01. Quy tắc giữ nguyên: **batch báo suite này fail → chạy lại riêng để xác nhận trước khi coi là regression.**
+
+---
+
 ## 🆕 DELTA — Session 58 (2026-08-03)
 
 ### TD-UI-02: Global `table { white-space:nowrap }` (table.css:61) là bẫy ngầm cho bảng mới 🟢 MEDIUM
