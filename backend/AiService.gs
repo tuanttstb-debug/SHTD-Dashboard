@@ -55,7 +55,9 @@ function callGemini(contextText, history, userMessage) {
   var apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY chưa được cấu hình trong Script Properties.');
 
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
+  // Model alias 'gemini-flash-latest' luôn trỏ tới bản Flash mới nhất còn hỗ trợ.
+  // Đổi từ 'gemini-2.5-flash' (S12) — model này bị Google chặn với API key/project mới (lỗi "no longer available to new users").
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + apiKey;
 
   var systemPrompt =
     'Bạn là trợ lý AI nội bộ của nhóm Số Hóa Tín Dụng (SHTD), Khối KHDN ngân hàng.\n' +
