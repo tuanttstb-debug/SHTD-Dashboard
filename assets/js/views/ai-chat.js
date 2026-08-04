@@ -104,6 +104,22 @@ function _fmtAiTime() {
   return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 }
 
+// Retry riêng cho AI (S59): 404/5xx của Web App GAS là lỗi transient tầng vận chuyển
+// (redirect googleusercontent). ai-chat là read-only nên retry an toàn (không như write → double-write).
+async function _aiPostWithRetry(payload) {
+  var attempts = 3, lastErr;
+  for (var a = 0; a < attempts; a++) {
+    try {
+      return await gasPost(payload);
+    } catch (err) {
+      lastErr = err;
+      if (!/HTTP: [45]\d\d|Failed to fetch|NetworkError/i.test(err.message)) break; // lỗi không phải transient → không retry
+      if (a < attempts - 1) await new Promise(function (r) { setTimeout(r, 800 * (a + 1)); });
+    }
+  }
+  throw lastErr;
+}
+
 async function sendAiMessage() {
   var input = document.getElementById('aiInput');
   if (!input) return;
@@ -125,7 +141,7 @@ async function sendAiMessage() {
   });
 
   try {
-    var res = await gasPost({ action: 'ai-chat', message: text, history: historyPayload });
+    var res = await _aiPostWithRetry({ action: 'ai-chat', message: text, history: historyPayload });
     if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định');
     _aiHistory.push({ role: 'model', text: res.reply, time: _fmtAiTime() });
   } catch (err) {
