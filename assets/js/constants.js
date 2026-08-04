@@ -16,7 +16,7 @@ let activePreset = localStorage.getItem('shtd_preset') || 'active';
 
 // ── Google Apps Script config ──
 // GS_WEBAPP_URL is defined in assets/js/config.js — update that file on each GAS redeploy
-const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
+const GS_SHEET_ID   = '1t4tkaw4K6u3fQiAxkavWXAZAlwiYqht1OQjkWw8Zq4g';
 const GS_RANGE      = 'Task_Master!A1:X';
 
 // ── Sheet column schema (24 cols) ──
