@@ -79,6 +79,7 @@ function updateClock() {
 }
 
 function renderAll() {
+  if (typeof normalizeCompleteInMemory === 'function') normalizeCompleteInMemory();  // %HT=100 ⇒ hoàn thành (display)
   updateNavBadges();
   updateFilterDropdowns();
   renderDashboard();

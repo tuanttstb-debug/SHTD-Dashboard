@@ -224,6 +224,7 @@ async function handleSubmit(e) {
     noiDungBLD: document.getElementById('fBLDTxt').value,
     yKienBLD: document.getElementById('fYKien').value,
   };
+  if (typeof normTaskComplete === 'function') normTaskComplete(task);  // %HT=100 ⇒ Hoàn thành
   const origId = document.getElementById('origId').value;
   let confirmed = false;
 

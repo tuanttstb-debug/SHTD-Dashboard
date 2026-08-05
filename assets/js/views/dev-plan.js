@@ -386,6 +386,7 @@ async function devSaveItem() {
     lastReview: _devNowIso(),                         // lưu = 1 lần review
     createdBy:  isNew ? me : (prev?.createdBy || me),
   };
+  if (typeof normDevComplete === 'function') normDevComplete(d);  // %HT=100 ⇒ Hoàn thành
 
   if (isNew) {
     dbDev.push(d);

@@ -659,6 +659,7 @@ async function _initSave() {
     parentId,
     type:              parentId ? 'milestone' : 'initiative',
   };
+  if (typeof normInitComplete === 'function') normInitComplete(ini);  // %HT=100 ⇒ Done (root only)
 
   const _shouldReturnToView = !!_initEditReturnId;
   _initCloseModal();
