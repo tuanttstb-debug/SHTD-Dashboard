@@ -102,6 +102,25 @@ async function cleanupCompleteByProgress() {
   return { total, tasks: changedTasks.length, inits: changedInits.length, dev: changedDev.length };
 }
 
+// Wrapper cho nút toolbar (admin): đếm read-only → hỏi xác nhận → chạy cleanup (ghi Sheet).
+async function uiCleanupCompleteByProgress() {
+  const isMs = i => (i && ((i.type === 'milestone') || (typeof _isMilestone === 'function' && _isMilestone(i.id))));
+  const nTask = (db && db.tasks || []).filter(t => _pctNum(t.progress) >= COMPLETE_PCT && t.state !== 'Hoàn thành').length;
+  const nInit = (db && db.initiatives || []).filter(i => !isMs(i) && _pctNum(i.pct) >= COMPLETE_PCT && i.status !== 'Done').length;
+  const nDev  = (typeof dbDev !== 'undefined' ? dbDev : []).filter(d => _pctNum(d.progress) >= COMPLETE_PCT && d.state !== 'Hoàn thành').length;
+  const total = nTask + nInit + nDev;
+
+  if (total === 0) { if (typeof toast === 'function') toast('Dữ liệu đã sạch — không có mục 100% nào chưa hoàn thành.', 'info'); return; }
+
+  const ok = (typeof uiConfirm === 'function')
+    ? await uiConfirm('Chuẩn hoá hoàn thành',
+        `Đặt trạng thái <strong>hoàn thành</strong> cho <strong>${total}</strong> mục đã đạt 100% (Task ${nTask} · Initiative ${nInit} · Dev ${nDev}). Thao tác ghi trực tiếp lên Google Sheets.`,
+        'info', `Chuẩn hoá ${total} mục`)
+    : confirm(`Chuẩn hoá ${total} mục về hoàn thành?`);
+  if (!ok) return;
+  await cleanupCompleteByProgress();
+}
+
 function genId(init, team, ms, extra = []) {
   let pfx;
   if (!init || init === 'BAU') {
