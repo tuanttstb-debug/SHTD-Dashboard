@@ -12,8 +12,14 @@ function buildContext(tokenData) {
       // Số liệu deterministic tính ở server — LLM dùng cho câu hỏi đếm/thống kê (đừng tự đếm dòng thô).
       lines.push(_aiTaskSummary_(taskRows));
 
-      var dataRows = taskRows.length > 301 ? taskRows.slice(0, 1).concat(taskRows.slice(-300)) : taskRows;
-      lines.push('\n=== DANH SÁCH TASK (' + (dataRows.length - 1) + ' task) ===');
+      // Chỉ mục TOÀN BỘ task (gọn) — bao phủ mọi task, không cắt.
+      lines.push('\n' + _aiTaskIndex_(taskRows));
+
+      // Chi tiết mở rộng (đủ 24 cột) chỉ cho tối đa 200 task gần nhất — bổ sung cột free-text
+      // (kết quả/kế hoạch/milestone/ý kiến BLĐ…). Để tra TOÀN BỘ dùng CHỈ MỤC ở trên.
+      var RICH_CAP = 200;
+      var dataRows = taskRows.length > RICH_CAP + 1 ? taskRows.slice(0, 1).concat(taskRows.slice(-RICH_CAP)) : taskRows;
+      lines.push('\n=== CHI TIẾT MỞ RỘNG — ' + (dataRows.length - 1) + ' task gần nhất (đủ cột; KHÔNG phải toàn bộ — dùng CHỈ MỤC để bao phủ tất cả) ===');
       lines.push('Cột: ' + dataRows[0].join(' | '));
       for (var i = 1; i < dataRows.length; i++) lines.push(dataRows[i].join(' | '));
     }
@@ -78,16 +84,56 @@ function _aiProg_(v) {
   return Math.min(100, Math.max(0, p));
 }
 
-function _aiTaskSummary_(rows) {
-  var H = rows[0].map(function (h) { return String(h).trim(); });
+function _aiResolveTaskCols_(headerRow) {
+  var H = headerRow.map(function (h) { return String(h).trim(); });
   function findCol(pred) { for (var i = 0; i < H.length; i++) { if (pred(H[i])) return i; } return -1; }
-  var cId    = findCol(function (h) { return h === 'ID'; });
-  var cName  = findCol(function (h) { return h.indexOf('Task / Deliverable') === 0 || h.indexOf('Deliverable') !== -1; });
-  var cAcc   = findCol(function (h) { return h.indexOf('PIC Accountable') === 0; });
-  var cRes   = findCol(function (h) { return h.indexOf('PIC Responsible') === 0; });
-  var cEnd   = findCol(function (h) { return h === 'Deadline'; });
-  var cProg  = findCol(function (h) { return h === '% HT'; });
-  var cState = findCol(function (h) { return h === 'Trạng thái'; });
+  return {
+    cId:    findCol(function (h) { return h === 'ID'; }),
+    cName:  findCol(function (h) { return h.indexOf('Task / Deliverable') === 0 || h.indexOf('Deliverable') !== -1; }),
+    cAcc:   findCol(function (h) { return h.indexOf('PIC Accountable') === 0; }),
+    cRes:   findCol(function (h) { return h.indexOf('PIC Responsible') === 0; }),
+    cEnd:   findCol(function (h) { return h === 'Deadline'; }),
+    cProg:  findCol(function (h) { return h === '% HT'; }),
+    cState: findCol(function (h) { return h === 'Trạng thái'; }),
+    cTeam:  findCol(function (h) { return h.indexOf('Team chính') === 0 || h === 'Team'; }),
+    cVm:    findCol(function (h) { return h.indexOf('Vướng mắc') === 0; })
+  };
+}
+
+function _aiTrunc_(s, n) {
+  s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  return s.length > n ? s.slice(0, n - 1) + '…' : s;
+}
+
+// Chỉ mục TOÀN BỘ task (gọn) — bao phủ mọi task để LLM lọc/đếm/liệt kê theo trạng thái/PIC/deadline,
+// không bị giới hạn bởi khối "chi tiết mở rộng" (chỉ 200 task gần nhất). Giải quyết lỗi "chỉ xem 300 task".
+function _aiTaskIndex_(rows) {
+  var C = _aiResolveTaskCols_(rows[0]);
+  var out = [];
+  out.push('=== CHỈ MỤC TOÀN BỘ TASK (LIỆT KÊ ĐẦY ĐỦ MỌI TASK — dùng để đếm/lọc/liệt kê theo trạng thái, PIC, deadline) ===');
+  out.push('ID | Trạng thái | %HT | Team | PIC | Deadline | Tên | Vướng mắc');
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (C.cName !== -1 && !String(r[C.cName] || '').trim()) continue;
+    var pic = (C.cRes !== -1 && String(r[C.cRes] || '').trim()) ? String(r[C.cRes]).trim()
+            : (C.cAcc !== -1 ? String(r[C.cAcc] || '').trim() : '');
+    out.push(
+      (C.cId    !== -1 ? String(r[C.cId]    || '').trim() : '') + ' | ' +
+      (C.cState !== -1 ? String(r[C.cState] || '').trim() : '') + ' | ' +
+      _aiProg_(C.cProg !== -1 ? r[C.cProg] : '') + ' | ' +
+      (C.cTeam  !== -1 ? String(r[C.cTeam]  || '').trim() : '') + ' | ' +
+      (pic || '') + ' | ' +
+      (C.cEnd   !== -1 ? String(r[C.cEnd]   || '').trim() : '') + ' | ' +
+      _aiTrunc_(C.cName !== -1 ? r[C.cName] : '', 90) + ' | ' +
+      _aiTrunc_(C.cVm   !== -1 ? r[C.cVm]   : '', 70)
+    );
+  }
+  return out.join('\n');
+}
+
+function _aiTaskSummary_(rows) {
+  var C = _aiResolveTaskCols_(rows[0]);
+  var cId = C.cId, cName = C.cName, cAcc = C.cAcc, cRes = C.cRes, cEnd = C.cEnd, cProg = C.cProg, cState = C.cState;
 
   var today = new Date(); today.setHours(0, 0, 0, 0);
   var soon  = new Date(today.getTime() + 7 * 24 * 3600 * 1000);
@@ -166,6 +212,7 @@ function callGemini(contextText, history, userMessage) {
     '- Trích dẫn ID task hoặc ID initiative khi đề cập mục cụ thể.\n' +
     '- Không bịa đặt dữ liệu; nếu không có thông tin hãy nói rõ.\n' +
     '- Với câu hỏi đếm/thống kê (bao nhiêu task, quá hạn, sắp hạn, theo PIC/trạng thái…): DÙNG số trong mục "SỐ LIỆU TÍNH SẴN" — KHÔNG tự đếm lại từ danh sách thô.\n' +
+    '- "CHỈ MỤC TOÀN BỘ TASK" liệt kê TẤT CẢ task trong hệ thống — dùng nó để lọc/liệt kê theo trạng thái (vd Blocked), PIC, deadline. TUYỆT ĐỐI KHÔNG nói kiểu "chỉ xem được 300 task" hay "các task còn lại chưa hiển thị".\n' +
     '- Khi liệt kê nhiều mục: trả lời ĐẦY ĐỦ, không cắt ngắn; ưu tiên bảng gọn dạng "ID | PIC | Deadline". Chỉ tóm tắt khi người dùng yêu cầu.\n\n' +
     'DỮ LIỆU DỰ ÁN:\n' + contextText;
 

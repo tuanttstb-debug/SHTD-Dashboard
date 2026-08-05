@@ -40,6 +40,58 @@ function renderAiChat() {
   _renderAiMessages();
 }
 
+// Render tối thiểu Markdown AN TOÀN cho tin nhắn bot: escape HTML TRƯỚC (chống XSS),
+// rồi format bảng GFM + **đậm** + `code` + bullet + xuống dòng. Không dùng thư viện ngoài.
+function _aiSplitMdRow(line) {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(function (c) { return c.trim(); });
+}
+
+function _aiMdInline(s) {
+  s = esc(s);
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  return s;
+}
+
+function _aiRenderMarkdown(src) {
+  var lines = String(src == null ? '' : src).replace(/\r\n/g, '\n').split('\n');
+  var html = [];
+  var i = 0;
+  while (i < lines.length) {
+    var line = lines[i];
+    // Bảng GFM: dòng có '|' + dòng kế là separator (---, :---)
+    if (/\|/.test(line) && i + 1 < lines.length &&
+        /-/.test(lines[i + 1]) && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i + 1])) {
+      var header = _aiSplitMdRow(line);
+      i += 2;
+      var body = '';
+      while (i < lines.length && lines[i].trim() !== '' && /\|/.test(lines[i])) {
+        var cells = _aiSplitMdRow(lines[i]);
+        body += '<tr>' + cells.map(function (c) { return '<td>' + _aiMdInline(c) + '</td>'; }).join('') + '</tr>';
+        i++;
+      }
+      html.push('<div class="ai-table-wrap"><table class="ai-md-table"><thead><tr>' +
+        header.map(function (c) { return '<th>' + _aiMdInline(c) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' + body + '</tbody></table></div>');
+      continue;
+    }
+    // Bullet list (- hoặc *)
+    if (/^\s*[-*]\s+/.test(line)) {
+      var items = '';
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+        items += '<li>' + _aiMdInline(lines[i].replace(/^\s*[-*]\s+/, '')) + '</li>';
+        i++;
+      }
+      html.push('<ul class="ai-md-list">' + items + '</ul>');
+      continue;
+    }
+    if (line.trim() === '') { html.push('<br>'); i++; continue; }
+    html.push('<div>' + _aiMdInline(line) + '</div>');
+    i++;
+  }
+  return html.join('');
+}
+
 function _renderAiMessages() {
   var container = document.getElementById('aiMessages');
   if (!container) return;
@@ -68,7 +120,7 @@ function _renderAiMessages() {
       '<div class="ai-msg-row ' + (isUser ? 'user' : 'bot') + '">' +
         '<div class="ai-msg-avatar">' + avatarContent + '</div>' +
         '<div>' +
-          '<div class="ai-msg-bubble">' + esc(turn.text) + '</div>' +
+          '<div class="ai-msg-bubble">' + (isUser ? esc(turn.text) : _aiRenderMarkdown(turn.text)) + '</div>' +
           (turn.time ? '<div class="ai-msg-time">' + turn.time + '</div>' : '') +
         '</div>' +
       '</div>';

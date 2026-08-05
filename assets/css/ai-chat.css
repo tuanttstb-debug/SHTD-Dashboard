@@ -199,6 +199,43 @@
 
 .ai-msg-row.bot .ai-msg-time { text-align: left; }
 
+/* Markdown render trong bong bóng bot (bảng/list/code/đậm) */
+.ai-msg-row.bot .ai-msg-bubble {
+  white-space: normal;   /* HTML block tự xuống dòng — không dùng pre-wrap */
+  max-width: 88%;        /* rộng hơn để chứa bảng */
+}
+.ai-msg-bubble .ai-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 8px 0;
+}
+.ai-md-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.ai-md-table th,
+.ai-md-table td {
+  border: 1px solid var(--border);
+  padding: 5px 9px;
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+}
+.ai-md-table th { background: var(--bg-3); font-weight: 700; }
+.ai-md-table tbody tr:nth-child(even) td { background: var(--bg-3); }
+.ai-md-list { margin: 6px 0; padding-left: 20px; }
+.ai-md-list li { margin: 2px 0; }
+.ai-msg-bubble strong { font-weight: 700; }
+.ai-msg-bubble code {
+  background: var(--bg-3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'DM Mono', ui-monospace, monospace;
+  font-size: 12px;
+}
+
 /* Typing indicator */
 .ai-typing-row {
   display: flex;
