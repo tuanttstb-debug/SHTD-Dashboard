@@ -10,16 +10,56 @@ function _hasTaskChanged(fresh, orig) {
       || fresh.picAcc   !== orig.picAcc;
 }
 
-function fmtTuanBC(el) {
-  let v = el.value.replace(/[^\d]/g, '');
-  if (!v) return;
-  const yr = new Date().getFullYear();
-  if (v.length <= 2) {
-    const wk = parseInt(v, 10);
-    if (wk >= 1 && wk <= 53) {
-      el.value = `Tuần ${String(wk).padStart(2,'0')}/${yr}`;
-    }
+/* ── Tuần báo cáo (đa tuần): auto từ ngày + chip gắn tay ──
+   Auto luôn tính live từ Start/Deadline (helpers.taskReportWeeks); hidden #fTuanBC
+   chỉ lưu các tuần gắn TAY ngoài khoảng auto. Xem AI_CONTEXT/REPORT_WEEK_DESIGN.md (S62). */
+let _tuanPinned = [];
+
+// Các tuần auto suy từ giá trị ngày/trạng thái hiện có trong modal (tuanBC rỗng → chỉ auto).
+function _tuanAutoWeeks() {
+  return taskReportWeeks({
+    startDate: document.getElementById('fStart')?.value || '',
+    endDate:   document.getElementById('fEnd')?.value   || '',
+    state:     document.getElementById('fState')?.value || '',
+    tuanBC:    ''
+  });
+}
+
+function _tuanRenderChips() {
+  _tuanPinned = _tuanPinned.filter((v, i, a) => v && a.indexOf(v) === i);
+  const auto    = _tuanAutoWeeks();
+  const autoSet = new Set(auto);
+  const pins    = _tuanPinned.filter(w => !autoSet.has(w));     // pin thực sự = ngoài auto
+
+  const box = document.getElementById('fTuanChips');
+  if (box) {
+    box.innerHTML =
+      auto.map(w => `<span class="tuan-chip is-auto" title="Tự động từ ngày">${esc(w)}</span>`).join('') +
+      pins.map(w => `<span class="tuan-chip is-pin">${esc(w)}<i class="fa-solid fa-xmark" title="Bỏ tuần" onclick="_tuanRemove('${esc(w)}')"></i></span>`).join('') +
+      ((auto.length || pins.length) ? '' : `<span class="tuan-empty">Chưa có tuần — nhập Start/Deadline hoặc bấm "Thêm tuần"</span>`);
   }
+  const hid = document.getElementById('fTuanBC');   // chỉ lưu pin (auto tính live khi đọc)
+  if (hid) hid.value = pins.join('; ');
+}
+
+function _tuanAddWeek() {
+  const inp   = document.getElementById('fTuanAdd');
+  const label = weekInputToLabel(inp?.value || '');
+  if (!label) { toast('Chọn một tuần hợp lệ trước.', 'warning'); return; }
+  if (_tuanPinned.indexOf(label) === -1) _tuanPinned.push(label);
+  if (inp) inp.value = '';
+  _tuanRenderChips();
+}
+
+function _tuanRemove(label) {
+  _tuanPinned = _tuanPinned.filter(w => w !== label);
+  _tuanRenderChips();
+}
+
+// Khởi tạo control khi mở modal (parse giá trị đã lưu → pin list).
+function _tuanInit(tuanBCRaw) {
+  _tuanPinned = (typeof parsePinnedWeeks === 'function' ? parsePinnedWeeks(tuanBCRaw || '') : []);
+  _tuanRenderChips();
 }
 
 function autoGenId() {
@@ -111,7 +151,7 @@ function openTaskModal(task = null) {
     // Hiển thị ý kiến BLĐ cho task đang/đã xin ý kiến
     document.getElementById('fYKienGroup').style.display =
       ((task.yKienBLD || '').trim() || task.canBLD === 'Y') ? '' : 'none';
-    document.getElementById('fTuanBC').value = task.tuanBC || '';
+    _tuanInit(task.tuanBC || '');   // chip control: pin đã lưu + auto từ ngày
     document.getElementById('fCat').value = task.category || '';
     document.getElementById('fPicSup').value = task.picSupport || '';
     document.getElementById('btnDelete').style.display = 'inline-flex';
@@ -132,6 +172,7 @@ function openTaskModal(task = null) {
     const _td=new Date();document.getElementById('fStart').value=`${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`;
     autoGenId();
     _populateMilestoneSelect('');
+    _tuanInit('');   // Add: chưa pin tuần nào; auto suy từ Start = hôm nay
   }
   document.getElementById('taskOverlay').classList.add('open');
   setTimeout(() => document.getElementById('fName').focus(), 120);

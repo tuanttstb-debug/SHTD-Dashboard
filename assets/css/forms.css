@@ -22,3 +22,17 @@ textarea.form-control{resize:vertical;min-height:72px;}
   color:var(--text-3);padding:14px 0 8px;border-top:1px solid var(--border);
   grid-column:1/-1;margin-top:4px;
 }
+
+/* ── Tuần báo cáo: chip đa tuần (auto + gắn tay) ── */
+.tuan-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:26px;align-items:center;}
+.tuan-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;
+  font-family:var(--mono);white-space:nowrap;
+}
+.tuan-chip.is-auto{background:var(--bg-3);color:var(--text-2);border:1px dashed var(--border);}
+.tuan-chip.is-pin{background:var(--primary-xlight);color:var(--primary);border:1px solid var(--primary);}
+.tuan-chip.is-pin i{cursor:pointer;opacity:.7;font-size:11px;}
+.tuan-chip.is-pin i:hover{opacity:1;}
+.tuan-empty{font-size:12px;color:var(--text-3);font-style:italic;}
+.tuan-add-row{display:flex;gap:8px;align-items:center;margin-top:8px;}

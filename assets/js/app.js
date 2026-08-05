@@ -137,12 +137,7 @@ function updateFilterDropdowns() {
   const fTuanBCEl = document.getElementById('filterTuanBC');
   if (fTuanBCEl) {
     const curTuan = fTuanBCEl.value;
-    const tuanSet = new Set();
-    db.tasks.forEach(t => { if (t.tuanBC && t.tuanBC.trim()) tuanSet.add(t.tuanBC.trim()); });
-    const sorted = [...tuanSet].sort((a, b) => {
-      const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
-      return parse(a) - parse(b);
-    });
+    const sorted = allReportWeeks();   // union tuần auto+pinned toàn bộ task (membership)
     fTuanBCEl.innerHTML = `<option value="">${t('common.all')}</option><option value="__thisweek__">${t('filter.thisweek')}</option>`
       + sorted.map(v => `<option value="${v}">${v}</option>`).join('');
     if (curTuan) fTuanBCEl.value = curTuan;
@@ -324,7 +319,7 @@ function showDetailModal(filter, title) {
   }
 
   let tasks = db.tasks.filter(t => {
-    if (weekScope && (t.tuanBC||'').trim() !== weekScope) return false;
+    if (weekScope && !taskInReportWeek(t, weekScope)) return false;
     if (innerFilter === 'all') return true;
     if (innerFilter === 'done') return parseInt(t.progress) >= 100 || t.state === 'Hoàn thành';
     if (innerFilter === 'inprogress') return parseInt(t.progress) < 100 && t.state !== 'Hoàn thành';
@@ -344,7 +339,7 @@ function showDetailModal(filter, title) {
         <td>${t.milestone ? `<span style="font-size:11px;background:var(--primary-xlight);padding:2px 6px;border-radius:3px;color:var(--primary);font-weight:700;">${esc(t.milestone)}</span>` : '–'}</td>
         <td>${esc(t.team||'–')}</td><td>${esc(t.picRes||'–')}</td>
         <td ${isOverdue(t.endDate,t.progress)?'class="text-danger-bold"':''}>${fmtDate(t.endDate)}</td>
-        <td><span style="font-size:11px;color:var(--text-2);font-family:var(--mono);">${esc(t.tuanBC||'–')}</span></td>
+        <td><span style="font-size:11px;color:var(--text-2);font-family:var(--mono);" title="${esc(taskReportWeeks(t).join('; '))}">${esc(taskWeeksBadge(t))}</span></td>
         <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
         <td>${stateChip(t.state)}</td><td>${ragBadge(t.status)}</td>
       </tr>`).join('');
@@ -359,12 +354,7 @@ function closeKbModal() { document.getElementById('kbOverlay').classList.remove(
 function openReportModal() {
   if (!db.tasks.length) { toast('Chưa có dữ liệu. Kết nối Sheets hoặc Import Excel trước.', 'warning'); return; }
   const sel = document.getElementById('reportWeekSelect');
-  const tuanSet = new Set();
-  db.tasks.forEach(t => { if (t.tuanBC?.trim()) tuanSet.add(t.tuanBC.trim()); });
-  const sorted = [...tuanSet].sort((a, b) => {
-    const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
-    return parse(a) - parse(b);
-  });
+  const sorted = allReportWeeks();   // union membership toàn bộ task
   const thisWeek = currentWeekLabel();
   sel.innerHTML = '<option value="">-- Chọn tuần --</option>'
     + sorted.map(v => `<option value="${v}"${v === thisWeek ? ' selected' : ''}>${v}</option>`).join('');

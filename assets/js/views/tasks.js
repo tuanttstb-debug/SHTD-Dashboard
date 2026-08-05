@@ -23,16 +23,11 @@ function setTaskScope(scope) {
   renderFilterChips();
 }
 
-function _getThisWeekLabel() {
-  const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
-}
+function _getThisWeekLabel() { return currentIsoWeekLabel(); }   // ISO week (helpers.js)
 
 function _applyPreset(tasks) {
   if (activePreset === 'active')  return tasks.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng');
-  if (activePreset === 'week')    return tasks.filter(t => (t.tuanBC||'').trim() === _getThisWeekLabel());
+  if (activePreset === 'week')    return tasks.filter(t => taskInReportWeek(t, _getThisWeekLabel()));
   if (activePreset === 'overdue') return tasks.filter(t => isOverdue(t.endDate, t.progress));
   return tasks;
 }
@@ -56,7 +51,7 @@ function updatePresetCounts() {
     : db.tasks;
   const counts = {
     active:  base.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng').length,
-    week:    base.filter(t => (t.tuanBC||'').trim() === wkLabel).length,
+    week:    base.filter(t => taskInReportWeek(t, wkLabel)).length,
     overdue: base.filter(t => isOverdue(t.endDate, t.progress)).length,
     all:     base.length,
   };
@@ -96,7 +91,7 @@ function getFiltered() {
     if (fRag  && t.status !== fRag) return false;
     if (fTuanBC) {
       const val = fTuanBC === '__thisweek__' ? thisWeekLabel : fTuanBC;
-      if ((t.tuanBC||'').trim() !== val) return false;
+      if (!taskInReportWeek(t, val)) return false;
     }
     return true;
   });
@@ -212,6 +207,7 @@ function renderTaskTable() {
   let tasks = getFiltered().sort((a,b) => {
     let va = a[sort.key]||'', vb = b[sort.key]||'';
     if (sort.key === 'progress') { va = parseInt(va); vb = parseInt(vb); }
+    if (sort.key === 'tuanBC')   { va = taskFirstWeekKey(a); vb = taskFirstWeekKey(b); }   // sort theo tuần sớm nhất
     if (va < vb) return sort.dir === 'asc' ? -1 : 1;
     if (va > vb) return sort.dir === 'asc' ? 1 : -1;
     return 0;
@@ -252,7 +248,7 @@ function renderTaskTable() {
         <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
         <td>${stateChip(t.state)}</td>
         <td>${ragBadge(t.status)}</td>
-        <td><span style="font-size:12px;color:var(--text-2);font-family:var(--mono);">${esc(t.tuanBC||'–')}</span></td>
+        <td><span style="font-size:12px;color:var(--text-2);font-family:var(--mono);" title="${esc(taskReportWeeks(t).join('; '))}">${esc(taskWeeksBadge(t))}</span></td>
       </tr>`;
     }).join('');
   }
@@ -313,7 +309,7 @@ function openTaskViewPopup(id) {
         ${row('calendar-plus', 'Bắt đầu', fmtDate(t.startDate))}
         ${row('calendar-xmark', 'Deadline', `<span${ov ? ' style="color:var(--danger);font-weight:700;"' : ''}>${fmtDate(t.endDate)}</span>`)}
         ${row('percent', 'Tiến độ', `${t.progress || 0}%`)}
-        ${row('newspaper', 'Tuần BC', esc(t.tuanBC || ''))}
+        ${row('newspaper', 'Tuần BC', esc(taskReportWeeks(t).join('; ') || '–'))}
         ${t.crossTeam === 'Y' ? row('arrow-right-arrow-left', 'Cross-team', 'Có') : ''}
       </div>
       ${section('flag-checkered', 'Kết quả', t.result)}

@@ -121,6 +121,129 @@ async function uiCleanupCompleteByProgress() {
   await cleanupCompleteByProgress();
 }
 
+/* ── Report Week (ISO-8601) — tuần báo cáo ĐA TUẦN cho Task ──
+   Membership = autoWeeks(Start→max(Deadline, hôm nay nếu chưa xong)) ∪ pinnedWeeks(nhập tay).
+   Mọi read path (filter/preset/report/dashboard/quickview) dùng taskReportWeeks() làm hàm gốc.
+   Nhãn canonical: "Tuần WW/YYYY" theo ISO week-year (thứ 2 đầu tuần). */
+const REPORT_WEEK_MAX_SPAN = 60;                 // chặn dữ liệu ngày rác làm phình membership
+
+// {year, week} ISO-8601 của 1 Date (year = ISO week-year, có thể lệch năm dương lịch ở biên).
+function isoWeekParts(d) {
+  const dt  = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = dt.getUTCDay() || 7;               // CN(0) → 7
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);      // dời tới thứ 5 của tuần ISO
+  const ys  = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((dt - ys) / 86400000) + 1) / 7);
+  return { year: dt.getUTCFullYear(), week };
+}
+function isoWeekLabel(d) {
+  const p = isoWeekParts(d);
+  return `Tuần ${String(p.week).padStart(2,'0')}/${p.year}`;
+}
+function currentIsoWeekLabel() { return isoWeekLabel(new Date()); }
+
+// Thứ 2 (đầu tuần ISO) của Date, giờ về 00:00 local.
+function isoWeekMonday(d) {
+  const dt  = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = dt.getDay() || 7;
+  dt.setDate(dt.getDate() - (day - 1));
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+// Mảng nhãn tuần ISO từ start → end (inclusive). Cap REPORT_WEEK_MAX_SPAN (giữ các tuần gần end nhất).
+function isoWeeksInRange(start, end) {
+  if (!start || !end) return [];
+  let a = isoWeekMonday(start), b = isoWeekMonday(end);
+  if (b < a) { const tmp = a; a = b; b = tmp; }
+  const out = [];
+  const cur = new Date(b);
+  while (cur >= a && out.length < REPORT_WEEK_MAX_SPAN) {
+    out.push(isoWeekLabel(cur));
+    cur.setDate(cur.getDate() - 7);
+  }
+  return out.reverse();
+}
+
+// '2026-W16' (giá trị <input type="week">) ⇄ 'Tuần 16/2026'
+function weekInputToLabel(v) {
+  const m = /^(\d{4})-W(\d{1,2})$/.exec(String(v || '').trim());
+  return m ? `Tuần ${m[2].padStart(2, '0')}/${m[1]}` : '';
+}
+function labelToWeekInput(label) {
+  const m = /(\d{1,2})\s*\/\s*(\d{4})/.exec(String(label || ''));
+  return m ? `${m[2]}-W${m[1].padStart(2, '0')}` : '';
+}
+
+// Chuẩn hoá 1 chuỗi tuần tự do → 'Tuần WW/YYYY' hoặc '' nếu không parse được.
+// Bắt: 'Tuần 16/2026', 'T16/2026', '16/2026', '2026-W16', 'W16 2026', 'tuan 16 2026'…
+function parseWeekLabel(s) {
+  s = String(s == null ? '' : s).trim();
+  if (!s) return '';
+  let m = /^(\d{4})-W(\d{1,2})$/i.exec(s);
+  if (m) { const w = +m[2]; if (w >= 1 && w <= 53) return `Tuần ${String(w).padStart(2,'0')}/${m[1]}`; }
+  m = /(\d{1,2})\s*[\/\-]\s*(\d{4})/.exec(s);                 // WW/YYYY
+  if (m) { const w = +m[1]; if (w >= 1 && w <= 53) return `Tuần ${String(w).padStart(2,'0')}/${m[2]}`; }
+  m = /(\d{4})\D+W?\s*(\d{1,2})/i.exec(s);                    // YYYY … WW
+  if (m) { const w = +m[2]; if (w >= 1 && w <= 53) return `Tuần ${String(w).padStart(2,'0')}/${m[1]}`; }
+  return '';
+}
+
+// Parse cột 'Tuần BC' (đa giá trị, phân cách ; hoặc ,) → mảng nhãn (giữ chuỗi lạ để không mất tag cũ).
+function parsePinnedWeeks(tuanBCRaw) {
+  return String(tuanBCRaw == null ? '' : tuanBCRaw)
+    .split(/[;,]/).map(x => x.trim()).filter(Boolean)
+    .map(x => parseWeekLabel(x) || x);
+}
+
+// So sánh 2 nhãn tuần theo (year, week); nhãn không chuẩn đẩy về cuối.
+function _weekKey(s) { const m = /(\d{1,2})\s*\/\s*(\d{4})/.exec(String(s || '')); return m ? (+m[2]) * 100 + (+m[1]) : Infinity; }
+function _weekLabelCmp(a, b) { return _weekKey(a) - _weekKey(b) || String(a).localeCompare(String(b)); }
+
+// HÀM GỐC: các tuần báo cáo của task = auto(từ ngày) ∪ pinned(tay), sorted asc + deduped.
+function taskReportWeeks(task) {
+  if (!task) return [];
+  const pinned = parsePinnedWeeks(task.tuanBC);
+  const s = typeof parseVNDate === 'function' ? parseVNDate(task.startDate) : null;
+  const e = typeof parseVNDate === 'function' ? parseVNDate(task.endDate)   : null;
+  let auto = [];
+  if (s || e) {
+    const startD = s || e;
+    let endD     = e || s;
+    const today  = new Date(); today.setHours(0, 0, 0, 0);
+    if (task.state !== 'Hoàn thành' && today > endD) endD = today;   // quá hạn chưa xong → kéo tới tuần này
+    auto = isoWeeksInRange(startD, endD);
+  }
+  return [...new Set([...auto, ...pinned])].sort(_weekLabelCmp);
+}
+
+// task có thuộc 1 tuần cụ thể không (dùng cho filter/report).
+function taskInReportWeek(task, weekLabel) {
+  if (!weekLabel) return true;
+  return taskReportWeeks(task).indexOf(weekLabel) !== -1;
+}
+
+// Số sortable của tuần báo cáo sớm nhất (để sort cột bảng).
+function taskFirstWeekKey(task) {
+  const w = taskReportWeeks(task);
+  return w.length ? _weekKey(w[0]) : Infinity;
+}
+
+// Nhãn hiển thị gọn cho cột bảng: tuần đầu + "(+N)" nếu nhiều tuần.
+function taskWeeksBadge(task) {
+  const w = taskReportWeeks(task);
+  if (!w.length) return '–';
+  return w.length === 1 ? w[0] : `${w[0]} (+${w.length - 1})`;
+}
+
+// Tập hợp mọi tuần báo cáo CANONICAL trên toàn bộ task (đã lọc nhãn lạ) — cho dropdown filter, sorted asc.
+function allReportWeeks() {
+  const set = new Set();
+  ((typeof db !== 'undefined' && db.tasks) || []).forEach(t =>
+    taskReportWeeks(t).forEach(w => { if (_weekKey(w) !== Infinity) set.add(w); }));
+  return [...set].sort(_weekLabelCmp);
+}
+
 function genId(init, team, ms, extra = []) {
   let pfx;
   if (!init || init === 'BAU') {

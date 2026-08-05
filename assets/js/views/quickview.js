@@ -55,12 +55,7 @@ function _qvPopulateFilters() {
       ).join('');
   if (curInit) initSel.value = curInit;
 
-  const tuanSet = new Set();
-  db.tasks.forEach(t => { if (t.tuanBC?.trim()) tuanSet.add(t.tuanBC.trim()); });
-  const sortedTuan = [...tuanSet].sort((a, b) => {
-    const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
-    return parse(a) - parse(b);
-  });
+  const sortedTuan = allReportWeeks();   // union membership toàn bộ task
   tuanSel.innerHTML = `<option value="">${t('qv.filter.all-weeks')}</option><option value="__thisweek__">${t('qv.filter.this-week')}</option>`
     + sortedTuan.map(v => `<option value="${v}">${v}</option>`).join('');
   if (curTuan) tuanSel.value = curTuan;
@@ -83,7 +78,7 @@ function renderQuickView() {
 
   let tasks = db.tasks.filter(t => {
     if (filterInit && t.initiative !== filterInit) return false;
-    if (activeWeek && (t.tuanBC||'').trim() !== activeWeek) return false;
+    if (activeWeek && !taskInReportWeek(t, activeWeek)) return false;
     return true;
   });
 
@@ -129,12 +124,7 @@ const _qvStateChip = s => {
   const map = { 'Chưa bắt đầu':'s0','Đang thực hiện':'s1','Hoàn thành chuẩn bị':'s2','Hoàn thành':'s3','Tạm dừng':'s4','Blocked':'s5' };
   return `<span class="state-chip ${map[s]||'s0'}">${tState(s)||'–'}</span>`;
 };
-function _qvCurrentWeek() {
-  const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
-}
+function _qvCurrentWeek() { return currentIsoWeekLabel(); }   // ISO week (helpers.js)
 function _qvOpenTask(id) {
   if (typeof editTask === 'function') {
     closeQuickView();
@@ -179,7 +169,7 @@ function _qvRenderDone(tasks) {
         ${tk.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${esc(tk.team)}</span>` : ''}
         ${tk.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${esc(tk.picRes)}</span>` : ''}
         ${tk.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar-check"></i>${t('qv.done.label')} ${_qvFmtDate(tk.endDate)}</span>` : ''}
-        ${tk.tuanBC ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${esc(tk.tuanBC)}</span>` : ''}
+        ${taskReportWeeks(tk).length ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;" title="${esc(taskReportWeeks(tk).join('; '))}">${esc(taskWeeksBadge(tk))}</span>` : ''}
       </div>
       ${(tk.result||'').trim() ? `
         <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:12px;color:var(--text-2);line-height:1.5;">
@@ -416,7 +406,7 @@ function _qvRenderIssue(tasks) {
         ${tk.team ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-users"></i>${esc(tk.team)}</span>` : ''}
         ${tk.picRes ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-user"></i>${esc(tk.picRes)}</span>` : ''}
         ${tk.endDate ? `<span class="qvp-card-meta-item"><i class="fa-solid fa-calendar"></i>${_qvFmtDate(tk.endDate)}</span>` : ''}
-        ${tk.tuanBC  ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;">${esc(tk.tuanBC)}</span>` : ''}
+        ${taskReportWeeks(tk).length ? `<span class="qvp-card-meta-item" style="background:var(--primary-xlight);padding:1px 6px;border-radius:4px;color:var(--primary);font-weight:600;" title="${esc(taskReportWeeks(tk).join('; '))}">${esc(taskWeeksBadge(tk))}</span>` : ''}
       </div>
       ${(tk.vuongMac||'').trim() ? `
         <div class="qvp-issue-text">

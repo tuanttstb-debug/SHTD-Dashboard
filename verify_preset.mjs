@@ -19,10 +19,17 @@ page.on('pageerror', e => jsErrors.push(e.message));
 const today = new Date();
 const pastDate  = d => { const x = new Date(today); x.setDate(x.getDate()-d); return x.toISOString().slice(0,10); };
 const futureDate= d => { const x = new Date(today); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); };
-const jan4 = new Date(today.getFullYear(), 0, 4);
-const wkNum = Math.ceil(((today - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-const THIS_WEEK = `Tuần ${String(wkNum).padStart(2,'0')}/${today.getFullYear()}`;
-const LAST_WEEK = `Tuần ${String(wkNum-1).padStart(2,'0')}/${today.getFullYear()}`;
+// ISO week label (khớp helpers.isoWeekLabel — thứ 2 đầu tuần, ISO week-year)
+const isoLabel = dt => {
+  const d = new Date(Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()));
+  const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - day);
+  const ys = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil((((d - ys) / 86400000) + 1) / 7);
+  return `Tuần ${String(wk).padStart(2,'0')}/${d.getUTCFullYear()}`;
+};
+const lastWeekDate = new Date(today); lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+const THIS_WEEK = isoLabel(today);
+const LAST_WEEK = isoLabel(lastWeekDate);
 
 const mkTask = (id, state, endDate, tuanBC='') => ({
   id, name:`Task ${id}`, initiative:'INI-001', milestone:'', team:'Số',
@@ -47,7 +54,8 @@ const TEST_TASKS = [
 ];
 // Expected counts:
 // active  = T-001,T-002,T-003,T-004,T-009,T-010 → 6  (không gồm Tạm dừng T-005 và Hoàn thành T-006..8)
-// week    = T-001,T-002,T-010 → 3
+// week    = 7  (membership ISO đa-tuần: MỌI task CHƯA 'Hoàn thành' đều start 30 ngày trước →
+//              auto-span kéo tới tuần hiện tại → T-001..005,009,010; 3 task Hoàn thành end ở quá khứ → loại)
 // overdue = T-002,T-004,T-010 → 3  (progress<100 AND endDate < today)
 // all     = 10
 
@@ -118,8 +126,8 @@ INFO(`Badge counts: active=${counts.active} week=${counts.week} overdue=${counts
 if (counts.active  === '6') PASS('T3a: Badge "Đang làm" = 6');
 else FAIL(`T3a: Badge "Đang làm" kỳ vọng 6, nhận ${counts.active}`);
 
-if (counts.week    === '3') PASS('T3b: Badge "Tuần này" = 3');
-else FAIL(`T3b: Badge "Tuần này" kỳ vọng 3, nhận ${counts.week}`);
+if (counts.week    === '7') PASS('T3b: Badge "Tuần này" = 7 (membership đa-tuần)');
+else FAIL(`T3b: Badge "Tuần này" kỳ vọng 7, nhận ${counts.week}`);
 
 if (counts.overdue === '3') PASS('T3c: Badge "Quá hạn" = 3');
 else FAIL(`T3c: Badge "Quá hạn" kỳ vọng 3, nhận ${counts.overdue}`);
@@ -150,8 +158,8 @@ if (weekActive && !activeOff) PASS('T5a: Preset "Tuần này" active, "Đang là
 else FAIL(`T5a: Active state sai — week=${weekActive} active=${activeOff}`);
 
 const weekRows = await page.$$eval('#taskTbody tr', rows => rows.length);
-if (weekRows === 3) PASS(`T5b: Preset "Tuần này" hiển thị đúng 3 rows`);
-else FAIL(`T5b: Kỳ vọng 3 rows, nhận ${weekRows}`);
+if (weekRows === 7) PASS(`T5b: Preset "Tuần này" hiển thị đúng 7 rows (membership đa-tuần)`);
+else FAIL(`T5b: Kỳ vọng 7 rows, nhận ${weekRows}`);
 
 /* ══ T6: Click preset "Quá hạn" ════════════════════════════════════════════ */
 await page.evaluate(() => setPreset('overdue'));

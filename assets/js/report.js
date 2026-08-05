@@ -2,7 +2,7 @@ function exportWeeklyReport(weekLabel) {
   if (!db.tasks.length) { toast('Không có dữ liệu để xuất báo cáo.', 'warning'); return; }
   if (!weekLabel) { toast('Vui lòng chọn tuần báo cáo.', 'warning'); return; }
 
-  const weekTasks  = db.tasks.filter(t => (t.tuanBC||'').trim() === weekLabel);
+  const weekTasks  = db.tasks.filter(t => taskInReportWeek(t, weekLabel));   // task đa tuần vào mọi báo cáo liên quan
   const inProgress = db.tasks.filter(t => parseInt(t.progress) < 100 && t.state !== 'Hoàn thành');
 
   const wb = XLSX.utils.book_new();

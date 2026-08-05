@@ -1,20 +1,10 @@
-function currentWeekLabel() {
-  const now = new Date();
-  const jan4 = new Date(now.getFullYear(), 0, 4);
-  const wk = Math.ceil(((now - jan4) / 86400000 + jan4.getDay() + 1) / 7);
-  return `Tuần ${String(wk).padStart(2,'0')}/${now.getFullYear()}`;
-}
+function currentWeekLabel() { return currentIsoWeekLabel(); }   // ISO week (helpers.js)
 
 function populateDashFilter() {
   const el = document.getElementById('dashFilterTuan');
   if (!el) return;
   const cur = el.value;
-  const tuanSet = new Set();
-  db.tasks.forEach(t => { if (t.tuanBC && t.tuanBC.trim()) tuanSet.add(t.tuanBC.trim()); });
-  const sorted = [...tuanSet].sort((a, b) => {
-    const parse = s => { const m = s.match(/(\d+)\/(\d+)/); return m ? parseInt(m[2])*100+parseInt(m[1]) : 0; };
-    return parse(a) - parse(b);
-  });
+  const sorted = allReportWeeks();   // union membership toàn bộ task
   el.innerHTML = `<option value="">${t('db.filter.all')}</option><option value="__thisweek__">${t('db.filter.this-week')}</option>`
     + sorted.map(v => `<option value="${v}">${v}</option>`).join('');
   if (cur) el.value = cur;
@@ -27,7 +17,7 @@ function renderDashboard() {
   const thisWeek = currentWeekLabel();
   const activeWeek = dashTuan === '__thisweek__' ? thisWeek : dashTuan;
   const tasks = dashTuan
-    ? db.tasks.filter(t => (t.tuanBC||'').trim() === activeWeek)
+    ? db.tasks.filter(t => taskInReportWeek(t, activeWeek))
     : db.tasks;
 
   const lbl = document.getElementById('dashFilterLabel');
