@@ -1,3 +1,31 @@
+# SESSION HANDOVER (S61–S62) — 2026-08-05
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `6d95f51` (S60 docs) → **sau**: `0b48e8b` (S62)
+**Version**: v6.28 → **v6.30** (`6.30-report-week-multiweek-20260805`, `?v=20260805c`)
+
+> Hai đợt nối tiếp: **S61** tự-hoàn-thành khi %=100; **S62** nâng cấp Tuần báo cáo Task đa-tuần (ISO). Thuần Task-domain (+helpers dùng chung). GAS S62 cần **copy 1 file migration** vào editor (không đổi Web App route).
+
+## S62 — Tuần báo cáo Task đa-tuần (ISO) · commit `0b48e8b` · v6.30
+- **✅ Task completed**: "Tuần BC" của Task từ **1 chuỗi free-text nhập tay → membership ĐA TUẦN chuẩn ISO-8601**. Hàm gốc `taskReportWeeks(task) = autoWeeks(Start→max(Deadline, hôm-nay nếu chưa xong)) ∪ pinnedWeeks(gắn tay)`. Mọi read path dùng nó.
+- **✅ Yêu cầu (phỏng vấn)**: hybrid (auto+sửa tay) · nội dung **dùng chung** (không snapshot theo tuần → không đổi schema) · chuẩn **ISO** (T2 đầu tuần) · task quá hạn chưa xong **kéo tới tuần hiện tại** · **chỉ Task** đợt này (Case sau).
+- **✅ Files (16, đã push)**:
+  - `helpers.js` — +ISO utils (`isoWeekLabel`/`isoWeeksInRange`/`parseWeekLabel`/`weekInput⇄label`/**`taskReportWeeks`**/`taskInReportWeek`/`taskFirstWeekKey`/`taskWeeksBadge`/`allReportWeeks`). 3 hàm tuần jan4 trùng (tasks/dashboard/quickview) → delegate `currentIsoWeekLabel()`.
+  - Read path exact-match → membership: `tasks.js` (preset/count/filter/cột badge/sort), `app.js` (filter populate + dashboard weekScope + report modal), `report.js`, `dashboard.js`, `quickview.js`, `performance.js`.
+  - `index.html` + `crud.js` + `forms.css` — modal thay `<input text>` bằng **chip control**: chip auto (từ ngày, live qua onchange fStart/fEnd/fState) + chip pin (`<input type="week">` ISO picker); hidden `#fTuanBC` chỉ lưu **pin ngoài auto**. `_tuanInit/_tuanRenderChips/_tuanAddWeek/_tuanRemove`.
+  - `backend/ReportWeekMigration.gs` (NEW) — `dryRunNormalizeWeeks()`/`commitNormalizeWeeks()` chuẩn hoá `Tuần BC` cũ → ISO, giá trị lạ giữ nguyên + log.
+  - `verify_report_week.mjs` (NEW, **17/17**, port 3046) + `run_tests.mjs`; `verify_preset.mjs` cập nhật ISO + membership; `AI_CONTEXT/REPORT_WEEK_DESIGN.md` (NEW); `config.js` v6.30.
+- **✅ Decision**: (a) membership **union** (auto∪pinned) — **chưa** hỗ trợ "bớt" tuần auto (auto tính lại; cần thì thêm cột exclude sau); (b) cột `Tuần BC` chỉ lưu **pin** (auto luôn live) → majority 0 nhập liệu; (c) `REPORT_WEEK_MAX_SPAN=60` chặn ngày rác; (d) nội dung Kết quả/Kế hoạch **1 bản dùng chung** mọi tuần.
+- **⛔ Blocker**: Không (code). **1 việc thủ công GAS**: copy `ReportWeekMigration.gs` vào editor → `dryRunNormalizeWeeks()` rồi `commitNormalizeWeeks()` để chuẩn hoá tuần cũ. FE tự chạy sau hard-reload `?v=20260805c`.
+- **➡️ Next step**: (1) hard-reload → mở modal Task xem chip auto/pin + `<input week>`; (2) chạy migration GAS; (3) smoke: task span nhiều tuần hiện ở mọi tuần; task quá hạn hiện ở "Tuần này"; báo cáo tuần gồm task đa tuần; (4) áp cơ chế cho **Case Pipeline** (đợt sau).
+- **🟢 Regression risk**: 🟢 THẤP — read path gom về 1 helper (unit-test `verify_report_week` 17/17: ISO biên năm, range, overdue-extend, union, parse, badge). Full suite **22/24** (2 fail pre-existing: my_work flaky TD-TEST-01 chạy riêng fail MW6 *khác* batch; history H13 stale TD-TEST-02). Suite mở modal (task_init_popup/atomic_write/milestone_task) PASS → chip control init OK. **⚠️ Ngữ nghĩa**: overdue-extension làm preset "Tuần này" ≈ **mọi task đang mở** (đúng yêu cầu user).
+
+## S61 — Auto-complete %=100 ⇒ hoàn thành · commit `a1e9f1e`+`b071f42` · v6.29/6.29.1
+- **✅ Task**: %HT=100 ⇒ tự đặt trạng thái hoàn thành cho **Task** (`state='Hoàn thành'`) / **Initiative root** (`status='Done'`, bỏ milestone) / **Dev** (`state='Hoàn thành'`). Case & Bug bỏ qua (không có cột %).
+- **✅ Files**: `helpers.js` (`_pctNum`/`normTaskComplete`/`normInitComplete`/`normDevComplete`/`normalizeCompleteInMemory`/`cleanupCompleteByProgress`/`uiCleanupCompleteByProgress`); `app.js` renderAll normalize (display); enforce khi save ở `crud.js`/`initiative-tracker.js`/`dev-plan.js`; **nút "Chuẩn hoá HT"** (admin-only) toolbar Tasks; `backend/DataCleanupService.gs` (NEW, bulk `dryRun/commitCompleteByProgress`).
+- **⛔ GAS**: (tùy chọn) copy `DataCleanupService.gs` chạy bulk trên Sheet; hoặc bấm nút "Chuẩn hoá HT" (admin) làm sạch từ FE.
+
+---
+
 # SESSION HANDOVER (S60) — 2026-08-05
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước session**: `aedd1ff` (S59) → **sau session**: `f8826c4`

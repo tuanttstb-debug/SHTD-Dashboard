@@ -8,6 +8,25 @@
 
 ---
 
+## 🆕 DELTA — Session 62 (2026-08-05) — Tuần báo cáo đa-tuần
+
+### TD-RW-01: Membership union chưa hỗ trợ "bớt" tuần auto ⚪ LOW
+`taskReportWeeks = auto ∪ pinned`. User thêm tuần tay được, **không xoá** được 1 tuần auto (auto tính lại mỗi lần đọc). Chấp nhận để đạt "0 nhập liệu" cho đa số. Nếu cần → thêm cột `Tuần loại trừ` (exclude) + trừ khỏi membership. Ghi trong REPORT_WEEK_DESIGN.md.
+
+### TD-RW-02: Ngữ nghĩa "Tuần này" đổi (không phải nợ, cần biết) 🟢 MEDIUM
+Overdue-extension (task chưa xong kéo tới tuần hiện tại) làm preset/filter "Tuần này" ≈ **mọi task đang mở đã bắt đầu** — không còn "chỉ task gắn tag tuần này". **Đúng yêu cầu user** nhưng khác hành vi cũ; lưu ý khi đọc báo cáo/train user. `verify_preset` T3b/T5b đã cập nhật 3→7 theo ngữ nghĩa mới.
+
+### TD-RW-03: `taskReportWeeks` gọi nhiều lần, chưa memoize ⚪ LOW
+Hàm gốc parse ngày + tính ISO range mỗi lần gọi (filter/dashboard/report… × mỗi task × mỗi render). Vài nghìn task vẫn ms-level, nhưng nếu scale lớn → memoize theo (startDate,endDate,state,tuanBC). Chưa cần.
+
+### TD-RW-04: Case Pipeline vẫn free-text tuần ⚪ LOW
+`cpfTuanBC` chưa nâng cấp (S62 chỉ Task, theo chốt user). Đợt sau áp cùng cơ chế + migration Case_Pipeline.
+
+### Ghi chú test S62
+`verify_report_week.mjs` (NEW, 17/17, port 3046) trong batch. `verify_preset.mjs` **KHÔNG** nằm trong `run_tests.mjs` (standalone, cần server ngoài :3030) — đã fix ISO + membership nhưng chỉ chạy tay. Cân nhắc thêm vào runner (đổi self-serve port) sau.
+
+---
+
 ## 🆕 DELTA — Session 60 (2026-08-05)
 
 ### TD-TEST-03 (mới): AI Assistant chưa có test tự động ⚪ LOW

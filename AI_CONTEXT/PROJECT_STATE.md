@@ -1,8 +1,10 @@
 # PROJECT STATE
-**As of**: 2026-08-05 (Session 60 — AI Assistant tuning: full-task index + Markdown table)
-**Version**: v6.28 (`APP_VERSION = '6.28-ai-table-fullindex-20260804'`, `index.html ?v=20260804c`)
-**Remote HEAD (main)**: `f8826c4` (S60) + commit handover này
+**As of**: 2026-08-05 (Session 62 — Tuần báo cáo Task đa-tuần ISO)
+**Version**: v6.30 (`APP_VERSION = '6.30-report-week-multiweek-20260805'`, `index.html ?v=20260805c`)
+**Remote HEAD (main)**: `0b48e8b` (S62) + commit handover này
 
+> **S62 (Report Week)**: "Tuần BC" của Task từ **1 chuỗi free-text → membership ĐA TUẦN chuẩn ISO-8601**. Hàm gốc `taskReportWeeks(task)=autoWeeks(Start→max(Deadline, hôm-nay nếu chưa xong)) ∪ pinnedWeeks(gắn tay)` — mọi read path (preset/filter/report/dashboard/quickview/performance) dùng chung. Modal thay `<input text>` bằng **chip control** (chip auto từ ngày + chip pin qua `<input type="week">` ISO). Cột `Tuần BC` chỉ lưu **pin ngoài auto** → majority 0 nhập liệu. Migration `backend/ReportWeekMigration.gs` (dry-run/commit) chuẩn hoá free-text cũ. Chỉ Task (Case sau). `verify_report_week` **17/17**; full suite 22/24 (2 pre-existing). ⚠️ Ngữ nghĩa: overdue-extension → "Tuần này" ≈ mọi task đang mở. Xem `AI_CONTEXT/REPORT_WEEK_DESIGN.md`.
+> **S61 (Auto-complete)**: %HT=100 ⇒ tự đặt trạng thái hoàn thành (Task `state='Hoàn thành'` / Initiative root `status='Done'` / Dev). Case & Bug bỏ qua (không có %). `helpers.js` norm* + `normalizeCompleteInMemory` (renderAll display) + enforce khi save + nút **"Chuẩn hoá HT"** (admin, toolbar Tasks) + `backend/DataCleanupService.gs` (bulk). v6.29/6.29.1.
 > **S60 (AI Assistant)**: Tinh chỉnh AI Chat (Gemini) sau migrate key cơ quan (S59), 3 commit. (a) model `gemini-2.5-flash`→**`gemini-flash-latest`** (key mới từ chối model cũ). (b) v6.27: server tự tính "SỐ LIỆU TÍNH SẴN" (đếm deterministic) + `maxOutputTokens` 1024→2048 + bỏ ép ngắn + **bỏ Audit_Log khỏi context** (nhẹ → nhanh → ít 404) + `ai-chat.js` **retry 3× backoff riêng cho AI** (read-only, không đụng `gasPost` global). (c) v6.28: `_aiTaskIndex_()` sinh **CHỈ MỤC TOÀN BỘ task** (fix "AI chỉ xem 300 task") + rich detail cap 200 gần nhất; `_aiRenderMarkdown()` render **bảng/đậm/code/bullet** trong bubble bot (esc TRƯỚC → chống XSS, user msg vẫn plain). **GAS đã redeploy (URL không đổi)** → live. Thuần AI feature. Tests: full suite **21/23** (2 fail pre-existing: H13 stale TD-TEST-02, my_work flaky TD-TEST-01 — 0 regression).
 > **S59 (hạ tầng)**: Chuyển toàn bộ **GAS backend (script + Sheet DB + email nhắc việc)** từ tài khoản Google **cá nhân → tài khoản cơ quan `cb_sptd_7@tpbank.vn`** (Google Workspace) để đảm bảo ANBM. Thuần đổi config, **không đổi schema/logic/feature**. Sửa 4 file: `Config.gs` (SPREADSHEET_ID → Sheet copy cơ quan `1t4tkaw4…Zq4g`), `config.js` (GS_WEBAPP_URL → deployment mới `AKfycbw1…DSg`; v6.26), `constants.js` (GS_SHEET_ID sync), `index.html` (cache-bust `?v=20260804`). Email digest giờ phát từ `@tpbank.vn` (MailApp dùng account sở hữu script — không sửa code). **Quyết định**: kịch bản A (Workspace, data ở lại Google được chấp nhận, frontend giữ public); Sheet **copy** (ID mới) vì không transfer ownership consumer↔Workspace được. **Còn thủ công phía GAS**: tắt trigger `notifScan` project cá nhân cũ (tránh email 2 lần) + đối chiếu `AUTH_SECRET`. **Rollback**: giữ deployment+Sheet cũ, revert `config.js`. Tests: full suite 20/23, 3 fail đều pre-existing (chứng minh qua git stash) — 0 regression do migration.
 > **S58.2**: **My Work** — page width về **chuẩn** (`.mw-page` bỏ double-padding + cap 1200px → full-width như mọi view; AI Chat 860px giữ nguyên vì cố ý). **"Cần làm ngay" chia 2 cột: Quá hạn (diff<0) | Sắp đến hạn (diff≥0, hôm nay+≤7d)** — mỗi cột count + sort soonest-first + empty "Không có"; mobile stack 1 cột. +i18n `mw.urgent.col.soon/none`. Audit toàn hệ thống: chỉ My Work lệch chuẩn. v6.25. Tests: urgent MW12/MW13 PASS (suite flaky TD-TEST-01, không do S58.2).
@@ -51,7 +53,12 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S60: APP_VERSION = '6.28-ai-table-fullindex-20260804'; S59: GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg` |
+| `assets/js/config.js` | 7 | ✅ S62: APP_VERSION = '6.30-report-week-multiweek-20260805'; S59: GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg` |
+| `assets/js/helpers.js` | ~230 | ✅ S62: ISO week utils + `taskReportWeeks` (gốc membership đa-tuần) + `allReportWeeks`/`taskWeeksBadge`; S61: auto-complete norm* + `cleanupCompleteByProgress` |
+| `backend/ReportWeekMigration.gs` | ~90 | ✅ S62: NEW — `dryRunNormalizeWeeks()`/`commitNormalizeWeeks()` chuẩn hoá `Tuần BC` free-text → ISO (đa giá trị) |
+| `backend/DataCleanupService.gs` | ~140 | ✅ S61: NEW — `dryRun/commitCompleteByProgress()` bulk %=100 ⇒ hoàn thành (Task/Initiative/Dev) |
+| `verify_report_week.mjs` | ~130 | ✅ S62: NEW — 17/17 (ISO biên năm, range, overdue-extend, union, parse, badge) |
+| `assets/js/crud.js` | ~330 | ✅ S62: chip control tuần (`_tuanInit/_tuanRenderChips/_tuanAddWeek/_tuanRemove`); S61: `normTaskComplete` khi save |
 | `assets/js/views/ai-chat.js` | ~200 | ✅ S60: `_aiRenderMarkdown()` renderer GFM an toàn (esc trước; bảng/đậm/code/bullet) cho bubble bot; retry 3× backoff scope-AI khi GAS 404/5xx |
 | `assets/css/ai-chat.css` | ~240 | ✅ S60: `.ai-md-table`/`.ai-md-list`/`code` style trong bubble bot (theme-aware) |
 | `assets/css/my-work.css` | ~600 | ✅ S58.2: `.mw-page` full-width (bỏ padding 20/24 + max-width 1200) + `.mw-urgent-cols` grid 2 cột (Quá hạn|Sắp đến hạn); S44b base |
@@ -103,6 +110,8 @@
 
 | Feature | Works? | Notes |
 |---|---|---|
+| **📅 Tuần báo cáo Task (đa-tuần ISO)** | ✅ | S62: membership `taskReportWeeks` = auto(Start→max(Deadline,hôm nay)) ∪ pinned; modal chip control (`<input type="week">`); migration `ReportWeekMigration.gs`. Chỉ Task (Case sau). 17/17 tests. ⚠️ "Tuần này" ≈ mọi task đang mở |
+| **✅ Auto-complete %=100** | ✅ | S61: %HT=100 ⇒ trạng thái hoàn thành (Task/Initiative root/Dev); nút "Chuẩn hoá HT" admin + `DataCleanupService.gs` bulk. Case/Bug bỏ qua (không có %) |
 | **🔔 Notification bell** | ✅ | S57: nhắc sắp/quá hạn + tạo + đóng cho 5 entity; deep-link popup; email digest 1/ngày; read-state per-user (sheet `Notifications`); trigger `notifScan()` ~8h + real-time `notifOnWrite()`. 21/21 tests. **GAS deployed + trigger bật + smoke test production OK (2026-08-02)** |
 | **i18n Phase 8 — KPI Overview + Owner Analysis** | ✅ | S51: +6 keys (kp.btn.*, kp.section.*, oa.tab.ranking); toolbar buttons + section headers + ranking tab; domain KPI data intentionally kept; 13/13 + 20/20 regression |
 | **i18n Phase 7 — Gantt, AI Chat, Branch, UM** | ✅ | S50: +74 keys; gantt subtitle/empty; ai-chat header/suggestions (_getAiSuggestions() fn); branch zones/stats/cols; UM ~45 strings + _umUsers cache skip + _umRestoreFilterUi(); 35/35 + 19/19 regression |

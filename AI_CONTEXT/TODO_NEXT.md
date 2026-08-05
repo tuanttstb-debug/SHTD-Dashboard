@@ -1,6 +1,26 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-05 (Session 60 — AI Assistant tuning: full-task index + Markdown table)
-**Context**: S60 done. v6.28-ai-table-fullindex-20260804, `?v=20260804c`. HEAD `f8826c4`. Thuần AI feature. GAS **đã redeploy** (URL không đổi). Full suite 21/23 (2 fail pre-existing, 0 regression). Code pushed.
+**Prepared**: 2026-08-05 (Session 62 — Tuần báo cáo Task đa-tuần ISO)
+**Context**: S61+S62 done. v6.30-report-week-multiweek-20260805, `?v=20260805c`. HEAD `0b48e8b`. Full suite 22/24 (2 fail pre-existing). Code pushed.
+
+---
+
+## ✅ COMPLETED S62 — Tuần báo cáo Task đa-tuần (ISO)
+- [x] `helpers.js` — ISO week utils + hàm gốc `taskReportWeeks` (auto∪pinned) + `allReportWeeks`/`taskWeeksBadge`/`taskInReportWeek`/`taskFirstWeekKey`; 3 hàm tuần jan4 trùng → delegate `currentIsoWeekLabel()`
+- [x] Read path exact-match → membership: tasks/app/report/dashboard/quickview/performance
+- [x] Modal chip control (auto + pin qua `<input type="week">`); hidden `#fTuanBC` chỉ lưu pin; forms.css `.tuan-chip`
+- [x] `backend/ReportWeekMigration.gs` (dry-run/commit chuẩn hoá free-text cũ); `verify_report_week.mjs` 17/17; `verify_preset` fix ISO; `REPORT_WEEK_DESIGN.md`; config v6.30
+
+## 🔴 PRIORITY 0 — Việc thủ công GAS (S62)
+| Bước | Action | Vì sao |
+|---|---|---|
+| 1 | Copy `backend/ReportWeekMigration.gs` vào GAS Editor → `dryRunNormalizeWeeks()` rồi `commitNormalizeWeeks()` | Chuẩn hoá `Tuần BC` free-text cũ → nhãn ISO (không đổi Web App route) |
+| 2 | Hard-reload → mở modal Task: chip auto/pin + `<input week>`; task span nhiều tuần hiện ở mọi tuần; task quá hạn ở "Tuần này"; báo cáo tuần gồm task đa tuần | Xác nhận membership + UX |
+
+## 🟡 PRIORITY 1 — Áp cơ chế tuần đa-tuần cho **Case Pipeline** (đợt sau)
+`cpfTuanBC` cũng free-text; áp cùng `taskReportWeeks`-style + chip control + migration Case_Pipeline.
+
+## 🟢 PRIORITY 2 — Tuỳ chọn Report Week
+Cơ chế "bớt tuần auto" (cột exclude) nếu user cần; memoize `taskReportWeeks` nếu số task rất lớn.
 
 ---
 
