@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-08-04 (Session 59 — Migrate GAS backend to corporate TPBank account)
-**Version**: v6.26 (`APP_VERSION = '6.26-gas-migrate-tpbank-20260804'`, `index.html ?v=20260804`)
-**Remote HEAD (main)**: `aedd1ff` (S59) + commit handover này
+**As of**: 2026-08-05 (Session 60 — AI Assistant tuning: full-task index + Markdown table)
+**Version**: v6.28 (`APP_VERSION = '6.28-ai-table-fullindex-20260804'`, `index.html ?v=20260804c`)
+**Remote HEAD (main)**: `f8826c4` (S60) + commit handover này
 
+> **S60 (AI Assistant)**: Tinh chỉnh AI Chat (Gemini) sau migrate key cơ quan (S59), 3 commit. (a) model `gemini-2.5-flash`→**`gemini-flash-latest`** (key mới từ chối model cũ). (b) v6.27: server tự tính "SỐ LIỆU TÍNH SẴN" (đếm deterministic) + `maxOutputTokens` 1024→2048 + bỏ ép ngắn + **bỏ Audit_Log khỏi context** (nhẹ → nhanh → ít 404) + `ai-chat.js` **retry 3× backoff riêng cho AI** (read-only, không đụng `gasPost` global). (c) v6.28: `_aiTaskIndex_()` sinh **CHỈ MỤC TOÀN BỘ task** (fix "AI chỉ xem 300 task") + rich detail cap 200 gần nhất; `_aiRenderMarkdown()` render **bảng/đậm/code/bullet** trong bubble bot (esc TRƯỚC → chống XSS, user msg vẫn plain). **GAS đã redeploy (URL không đổi)** → live. Thuần AI feature. Tests: full suite **21/23** (2 fail pre-existing: H13 stale TD-TEST-02, my_work flaky TD-TEST-01 — 0 regression).
 > **S59 (hạ tầng)**: Chuyển toàn bộ **GAS backend (script + Sheet DB + email nhắc việc)** từ tài khoản Google **cá nhân → tài khoản cơ quan `cb_sptd_7@tpbank.vn`** (Google Workspace) để đảm bảo ANBM. Thuần đổi config, **không đổi schema/logic/feature**. Sửa 4 file: `Config.gs` (SPREADSHEET_ID → Sheet copy cơ quan `1t4tkaw4…Zq4g`), `config.js` (GS_WEBAPP_URL → deployment mới `AKfycbw1…DSg`; v6.26), `constants.js` (GS_SHEET_ID sync), `index.html` (cache-bust `?v=20260804`). Email digest giờ phát từ `@tpbank.vn` (MailApp dùng account sở hữu script — không sửa code). **Quyết định**: kịch bản A (Workspace, data ở lại Google được chấp nhận, frontend giữ public); Sheet **copy** (ID mới) vì không transfer ownership consumer↔Workspace được. **Còn thủ công phía GAS**: tắt trigger `notifScan` project cá nhân cũ (tránh email 2 lần) + đối chiếu `AUTH_SECRET`. **Rollback**: giữ deployment+Sheet cũ, revert `config.js`. Tests: full suite 20/23, 3 fail đều pre-existing (chứng minh qua git stash) — 0 regression do migration.
 > **S58.2**: **My Work** — page width về **chuẩn** (`.mw-page` bỏ double-padding + cap 1200px → full-width như mọi view; AI Chat 860px giữ nguyên vì cố ý). **"Cần làm ngay" chia 2 cột: Quá hạn (diff<0) | Sắp đến hạn (diff≥0, hôm nay+≤7d)** — mỗi cột count + sort soonest-first + empty "Không có"; mobile stack 1 cột. +i18n `mw.urgent.col.soon/none`. Audit toàn hệ thống: chỉ My Work lệch chuẩn. v6.25. Tests: urgent MW12/MW13 PASS (suite flaky TD-TEST-01, không do S58.2).
 > **S58.1 FIX**: Dev Plan bảng — sửa **đè chữ** (name đè target) + **nút Sửa/Xóa đè cột Ghi chú** + textarea modal **auto-grow theo nội dung** + **page width đồng bộ** .content. Gốc: global `table{white-space:nowrap}` (table.css:61) làm cell `table-layout:fixed` (S58) vẫn tràn. Sửa: `.dev-table td{white-space:normal}` (+ `.dev-table td.dev-cell-date` nowrap giữ ngày 1 dòng), header wrap, buttons compact + cột actions 58→78px, `.dev-autogrow` + `_devAutoGrow()`, `.dev-page` padding 2px→0. v6.24. Tests `verify_dev_plan` **40/40**.
@@ -37,7 +38,7 @@
 |---|---|---|
 | `index.html` | ~1870 | ✅ S49: cache-bust `?v=20260710` (56 refs); S44a: +#mwInitPopup overlay; S43: data-i18n on tasks filter labels |
 | `backend/GAS.GS` | 535 | ✅ Archived patch — moved from root to backend/ |
-| `backend/AiService.gs` | ~75 | ⚠️ S12 — model `gemini-2.5-flash` in repo; GAS deploy unconfirmed |
+| `backend/AiService.gs` | ~250 | ✅ S60: model `gemini-flash-latest`; `_aiTaskIndex_()` (chỉ mục toàn bộ task) + `_aiResolveTaskCols_()`/`_aiTrunc_()` + `_aiTaskSummary_()` deterministic + rich detail cap 200; drop Audit_Log; maxOutputTokens 2048. **GAS deployed (URL không đổi)** |
 | `backend/Code.gs` | ~170 | ✅ S24: xóa `user-list` khỏi ADMIN_ONLY → tất cả roles load được _appUsers; S19: +case-pipeline routes |
 | `backend/UserService.gs` | ~130 | ✅ NEW S13 — deployed |
 | `backend/Config.gs` | 6 | ✅ S18: comment A1:X |
@@ -50,7 +51,9 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S59: APP_VERSION = '6.26-gas-migrate-tpbank-20260804'; GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg`; S30: new GS_WEBAPP_URL |
+| `assets/js/config.js` | 7 | ✅ S60: APP_VERSION = '6.28-ai-table-fullindex-20260804'; S59: GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg` |
+| `assets/js/views/ai-chat.js` | ~200 | ✅ S60: `_aiRenderMarkdown()` renderer GFM an toàn (esc trước; bảng/đậm/code/bullet) cho bubble bot; retry 3× backoff scope-AI khi GAS 404/5xx |
+| `assets/css/ai-chat.css` | ~240 | ✅ S60: `.ai-md-table`/`.ai-md-list`/`code` style trong bubble bot (theme-aware) |
 | `assets/css/my-work.css` | ~600 | ✅ S58.2: `.mw-page` full-width (bỏ padding 20/24 + max-width 1200) + `.mw-urgent-cols` grid 2 cột (Quá hạn|Sắp đến hạn); S44b base |
 | `assets/js/views/my-work.js` | ~410 | ✅ S58.2: `_mwBuildUrgentSection` chia 2 cột overdue/soon + `_mwUrgentTaskItem/CaseItem`; S54.1: dev review all active; S44b base |
 | `assets/css/dev-plan.css` | ~250 | ✅ S58.1: `.dev-table td{white-space:normal}` (override global nowrap) + `td.dev-cell-date` nowrap + header wrap + `.btn-sm` compact + `.dev-autogrow` + `.dev-page` pad 2px→0; S58: `table-layout:fixed; width:100%`; S54: base |
@@ -136,7 +139,7 @@
 | Initiative Tracker | ✅ | S56: date field → native date picker (giữ storage `DD-MMM-YY`), Start default hôm nay; S55: tách Done, stat cards `.cp-stat-card`, summary popup; S14 milestone drill-down; S20: syncInitiativeAction() |
 | **Action Plan v2** | ✅ | S34: role-aware default (Admin=all teams grouped accordion; User/TL=own team kanban); mixed Tasks+Cases kanban; Blocked/overdue auto-add; Initiatives section; 24/24 tests pass |
 | **Audit history tab** | ✅ | S33: Task/Initiative/Case view popups — History tab, lazy load from GAS audit-read; startDate defaults today on Add |
-| **AI Assistant** | ⚠️ | Frontend complete; GAS AiService.gs deploy + GEMINI_API_KEY unconfirmed |
+| **AI Assistant** | ✅ | S60: model `gemini-flash-latest`; chỉ mục toàn bộ task (fix "chỉ 300 task") + số liệu deterministic + render bảng Markdown; retry 404/5xx. **GAS deployed, GEMINI_API_KEY (key cơ quan) live.** ⚠️ chưa có test tự động (TD-TEST-03) |
 | User Management | ✅ | Admin-only; S13 CRUD; S22: search/filter/sort/pagination added (TD-030 resolved) |
 | Login / Auth | ✅ | S11+S18 verified |
 | Optimistic Locking | ✅ | Task_Master; Case_Pipeline không cần (simple write-all) |

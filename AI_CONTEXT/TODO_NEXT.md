@@ -1,6 +1,24 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-04 (Session 59 — Migrate GAS backend to corporate TPBank account)
-**Context**: S59 done. v6.26-gas-migrate-tpbank-20260804, `?v=20260804`. HEAD `aedd1ff`. Thuần đổi config (URL/Sheet ID/version/cache-bust) — không đổi schema/logic. Full suite 20/23 (3 fail pre-existing, 0 regression). Code pushed.
+**Prepared**: 2026-08-05 (Session 60 — AI Assistant tuning: full-task index + Markdown table)
+**Context**: S60 done. v6.28-ai-table-fullindex-20260804, `?v=20260804c`. HEAD `f8826c4`. Thuần AI feature. GAS **đã redeploy** (URL không đổi). Full suite 21/23 (2 fail pre-existing, 0 regression). Code pushed.
+
+---
+
+## ✅ COMPLETED S60 — AI Assistant tuning (full-task index + Markdown table)
+- [x] `f5a447a` — Gemini model `gemini-2.5-flash` → **`gemini-flash-latest`** (key cơ quan từ chối model cũ)
+- [x] `09cdc54` (v6.27) — server "SỐ LIỆU TÍNH SẴN" (đếm deterministic) + `maxOutputTokens` 1024→2048 + bỏ ép ngắn gọn + **bỏ Audit_Log khỏi context** (nhẹ/nhanh/ít 404) + `ai-chat.js` retry 3× backoff scope-AI khi 404/5xx
+- [x] `f8826c4` (v6.28) — `_aiTaskIndex_()` **chỉ mục TOÀN BỘ task** (fix "chỉ xem 300 task") + rich detail cap 200; `_aiRenderMarkdown()` render bảng/đậm/code/bullet trong bubble bot (esc TRƯỚC → XSS-safe)
+- [x] GAS **redeploy** (user, URL không đổi) → backend live; full suite 21/23 (2 fail pre-existing) → push main
+
+## 🟡 PRIORITY 1 — Smoke test AI Assistant (v6.28) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.28-ai-table-fullindex-20260804` |
+| Hỏi AI "liệt kê task Blocked" / "task quá hạn theo PIC" | Bao phủ **mọi** task (không cắt); KHÔNG nói "chỉ xem được 300 task" |
+| Câu trả lời dạng bảng | Render **bảng Markdown** đẹp trong bubble bot (không còn `\|---\|` thô) |
+| Câu đếm (bao nhiêu task quá hạn/sắp hạn) | Số khớp "SỐ LIỆU TÍNH SẴN" (deterministic), không lệch |
+| Gõ ký tự HTML (`<b>`, `<script>`) trong câu hỏi | Hiển thị nguyên văn escaped (không thực thi) |
+| Lỗi transient GAS | Tự retry, không hiện 404 ngay lần đầu |
 
 ---
 

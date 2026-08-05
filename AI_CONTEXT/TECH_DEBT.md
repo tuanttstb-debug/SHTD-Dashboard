@@ -8,6 +8,21 @@
 
 ---
 
+## 🆕 DELTA — Session 60 (2026-08-05)
+
+### TD-TEST-03 (mới): AI Assistant chưa có test tự động ⚪ LOW
+**Issue**: `views/ai-chat.js` (`_aiRenderMarkdown()` — renderer GFM + XSS guard) và `backend/AiService.gs` (`_aiTaskIndex_`/`_aiTaskSummary_`/`_aiResolveTaskCols_`) **không nằm trong `run_tests.mjs`**. Backend cần Gemini API + GAS live nên khó test headless; frontend renderer thì test được (thuần hàm DOM).
+**Impact**: Thấp — logic renderer đơn giản, đã review XSS bằng tay (esc trước, user input escaped). Nhưng thay đổi tương lai không có lưới an toàn.
+**Action**: (tùy chọn) thêm `verify_ai_chat.mjs` test riêng `_aiRenderMarkdown()`: bảng GFM → `<table>`, `<script>` trong input → escaped, bullet/bold/code. Không block.
+
+### Ghi chú S60 (AI tuning) — nợ có kiểm soát, không phát sinh nợ nặng
+- **`_aiTaskIndex_` không giới hạn số dòng** 🟢 MEDIUM: trước cap 300 (token), giờ index TOÀN BỘ task. Trên `gemini-flash-latest` (~1M ctx) ổn với hàng trăm→vài nghìn task; nếu task tăng rất lớn → prompt phình, doPost chậm + chi phí tăng. **Ngưỡng cần theo dõi**: nếu > ~3–4k task, cân nhắc index phân trang / lọc theo scope trước khi gửi. Hiện chấp nhận.
+- **Bỏ Audit_Log khỏi context AI** (v6.27): payload nhẹ → nhanh → ít 404. Đánh đổi: AI không trả lời được câu hỏi về lịch sử audit chi tiết. Nếu cần → thêm lại có chọn lọc (chỉ audit gần đây / theo yêu cầu).
+- **Retry scope-AI** (`ai-chat.js`) tách khỏi `gasPost` global **cố ý** — chỉ áp cho read (AI). KHÔNG mở retry cho `gasPost` chung (có ghi → double-write). Giữ nguyên nguyên tắc này.
+- **Markdown renderer tự viết** (không lib): an toàn XSS nhờ `esc()` chạy TRƯỚC mọi format; chỉ hỗ trợ subset (bảng/đậm/code/bullet). Nếu Gemini trả markdown phức tạp hơn (heading/nested/link) → render thô (an toàn, không vỡ). Mở rộng khi cần.
+
+---
+
 ## 🆕 DELTA — Session 59 (2026-08-04)
 
 ### Ghi chú S59 (migrate GAS về tài khoản cơ quan) — không phát sinh nợ code, nhưng có 2 điểm cần theo dõi

@@ -1,3 +1,32 @@
+# SESSION HANDOVER (S60) — 2026-08-05
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước session**: `aedd1ff` (S59) → **sau session**: `f8826c4`
+**Version**: v6.26 → **v6.28** (`6.28-ai-table-fullindex-20260804`, `?v=20260804c`)
+
+> Session tinh chỉnh **AI Assistant (Gemini)** sau khi migrate API key sang tài khoản cơ quan (S59). 3 commit nối tiếp: (a) đổi model, (b) fix 404 + trả lời ngắn + chậm, (c) full-task index + render bảng Markdown. Thuần AI feature — **không đụng schema/CRUD/module khác**. GAS **đã redeploy** (user, URL không đổi).
+
+- **✅ Task completed (S60)**:
+  - **(a) `f5a447a`** — đổi Gemini model `gemini-2.5-flash` → **`gemini-flash-latest`** (key cơ quan mới bị từ chối model cũ: "no longer available to new users"; alias `-latest` luôn trỏ Flash hiện hành).
+  - **(b) `09cdc54` (v6.27)** — fix **404 + câu trả lời quá ngắn + phản hồi chậm**: server tự tính "SỐ LIỆU TÍNH SẴN" (overdue/sắp hạn/theo PIC/theo trạng thái) → câu đếm deterministic; `maxOutputTokens` 1024→2048 + bỏ ép ngắn gọn trong prompt; **bỏ Audit_Log khỏi context** (payload nhẹ → doPost nhanh → ít 404 transport); `ai-chat.js` +**retry 3× backoff riêng cho AI** khi GAS 404/5xx (read-only → an toàn; KHÔNG đụng `gasPost` chung, tránh double-write).
+  - **(c) `f8826c4` (v6.28, chính của session)** — **fix "AI chỉ xem 300 task"** + **render bảng Markdown** trong bong bóng bot.
+  - Chạy **full suite local (23 suite)** + `verify_my_work` riêng để chứng minh 0 regression.
+- **✅ Files changed (v6.28, đã push `f8826c4` — 5 file source)**:
+  - `backend/AiService.gs` — `_aiTaskIndex_()` sinh **CHỈ MỤC TOÀN BỘ task** (ID/Trạng thái/%HT/Team/PIC/Deadline/Tên/Vướng mắc) bao phủ **mọi** task; refactor lookup cột → `_aiResolveTaskCols_()`; +`_aiTrunc_()`; khối "chi tiết mở rộng" (đủ 24 cột) cap **200 task gần nhất**; system prompt dặn dùng chỉ mục + **KHÔNG** nói "chỉ xem 300 task".
+  - `assets/js/views/ai-chat.js` — `_aiRenderMarkdown()` renderer GFM tối giản AN TOÀN (`esc()` **TRƯỚC** → chống XSS, rồi bảng/`**đậm**`/`` `code` ``/bullet). Bong bóng **bot** render markdown; tin nhắn **user** vẫn `esc()`-plain.
+  - `assets/css/ai-chat.css` — style bảng/list/code trong bubble bot (theme-aware `--border`/`--bg-3`).
+  - `assets/js/config.js` — `APP_VERSION='6.28-ai-table-fullindex-20260804'`.
+  - `index.html` — cache-bust `?v=20260804b`→`c` (60 refs).
+- **✅ Decision made**:
+  - (a) **Chỉ mục toàn bộ (compact) + chi tiết cap 200**: thay vì tăng cứng cap 300 (dễ vỡ token khi task nhiều), tách **2 tầng** — index gọn bao phủ tất cả (đếm/lọc/liệt kê), rich detail chỉ 200 task gần nhất (cột free-text). `gemini-flash-latest` ~1M ctx nên index toàn bộ chấp nhận được.
+  - (b) **Render Markdown tự viết, KHÔNG thư viện ngoài**: escape HTML trước rồi mới format → an toàn XSS; chỉ subset (bảng/đậm/code/bullet) đủ cho câu trả lời dạng bảng "ID | PIC | Deadline".
+  - (c) **Retry chỉ scope AI** (không đụng `gasPost` global) vì AI read-only; global có ghi → retry có thể double-write.
+  - (d) **Bỏ Audit_Log khỏi context AI** để nhẹ payload — chấp nhận AI không trả lời được câu về lịch sử audit chi tiết (hiếm).
+- **⛔ Blocker**: Không. **GAS đã redeploy (user, URL KHÔNG đổi)** → backend fix live. User cần **hard-reload** để nhận `?v=20260804c` + badge `v6.28`.
+- **➡️ Next step**: (1) Smoke test production: hỏi AI "liệt kê task Blocked", "bao nhiêu task quá hạn theo PIC" → phải bao phủ **mọi** task + render **bảng** đẹp, KHÔNG nói "chỉ xem 300 task". (2) Vẫn còn **P0 khép migration S59** (tắt trigger `notifScan` project cá nhân cũ, đối chiếu `AUTH_SECRET`, gỡ deployment/Sheet cũ sau vài ngày). (3) (Nợ) fix flaky/stale test TD-TEST-01/02; cân nhắc thêm test cho AI-chat (TD-TEST-03 mới).
+- **🟢 Regression risk**: 🟢 **THẤP** — khu trú AI feature. Frontend renderer đã kiểm XSS (`esc()` trước, user input vẫn escaped). Full suite **21/23**; 2 fail đều **pre-existing KHÔNG do session**: `verify_history` H13 (TD-TEST-02 stale ISO — output "expected 05-Aug-26 got 2026-08-05"), `verify_my_work` flaky (TD-TEST-01 — chạy riêng fail **MW6** *khác* test batch → đua timing). Không có test cho AI-chat (nợ TD-TEST-03).
+
+---
+
 # SESSION HANDOVER (S59) — 2026-08-04
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước session**: `472c7dd` (S58) → **sau session**: `aedd1ff` + commit handover này
