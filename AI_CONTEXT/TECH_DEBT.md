@@ -8,6 +8,17 @@
 
 ---
 
+## 🆕 DELTA — Session 64 (2026-08-06) — Initiative filter Accountable + xóa Milestone
+
+### TD-INIT-02: Xóa initiative/milestone dùng `writeInitiatives()` (ghi TẤT CẢ dòng), chưa atomic ⚪ LOW
+`_initDeleteMilestone` (S64) + `_initDelete` (S63) đều xóa local rồi gọi `writeInitiatives()` chạy nền (ghi lại toàn bộ Initiative_Master) thay vì atomic 1-dòng — vì **chưa có route `_gasInitiativeDelete`**. Chấp nhận: đã non-blocking + `.catch`. Nếu Initiative_Master lớn hoặc nhiều thao tác xóa đồng thời → cân nhắc thêm route atomic delete (giống `_gasTaskDelete`). Không block.
+
+### Ghi chú S64 — nợ có kiểm soát
+- **Xóa Milestone gỡ link task (không xóa task)**: task mất `task.milestone` (không còn trỏ ID đã mất) nhưng **giữ `task.initiative`** → task trở thành "loose" (không milestone) trong initiative. **Đúng yêu cầu user** ("xóa khi thao tác sai", giữ task). Ghi GAS mỗi task đổi qua `_gasTaskUpsert` nền — nếu 1 milestone có rất nhiều task, sẽ bắn N request atomic song song (chấp nhận; giống pattern `_initFixLooseLink`).
+- **Filter Accountable + Category giờ re-render cả stat bar**: `_initSetFilter` bọc `#initStatBar` để đồng bộ ô số. Nếu sau này thêm filter mới → nhớ nó cũng đi qua `_initSetFilter` (không tự thêm select rời). Restore selects đã đổi từ index → **id** (`initSelCat/initSelAcc/initSelStatus`) → thêm/bớt select không vỡ. Test `verify_i18n_p6` IP6-5/6 phụ thuộc **thứ tự** select trong `.toolbar-right` (cat, acc, status) — nếu đổi thứ tự phải cập nhật index test.
+
+---
+
 ## 🆕 DELTA — Session 63 (2026-08-06) — Async/Optimistic CRUD
 
 ### TD-INIT-01: `syncInitiativeAction` / `syncInitiativeDelete` là dead code ⚪ LOW

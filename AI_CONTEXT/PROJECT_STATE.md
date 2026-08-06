@@ -1,8 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-08-06 (Session 63 — CRUD ghi/load bất đồng bộ + optimistic)
-**Version**: v6.31 (`APP_VERSION = '6.31-async-optimistic-crud-20260806'`, `index.html ?v=20260806`)
-**Remote HEAD (main)**: `4112df3` (S63)
+**As of**: 2026-08-06 (Session 64 — Initiative: filter Accountable + xóa Milestone)
+**Version**: v6.32 (`APP_VERSION = '6.32-init-acc-filter-ms-delete-20260806'`, `index.html ?v=20260806b`)
+**Remote HEAD (main)**: `964539a` (S64)
 
+> **S64 (Initiative CR)**: Trên **Theo dõi Initiative** — (1) **filter theo Accountable**: dropdown mới ở toolbar (distinct từ initiative gốc), lọc **cả card list lẫn 5 ô số** (đồng nhất Category); tiện thể fix `_initSetFilter` re-render cả `#initStatBar` (trước đổi Category/Accountable làm ô số lệch). (2) **Xóa Milestone**: nút 🗑 mỗi milestone row → `_initDeleteMilestone` xóa milestone + **gỡ link Task** (`task.milestone=''`, giữ Task + link initiative), confirm cảnh báo N task; optimistic (ghi GAS nền). Thuần frontend — **không GAS deploy**. i18n +3 key VI/EN. CR e2e **11/11**; `verify_initiative_tracker` 19/19; `verify_i18n_p6` **29/29** (cập nhật index + coverage Accountable). Fail dai dẳng: history H13 pre-existing. v6.32.
 > **S63 (Async/Optimistic CRUD)**: Rà soát toàn bộ CRUD. **Initiative Tracker** là điểm lệch duy nhất còn **await network GAS TRƯỚC khi render** → đưa `_initSave`/`_initDelete`/`_initFixLooseLink` về **optimistic** (mutate local → persist → render NGAY; ghi GAS atomic chạy nền) như Task/Case/Issue/Dev đã làm từ S29/S30. **Bỏ toast thành công** ở add/edit/delete cả **5 entity** → "chỉ báo khi lưu không thành công" (toast lỗi vẫn ở `_gas*Upsert/Delete` + `syncDot`). Giữ bulk-summary toast & manual-sync. `syncInitiativeAction/Delete` giờ dead code (giữ, dọn sau). Thuần frontend — **không GAS deploy**. Full suite **22/24** (2 fail pre-existing: my_work MW22/MW23, history H13 — 0 regression); suite liên quan xanh: initiative 19/19, dev 40/40, case 22/22, atomic 41/41, issue 61/61. v6.31.
 > **S62 (Report Week)**: "Tuần BC" của Task từ **1 chuỗi free-text → membership ĐA TUẦN chuẩn ISO-8601**. Hàm gốc `taskReportWeeks(task)=autoWeeks(Start→max(Deadline, hôm-nay nếu chưa xong)) ∪ pinnedWeeks(gắn tay)` — mọi read path (preset/filter/report/dashboard/quickview/performance) dùng chung. Modal thay `<input text>` bằng **chip control** (chip auto từ ngày + chip pin qua `<input type="week">` ISO). Cột `Tuần BC` chỉ lưu **pin ngoài auto** → majority 0 nhập liệu. Migration `backend/ReportWeekMigration.gs` (dry-run/commit) chuẩn hoá free-text cũ. Chỉ Task (Case sau). `verify_report_week` **17/17**; full suite 22/24 (2 pre-existing). ⚠️ Ngữ nghĩa: overdue-extension → "Tuần này" ≈ mọi task đang mở. Xem `AI_CONTEXT/REPORT_WEEK_DESIGN.md`.
 > **S61 (Auto-complete)**: %HT=100 ⇒ tự đặt trạng thái hoàn thành (Task `state='Hoàn thành'` / Initiative root `status='Done'` / Dev). Case & Bug bỏ qua (không có %). `helpers.js` norm* + `normalizeCompleteInMemory` (renderAll display) + enforce khi save + nút **"Chuẩn hoá HT"** (admin, toolbar Tasks) + `backend/DataCleanupService.gs` (bulk). v6.29/6.29.1.
@@ -54,7 +55,7 @@
 | `assets/js/constants.js` | ~65 | ✅ S40: TEAM_LIST 8→7 teams (BL1+BL2 merged → BL); S31: +`deletedIds: []` in db init; S21: +TEAM_LIST (offline fallback) |
 | `assets/css/my-work.css` | ~560 | ✅ S44b: .mw-champion-section/item/status/pending/done; S44a: .mw-popup-ini-item; S42 base styles |
 | `assets/js/views/my-work.js` | ~380 | ✅ S44b: _mwGetChampionTasks/BuildChampionSection/mwRefreshChampionStatus; S44a: mwOpenInitPopup/Close, MAX_INIT=4; S42 base |
-| `assets/js/config.js` | 7 | ✅ S63: APP_VERSION = '6.31-async-optimistic-crud-20260806'; S59: GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg` |
+| `assets/js/config.js` | 7 | ✅ S64: APP_VERSION = '6.32-init-acc-filter-ms-delete-20260806'; S59: GS_WEBAPP_URL → deployment cơ quan `AKfycbw1…DSg` |
 | `assets/js/helpers.js` | ~230 | ✅ S62: ISO week utils + `taskReportWeeks` (gốc membership đa-tuần) + `allReportWeeks`/`taskWeeksBadge`; S61: auto-complete norm* + `cleanupCompleteByProgress` |
 | `backend/ReportWeekMigration.gs` | ~90 | ✅ S62: NEW — `dryRunNormalizeWeeks()`/`commitNormalizeWeeks()` chuẩn hoá `Tuần BC` free-text → ISO (đa giá trị) |
 | `backend/DataCleanupService.gs` | ~140 | ✅ S61: NEW — `dryRun/commitCompleteByProgress()` bulk %=100 ⇒ hoàn thành (Task/Initiative/Dev) |
@@ -86,7 +87,7 @@
 | `assets/js/helpers.js` | ~80 | ✅ S43: stateChip() uses tState() for language-aware label |
 | `assets/js/views/case-pipeline.js` | ~740 | ✅ S24: +openCaseViewPopup(), closeCaseViewPopup(), cpViewOpenEdit(), _cpViewId; cpOpenDetail() → openCaseViewPopup(); S23: DVKD col+filter, PIC cascade |
 | `assets/js/views/performance.js` | ~85 | ✅ S24: +openPerfTaskPopup(key) — click row → detailOverlay với tasks lọc theo perfTab |
-| `assets/js/views/initiative-tracker.js` | ~920 | ✅ S63: `_initSave`/`_initDelete`/`_initFixLooseLink` optimistic (bỏ await network trước render + bỏ toast success); S56: 3 date field → `<input type="date">`; giữ storage `DD-MMM-YY` qua `_initToISO`/`_initFromISO`; Add default Start = hôm nay ISO; S55: stat bar → `.cp-stat-card`, tách Done, summary popup; S49: ~52 VI → t(); S27: ms auto-gen ID; S25: view popups |
+| `assets/js/views/initiative-tracker.js` | ~960 | ✅ S64: filter Accountable (`_initFilterAcc`/`#initSelAcc`/`_initAccountableOptions`; `_initSetFilter` re-render cả `#initStatBar`); `_initDeleteMilestone` (xóa milestone + gỡ link task, optimistic); S63: `_initSave`/`_initDelete`/`_initFixLooseLink` optimistic; S56: 3 date field → `<input type="date">` (storage `DD-MMM-YY` qua `_initToISO`/`_initFromISO`); S55: stat bar `.cp-stat-card`, tách Done, summary popup; S49: i18n; S27: ms auto-gen ID; S25: view popups |
 | `assets/js/api.js` | ~390 | ✅ S31: `syncAction` merge skips `db.deletedIds`; `readFromHandle` prunes stale deletedIds; S30: atomic helpers; S24: PA2 _resolvePickerCase |
 | `assets/js/parsers.js` | ~325 | ✅ S24: +_resolvePickerCase() — map picRes/picAcc → canonical Username từ _appUsers; gọi cuối _parseArrayIntoDb() |
 | `assets/js/ui/navigation.js` | ~120 | ✅ S31: `navigateTo('tasks')` now calls `selectedIds.clear()` before render; removed 7 duplicate filter listeners from `setupListeners`; S24: +closeCaseViewPopup() in Escape handler |
@@ -146,7 +147,7 @@
 | Gantt / Timeline | ✅ | |
 | Auto weekly report | ✅ | |
 | KPI Overview / Progress / Owner | ✅ | |
-| Initiative Tracker | ✅ | S56: date field → native date picker (giữ storage `DD-MMM-YY`), Start default hôm nay; S55: tách Done, stat cards `.cp-stat-card`, summary popup; S14 milestone drill-down; S20: syncInitiativeAction() |
+| Initiative Tracker | ✅ | S64: filter **Accountable** (lọc card + ô số) + **xóa Milestone** (gỡ link task, giữ task); S56: date field → native picker (storage `DD-MMM-YY`), Start default hôm nay; S55: tách Done, stat cards `.cp-stat-card`, summary popup; S14 milestone drill-down; S20: syncInitiativeAction() |
 | **Action Plan v2** | ✅ | S34: role-aware default (Admin=all teams grouped accordion; User/TL=own team kanban); mixed Tasks+Cases kanban; Blocked/overdue auto-add; Initiatives section; 24/24 tests pass |
 | **Audit history tab** | ✅ | S33: Task/Initiative/Case view popups — History tab, lazy load from GAS audit-read; startDate defaults today on Add |
 | **AI Assistant** | ✅ | S60: model `gemini-flash-latest`; chỉ mục toàn bộ task (fix "chỉ 300 task") + số liệu deterministic + render bảng Markdown; retry 404/5xx. **GAS deployed, GEMINI_API_KEY (key cơ quan) live.** ⚠️ chưa có test tự động (TD-TEST-03) |

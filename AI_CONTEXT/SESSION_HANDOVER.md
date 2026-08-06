@@ -1,3 +1,25 @@
+# SESSION HANDOVER (S64) — 2026-08-06
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `43c6da0` (S63 test EVD) → **sau**: `964539a` (S64)
+**Version**: v6.31 → **v6.32** (`6.32-init-acc-filter-ms-delete-20260806`, `?v=20260806b`)
+
+> CR nhỏ trên **Theo dõi Initiative**: (1) bổ sung **filter theo Accountable** để thao tác nhanh tại UI; (2) cho phép **xóa Milestone** (hỗ trợ sửa thao tác sai). Thuần frontend — **không GAS deploy**.
+
+## S64 — Initiative: filter Accountable + xóa Milestone · commit `964539a` · v6.32
+- **✅ Task completed**: (1) **CR1 — Filter Accountable**: thêm dropdown "Tất cả Accountable" vào toolbar Initiative Tracker (giữa Category và Status), options **distinct** từ initiative gốc (sorted). Chọn 1 người → lọc **cả card list LẪN 5 ô số thống kê** (đồng nhất Category, theo phỏng vấn). (2) **CR2 — Xóa Milestone**: nút 🗑 (đỏ) trên mỗi milestone row cạnh nút Sửa → `_initDeleteMilestone` xóa milestone + **gỡ liên kết Task** (`task.milestone=''`, GIỮ Task + link initiative), confirm cảnh báo số Task bị gỡ trước khi xóa.
+- **✅ Fix phụ (đúng ý đồ S55)**: `_initSetFilter` trước chỉ re-render `#initCardList` → đổi Category/Accountable làm **ô số thống kê bị lệch** (stat bar render 1 lần). Nay bọc stat bar trong `<div id="initStatBar">` + `_initSetFilter` re-render **cả** stat bar lẫn card list. Status filter không đổi ô số (base không phụ thuộc status) → an toàn.
+- **✅ Files changed (5, đã push)**:
+  - `assets/js/views/initiative-tracker.js` — state `_initFilterAcc`; select `#initSelAcc` + `_initAccountableOptions()`; `_initStatBase` +điều kiện accountable; `_initSetFilter` +type `acc` + re-render `#initStatBar`; restore filter selects theo **id** (`initSelCat/initSelAcc/initSelStatus`) thay vì index (bền với việc thêm select); nút 🗑 milestone + hàm `_initDeleteMilestone` (optimistic mirror `_initDelete`: xóa local → gỡ link task `_gasTaskUpsert` nền → `persist` → `writeInitiatives().catch` → render).
+  - `assets/js/i18n.js` — +`it.filter.all-acc`, `it.ms.delete.confirm`, `it.ms.delete.warn-tasks` (VI+EN).
+  - `assets/js/config.js` — `APP_VERSION='6.32-init-acc-filter-ms-delete-20260806'`; `index.html` — cache-bust `?v=20260806`→`?v=20260806b` (60 refs).
+  - `verify_i18n_p6.mjs` — IP6-5/6 dời index Status (1→2, do thêm select) + thêm assert Accountable filter (index 1) → **29/29** (was 27).
+- **✅ Decision** (chốt qua phỏng vấn 2 câu): (a) **Xóa Milestone = gỡ link Task, GIỮ Task** (không xóa task, không chặn). Task mất `task.milestone` (không còn trỏ ID đã mất) nhưng **giữ link initiative**; cảnh báo N task trước xóa. (b) **Filter Accountable từ Initiative + áp cả ô số** (giống Category), KHÔNG lấy từ User_Master (chỉ hiện người thực sự phụ trách). (c) Kết hợp **AND** với scope (Của tôi/Tất cả) + filter Status hiện có — đơn giản, dự đoán được.
+- **⛔ Blocker**: Không. Thuần frontend — **KHÔNG cần GAS deploy**. User chỉ cần **hard-reload** nhận `?v=20260806b` + badge `v6.32`.
+- **➡️ Next step**: (1) Hard-reload → smoke: Theo dõi Initiative → chọn 1 Accountable → card + 5 ô số lọc đúng người; đổi scope/category vẫn kết hợp đúng. (2) Mở Milestones 1 initiative → 🗑 → milestone biến mất **ngay**, Task liên kết **vẫn còn** nhưng mất nhãn milestone (thành "loose"/không milestone); ngắt mạng → xóa → có toast cảnh báo. (3) P1 tồn từ S62: áp tuần đa-tuần cho Case Pipeline. (4) P2: dọn dead code `syncInitiativeAction/Delete` (TD-INIT-01).
+- **🟢 Regression risk**: 🟢 **THẤP** — khu trú 1 file view + i18n additive. CR e2e **11/11** (filter card+ô số cập nhật+reset; milestone removed, tasks kept & unlinked, initiative link giữ; 0 JS error). `verify_initiative_tracker` **19/19**, `verify_i18n_p6` **29/29** (cập nhật hợp lệ theo markup mới). Full batch flaky như thường (my_work/i18n_p8 fail trong batch, **pass khi chạy riêng**: my_work 62/62, i18n_p8 13/13 — timing, không do session). Fail dai dẳng duy nhất: `history` **H13** = pre-existing TD-TEST-02 (stale date từ S56, không liên quan CR). ⚠️ `_initDeleteMilestone` dùng `writeInitiatives()` (ghi tất cả dòng) chạy nền như `_initDelete` — chưa có atomic delete cho initiative/milestone (xem TD-INIT-02).
+
+---
+
 # SESSION HANDOVER (S63) — 2026-08-06
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `c9b273e` (S62 docs) → **sau**: `4112df3` (S63)

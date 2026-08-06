@@ -1,6 +1,24 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-06 (Session 63 — CRUD ghi/load bất đồng bộ + optimistic)
-**Context**: S63 done. v6.31-async-optimistic-crud-20260806, `?v=20260806`. HEAD `4112df3`. Full suite 22/24 (2 fail pre-existing, 0 regression). Code pushed.
+**Prepared**: 2026-08-06 (Session 64 — Initiative: filter Accountable + xóa Milestone)
+**Context**: S64 done. v6.32-init-acc-filter-ms-delete-20260806, `?v=20260806b`. HEAD `964539a`. CR e2e 11/11; initiative 19/19; i18n_p6 29/29. Fail dai dẳng: history H13 (pre-existing). Code pushed.
+
+---
+
+## ✅ COMPLETED S64 — Initiative: filter Accountable + xóa Milestone
+- [x] **CR1 — Filter Accountable**: `initiative-tracker.js` +state `_initFilterAcc`, select `#initSelAcc` + `_initAccountableOptions()` (distinct từ initiative gốc, sorted); `_initStatBase` áp accountable → lọc **cả card list lẫn 5 ô số**; `_initSetFilter` re-render cả `#initStatBar` (fix ô số lệch khi đổi Category/Accountable); restore selects theo **id** thay vì index
+- [x] **CR2 — Xóa Milestone**: nút 🗑 mỗi milestone row + `_initDeleteMilestone` (optimistic mirror `_initDelete`) — confirm cảnh báo N task → xóa milestone + **gỡ link Task** (`task.milestone=''`, giữ Task + link initiative) → `_gasTaskUpsert` nền + `writeInitiatives().catch` + render ngay
+- [x] i18n +`it.filter.all-acc` / `it.ms.delete.confirm` / `it.ms.delete.warn-tasks` (VI+EN); config v6.32; cache-bust `?v=20260806b` (60 refs)
+- [x] `verify_i18n_p6` cập nhật index Status (dời do thêm select) + coverage Accountable → **29/29**; CR e2e **11/11**; initiative suite 19/19
+
+## 🟡 PRIORITY 1 — Smoke test S64 (v6.32) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.32-init-acc-filter-ms-delete-20260806` |
+| Theo dõi Initiative → dropdown Accountable | Liệt kê đúng người đang phụ trách; chọn 1 người → card list + 5 ô số lọc đúng |
+| Kết hợp scope (Của tôi/Tất cả) + Category + Accountable | Lọc AND đúng, ô số cập nhật theo |
+| Mở Milestones 1 initiative → nút 🗑 | Confirm cảnh báo số Task; xác nhận → milestone biến mất **ngay** |
+| Task từng thuộc milestone vừa xóa | **Vẫn còn** trong Task/initiative, mất nhãn milestone (thành "loose"/trống) |
+| Ngắt mạng → xóa milestone | Có toast cảnh báo lỗi ghi; UI vẫn cập nhật cục bộ |
 
 ---
 
