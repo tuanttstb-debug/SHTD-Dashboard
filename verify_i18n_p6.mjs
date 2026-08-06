@@ -129,7 +129,8 @@ const filterOptsVI = await page.$$eval(
   els => els.map(el => el.options[0]?.textContent.trim())
 );
 ok('Filter cat VI: "Tất cả Category"',   filterOptsVI[0] === 'Tất cả Category');
-ok('Filter status VI: "Tất cả Trạng thái"', filterOptsVI[1] === 'Tất cả Trạng thái');
+ok('Filter acc VI: "Tất cả Accountable"', filterOptsVI[1] === 'Tất cả Accountable');
+ok('Filter status VI: "Tất cả Trạng thái"', filterOptsVI[2] === 'Tất cả Trạng thái');
 
 // ── IP6-6: IT filter dropdowns — EN ──────────────────────────────────────────
 console.log('\nIP6-6: IT filter dropdown options in EN');
@@ -140,7 +141,8 @@ const filterOptsEN = await page.$$eval(
   els => els.map(el => el.options[0]?.textContent.trim())
 );
 ok('Filter cat EN: "All Categories"',   filterOptsEN[0] === 'All Categories');
-ok('Filter status EN: "All Statuses"',  filterOptsEN[1] === 'All Statuses');
+ok('Filter acc EN: "All Accountable"',  filterOptsEN[1] === 'All Accountable');
+ok('Filter status EN: "All Statuses"',  filterOptsEN[2] === 'All Statuses');
 
 // ── IP6-7: IT add button — VI ─────────────────────────────────────────────────
 console.log('\nIP6-7: IT toolbar add button in VI');

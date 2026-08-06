@@ -3,6 +3,7 @@
 /* ── filter state ── */
 let _initFilterCat    = '';
 let _initFilterStatus = '';
+let _initFilterAcc    = '';
 let _initScope        = null;  // null = uninit | 'mine' | 'all'
 let _initShowDone     = false; // collapsible "Đã hoàn thành" section (default collapsed)
 
@@ -36,7 +37,7 @@ function renderInitiativeTracker() {
   const currentScope = _initScope; // read after possible fallback
 
   root.innerHTML = `
-    ${_initStatBar()}
+    <div id="initStatBar">${_initStatBar()}</div>
     <div class="toolbar" style="margin-bottom:16px;">
       <div class="toolbar-left">
         <div style="font-size:17px;font-weight:800;">${t('page.initiative-tracker')}</div>
@@ -53,11 +54,15 @@ function renderInitiativeTracker() {
             ${t('task.scope.all')}
           </button>
         </div>
-        <select class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('cat',this.value)">
+        <select id="initSelCat" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('cat',this.value)">
           <option value="">${t('it.filter.all-cat')}</option>
           ${_initCategoryOptions()}
         </select>
-        <select class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('status',this.value)">
+        <select id="initSelAcc" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('acc',this.value)">
+          <option value="">${t('it.filter.all-acc')}</option>
+          ${_initAccountableOptions()}
+        </select>
+        <select id="initSelStatus" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('status',this.value)">
           <option value="">${t('it.filter.all-status')}</option>
           <option value="Active">Active</option>
           <option value="Done">Done</option>
@@ -77,9 +82,11 @@ function renderInitiativeTracker() {
   `;
 
   // restore filter selects
-  const selCat = root.querySelectorAll('select')[0];
-  const selSts = root.querySelectorAll('select')[1];
+  const selCat = document.getElementById('initSelCat');
+  const selAcc = document.getElementById('initSelAcc');
+  const selSts = document.getElementById('initSelStatus');
   if (selCat) selCat.value = _initFilterCat;
+  if (selAcc) selAcc.value = _initFilterAcc;
   if (selSts) selSts.value = _initFilterStatus;
 }
 
@@ -98,6 +105,7 @@ function _initStatBase() {
   const scope = _getInitScope();
   return _initRealRoots().filter(i => {
     if (_initFilterCat && i.category !== _initFilterCat)   return false;
+    if (_initFilterAcc && i.accountable !== _initFilterAcc) return false;
     if (scope === 'mine' && !isCurrentUser(i.accountable)) return false;
     return true;
   });
@@ -274,6 +282,7 @@ function _initBuildMilestoneList(parentId, milestones) {
         ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ms.deadline)}</span>` : ''}
         <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
         <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa milestone"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--danger);" onclick="_initDeleteMilestone('${_esc(ms.id)}')" title="Xóa milestone"><i class="fa-solid fa-trash"></i></button>
         <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> Task</button>
         <button class="init-ms-task-btn${btnExtra}" id="ms-task-btn-${_esc(ms.id)}" onclick="_initToggleMsTaskPanel('${_esc(ms.id)}')">
           <i class="fa-solid fa-list-check"></i> ${msTasks.length} task
@@ -426,6 +435,10 @@ function _initToggleTasks(id) {
 function _initSetFilter(type, val) {
   if (type === 'cat')    _initFilterCat    = val;
   if (type === 'status') _initFilterStatus = val;
+  if (type === 'acc')    _initFilterAcc    = val;
+  // Category + Accountable đổi tập base → cập nhật cả ô số thống kê lẫn danh sách card.
+  const bar = document.getElementById('initStatBar');
+  if (bar) bar.innerHTML = _initStatBar();
   const list = document.getElementById('initCardList');
   if (list) list.innerHTML = _initBuildCardList();
 }
@@ -434,6 +447,12 @@ function _initSetFilter(type, val) {
 function _initCategoryOptions() {
   const cats = [...new Set((db.initiatives||[]).filter(i=>i.type?i.type==='initiative':!i.parentId).map(i=>i.category).filter(Boolean))];
   return cats.map(c => `<option value="${_esc(c)}">${_esc(c)}</option>`).join('');
+}
+
+/* ── accountable helper (distinct Accountable trong initiative gốc) ── */
+function _initAccountableOptions() {
+  const accs = [...new Set(_initRealRoots().map(i => i.accountable).filter(Boolean))].sort();
+  return accs.map(a => `<option value="${_esc(a)}">${_esc(a)}</option>`).join('');
 }
 
 /* ── CRUD Modal ── */
@@ -690,6 +709,29 @@ async function _initDelete(id) {
   // Also delete child milestones
   const toDelete = [id, ...milestones.map(m => m.id)];
   toDelete.forEach(delId => { db.initiatives = db.initiatives.filter(x => x.id !== delId); });
+  persist();
+  writeInitiatives().catch(e => toast(t('it.toast.delete-error') + e.message, 'warning', 5000));
+
+  renderInitiativeTracker();
+}
+
+/* ── delete a single milestone (unlink its tasks, keep them) ── */
+async function _initDeleteMilestone(msId) {
+  const ms = (db.initiatives || []).find(i => i.id === msId);
+  if (!ms) return;
+  const parentId = ms.parentId;
+  const linkedTasks = _initGetMsTasks(ms, parentId);
+
+  let warning = `${t('common.delete')} milestone <strong>${_esc(_msShortLabel(msId))}</strong>?`;
+  if (linkedTasks.length) warning += `<br><span style="color:var(--warning,orange);">⚠️ ${linkedTasks.length} ${t('it.ms.delete.warn-tasks')}</span>`;
+
+  const ok = await uiConfirm(t('it.ms.delete.confirm'), warning, 'danger', t('common.delete'));
+  if (!ok) return;
+
+  // Optimistic: remove milestone locally + unlink its tasks (keep task, clear milestone),
+  // persist + render NGAY; ghi GAS chạy nền (atomic 1 dòng/task + writeInitiatives).
+  db.initiatives = db.initiatives.filter(x => x.id !== msId);
+  linkedTasks.forEach(tk => { tk.milestone = ''; _gasTaskUpsert(tk); });
   persist();
   writeInitiatives().catch(e => toast(t('it.toast.delete-error') + e.message, 'warning', 5000));
 

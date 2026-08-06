@@ -371,6 +371,7 @@ const TRANSLATIONS = {
     // ── Initiative Tracker ──
     'it.filter.all-cat':      'Tất cả Category',
     'it.filter.all-status':   'Tất cả Trạng thái',
+    'it.filter.all-acc':      'Tất cả Accountable',
     'it.btn.add-init':        'Thêm Initiative',
     'it.btn.add-ms':          'Thêm Milestone',
     'it.btn.add-task':        'Thêm Task',
@@ -411,6 +412,8 @@ const TRANSLATIONS = {
     'it.delete.confirm':      'Xóa Initiative',
     'it.delete.warn-tasks':   'task đang liên kết sẽ không còn trỏ về initiative này.',
     'it.delete.warn-ms':      'milestone con sẽ bị xóa theo.',
+    'it.ms.delete.confirm':   'Xóa Milestone',
+    'it.ms.delete.warn-tasks':'task đang liên kết sẽ được gỡ khỏi milestone này (Task vẫn được giữ).',
     'it.toast.added':         'Đã thêm initiative!',
     'it.toast.updated':       'Đã cập nhật initiative!',
     'it.toast.deleted':       'Đã xóa initiative.',
@@ -875,6 +878,7 @@ const TRANSLATIONS = {
     // ── Initiative Tracker ──
     'it.filter.all-cat':      'All Categories',
     'it.filter.all-status':   'All Statuses',
+    'it.filter.all-acc':      'All Accountable',
     'it.btn.add-init':        'Add Initiative',
     'it.btn.add-ms':          'Add Milestone',
     'it.btn.add-task':        'Add Task',
@@ -915,6 +919,8 @@ const TRANSLATIONS = {
     'it.delete.confirm':      'Delete Initiative',
     'it.delete.warn-tasks':   'linked tasks will lose their reference to this initiative.',
     'it.delete.warn-ms':      'child milestones will also be deleted.',
+    'it.ms.delete.confirm':   'Delete Milestone',
+    'it.ms.delete.warn-tasks':'linked tasks will be unlinked from this milestone (tasks are kept).',
     'it.toast.added':         'Initiative added!',
     'it.toast.updated':       'Initiative updated!',
     'it.toast.deleted':       'Initiative deleted.',
