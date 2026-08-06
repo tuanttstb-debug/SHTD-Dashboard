@@ -8,6 +8,18 @@
 
 ---
 
+## 🆕 DELTA — Session 63 (2026-08-06) — Async/Optimistic CRUD
+
+### TD-INIT-01: `syncInitiativeAction` / `syncInitiativeDelete` là dead code ⚪ LOW
+S63 đưa Initiative save/delete về optimistic + atomic (`_gasInitiativeUpsert` / `writeInitiatives().catch`). Hai hàm cũ `syncInitiativeAction` (blocking `showLoading`) + `syncInitiativeDelete` (initiatives.js:155/212) **không còn view nào gọi**. Giữ tạm để tránh rủi ro đụng `index.html`/`onclick`. **Action**: grep xác nhận 0 tham chiếu → xoá cả 2 hàm. Không block.
+
+### Ghi chú S63 — nợ có kiểm soát
+- **Bỏ toast success toàn CRUD**: feedback thành công giờ = UI cập nhật tức thì + `syncDot` xanh. Đánh đổi: user quen "toast xác nhận" có thể hụt hẫng lúc đầu. **Đúng yêu cầu user** ("chỉ báo khi lưu không thành công"). Nếu cần hoàn tác → thêm lại toast ở tầng view (không ở `_gas*`).
+- **Rename Initiative (origId≠newId)** vẫn để **orphan dòng cũ** trong Sheet tới lần `writeInitiatives()` đủ (atomic chỉ upsert dòng mới). Pre-existing từ trước S63, **không** phát sinh do session này; S63 giữ nguyên semantics. Nếu cần sạch ngay → thêm `_gasInitiativeDelete(origId)` atomic khi rename.
+- **`_initDelete` dùng `writeInitiatives()` (ghi TẤT CẢ dòng) chạy nền** thay vì atomic 1-dòng (chưa có `_gasInitiativeDelete`). Chấp nhận: đã non-blocking + `.catch`. Nếu Initiative_Master lớn → cân nhắc route atomic delete.
+
+---
+
 ## 🆕 DELTA — Session 62 (2026-08-05) — Tuần báo cáo đa-tuần
 
 ### TD-RW-01: Membership union chưa hỗ trợ "bớt" tuần auto ⚪ LOW

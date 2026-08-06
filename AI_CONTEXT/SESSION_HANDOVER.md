@@ -1,3 +1,27 @@
+# SESSION HANDOVER (S63) — 2026-08-06
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `c9b273e` (S62 docs) → **sau**: `4112df3` (S63)
+**Version**: v6.30 → **v6.31** (`6.31-async-optimistic-crud-20260806`, `?v=20260806`)
+
+> UX tuning: rà soát toàn bộ CRUD → **Initiative Tracker** là điểm lệch duy nhất còn **await network TRƯỚC khi render** (lag "refresh lại toàn bộ"). Đưa Initiative về pattern **optimistic** như Task/Case/Issue/Dev + **bỏ toast thành công** trên cả 5 entity (chỉ báo khi lỗi). Thuần frontend — **không GAS deploy**.
+
+## S63 — CRUD ghi/load bất đồng bộ + optimistic · commit `4112df3` · v6.31
+- **✅ Task completed**: (1) **Initiative Tracker** `_initSave`/`_initDelete`/`_initFixLooseLink` — bỏ `await` network trước render: mutate local → `persist()` → `renderInitiativeTracker()` **NGAY**, ghi GAS atomic 1-dòng chạy **nền**. Item mới/sửa hiện tức thì thay vì chờ round-trip GAS. (2) **Bỏ toast thành công** ở add/edit/delete của **cả 5 entity** (Task/Case/Issue/Dev/Initiative+Milestone) → đúng yêu cầu "chỉ báo khi lưu không thành công".
+- **✅ Nguyên nhân gốc (Initiative lệch)**: 4 entity kia đã optimistic từ S29/S30 (mutate→persist→close→render→`_gas*Upsert` KHÔNG await). Riêng `_initSave` `await syncInitiativeAdd/Edit` rồi mới `renderInitiativeTracker()` + toast success → modal đóng nhưng danh sách "đứng im" tới khi network xong. `syncInitiativeAdd/Edit` (initiatives.js) vốn đã mutate+persist **đồng bộ** rồi return promise ghi nền → chỉ cần **thôi await**.
+- **✅ Files changed (7, đã push)**:
+  - `assets/js/views/initiative-tracker.js` — `_initSave` optimistic (bỏ await + 2 toast added/updated); `_initDelete` bỏ toast deleted (giữ `.catch` lỗi); `_initFixLooseLink` bỏ toast success.
+  - `assets/js/crud.js` — bỏ toast task-saved + task-deleted (giữ flow optimistic + `_gasTaskUpsert/Delete` nền).
+  - `assets/js/views/case-pipeline.js` — bỏ toast "Đã thêm/cập nhật/xóa case".
+  - `assets/js/views/issue-tracker.js` — bỏ toast "Đã tạo/cập nhật/xóa issue".
+  - `assets/js/views/dev-plan.js` — bỏ toast dev added/updated/deleted.
+  - `assets/js/config.js` — `APP_VERSION='6.31-async-optimistic-crud-20260806'`; `index.html` — cache-bust `?v=20260805c`→`?v=20260806` (60 refs).
+- **✅ Decision**: (a) **Giữ toast LỖI** — nằm trong `_gas*Upsert/Delete` (warning + `syncDot` chuyển xám khi ghi fail) → local-vs-server luôn nhìn thấy được; feedback thành công = **UI cập nhật tức thì** + syncDot xanh. (b) **KHÔNG** đụng bulk-summary toast (bulk.js "Đã xóa N task") và manual-sync toast (app.js syncDB showLoading) — batch summary & thao tác user chủ động, feedback hợp lý. (c) `syncInitiativeAction`/`syncInitiativeDelete` (path cũ blocking `showLoading`) nay **dead code** — GIỮ nguyên (không tham chiếu ở view, tránh rủi ro đụng index.html); dọn sau (TD-INIT-01). (d) Rename Initiative (origId≠newId) giữ nguyên semantics cũ (atomic upsert dòng mới, orphan dòng cũ tới lần `writeInitiatives` đủ) — không mở rộng phạm vi.
+- **⛔ Blocker**: Không. Thuần frontend — **KHÔNG cần GAS deploy**. User chỉ cần **hard-reload** nhận `?v=20260806` + badge `v6.31`.
+- **➡️ Next step**: (1) Hard-reload → smoke: thêm/sửa Initiative + Milestone → item hiện **tức thì**, không lag, không toast success; ngắt mạng → sửa → **có** toast cảnh báo + syncDot xám. (2) Lặp lại nhanh cho Task/Case/Issue/Dev (không toast success, chỉ báo khi lỗi). (3) (tùy chọn) dọn dead code `syncInitiativeAction/Delete` (TD-INIT-01). (4) P1 tồn: áp tuần đa-tuần cho Case Pipeline (S62 nợ).
+- **🟢 Regression risk**: 🟢 **THẤP** — chỉ bỏ `await` + xóa lệnh `toast(...,'success')`; flow optimistic (mutate/persist/render/ghi-nền) giữ nguyên. Không đụng schema/backend/GAS/read path. Full suite **22/24** = **baseline y hệt trước** (2 fail pre-existing: `my_work` MW22/MW23 progress-toggle S44b — fail cả khi chạy riêng, KHÔNG đụng my-work.js; `history` H13 stale date TD-TEST-02). Suite trực tiếp liên quan xanh: initiative **19/19**, dev_plan **40/40**, case **22/22**, atomic_write **41/41**, issue **61/61**. ⚠️ Không test nào assert vào toast text (IT5 check db/modal/row/KPI) → bỏ toast an toàn.
+
+---
+
 # SESSION HANDOVER (S61–S62) — 2026-08-05
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `6d95f51` (S60 docs) → **sau**: `0b48e8b` (S62)

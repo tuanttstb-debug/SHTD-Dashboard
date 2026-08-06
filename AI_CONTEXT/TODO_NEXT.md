@@ -1,6 +1,26 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-05 (Session 62 — Tuần báo cáo Task đa-tuần ISO)
-**Context**: S61+S62 done. v6.30-report-week-multiweek-20260805, `?v=20260805c`. HEAD `0b48e8b`. Full suite 22/24 (2 fail pre-existing). Code pushed.
+**Prepared**: 2026-08-06 (Session 63 — CRUD ghi/load bất đồng bộ + optimistic)
+**Context**: S63 done. v6.31-async-optimistic-crud-20260806, `?v=20260806`. HEAD `4112df3`. Full suite 22/24 (2 fail pre-existing, 0 regression). Code pushed.
+
+---
+
+## ✅ COMPLETED S63 — CRUD ghi/load bất đồng bộ + optimistic (mượt UX, chỉ báo khi lỗi)
+- [x] `initiative-tracker.js` — `_initSave`/`_initDelete`/`_initFixLooseLink` optimistic: mutate local → persist → render NGAY; ghi GAS atomic chạy nền (bỏ `await` trước render) → item hiện tức thì, hết lag "refresh lại toàn bộ"
+- [x] Bỏ toast **thành công** ở add/edit/delete cả 5 entity (Task/Case/Issue/Dev/Initiative+Milestone) → "chỉ báo khi lưu không thành công" (toast lỗi vẫn ở `_gas*Upsert/Delete` + `syncDot`)
+- [x] Giữ bulk-summary toast (bulk.js) + manual-sync toast (app.js syncDB) — feedback hợp lý cho batch/thao tác chủ động
+- [x] config v6.31; cache-bust `?v=20260806` (60 refs); 7 file source. Full suite 22/24 (baseline); suite liên quan xanh (initiative 19/19, dev 40/40, case 22/22, atomic 41/41, issue 61/61)
+
+## 🟡 PRIORITY 1 — Smoke test UX optimistic (v6.31) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.31-async-optimistic-crud-20260806` |
+| Initiative → Thêm/Sửa Initiative + Milestone | Item hiện **tức thì** sau khi bấm Lưu (không chờ network), **không** toast "thành công" |
+| Task/Case/Issue/Dev → Thêm/Sửa/Xóa | Cập nhật tức thì, không toast success |
+| Ngắt mạng → sửa 1 mục | **CÓ** toast cảnh báo "đã lưu cục bộ" + `syncDot` chuyển xám |
+| Xóa 1 mục | Biến mất ngay khỏi list (đã qua confirm dialog), không toast success |
+
+## 🟢 PRIORITY 2 — Dọn dead code (TD-INIT-01)
+`syncInitiativeAction`/`syncInitiativeDelete` (initiatives.js) không còn view nào gọi (delete dùng `writeInitiatives().catch` trực tiếp). Xoá sau khi xác nhận không tham chiếu trong index.html/onclick.
 
 ---
 
