@@ -610,7 +610,6 @@ function handleCaseSubmit() {
   persistCases();
 
   closeCaseModal();
-  toast(_cpEditId ? 'Đã cập nhật case.' : 'Đã thêm case mới.', 'success');
   renderCasePipeline();
 
   // Fire atomic GAS write in background (1 row, not all cases)
@@ -635,7 +634,6 @@ async function deleteCaseItem() {
   persistCases();
 
   closeCaseModal();
-  toast('Đã xóa case.', 'success');
   renderCasePipeline();
 
   // Fire atomic GAS delete in background (1 row, not all cases)

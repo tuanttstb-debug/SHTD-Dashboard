@@ -358,7 +358,6 @@ async function _initFixLooseLink(taskId, fullMsId, msId) {
   if (!task) return;
   task.milestone = fullMsId;
   persist();
-  toast(`Task ${_esc(taskId)}: milestone → ${_esc(fullMsId)}`, 'success');
 
   // Re-render the milestone list section for the parent initiative
   const ms = (db.initiatives || []).find(i => i.id === msId);
@@ -664,17 +663,15 @@ async function _initSave() {
   const _shouldReturnToView = !!_initEditReturnId;
   _initCloseModal();
 
-  if (origId) {
-    if (origId !== newId) {
-      db.initiatives = db.initiatives.filter(x => x.id !== origId);
-      await syncInitiativeAdd(ini);
-    } else {
-      await syncInitiativeEdit(ini);
-    }
-    toast(t('it.toast.updated'), 'success');
+  // Optimistic: mutate local + persist + render NGAY; ghi GAS chạy nền (atomic 1 dòng).
+  // Không await network, không toast thành công — chỉ báo khi ghi thất bại (trong _gasInitiativeUpsert).
+  if (origId && origId !== newId) {
+    db.initiatives = db.initiatives.filter(x => x.id !== origId);
+    syncInitiativeAdd(ini);
+  } else if (origId) {
+    syncInitiativeEdit(ini);
   } else {
-    await syncInitiativeAdd(ini);
-    toast(t('it.toast.added'), 'success');
+    syncInitiativeAdd(ini);
   }
   renderInitiativeTracker();
   if (_shouldReturnToView) openInitViewPopup(ini.id);
@@ -696,7 +693,6 @@ async function _initDelete(id) {
   persist();
   writeInitiatives().catch(e => toast(t('it.toast.delete-error') + e.message, 'warning', 5000));
 
-  toast(t('it.toast.deleted'), 'success');
   renderInitiativeTracker();
 }
 

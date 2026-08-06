@@ -400,7 +400,6 @@ async function devSaveItem() {
   renderDevPlan();
   if (typeof renderMyWork === 'function' &&
       document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
-  toast('✅ ' + (isNew ? t('dev.toast.added') : t('dev.toast.updated')) + ' ' + d.id, 'success');
   _gasDevUpsert(d);
 }
 
@@ -419,7 +418,6 @@ async function devDeleteItem(id) {
   dbDev = dbDev.filter(x => x.id !== id);
   persistDev();
   renderDevPlan();
-  toast(t('dev.toast.deleted') + ' ' + id, 'info');
   _gasDevDelete(id, d.name);
 }
 

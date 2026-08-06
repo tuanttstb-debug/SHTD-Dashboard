@@ -481,7 +481,6 @@ async function itSaveIssue() {
   persistIssues();
   closeIssueModal();
   renderIssueTracker();
-  toast('✅ ' + (isNew ? 'Đã tạo issue ' : 'Đã cập nhật issue ') + iss.id, 'success');
   _gasIssueUpsert(iss);
 }
 
@@ -497,7 +496,6 @@ async function _itDeleteIssue(id) {
   dbIssues = dbIssues.filter(i => i.id !== id);
   persistIssues();
   renderIssueTracker();
-  toast('Đã xóa issue ' + id, 'info');
   _gasIssueDelete(id, iss.tieuDe);
 }
 

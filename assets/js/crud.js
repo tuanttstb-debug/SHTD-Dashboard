@@ -316,7 +316,6 @@ async function handleSubmit(e) {
   const shouldReturn = !!_taskEditReturnId;
   closeTaskModal();
   if (shouldReturn) openTaskViewPopup(task.id);
-  toast(`${t('toast.task-saved')} <strong>${task.id}</strong>!`, 'success');
   renderAll();
 
   // Fire atomic GAS write in background (1 row, not all tasks)
@@ -338,7 +337,6 @@ async function deleteTask() {
   persist();
 
   closeTaskModal();
-  toast(`${t('toast.task-deleted')} ${id}.`, 'info');
   renderAll();
 
   // Fire atomic GAS delete in background (1 row, not all tasks)
