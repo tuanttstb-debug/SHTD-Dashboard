@@ -1,3 +1,8 @@
 node_modules/
 _verify_screenshots/
 File raw.xlsx
+
+# Tài liệu ngoài phạm vi source (Innovation / tham khảo)
+Innovation.MD
+Innovation_*.docx
+Mẫu tham khảo/
