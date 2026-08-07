@@ -169,6 +169,7 @@ const TRANSLATIONS = {
     'common.refresh':   'Làm mới',
     'common.print':     'In',
     'common.all':       'Tất cả',
+    'sync.id-reassigned': 'Mã "{old}" vừa được người khác dùng — hệ thống đã cấp mã mới: {new}.',
     'common.loading':   'Đang tải...',
 
     // ── Task modal ──
@@ -676,6 +677,7 @@ const TRANSLATIONS = {
     'common.refresh':   'Refresh',
     'common.print':     'Print',
     'common.all':       'All',
+    'sync.id-reassigned': 'ID "{old}" was just taken by someone else — a new ID was assigned: {new}.',
     'common.loading':   'Loading...',
 
     // ── Task modal ──

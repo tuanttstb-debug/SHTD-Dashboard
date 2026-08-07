@@ -481,7 +481,7 @@ async function itSaveIssue() {
   persistIssues();
   closeIssueModal();
   renderIssueTracker();
-  _gasIssueUpsert(iss);
+  _gasIssueUpsert(iss, isNew);
 }
 
 async function _itDeleteIssue(id) {

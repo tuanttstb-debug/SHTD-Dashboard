@@ -400,7 +400,7 @@ async function devSaveItem() {
   renderDevPlan();
   if (typeof renderMyWork === 'function' &&
       document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
-  _gasDevUpsert(d);
+  _gasDevUpsert(d, isNew);
 }
 
 async function devDeleteItem(id) {

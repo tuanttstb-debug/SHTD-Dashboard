@@ -178,13 +178,18 @@ async function syncInitiativeAction(mutateFn) {
 }
 
 /* ── Atomic single-row GAS write for initiative/milestone ── */
-async function _gasInitiativeUpsert(ini) {
+async function _gasInitiativeUpsert(ini, isNew) {
   if (!GS_WEBAPP_URL) return;
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'initiative-upsert', initId: ini.id, initName: ini.name, row: initiativeToRow(ini) });
+    const json = await gasPost({ action: 'initiative-upsert', initId: ini.id, initName: ini.name, row: initiativeToRow(ini), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'initiative-upsert lỗi');
+    // Server có thể cấp mã mới nếu mã vừa bị người khác dùng (guard đồng thời).
+    if (typeof _adoptReassignedId === 'function') {
+      const rec = db.initiatives.find(x => x.id === ini.id);
+      _adoptReassignedId(rec, json.id, persist, () => { if (typeof renderInitiativeTracker === 'function') renderInitiativeTracker(); });
+    }
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
     if (dot) dot.className = 'status-dot';
@@ -193,11 +198,11 @@ async function _gasInitiativeUpsert(ini) {
 }
 
 /* ── CRUD helpers ── */
-function syncInitiativeAdd(ini) {
+function syncInitiativeAdd(ini, isNew = true) {
   // Optimistic update: mutate local + persist, then fire atomic GAS write (1 row)
   db.initiatives.push(ini);
   persist();
-  return _gasInitiativeUpsert(ini);
+  return _gasInitiativeUpsert(ini, isNew);
 }
 
 function syncInitiativeEdit(ini) {
@@ -206,7 +211,7 @@ function syncInitiativeEdit(ini) {
   if (idx === -1) return Promise.resolve();
   db.initiatives[idx] = ini;
   persist();
-  return _gasInitiativeUpsert(ini);
+  return _gasInitiativeUpsert(ini, false);
 }
 
 async function syncInitiativeDelete(id) {

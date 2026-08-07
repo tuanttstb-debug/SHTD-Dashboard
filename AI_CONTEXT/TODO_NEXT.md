@@ -1,6 +1,34 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-06 (Session 64 — Initiative: filter Accountable + xóa Milestone)
-**Context**: S64 done. v6.32-init-acc-filter-ms-delete-20260806, `?v=20260806b`. HEAD `964539a`. CR e2e 11/11; initiative 19/19; i18n_p6 29/29. Fail dai dẳng: history H13 (pre-existing). Code pushed.
+**Prepared**: 2026-08-07 (Session 65 — Guard chống ghi đè khi tạo trùng đồng thời)
+**Context**: S65 done. v6.33-concurrent-create-idlock-20260807, `?v=20260807`. HEAD `<S65>`. `verify_id_reassign` 17/17; full suite 24/25 (chỉ H13 pre-existing). Code pushed. 🔴 **CHƯA GAS redeploy**.
+
+---
+
+## ✅ COMPLETED S65 — Guard chống ghi đè khi tạo trùng đồng thời (5 entity)
+- [x] NEW `backend/Concurrency.gs` — `_acquireWriteLock()` (script lock 20s) + `reassignIdIfExists(sheetName,id)` (tách `<prefix><số cuối>`, tăng số khi trùng — đúng SO-/CP-/IS-YY-/DEV-YY-/-M#)
+- [x] `Code.gs` — 5 handler `*-upsert` bọc write lock; `isNew` → reassign + đồng bộ `row[0]` + trả `id`
+- [x] Client: create gửi `isNew:true`; `_adoptReassignedId()` (api.js) nhận mã mới + toast `sync.id-reassigned` (VI/EN); edit `isNew:false`. `_gasTaskUpsert`(isNew=!oldId), `_gasCase/Issue/Dev Upsert(rec,isNew)`, `_gasInitiativeUpsert(ini,isNew)` + `syncInitiativeAdd(ini,isNew)`; view save truyền isNew (case chốt `!_cpEditId` trước close)
+- [x] `verify_id_reassign.mjs` (NEW, 17/17) + run_tests.mjs; config v6.33; cache-bust `?v=20260807` (60 refs)
+
+## 🔴 PRIORITY 0 — GAS REDEPLOY (bắt buộc để fix có hiệu lực)
+| Bước | Action | Vì sao |
+|---|---|---|
+| 1 | Apps Script editor → **thêm file `Concurrency.gs`** (copy từ repo) | Chứa lock + reassign |
+| 2 | **Cập nhật `Code.gs`** (copy từ repo) | 5 handler upsert dùng lock/reassign |
+| 3 | Deploy → **New version** (URL không đổi) | Kích hoạt server-side guard |
+
+## 🟡 PRIORITY 1 — Smoke test S65 (v6.33) đa-user trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.33-concurrent-create-idlock-20260807` |
+| 2 người cùng tạo Task/Case/Issue/Dev cùng lúc | **Không mất** bản ghi nào; người thứ 2 nhận mã kế tiếp |
+| Người thứ 2 (bị cấp lại mã) | Toast "Mã … đã được người khác dùng — đã cấp mã mới: …"; list hiện mã mới |
+| Tạo Milestone `{parent}-M#` khi trùng | Cấp `-M(n+1)`, parent không bị đụng |
+| Sửa/rename 1 mục | KHÔNG bị auto đổi mã (chỉ create mới reassign) |
+
+## 🟢 PRIORITY 2 — Mở rộng (tùy chọn)
+- Lock cho bulk write-all (`write`/`case-write`/`initiative-write`/import Excel) + atomic delete cho initiative/milestone (TD-INIT-02) — hiện ngoài phạm vi S65.
+- `verify_id_reassign.mjs` là **port** thuật toán GAS → sửa `Concurrency.gs` phải cập nhật test song song.
 
 ---
 

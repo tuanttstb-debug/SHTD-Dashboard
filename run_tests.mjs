@@ -11,6 +11,7 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  'verify_id_reassign.mjs',     // 17 tests  S65 — guard cấp lại mã khi tạo trùng đồng thời
   'verify_report_week.mjs',     // 17 tests  S62 — tuần báo cáo đa-tuần (ISO)
   'verify_notifications.mjs',   // 21 tests  S57
   'verify_initiative_tracker.mjs', // ~15 tests S55

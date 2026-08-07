@@ -570,6 +570,7 @@ function closeCaseModal() {
 
 function handleCaseSubmit() {
   const fv = id => (document.getElementById(id) || {}).value?.trim() || '';
+  const isNew = !_cpEditId;   // chốt trước khi closeCaseModal() xóa _cpEditId
 
   const caseName = fv('cpfCaseName');
   if (!caseName) { toast('Vui lòng nhập Khách hàng / Case.', 'warning'); return; }
@@ -613,7 +614,7 @@ function handleCaseSubmit() {
   renderCasePipeline();
 
   // Fire atomic GAS write in background (1 row, not all cases)
-  _gasCaseUpsert(newCase);
+  _gasCaseUpsert(newCase, isNew);
 }
 
 async function deleteCaseItem() {

@@ -373,6 +373,20 @@ async function syncAction(action) {
    Bulk import / bulk ops still use the full-rewrite actions.
 ══════════════════════════════════════════ */
 
+// Server đã cấp mã mới cho 1 bản ghi MỚI vì mã cũ vừa bị người khác dùng
+// (guard chống ghi đè khi 2 người cùng tạo). Nhận mã mới vào bản ghi cục bộ.
+function _adoptReassignedId(rec, newId, persistFn, renderFn) {
+  if (!rec || !newId || newId === rec.id) return;
+  const oldId = rec.id;
+  rec.id = newId;
+  if (typeof persistFn === 'function') persistFn();
+  if (typeof renderFn === 'function') renderFn();
+  const msg = (typeof t === 'function' ? t('sync.id-reassigned')
+    : 'Mã "{old}" vừa được người khác dùng — hệ thống đã cấp mã mới: {new}.')
+    .replace('{old}', oldId).replace('{new}', newId);
+  toast(msg, 'info', 6000);
+}
+
 async function _gasTaskUpsert(task, oldId) {
   if (!GS_WEBAPP_URL) return;
   const dot = document.getElementById('syncDot');
@@ -382,8 +396,9 @@ async function _gasTaskUpsert(task, oldId) {
       const delRes = await gasPost({ action: 'task-delete', taskId: oldId, taskName: task.name });
       if (delRes.status !== 'ok') throw new Error('Xóa task cũ [' + oldId + '] thất bại: ' + (delRes.error || 'unknown'));
     }
-    const json = await gasPost({ action: 'task-upsert', taskId: task.id, taskName: task.name, row: taskToRow(task) });
+    const json = await gasPost({ action: 'task-upsert', taskId: task.id, taskName: task.name, row: taskToRow(task), isNew: !oldId });
     if (json.status !== 'ok') throw new Error(json.error || 'task-upsert lỗi');
+    _adoptReassignedId(task, json.id, persist, () => { if (typeof renderAll === 'function') renderAll(); });
     if (json.serverTs) { db._serverTs = json.serverTs; persist(); }
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
@@ -407,13 +422,14 @@ async function _gasTaskDelete(taskId, taskName) {
   }
 }
 
-async function _gasCaseUpsert(c) {
+async function _gasCaseUpsert(c, isNew) {
   if (!GS_WEBAPP_URL) return;
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'case-upsert', caseId: c.id, caseName: c.caseName, row: caseToRow(c) });
+    const json = await gasPost({ action: 'case-upsert', caseId: c.id, caseName: c.caseName, row: caseToRow(c), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'case-upsert lỗi');
+    _adoptReassignedId(c, json.id, persistCases, () => { if (typeof renderCasePipeline === 'function') renderCasePipeline(); });
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
     if (dot) dot.className = 'status-dot';
@@ -639,13 +655,14 @@ function genIssueId() {
   return prefix + String(max + 1).padStart(3, '0');
 }
 
-async function _gasIssueUpsert(iss) {
+async function _gasIssueUpsert(iss, isNew) {
   if (!GS_WEBAPP_URL) return;
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'issue-upsert', issueId: iss.id, issueName: iss.tieuDe, row: issueToRow(iss) });
+    const json = await gasPost({ action: 'issue-upsert', issueId: iss.id, issueName: iss.tieuDe, row: issueToRow(iss), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'issue-upsert lỗi');
+    _adoptReassignedId(iss, json.id, persistIssues, () => { if (typeof renderIssueTracker === 'function') renderIssueTracker(); });
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
     if (dot) dot.className = 'status-dot';
@@ -730,13 +747,14 @@ function genDevId() {
   return prefix + String(max + 1).padStart(3, '0');
 }
 
-async function _gasDevUpsert(d) {
+async function _gasDevUpsert(d, isNew) {
   if (!GS_WEBAPP_URL) return;
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'dev-upsert', devId: d.id, devName: d.name, row: devToRow(d) });
+    const json = await gasPost({ action: 'dev-upsert', devId: d.id, devName: d.name, row: devToRow(d), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'dev-upsert lỗi');
+    _adoptReassignedId(d, json.id, persistDev, () => { if (typeof renderDevPlan === 'function') renderDevPlan(); });
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
     if (dot) dot.className = 'status-dot';

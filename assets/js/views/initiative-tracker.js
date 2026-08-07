@@ -685,12 +685,13 @@ async function _initSave() {
   // Optimistic: mutate local + persist + render NGAY; ghi GAS chạy nền (atomic 1 dòng).
   // Không await network, không toast thành công — chỉ báo khi ghi thất bại (trong _gasInitiativeUpsert).
   if (origId && origId !== newId) {
+    // Đổi tên mã (user chủ động chọn newId, đã qua kiểm tra trùng cục bộ) → không auto cấp lại mã.
     db.initiatives = db.initiatives.filter(x => x.id !== origId);
-    syncInitiativeAdd(ini);
+    syncInitiativeAdd(ini, false);
   } else if (origId) {
     syncInitiativeEdit(ini);
   } else {
-    syncInitiativeAdd(ini);
+    syncInitiativeAdd(ini, true);   // tạo mới → server cấp lại mã nếu trùng (guard đồng thời)
   }
   renderInitiativeTracker();
   if (_shouldReturnToView) openInitViewPopup(ini.id);
