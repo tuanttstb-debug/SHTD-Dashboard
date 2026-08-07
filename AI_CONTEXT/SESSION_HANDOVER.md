@@ -1,11 +1,11 @@
 # SESSION HANDOVER (S66) — 2026-08-07
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main trước**: `2953e14` (S65 docs) → **sau**: `aa257e9`
+**origin/main trước**: `2953e14` (S65 docs) → **sau**: `0c55158`
 **Version**: v6.33 → **v6.34** (`6.34-init-category-es-health-20260807`, `?v=20260807b`)
 
 > DEBUG 3 phần: (1) **đồng nhất droplist Category** Initiative (modal Thêm + mọi filter) + thêm **Bất Động Sản**; (2)(3) tab **Tổng hợp BLĐ** → "Sức khỏe từng Initiative": **filter theo Category** + thêm cột **Tên + Phụ trách** + click dòng → **popup chi tiết initiative**. Thuần frontend — **KHÔNG GAS deploy**.
 
-## S66 — Initiative Category đồng nhất + ES health nâng cấp · commit `aa257e9` · v6.34
+## S66 — Initiative Category đồng nhất + ES health nâng cấp · commit `0c55158` · v6.34
 - **✅ Part 1 — Category đồng nhất (+ Bất Động Sản)**: NEW `INIT_CATEGORIES` (6 cũ + **Bất Động Sản**) + `_initCategories()` (chuẩn ∪ category lạ trong data để không mồ côi) trong `initiative-tracker.js`. Modal Thêm `#initFCat` (trước hardcode 6 option) + filter `#initSelCat` (`_initCategoryOptions`) + filter ES đều render từ **một nguồn** → danh sách **giống hệt** mọi nơi.
 - **✅ Part 2 — ES "Sức khỏe từng Initiative" view theo Category**: thêm droplist `#esInitCatFilter` ở card-header → `esFilterInitCat(val)` lọc bảng theo mảng (re-render từ cache `_esInitSummaryCache`, không tính lại toàn ES). "Tất cả" = hiện hết.
 - **✅ Part 3 — cột Tên + Phụ trách + click→popup**: `_esRenderInitTable` join `db.initiatives` theo key (`t.initiative === ini.id`) → cột 1 hiện **Tên** (trước là ID), thêm cột **Phụ trách** (accountable) → **8 cột** (colspan empty 7→8). Dòng có initiative thực → `onclick="openInitViewPopup(id)"` (popup chi tiết đã có sẵn, S25). Dòng BAU/không map → "—", không click.
