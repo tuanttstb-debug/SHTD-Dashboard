@@ -1,3 +1,22 @@
+# SESSION HANDOVER (S66) — 2026-08-07
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `2953e14` (S65 docs) → **sau**: `aa257e9`
+**Version**: v6.33 → **v6.34** (`6.34-init-category-es-health-20260807`, `?v=20260807b`)
+
+> DEBUG 3 phần: (1) **đồng nhất droplist Category** Initiative (modal Thêm + mọi filter) + thêm **Bất Động Sản**; (2)(3) tab **Tổng hợp BLĐ** → "Sức khỏe từng Initiative": **filter theo Category** + thêm cột **Tên + Phụ trách** + click dòng → **popup chi tiết initiative**. Thuần frontend — **KHÔNG GAS deploy**.
+
+## S66 — Initiative Category đồng nhất + ES health nâng cấp · commit `aa257e9` · v6.34
+- **✅ Part 1 — Category đồng nhất (+ Bất Động Sản)**: NEW `INIT_CATEGORIES` (6 cũ + **Bất Động Sản**) + `_initCategories()` (chuẩn ∪ category lạ trong data để không mồ côi) trong `initiative-tracker.js`. Modal Thêm `#initFCat` (trước hardcode 6 option) + filter `#initSelCat` (`_initCategoryOptions`) + filter ES đều render từ **một nguồn** → danh sách **giống hệt** mọi nơi.
+- **✅ Part 2 — ES "Sức khỏe từng Initiative" view theo Category**: thêm droplist `#esInitCatFilter` ở card-header → `esFilterInitCat(val)` lọc bảng theo mảng (re-render từ cache `_esInitSummaryCache`, không tính lại toàn ES). "Tất cả" = hiện hết.
+- **✅ Part 3 — cột Tên + Phụ trách + click→popup**: `_esRenderInitTable` join `db.initiatives` theo key (`t.initiative === ini.id`) → cột 1 hiện **Tên** (trước là ID), thêm cột **Phụ trách** (accountable) → **8 cột** (colspan empty 7→8). Dòng có initiative thực → `onclick="openInitViewPopup(id)"` (popup chi tiết đã có sẵn, S25). Dòng BAU/không map → "—", không click.
+- **✅ Files changed (5 source + 3 docs, đã push)**: `assets/js/views/initiative-tracker.js` (INIT_CATEGORIES/_initCategories; modal option động), `assets/js/views/executive-summary.js` (`_esInitCatFilter`/`esFilterInitCat`/`_esRenderInitTable` join+filter+click), `index.html` (ES card-header +select, thead +cột Phụ trách, cache-bust `?v=20260807b` 60 refs), `assets/js/config.js` (v6.34), `run_tests.mjs`. NEW `verify_es_init_health.mjs`.
+- **✅ Decision** (chốt qua phỏng vấn 3 câu): (a) filter Category ES = **droplist** (không group section). (b) click dòng = **popup initiative có sẵn** `openInitViewPopup` (không làm popup drill-down task mới). (c) danh sách Category = **full canonical** cho cả modal lẫn filter (identical). (d) Category ES lấy từ **initiative gốc** (db.initiatives.category), không phải task.category; BAU không có initiative → không phân loại/không click.
+- **⛔ Blocker**: Không. **Thuần frontend — KHÔNG cần GAS deploy.** User hard-reload nhận `?v=20260807b` + badge v6.34.
+- **➡️ Next step**: (1) Hard-reload → smoke: Initiative modal Thêm có "Bất Động Sản"; filter Initiative + ES đều có; (2) ES "Sức khỏe từng Initiative" hiện Tên + Phụ trách, lọc theo mảng, click 1 dòng → popup chi tiết mở; BAU không mở. (3) (nợ cũ) Case Pipeline multi-week (S62 P1); dọn dead code TD-INIT-01.
+- **🟢 Regression risk**: 🟢 **THẤP** — thuần frontend, khu trú 2 view + markup ES. `verify_es_init_health` **14/14** (8 cột, name/acc, filter BĐS, click popup, BAU no-click, modal category). `verify_initiative_tracker` 19/19, `verify_i18n_p5` 24/24 (ES), `verify_i18n_p6` 29/29 (filter Initiative). Full suite **24/25** — chỉ H13 pre-existing (TD-TEST-02, không liên quan). ⚠️ ES table key = `t.initiative`; chỉ join được khi khớp `db.initiatives.id` → tên/phụ trách/category rỗng cho task trỏ initiative không tồn tại (giữ hành vi hiện ID cũ).
+
+---
+
 # SESSION HANDOVER (S65) — 2026-08-07
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `964539a` (S64) → **sau**: `8307173`

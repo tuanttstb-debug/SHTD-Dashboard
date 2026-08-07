@@ -189,14 +189,49 @@ function _esRenderAttentionList(attention) {
   el.innerHTML = html;
 }
 
+let _esInitCatFilter    = '';   // lọc bảng sức khỏe theo mảng công việc (Category)
+let _esInitSummaryCache = {};   // giữ initSummary để re-render khi đổi filter
+
+// Đổi filter Category → re-render bảng từ cache (không cần tính lại toàn ES)
+function esFilterInitCat(val) {
+  _esInitCatFilter = val || '';
+  _esRenderInitTable(_esInitSummaryCache);
+}
+
 function _esRenderInitTable(initSummary) {
   const tbody = document.getElementById('esInitTableBody');
   if (!tbody) return;
+  _esInitSummaryCache = initSummary || {};
 
-  const entries = Object.entries(initSummary);
+  const inis = db.initiatives || [];
+  const findIni = k => inis.find(i => i.id === k) || null;
+
+  // Droplist Category dùng CHUNG danh sách chuẩn với Initiative Tracker (_initCategories)
+  const sel = document.getElementById('esInitCatFilter');
+  if (sel) {
+    const cats = (typeof _initCategories === 'function')
+      ? _initCategories()
+      : [...new Set(inis.map(i => i.category).filter(Boolean))].sort();
+    sel.innerHTML = `<option value="">${t('common.all')}</option>` +
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    sel.value = _esInitCatFilter;
+  }
+
+  // Join sang initiative gốc để lấy TÊN + Phụ trách + Category, rồi lọc theo mảng
+  let entries = Object.entries(initSummary).map(([k, v]) => {
+    const ini = findIni(k);
+    return {
+      k, v, ini,
+      name:        ini ? (ini.name || k) : k,
+      accountable: ini ? (ini.accountable || '') : '',
+      category:    ini ? (ini.category || '') : '',
+    };
+  });
+  if (_esInitCatFilter) entries = entries.filter(e => e.category === _esInitCatFilter);
+
   if (entries.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-3);">
-      ${t('es.no-data-upload')}
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3);">
+      ${_esInitCatFilter ? 'Không có initiative thuộc mảng này.' : t('es.no-data-upload')}
     </td></tr>`;
     return;
   }
@@ -204,14 +239,14 @@ function _esRenderInitTable(initSummary) {
   // Red first → Amber → Green; within same RAG: worst completion first
   const ragRank = v => v.rags.Red > 0 ? 0 : v.rags.Amber > 0 ? 1 : 2;
   entries.sort((a, b) => {
-    const rr = ragRank(a[1]) - ragRank(b[1]);
+    const rr = ragRank(a.v) - ragRank(b.v);
     if (rr !== 0) return rr;
-    const pA = a[1].total ? a[1].done / a[1].total : 0;
-    const pB = b[1].total ? b[1].done / b[1].total : 0;
+    const pA = a.v.total ? a.v.done / a.v.total : 0;
+    const pB = b.v.total ? b.v.done / b.v.total : 0;
     return pA - pB;
   });
 
-  tbody.innerHTML = entries.map(([k, v]) => {
+  tbody.innerHTML = entries.map(({ k, v, ini, name, accountable }) => {
     const avg = v.total ? Math.round(v.totProg / v.total) : 0;
     const donePct = v.total ? Math.round(v.done / v.total * 100) : 0;
     const domRag = v.rags.Red > 0 ? 'Red' : v.rags.Amber > 0 ? 'Amber' : 'Green';
@@ -222,8 +257,14 @@ function _esRenderInitTable(initSummary) {
     else if (domRag === 'Amber') { stTag = t('es.risk.watch'); stCls = 'st-watch'; }
     else { stTag = t('es.risk.good'); stCls = 'st-good'; }
 
-    return `<tr>
-      <td><div class="es-init-name" title="${esc(k)}">${esc(k)}</div></td>
+    // Chỉ initiative thực (có trong db.initiatives) mới mở được popup chi tiết
+    const rowAttr = ini
+      ? ` class="es-init-row-click" style="cursor:pointer;" title="Xem chi tiết initiative" onclick="openInitViewPopup('${esc(k)}')"`
+      : '';
+
+    return `<tr${rowAttr}>
+      <td><div class="es-init-name" title="${esc(name)} · ${esc(k)}">${esc(name)}</div></td>
+      <td><span class="es-init-acc">${accountable ? esc(accountable) : '<span style="color:var(--text-3);">—</span>'}</span></td>
       <td style="text-align:center;font-weight:700;font-family:var(--mono);">${v.total}</td>
       <td style="text-align:center;font-weight:700;font-family:var(--mono);color:var(--success);">${v.done}</td>
       <td style="text-align:center;font-family:var(--mono);font-weight:700;">${donePct}%</td>

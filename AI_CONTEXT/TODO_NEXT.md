@@ -1,6 +1,23 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-07 (Session 65 — Guard chống ghi đè khi tạo trùng đồng thời)
-**Context**: S65 done. v6.33-concurrent-create-idlock-20260807, `?v=20260807`. HEAD `8307173`. `verify_id_reassign` 17/17; full suite 24/25 (chỉ H13 pre-existing). Code pushed. ✅ **GAS đã redeploy** (user, 2026-08-07, URL không đổi).
+**Prepared**: 2026-08-07 (Session 66 — Initiative Category đồng nhất + ES health nâng cấp)
+**Context**: S66 done. v6.34-init-category-es-health-20260807, `?v=20260807b`. HEAD `aa257e9`. `verify_es_init_health` 14/14; full suite 24/25 (chỉ H13 pre-existing). Code pushed. **Thuần frontend — KHÔNG cần GAS deploy.**
+
+---
+
+## ✅ COMPLETED S66 — Initiative Category đồng nhất + ES health nâng cấp
+- [x] **Part 1** — `INIT_CATEGORIES` (6 cũ + **Bất Động Sản**) + `_initCategories()` (chuẩn ∪ data) dùng CHUNG: modal Thêm `#initFCat` (bỏ hardcode 6 option) + filter Initiative `#initSelCat` + filter ES → danh sách giống hệt
+- [x] **Part 2** — ES "Sức khỏe từng Initiative": droplist `#esInitCatFilter` + `esFilterInitCat()` lọc theo Category (re-render từ cache)
+- [x] **Part 3** — `_esRenderInitTable` join `db.initiatives`: cột **Tên** (thay ID) + **Phụ trách** (8 cột); dòng initiative thực → click `openInitViewPopup`; BAU không click
+- [x] `verify_es_init_health.mjs` (NEW, 14/14) + run_tests.mjs; config v6.34; cache-bust `?v=20260807b` (60 refs)
+
+## 🟡 PRIORITY 1 — Smoke test S66 (v6.34) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.34-init-category-es-health-20260807` |
+| Initiative → Thêm → droplist Category | Có **Bất Động Sản** + 6 mảng cũ; giống filter Initiative |
+| Tổng hợp BLĐ → "Sức khỏe từng Initiative" | Cột **Tên** + **Phụ trách** hiện đúng; droplist Category ở header |
+| Chọn 1 mảng ở droplist ES | Bảng chỉ còn initiative thuộc mảng đó |
+| Click 1 dòng initiative | Popup chi tiết initiative mở (như popup chung); dòng BAU không mở |
 
 ---
 

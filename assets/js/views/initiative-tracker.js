@@ -443,10 +443,19 @@ function _initSetFilter(type, val) {
   if (list) list.innerHTML = _initBuildCardList();
 }
 
-/* ── categories helper ── */
+/* ── categories: danh sách chuẩn dùng CHUNG cho modal Thêm + mọi droplist filter ── */
+const INIT_CATEGORIES = ['Số hóa', 'Sản phẩm', 'Đào tạo', 'Kỹ thuật', 'Vận hành', 'Chiến lược', 'Bất Động Sản'];
+
+// Danh sách chuẩn + bất kỳ category nào đã có trong dữ liệu nhưng chưa nằm trong
+// danh sách chuẩn (để không "mồ côi" dữ liệu cũ). Modal & filter dùng cùng hàm này.
+function _initCategories() {
+  const extra = [...new Set((db.initiatives || []).map(i => i.category).filter(Boolean))]
+    .filter(c => INIT_CATEGORIES.indexOf(c) === -1).sort();
+  return [...INIT_CATEGORIES, ...extra];
+}
+
 function _initCategoryOptions() {
-  const cats = [...new Set((db.initiatives||[]).filter(i=>i.type?i.type==='initiative':!i.parentId).map(i=>i.category).filter(Boolean))];
-  return cats.map(c => `<option value="${_esc(c)}">${_esc(c)}</option>`).join('');
+  return _initCategories().map(c => `<option value="${_esc(c)}">${_esc(c)}</option>`).join('');
 }
 
 /* ── accountable helper (distinct Accountable trong initiative gốc) ── */
@@ -486,12 +495,7 @@ function _initModalTemplate() {
             <label class="form-label">Category</label>
             <select class="form-control" id="initFCat">
               <option value="">– Chọn –</option>
-              <option>Số hóa</option>
-              <option>Sản phẩm</option>
-              <option>Đào tạo</option>
-              <option>Kỹ thuật</option>
-              <option>Vận hành</option>
-              <option>Chiến lược</option>
+              ${_initCategoryOptions()}
             </select>
           </div>
           <div class="form-group">
