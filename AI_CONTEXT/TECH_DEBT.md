@@ -8,6 +8,35 @@
 
 ---
 
+## 🆕 DELTA — Session 66 (2026-08-07) — Initiative Category đồng nhất + ES health nâng cấp
+
+### TD-006 (nối): Category list vẫn code-defined, chưa data/admin-managed 🟢 MEDIUM
+S66 **cải thiện một phần** TD-006: gộp category Initiative rải rác (modal hardcode 6 option + filter data-driven) về **1 nguồn** `INIT_CATEGORIES` + `_initCategories()` (dùng chung modal Thêm + filter Initiative + filter ES) → thêm/sửa mảng chỉ 1 chỗ. **Nợ còn lại**: list vẫn nằm trong code (`initiative-tracker.js`), thêm mảng mới phải sửa JS + cache-bust; chưa có màn admin quản lý. `_initCategories()` có union với category lạ trong data để không mồ côi. Không block.
+
+### TD-ES-01: ES "Sức khỏe từng Initiative" join theo `t.initiative === ini.id` ⚪ LOW
+`_esRenderInitTable` (S66) lấy Tên + Phụ trách + Category bằng cách tìm `db.initiatives` theo key = `task.initiative`. Task trỏ tới initiative **không tồn tại** trong `db.initiatives` (vd 'BAU', hoặc initiative đã xóa) → cột Tên hiện raw key, Phụ trách/Category rỗng ("—"), **không mở popup** (không có onclick). **Đúng ý đồ** (chỉ initiative thực mới có chi tiết); ghi lại để biết khi debug "sao dòng này không click được".
+
+### Ghi chú S66 — nợ có kiểm soát
+- **`_esInitCatFilter` + `_esInitSummaryCache`** = thêm module-global state cho Executive Summary (nối dài TD-004). `esFilterInitCat` re-render bảng từ cache (không tính lại toàn ES) — chấp nhận.
+- **ES table `onclick="openInitViewPopup('${esc(k)}')`** dùng single-quote inline như phần còn lại của app (SEC-01) — initiative ID do genId/user nhập, format-controlled; rủi ro thấp. Nếu siết SEC-01 toàn cục thì gộp luôn chỗ này.
+- `verify_es_init_health.mjs` (NEW, 14/14) phụ thuộc **số cột = 8** và text "Phụ trách" — đổi layout bảng ES phải cập nhật test.
+
+---
+
+## 🆕 DELTA — Session 65 (2026-08-07) — Guard chống ghi đè khi tạo trùng đồng thời
+
+### TD-CONC-01: Bulk write-all + atomic delete CHƯA nằm dưới write lock ⚪ LOW
+S65 thêm `LockService.getScriptLock()` + `reassignIdIfExists()` cho **5 handler `*-upsert`** (create atomic) → hết ghi đè khi 2 người cùng tạo. **Ngoài phạm vi (còn nợ)**: (a) các route ghi-tất-cả `write`/`case-pipeline-write`/`initiative-write`/`kpi-write` + import Excel **không** lấy lock → 2 full-write đồng thời vẫn last-write-wins (hiếm: admin/bulk); (b) các `*-delete` không lock (2 create đồng thời đã được lock tuần tự hoá nên đủ cho bug đã báo). Gộp với TD-013/TD-025/TD-027 (last-write-wins). Không block.
+
+### TD-TEST-04: `verify_id_reassign.mjs` là BẢN PORT thuật toán GAS ⚪ LOW
+GAS không chạy được dưới node → `verify_id_reassign.mjs` (17/17) **sao chép** logic `reassignIdIfExists` (backend/Concurrency.gs) thành hàm `nextFreeId` để test spec. **Rủi ro drift**: sửa `Concurrency.gs` mà quên cập nhật test → test vẫn xanh nhưng lệch thực tế. Đã ghi cảnh báo ở đầu 2 file. Dài hạn: tách core thành file dùng chung được cả 2 (khó vì GAS/ESM khác nhau) — chấp nhận drift-with-warning.
+
+### Ghi chú S65 — nợ có kiểm soát
+- **Reassign chỉ khi `isNew`** (create thuần): edit/rename gửi `isNew:false` → **không** auto đổi mã (tôn trọng mã user chọn, đã qua dup-check local). Rename tới mã người khác vừa tạo vẫn có thể đè — edge hiếm, giữ hành vi cũ.
+- **Client cũ (chưa hard-reload)** không gửi `isNew` → server coi như edit (không reassign) → **backward-compatible**, không vỡ; chỉ mất guard tới khi user reload nhận v6.33.
+
+---
+
 ## 🆕 DELTA — Session 64 (2026-08-06) — Initiative filter Accountable + xóa Milestone
 
 ### TD-INIT-02: Xóa initiative/milestone dùng `writeInitiatives()` (ghi TẤT CẢ dòng), chưa atomic ⚪ LOW
@@ -632,7 +661,7 @@ Use same Python pattern for both. One version string for everything (e.g. `20260
 ---
 
 ## Debt Summary
-**Last updated**: 2026-06-24 (Session 35 — sidebar scroll fix; CSS cache-bust gap discovered + resolved; TD-041 added)
+**Last updated**: 2026-06-24 (Session 35). **Nợ mới sau S35 ghi ở các khối "🆕 DELTA — Session N" đầu file** (S36→S66), không nhập lại bảng dưới đây.
 
 | ID | Rating | Issue | Effort | Status |
 |---|---|---|---|---|
