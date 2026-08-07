@@ -1,6 +1,6 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-08-07 (Session 65 — Guard chống ghi đè khi tạo trùng đồng thời)
-**Context**: S65 done. v6.33-concurrent-create-idlock-20260807, `?v=20260807`. HEAD `<S65>`. `verify_id_reassign` 17/17; full suite 24/25 (chỉ H13 pre-existing). Code pushed. 🔴 **CHƯA GAS redeploy**.
+**Context**: S65 done. v6.33-concurrent-create-idlock-20260807, `?v=20260807`. HEAD `8307173`. `verify_id_reassign` 17/17; full suite 24/25 (chỉ H13 pre-existing). Code pushed. ✅ **GAS đã redeploy** (user, 2026-08-07, URL không đổi).
 
 ---
 
@@ -10,12 +10,8 @@
 - [x] Client: create gửi `isNew:true`; `_adoptReassignedId()` (api.js) nhận mã mới + toast `sync.id-reassigned` (VI/EN); edit `isNew:false`. `_gasTaskUpsert`(isNew=!oldId), `_gasCase/Issue/Dev Upsert(rec,isNew)`, `_gasInitiativeUpsert(ini,isNew)` + `syncInitiativeAdd(ini,isNew)`; view save truyền isNew (case chốt `!_cpEditId` trước close)
 - [x] `verify_id_reassign.mjs` (NEW, 17/17) + run_tests.mjs; config v6.33; cache-bust `?v=20260807` (60 refs)
 
-## 🔴 PRIORITY 0 — GAS REDEPLOY (bắt buộc để fix có hiệu lực)
-| Bước | Action | Vì sao |
-|---|---|---|
-| 1 | Apps Script editor → **thêm file `Concurrency.gs`** (copy từ repo) | Chứa lock + reassign |
-| 2 | **Cập nhật `Code.gs`** (copy từ repo) | 5 handler upsert dùng lock/reassign |
-| 3 | Deploy → **New version** (URL không đổi) | Kích hoạt server-side guard |
+## ✅ DONE — GAS redeploy (user, 2026-08-07, URL không đổi)
+- [x] Apps Script editor: thêm `Concurrency.gs` + cập nhật `Code.gs` → Deploy New version → server-side guard live.
 
 ## 🟡 PRIORITY 1 — Smoke test S65 (v6.33) đa-user trên production
 | Check | Expected |
