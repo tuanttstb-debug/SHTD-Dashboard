@@ -112,7 +112,7 @@ function _dnRun_(commit) {
         }
         out.push([isoV]);
         var rawStr = (Object.prototype.toString.call(raw) === '[object Date]')
-          ? Utilities.formatDate(raw, tz, 'yyyy-MM-dd (Date)') : String(raw);
+          ? (Utilities.formatDate(raw, tz, 'yyyy-MM-dd') + ' (Date)') : String(raw);
         if (rawStr !== isoV) { changed++; if (samples.length < 8) samples.push(rawStr + '  →  ' + isoV); }
       }
       grand.scanned += n; grand.changed += changed; grand.unparseable += bad;
