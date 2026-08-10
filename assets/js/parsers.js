@@ -99,27 +99,7 @@ function extractWorkbook(wb) {
   const cHl    = colIdxExact(H, ['highlightbáocáo','highlight','báocáo']);
   if (cName === -1) return null;
 
-  const parseDate = v => {
-    if (!v) return '';
-    if (v instanceof Date) {
-      const d = new Date(v.getTime() - v.getTimezoneOffset()*60000);
-      return d.toISOString().split('T')[0];
-    }
-    if (typeof v === 'number') {
-      const d = new Date((v - 25569) * 86400000);
-      return d.toISOString().split('T')[0];
-    }
-    if (typeof v === 'string') {
-      const p = v.split(/[\/\-]/);
-      if (p.length === 3) {
-        if (p[0].length <= 2 && p[2].length === 4)
-          return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-        if (p[0].length === 4)
-          return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
-      }
-    }
-    return String(v);
-  };
+  const parseDate = v => toISODate(v);   // unified: any format → ISO 'YYYY-MM-DD'
   const parseRAG = (a, b) => {
     const s = ((a||b||'').toString().toLowerCase());
     if (s.includes('red') || s.includes('đỏ')) return 'Red';
@@ -239,28 +219,7 @@ function _parseArrayIntoDb(values) {
   const cCross = ci(['cross-team','crossteam']);
   const cHl    = ci(['highlight','báo cáo']);
 
-  const _mmmIdx = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
-  const parseDate = v => {
-    if (!v) return '';
-    v = v.toString().trim();
-    const dmy = v.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2})$/);
-    if (dmy) {
-      const mi = _mmmIdx[dmy[2].toLowerCase()];
-      if (mi !== undefined) {
-        const yy = parseInt(dmy[3], 10);
-        const year4 = yy + (yy < 50 ? 2000 : 1900);
-        return `${year4}-${String(mi+1).padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
-      }
-    }
-    const p = v.split(/[\/\-]/);
-    if (p.length === 3) {
-      if (p[0].length <= 2 && p[2].length === 4)
-        return p[2] + '-' + p[1].padStart(2,'0') + '-' + p[0].padStart(2,'0');
-      if (p[0].length === 4)
-        return p[0] + '-' + p[1].padStart(2,'0') + '-' + p[2].padStart(2,'0');
-    }
-    return v;
-  };
+  const parseDate = v => toISODate(v);   // unified: any format → ISO 'YYYY-MM-DD'
   const parseRAG   = v => { const s=(v||'').toLowerCase(); if(s.includes('red')||s.includes('đỏ')) return 'Red'; if(s.includes('amber')||s.includes('cam')) return 'Amber'; return 'Green'; };
   const parseState = v => { if(!v) return 'Chưa bắt đầu'; const s=v.toLowerCase(); if(s.includes('đang')) return 'Đang thực hiện'; if(s.includes('chuẩn bị')) return 'Hoàn thành chuẩn bị'; if(s.includes('hoàn thành')||s.includes('done')) return 'Hoàn thành'; if(s.includes('tạm')) return 'Tạm dừng'; if(s.includes('block')) return 'Blocked'; return 'Chưa bắt đầu'; };
   const parseYN    = v => { const s=(v||'').toUpperCase().trim(); return (s==='Y'||s==='YES')?'Y':'N'; };

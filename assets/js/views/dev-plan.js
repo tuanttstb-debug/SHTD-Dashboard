@@ -256,8 +256,8 @@ function _devRowHtml(d, stt) {
     </td>
     <td class="dev-cell-target" title="${esc(d.target)}">${esc(d.target || '–')}</td>
     <td class="dev-cell-muted">${esc(d.coordUnit || '–')}</td>
-    <td class="dev-cell-muted dev-cell-date">${esc(d.startDate || '–')}</td>
-    <td class="dev-cell-muted dev-cell-date">${esc(d.endDate || '–')}</td>
+    <td class="dev-cell-muted dev-cell-date">${fmtDate(d.startDate)}</td>
+    <td class="dev-cell-muted dev-cell-date">${fmtDate(d.endDate)}</td>
     <td>${stateChip(d.state)}</td>
     <td>
       <div class="dev-prog"><div class="dev-prog-fill" style="width:${prog}%"></div></div>
@@ -453,8 +453,8 @@ function openDevViewPopup(id) {
         <div class="cp-view-grid">
           ${_devVR(t('dev.col.pic'),   _devPicLabel(d.pic))}
           ${_devVR(t('dev.col.coord'), d.coordUnit)}
-          ${_devVR(t('dev.col.start'), d.startDate)}
-          ${_devVR(t('dev.col.end'),   d.endDate)}
+          ${_devVR(t('dev.col.start'), d.startDate ? fmtDate(d.startDate) : '')}
+          ${_devVR(t('dev.col.end'),   d.endDate ? fmtDate(d.endDate) : '')}
           ${_devVR(t('dev.review.last'), d.lastReview ? new Date(d.lastReview).toLocaleString('vi-VN') : '')}
         </div>
         ${d.target ? `<div class="cp-view-section"><div class="cp-view-label">${t('dev.col.target')}</div><div class="cp-view-val" style="white-space:pre-wrap;">${esc(d.target)}</div></div>` : ''}

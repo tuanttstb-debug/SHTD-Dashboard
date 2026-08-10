@@ -273,8 +273,8 @@ function _itRenderTable() {
         <td><span class="it-status-chip it-st-${_itStatusClass(i.trangThai)}">${esc(i.trangThai||'–')}</span></td>
         <td><span class="it-dept-badge">${esc(i.phongBan||'–')}</span></td>
         <td style="font-size:12px;color:var(--text-2);">${esc(i.nguoiLog||'–')}</td>
-        <td style="font-size:12px;">${esc(i.ngayPhatSinh||'–')}</td>
-        <td style="font-size:12px;${isBreach ? 'color:var(--danger);font-weight:700;' : ''}">${esc(i.deadline||'–')}</td>
+        <td style="font-size:12px;">${fmtDate(i.ngayPhatSinh)}</td>
+        <td style="font-size:12px;${isBreach ? 'color:var(--danger);font-weight:700;' : ''}">${fmtDate(i.deadline)}</td>
         <td onclick="event.stopPropagation();">
           <div style="display:flex;gap:4px;">
             <button class="btn btn-ghost btn-sm" onclick="openIssueModal('${esc(i.id)}')" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></button>
@@ -539,9 +539,9 @@ function openIssueViewPopup(id) {
           ${_itVR('Loại issue',     iss.loaiIssue)}
           ${_itVR('Loại xử lý',    iss.loaiXuLy)}
           ${_itVR('Phòng ban',      iss.phongBan)}
-          ${_itVR('Ngày phát sinh', iss.ngayPhatSinh)}
-          ${_itVR('Deadline',       iss.deadline,  isBreach ? 'color:var(--danger);font-weight:700;' : '')}
-          ${_itVR('Ngày giải quyết',iss.ngayGiaiQuyet)}
+          ${_itVR('Ngày phát sinh', iss.ngayPhatSinh ? fmtDate(iss.ngayPhatSinh) : '')}
+          ${_itVR('Deadline',       iss.deadline ? fmtDate(iss.deadline) : '',  isBreach ? 'color:var(--danger);font-weight:700;' : '')}
+          ${_itVR('Ngày giải quyết',iss.ngayGiaiQuyet ? fmtDate(iss.ngayGiaiQuyet) : '')}
           ${_itVR('Ticket ngoài',   iss.ticketNgoai)}
           ${_itVR('Ảnh hưởng NV',  iss.anhHuong)}
         </div>

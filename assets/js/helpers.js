@@ -3,18 +3,54 @@ const _esc = esc;
 
 const picNorm = n => { const s = (n||'').toString().trim(); return s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : ''; };
 
-const fmtDate = d => { if (!d) return '–'; const p = d.split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d; };
+/* ══════════════════════════════════════════════════════════════════════
+   UNIFIED DATE HANDLING (single source of truth for the whole project)
+   ─────────────────────────────────────────────────────────────────────
+   Canonical in Google Sheet + in-memory: ISO 'YYYY-MM-DD'.
+   Canonical on-screen display:           'DD/MM/YYYY'.
+   `<input type="date">` needs ISO → memory being ISO means modals bind
+   directly with no per-view conversion.
+   `toISODate()` is intentionally permissive so legacy / mangled data
+   (Google Sheets localised months like "30-thg 7-26", real Date cells,
+   Excel serials, DD-MMM-YY, DD/MM/YYYY) all normalise to one ISO string.
+════════════════════════════════════════════════════════════════════════ */
+const _MMM_MAP = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
+function _isoFromYMD(y, m0, d) {
+  if (!(y >= 1900 && y <= 2200) || m0 < 0 || m0 > 11 || d < 1 || d > 31) return '';
+  return `${y}-${String(m0 + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+// Parse ANY supported representation → ISO 'YYYY-MM-DD' (or '' if empty/unparseable). Never throws.
+function toISODate(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date) return isNaN(v) ? '' : _isoFromYMD(v.getFullYear(), v.getMonth(), v.getDate());
+  if (typeof v === 'number') {                       // Excel/Sheets serial
+    const d = new Date(Math.round((v - 25569) * 86400000));
+    return isNaN(d) ? '' : _isoFromYMD(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  }
+  const s = String(v).trim();
+  if (!s) return '';
+  const _yr = y => { const n = +y; return n < 100 ? (n < 50 ? 2000 + n : 1900 + n) : n; };
+  let m;
+  if ((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)))                 return _isoFromYMD(+m[1], +m[2] - 1, +m[3]); // ISO (opt. time)
+  if ((m = s.match(/^(\d{1,2})[\-\/]([A-Za-z]{3,})[\-\/](\d{2,4})$/))) {                                          // DD-MMM-YY(YY)
+    const mo = _MMM_MAP[m[2].slice(0, 3).toLowerCase()];
+    if (mo !== undefined) return _isoFromYMD(_yr(m[3]), mo, +m[1]);
+  }
+  if ((m = s.match(/^(\d{1,2})[\-\/\s]+(?:thg|tháng)\.?\s*(\d{1,2})[\-\/\s,]+(\d{2,4})$/i)))                       // DD-thg M-YY (VN locale)
+    return _isoFromYMD(_yr(m[3]), +m[2] - 1, +m[1]);
+  if ((m = s.match(/^(\d{1,2})[\-\/](\d{1,2})[\-\/](\d{4})$/)))      return _isoFromYMD(+m[3], +m[2] - 1, +m[1]);  // DD/MM/YYYY (day-first, VN)
+  const d = new Date(s);
+  return isNaN(d) ? '' : _isoFromYMD(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+// Display: any stored value → 'DD/MM/YYYY' (or '–' when empty/unparseable).
+const fmtDate = v => { const iso = toISODate(v); if (!iso) return '–'; const p = iso.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
 
 function parseVNDate(s) {
-  if (!s) return null;
-  s = String(s).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    const [y,m,d] = s.split('-'); return new Date(+y, +m-1, +d);
-  }
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
-    const [d,m,y] = s.split('/'); return new Date(+y, +m-1, +d);
-  }
-  return null;
+  const iso = toISODate(s);
+  if (!iso) return null;
+  const [y, m, d] = iso.split('-');
+  return new Date(+y, +m - 1, +d);
 }
 
 function isOverdue(endDateString, progress) {
@@ -264,26 +300,8 @@ function genId(init, team, ms, extra = []) {
   return pfx + String(max + 1).padStart(3, '0');
 }
 
+// Storage serializer: any value → canonical ISO 'YYYY-MM-DD' for the Sheet.
+// (Name kept for backward-compat with existing *ToRow() call sites.)
 function fmtDateExport(d) {
-  if (!d) return '';
-  d = String(d).trim();
-  let day, month0based, year4;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-    const parts = d.split('-');
-    year4       = parseInt(parts[0], 10);
-    month0based = parseInt(parts[1], 10) - 1;
-    day         = parseInt(parts[2], 10);
-  } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d)) {
-    const parts = d.split('/');
-    day         = parseInt(parts[0], 10);
-    month0based = parseInt(parts[1], 10) - 1;
-    year4       = parseInt(parts[2], 10);
-  } else {
-    return d;
-  }
-  if (month0based < 0 || month0based > 11) return d;
-  const dd  = String(day).padStart(2, '0');
-  const mmm = _MMM[month0based];
-  const yy  = String(year4).slice(-2);
-  return `${dd}-${mmm}-${yy}`;
+  return toISODate(d);
 }

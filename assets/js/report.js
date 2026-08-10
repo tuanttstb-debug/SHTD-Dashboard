@@ -77,7 +77,7 @@ function _rptResults(wb, weekLabel, tasks) {
     .map(t => [
       t.id, t.name, t.initiative||'BAU', t.category||'',
       t.team||'', t.picRes||'',
-      fmtDateExport(t.startDate), fmtDateExport(t.endDate),
+      fmtDate(t.startDate), fmtDate(t.endDate),
       `${t.progress||0}%`, t.state||'', t.status||'',
       t.result||''
     ]);
@@ -104,7 +104,7 @@ function _rptNextPlan(wb, inProgress) {
   const rows = tasks.map(t => [
     t.id, t.name, t.initiative||'BAU',
     t.team||'', t.picRes||'',
-    fmtDateExport(t.endDate),
+    fmtDate(t.endDate),
     `${t.progress||0}%`, t.status||'',
     t.nextPlan||''
   ]);

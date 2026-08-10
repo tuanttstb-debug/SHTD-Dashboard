@@ -55,21 +55,7 @@ function rowToCase(header, row) {
   const v   = i => (row[i] || '').toString().trim();
 
   const rawDate = s => {
-    if (!s) return '';
-    // dd-MMM-yy → yyyy-MM-dd
-    const mmmMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
-    const m = s.match(/^(\d{1,2})-([a-zA-Z]{3})-(\d{2,4})$/);
-    if (m) {
-      const mo = mmmMap[m[2].toLowerCase()];
-      if (mo !== undefined) {
-        const yr = m[3].length === 2 ? 2000 + parseInt(m[3]) : parseInt(m[3]);
-        return `${yr}-${String(mo+1).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-      }
-    }
-    // dd/MM/yyyy
-    const m2 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (m2) return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
-    return s;
+    return toISODate(s);   // unified: any format → ISO 'YYYY-MM-DD'
   };
 
   return {
@@ -617,7 +603,7 @@ function _buildHistoryTable(rows, syntheticRow, actionMap) {
 function rowToIssue(r) {
   return {
     id:            String(r[0]  || '').trim(),
-    ngayPhatSinh:  String(r[1]  || '').trim(),
+    ngayPhatSinh:  toISODate(r[1]),
     tieuDe:        String(r[2]  || '').trim(),
     heTong:        String(r[3]  || '').trim(),
     loaiIssue:     String(r[4]  || '').trim(),
@@ -627,8 +613,8 @@ function rowToIssue(r) {
     phongBan:      String(r[8]  || '').trim(),
     nguyenNhan:    String(r[9]  || '').trim(),
     deXuat:        String(r[10] || '').trim(),
-    deadline:      String(r[11] || '').trim(),
-    ngayGiaiQuyet: String(r[12] || '').trim(),
+    deadline:      toISODate(r[11]),
+    ngayGiaiQuyet: toISODate(r[12]),
     ticketNgoai:   String(r[13] || '').trim(),
     anhHuong:      String(r[14] || '').trim(),
     nguoiLog:      String(r[15] || '').trim(),
@@ -639,9 +625,9 @@ function rowToIssue(r) {
 
 function issueToRow(iss) {
   return [
-    iss.id, iss.ngayPhatSinh, iss.tieuDe, iss.heTong,
+    iss.id, toISODate(iss.ngayPhatSinh), iss.tieuDe, iss.heTong,
     iss.loaiIssue, iss.mucDo, iss.loaiXuLy, iss.trangThai, iss.phongBan,
-    iss.nguyenNhan, iss.deXuat, iss.deadline, iss.ngayGiaiQuyet,
+    iss.nguyenNhan, iss.deXuat, toISODate(iss.deadline), toISODate(iss.ngayGiaiQuyet),
     iss.ticketNgoai, iss.anhHuong, iss.nguoiLog, iss.nguoiXuLy, iss.ghiChu,
   ];
 }
@@ -720,12 +706,12 @@ function rowToDev(r) {
     target:     String(r[2]  || '').trim(),
     pic:        String(r[3]  || '').trim(),
     coordUnit:  String(r[4]  || '').trim(),
-    startDate:  String(r[5]  || '').trim(),
-    endDate:    String(r[6]  || '').trim(),
+    startDate:  toISODate(r[5]),
+    endDate:    toISODate(r[6]),
     state:      String(r[7]  || '').trim(),
     progress:   String(r[8]  || '').trim(),
     note:       String(r[9]  || '').trim(),
-    lastReview: String(r[10] || '').trim(),
+    lastReview: String(r[10] || '').trim(),   // full timestamp (date+time) — NOT a date-picker field
     createdBy:  String(r[11] || '').trim(),
   };
 }
@@ -733,7 +719,7 @@ function rowToDev(r) {
 function devToRow(d) {
   return [
     d.id, d.name, d.target, d.pic, d.coordUnit,
-    d.startDate, d.endDate, d.state, d.progress,
+    toISODate(d.startDate), toISODate(d.endDate), d.state, d.progress,
     d.note, d.lastReview, d.createdBy,
   ];
 }

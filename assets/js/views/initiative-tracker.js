@@ -228,7 +228,7 @@ function _initBuildCard(ini) {
         </div>
         <span class="init-status-chip ${statusKey}">${_initStatusIcon(ini.status)} ${_esc(ini.status||'Active')}</span>
         ${ini.accountable ? `<span style="font-size:12px;color:var(--text-3);"><i class="fa-solid fa-user" style="margin-right:3px;"></i>${_esc(ini.accountable)}</span>` : ''}
-        ${ini.deadline ? `<span style="font-size:12px;color:var(--text-3);"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ini.deadline)}</span>` : ''}
+        ${ini.deadline ? `<span style="font-size:12px;color:var(--text-3);"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${fmtDate(ini.deadline)}</span>` : ''}
         ${ini.category ? `<span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:99px;font-weight:600;">${_esc(ini.category)}</span>` : ''}
       </div>
       <div class="init-card-actions" onclick="event.stopPropagation()">
@@ -279,7 +279,7 @@ function _initBuildMilestoneList(parentId, milestones) {
           <div class="init-prog-bar" style="width:60px;"><div class="init-prog-fill ${dotClass === 'done' ? 'done' : dotClass === 'blocked' ? 'blocked' : ''}" style="width:${ms.pct||0}%;"></div></div>
           <span class="init-prog-pct">${ms.pct||0}%</span>
         </div>
-        ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${_esc(ms.deadline)}</span>` : ''}
+        ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${fmtDate(ms.deadline)}</span>` : ''}
         <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
         <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa milestone"><i class="fa-solid fa-pen"></i></button>
         <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--danger);" onclick="_initDeleteMilestone('${_esc(ms.id)}')" title="Xóa milestone"><i class="fa-solid fa-trash"></i></button>
@@ -669,11 +669,11 @@ async function _initSave() {
     name,
     category:          document.getElementById('initFCat').value,
     accountable:       document.getElementById('initFAcc').value.trim(),
-    startDate:         _initFromISO(document.getElementById('initFStart').value),
-    deadline:          _initFromISO(document.getElementById('initFDeadline').value),
+    startDate:         toISODate(document.getElementById('initFStart').value),
+    deadline:          toISODate(document.getElementById('initFDeadline').value),
     pct:               Math.min(100, Math.max(0, pctRaw)),
     milestoneTracking: parentId ? '' : document.getElementById('initFMsTrack').value.trim(),
-    milestoneDeadline: parentId ? '' : _initFromISO(document.getElementById('initFMsDl').value),
+    milestoneDeadline: parentId ? '' : toISODate(document.getElementById('initFMsDl').value),
     status:            document.getElementById('initFStatus').value || (parentId ? 'Chưa bắt đầu' : 'Active'),
     kpiTarget:         parentId ? '' : document.getElementById('initFKpi').value.trim(),
     notes:             document.getElementById('initFNotes').value.trim(),
@@ -803,7 +803,7 @@ function openInitViewPopup(id) {
         ${!isMilestone && milestones.length ? row('list-ol', 'Milestones', milestones.length + ' milestone') : ''}
         ${!isMilestone && linkedTasks.length ? row('list-check', t('it.view.linked-tasks'), linkedTasks.length + ' task') : ''}
         ${ini.milestoneTracking ? row('flag', 'Milestone đang track', _esc(ini.milestoneTracking)) : ''}
-        ${ini.milestoneDeadline ? row('clock', 'Deadline Milestone', _esc(ini.milestoneDeadline)) : ''}
+        ${ini.milestoneDeadline ? row('clock', 'Deadline Milestone', fmtDate(ini.milestoneDeadline)) : ''}
         ${ini.docLink ? `<div class="cp-view-row"><span class="cp-view-label"><i class="fa-solid fa-link"></i>${t('it.view.doc')}</span><span class="cp-view-val"><a href="${_esc(ini.docLink)}" target="_blank" rel="noopener" style="color:var(--primary);">${t('it.view.open-link')}</a></span></div>` : ''}
       </div>
       ${section('bullseye', t('it.view.kpi'), ini.kpiTarget)}
@@ -970,9 +970,7 @@ function openTaskModalForMilestone(msId, iniId) {
 // Stored DD-MMM-YY (or any _initParseDate-able value) → YYYY-MM-DD for <input type="date">.
 // Returns '' when empty/unparseable so the picker shows blank.
 function _initToISO(str) {
-  const d = _initParseDate(str);
-  if (!d) return '';
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return toISODate(str);   // unified date handling (helpers.js)
 }
 
 // YYYY-MM-DD from <input type="date"> → stored DD-MMM-YY. Passes through anything non-ISO.

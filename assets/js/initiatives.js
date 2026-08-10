@@ -31,11 +31,11 @@ function initiativeToRow(ini) {
     ini.name            || '',
     ini.category        || '',
     ini.accountable     || '',
-    ini.startDate       || '',
-    ini.deadline        || '',
+    toISODate(ini.startDate),
+    toISODate(ini.deadline),
     ini.pct !== undefined ? String(ini.pct) : '',
     ini.milestoneTracking || '',
-    ini.milestoneDeadline || '',
+    toISODate(ini.milestoneDeadline),
     ini.status          || 'Active',
     ini.kpiTarget       || '',
     ini.notes           || '',
@@ -102,7 +102,7 @@ function _parseInitiativeArray(values) {
     // Initiative rows: "Milestone Đang track" col stores the name of the currently tracked milestone
     const status             = isMsRow ? (rawStatus || rawMsTrack || 'Chưa bắt đầu') : (rawStatus || 'Active');
     const milestoneTracking  = isMsRow ? '' : rawMsTrack;
-    const milestoneDeadline  = isMsRow ? '' : g(r, cMsDl);
+    const milestoneDeadline  = isMsRow ? '' : toISODate(g(r, cMsDl));
 
     // Type: explicit col → derive from ID pattern
     const type     = g(r, cType) || (isMsRow ? 'milestone' : 'initiative');
@@ -114,8 +114,8 @@ function _parseInitiativeArray(values) {
       name:              g(r, cName),
       category:          g(r, cCat),
       accountable:       g(r, cAcc),
-      startDate:         g(r, cSt),
-      deadline:          g(r, cDl),
+      startDate:         toISODate(g(r, cSt)),
+      deadline:          toISODate(g(r, cDl)),
       pct,
       milestoneTracking,
       milestoneDeadline,

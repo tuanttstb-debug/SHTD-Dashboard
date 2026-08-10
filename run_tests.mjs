@@ -11,6 +11,7 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  'verify_date_unify.mjs',      // 28 tests  S67 — date logic đồng nhất (ISO storage / DD/MM/YYYY display)
   'verify_id_reassign.mjs',     // 17 tests  S65 — guard cấp lại mã khi tạo trùng đồng thời
   'verify_es_init_health.mjs',  // 14 tests  S66 — ES init health: name/acc/filter/popup + category đồng nhất
   'verify_report_week.mjs',     // 17 tests  S62 — tuần báo cáo đa-tuần (ISO)

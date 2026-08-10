@@ -339,7 +339,7 @@ function _apTaskCard(t) {
     <div class="kanban-card-owner">
       <i class="fa-solid fa-user" style="margin-right:3px;"></i>${esc(t.picRes || '–')}
       ${t.endDate ? `<span style="margin-left:8px;${overdue ? 'color:var(--danger);font-weight:700;' : 'color:var(--text-3);'}">
-        <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${esc(t.endDate)}
+        <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${fmtDate(t.endDate)}
       </span>` : ''}
     </div>
   </div>`;
@@ -364,7 +364,7 @@ function _apCaseCard(c) {
     <div class="kanban-card-owner">
       <i class="fa-solid fa-user" style="margin-right:3px;"></i>${esc(c.pic || '–')}
       ${c.deadline ? `<span style="margin-left:8px;${overdue ? 'color:var(--danger);font-weight:700;' : 'color:var(--text-3);'}">
-        <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${esc(c.deadline)}
+        <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${fmtDate(c.deadline)}
       </span>` : ''}
     </div>
   </div>`;
@@ -397,7 +397,7 @@ function _apInitSection(inits) {
         <span class="ap-init-meta">${milestones.length} MS · ${linkedTasks.length} task</span>
         <span class="ap-init-meta" style="color:${sColor};font-weight:600;">${esc(i.status || '')}</span>
         ${i.deadline ? `<span class="ap-init-meta">
-          <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${esc(i.deadline)}
+          <i class="fa-solid fa-calendar-day" style="margin-right:2px;"></i>${fmtDate(i.deadline)}
         </span>` : ''}
       </div>`;
     }).join('')}

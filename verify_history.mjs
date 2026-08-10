@@ -14,7 +14,7 @@
  *   H10: Case popup tabs hoạt động đúng
  *   H11: Thêm Task mới → startDate tự điền hôm nay
  *   H12: Thêm Case mới → startDate tự điền hôm nay
- *   H13: Thêm Initiative mới → startDate tự điền hôm nay (DD-MMM-YY)
+ *   H13: Thêm Initiative mới → startDate tự điền hôm nay (ISO YYYY-MM-DD)
  *   H14: Không có JS console errors
  *
  * EVD screenshots: test-results/history/
@@ -436,20 +436,21 @@ console.log('\n📋 H12: Thêm Case mới → startDate tự điền hôm nay');
 }
 
 /* ─ H13: New initiative modal → startDate = today DD-MMM-YY ─ */
-console.log('\n📋 H13: Thêm Initiative mới → startDate tự điền hôm nay (DD-MMM-YY)');
+console.log('\n📋 H13: Thêm Initiative mới → startDate tự điền hôm nay (ISO YYYY-MM-DD)');
 {
   await navTo('initiative-tracker');
   await page.waitForTimeout(500);
   await page.evaluate(() => _initOpenModal(null));
   await page.waitForTimeout(400);
 
+  // #initFStart is <input type="date"> → its .value is always ISO YYYY-MM-DD.
+  // Project canonical (S67) is ISO for storage + memory, so today's default is ISO.
   const startVal = await page.$eval('#initFStart', el => el.value);
   const today    = new Date();
-  const MMM      = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const todayDMY = `${String(today.getDate()).padStart(2,'0')}-${MMM[today.getMonth()]}-${String(today.getFullYear()).slice(-2)}`;
+  const todayISO = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-  startVal === todayDMY ? PASS('H13', `initFStart = hôm nay (${todayDMY})`)
-                        : FAIL('H13', `initFStart = "${startVal}", expected "${todayDMY}"`);
+  startVal === todayISO ? PASS('H13', `initFStart = hôm nay (${todayISO})`)
+                        : FAIL('H13', `initFStart = "${startVal}", expected "${todayISO}"`);
 
   await SS(page, 'h13_initiative_modal_startdate_today');
   await page.evaluate(() => document.getElementById('initModalOverlay').style.display = 'none');
