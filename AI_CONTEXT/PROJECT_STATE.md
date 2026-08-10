@@ -1,8 +1,10 @@
 # PROJECT STATE
-**As of**: 2026-08-07 (Session 66 — Initiative Category đồng nhất + ES health nâng cấp)
-**Version**: v6.34 (`APP_VERSION = '6.34-init-category-es-health-20260807'`, `index.html ?v=20260807b`)
-**Remote HEAD (main)**: `0c55158`
+**As of**: 2026-08-10 (Session 67 — Revert GAS cá nhân + đồng nhất logic ngày tháng ISO)
+**Version**: v6.36 (`APP_VERSION = '6.36-date-unify-iso-20260810'`, `index.html ?v=20260810b`)
+**Remote HEAD (main)**: `d8779d9`
 
+> **S67.2 (Date unify — DEBUG)**: Gom toàn bộ xử lý ngày về **1 nguồn** `helpers.js`: `toISODate(v)` (parser vạn năng → **ISO YYYY-MM-DD**), `fmtDate` (→ **DD/MM/YYYY**), `parseVNDate`/`fmtDateExport` route qua `toISODate`. **Canonical = ISO cho storage + memory**; hiển thị DD/MM/YYYY. Mọi reader (task/case/init/dev/issue) normalize ISO vào memory; mọi writer ghi ISO; mọi hiển thị dùng `fmtDate`. Gốc lỗi "26/thg 7/30" + modal trống ngày: copy tay biến ô thành Date/serial/locale (`30-thg 7-26`), `parseDate` của Task không nhận `DD-MMM-YY`. NEW `backend/DateNormalizeMigration.gs` (dryRun/commit, **bỏ setNumberFormat** vì cột kiểu ngày chặn) — **user đã chạy commit xong**. Dev "Review cuối" giữ nguyên (timestamp). `verify_date_unify` **28/28**; `verify_history` **47/47** (H13 → ISO); full suite 26/27 (chỉ my_work MW6 flaky). v6.36.
+> **S67.1 (Revert GAS — hạ tầng)**: Trỏ backend **về tài khoản cá nhân** (bỏ hướng S59 cơ quan) vì **ANBM không xử lý được + noti không chạy trên mạng nội bộ**. `config.js` GS_WEBAPP_URL → `AKfycbydyik…97f2`; `constants.js` GS_SHEET_ID + `Config.gs` SPREADSHEET_ID → Sheet cũ `1cpg1p_8…56Hk`. Thuần config, deployment cá nhân cũ vẫn live (không deploy GAS mới). ⚠️ Giá trị cơ quan (`AKfycbw1…DSg`/`1t4tkaw4…Zq4g`) **retired**; doc S59/S66 mô tả hướng cơ quan = **đã bỏ**. Data 04-08→10-08 chỉ ở Sheet cơ quan → user copy tay (đã chuẩn hoá qua migration S67.2). v6.35.
 > **S66 (Initiative Category + ES health — DEBUG)**: (1) **Đồng nhất droplist Category** Initiative: NEW `INIT_CATEGORIES` (6 cũ + **Bất Động Sản**) + `_initCategories()` (chuẩn ∪ data) dùng CHUNG cho modal Thêm (`#initFCat`, trước hardcode) + filter Initiative (`#initSelCat`) + filter ES → danh sách giống hệt. (2)(3) Tab **Tổng hợp BLĐ** "Sức khỏe từng Initiative": droplist `#esInitCatFilter` (`esFilterInitCat`) **lọc theo Category**; `_esRenderInitTable` join `db.initiatives` → thêm cột **Tên** (thay ID) + **Phụ trách** (8 cột); dòng initiative thực → click mở `openInitViewPopup` (popup chi tiết có sẵn), BAU không click. Thuần frontend — **KHÔNG GAS deploy**. `verify_es_init_health` **14/14**; full suite 24/25 (chỉ H13 pre-existing). v6.34.
 > **S65 (Concurrency guard — DEBUG)**: Sửa lỗi **ghi đè khi 2 người cùng tạo mới cùng lúc** ở **cả 5 entity** (Task/Case/Issue/Initiative+Milestone/Dev). Gốc: client sinh mã tuần tự từ **cache local** → trùng → upsert-theo-ID của người sau đè dòng người trước. Fix **server-authoritative**: NEW `backend/Concurrency.gs` (`_acquireWriteLock` script-lock + `reassignIdIfExists` tăng số cuối của prefix khi trùng); `Code.gs` bọc 5 handler `*-upsert` trong lock, `isNew` → reassign + trả `id`. Client gửi `isNew:true` khi create + `_adoptReassignedId()` nhận mã mới (toast `sync.id-reassigned`); edit gửi `isNew:false`. `verify_id_reassign` **17/17**; full suite **24/25** (chỉ H13 pre-existing). ✅ **GAS đã redeploy** (user, 2026-08-07, URL không đổi). v6.33.
 > **S64 (Initiative CR)**: Trên **Theo dõi Initiative** — (1) **filter theo Accountable**: dropdown mới ở toolbar (distinct từ initiative gốc), lọc **cả card list lẫn 5 ô số** (đồng nhất Category); tiện thể fix `_initSetFilter` re-render cả `#initStatBar` (trước đổi Category/Accountable làm ô số lệch). (2) **Xóa Milestone**: nút 🗑 mỗi milestone row → `_initDeleteMilestone` xóa milestone + **gỡ link Task** (`task.milestone=''`, giữ Task + link initiative), confirm cảnh báo N task; optimistic (ghi GAS nền). Thuần frontend — **không GAS deploy**. i18n +3 key VI/EN. CR e2e **11/11**; `verify_initiative_tracker` 19/19; `verify_i18n_p6` **29/29** (cập nhật index + coverage Accountable). Fail dai dẳng: history H13 pre-existing. v6.32.
@@ -21,9 +23,9 @@
 > **S54.1 fix**: My Work giờ hiện **toàn bộ dev item đang làm của tôi** (trước chỉ hiện item quá hạn review >7 ngày → item vừa tạo bị ẩn cả tuần). Item quá hạn gắn badge "Cần review" + xếp đầu. `readDev()` re-render My Work khi load xong.
 > **⚠️** `backend/RenameUserService.gs` bị nối đoạn PowerShell chứa API key ở cuối (không do S54) — chưa commit; cần dọn + thu hồi key.
 **Schema**: Task_Master 24 cột (SCHEMA-01 đã giải quyết sau khi merge)
-**GAS URL (current)**: `https://script.google.com/macros/s/AKfycbw1BgeNZuo8WVBpwjB0zj7HC-yr5DEHZtO3saHEnJ1g7m7XJdPhif9hmYKPNhk6cg9DSg/exec` (S59 — tài khoản cơ quan `cb_sptd_7@tpbank.vn`)
-**GAS URL (cũ, giữ để rollback)**: `…AKfycbydyik…97f2/exec` (tài khoản cá nhân — xóa deployment sau khi verify ổn định)
-**Owner tài khoản GAS/Sheet**: `cb_sptd_7@tpbank.vn` (Google Workspace TPBank) — trước S59 là mail cá nhân
+**GAS URL (current)**: `https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec` (S67 — REVERT về tài khoản **cá nhân**; Sheet `1cpg1p_8…56Hk`)
+**GAS URL (retired, S59 cơ quan — KHÔNG dùng)**: `AKfycbw1…DSg/exec` + Sheet `1t4tkaw4…Zq4g` (tài khoản `cb_sptd_7@tpbank.vn`) — bỏ vì ANBM + noti nội bộ. Giữ tham chiếu để merge data 04-08→10-08 nếu cần.
+**Owner tài khoản GAS/Sheet (current)**: tài khoản **cá nhân** (S67 revert). Hướng cơ quan S59 = đã bỏ.
 
 ---
 
@@ -223,7 +225,7 @@ debug_login.mjs           ← S18 login diagnostics
 | `GS_WEBAPP_URL` | In `assets/js/config.js`; **updated S30** — new deployment với atomic action handlers |
 | Task backend | ✅ Deployed — 24 cột (S18) |
 | Case Pipeline backend | ✅ **Deployed** 2026-06-15 — Code.gs routes + CasePipelineService.gs live; GS_WEBAPP_URL không đổi |
-| `GS_SHEET_ID` | `1t4tkaw4K6u3fQiAxkavWXAZAlwiYqht1OQjkWw8Zq4g` (S59 — Sheet copy tài khoản cơ quan; ID cũ `1cpg1p_8…56Hk` giữ để rollback) |
+| `GS_SHEET_ID` | `1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk` (S67 — REVERT về Sheet cá nhân; Sheet cơ quan `1t4tkaw4…Zq4g` retired) |
 | Task sheet | `Task_Master!A1:X` (24 cột) |
 | Case sheet | `Case_Pipeline` (20 cột A→T; tự tạo khi chưa có) |
 

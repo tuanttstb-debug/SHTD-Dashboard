@@ -8,6 +8,26 @@
 
 ---
 
+## 🆕 DELTA — Session 67 (2026-08-10) — Revert GAS cá nhân + đồng nhất logic ngày tháng ISO
+
+### TD-DATE-01: `toISODate` nằm trên MỌI read/write/display path ngày 🟢 MEDIUM
+S67 gom toàn bộ xử lý ngày về **1 hàm** `toISODate()` (helpers.js) + `fmtDate`. Lợi: hết phân mảnh (trước mỗi entity 1 parser, `parseDate` của Task còn không nhận `DD-MMM-YY`). **Rủi ro tập trung**: bug trong `toISODate` ảnh hưởng **toàn bộ** field ngày (task/case/init/dev/issue, cả read lẫn write). Giảm thiểu bằng `verify_date_unify.mjs` **28/28** (Date obj, Excel serial, ISO, DD-MMM-YY, `DD-thg M-YY`, DD/MM/YYYY, round-trip, junk→''). Sửa `toISODate` phải chạy suite này.
+
+### TD-DATE-02: Chống tái diễn locale = thao tác tay (migration bỏ setNumberFormat) ⚪ LOW
+`DateNormalizeMigration.gs` (S67) chỉ `setValues(ISO)` — **bỏ hẳn `setNumberFormat('@')`** vì cột ngày có "kiểu cột" (Google Sheets Tables/imported) chặn → lỗi "không thể đặt định dạng số của cột đã nhập" abort commit. Hệ quả: cột kiểu ngày sẽ **lưu ISO thành Date cell** (Sheets tự parse) — FE `toISODate` đọc Date object vẫn đúng nên **không sai**, nhưng Sheet không giữ ISO-as-text. Muốn khoá text chống Sheets re-localise Jul→"thg 7" phải **set Plain-text tay** (Format → Number → Plain text) nếu column type cho phép. Không block.
+
+### TD-DATE-03: Ô ngày "unparseable" được giữ nguyên (không mất, nhưng lệch canonical) ⚪ LOW
+Migration: ô có nội dung nhưng `_dnToISO` trả '' → **giữ raw** (không ghi đè, đếm `unparseable`). Trên FE, `fmtDate` của các ô đó hiện `–`. Nếu Logger commit báo `unparseable > 0` → có định dạng ngày lạ chưa phủ; cần lấy mẫu, mở rộng regex `toISODate` (FE) **và** `_dnToISO` (GAS) song song rồi chạy lại migration.
+
+### Ghi chú S67 — nợ có kiểm soát
+- **Backend revert về cá nhân** (bỏ S59 cơ quan): giá trị cơ quan (`AKfycbw1…DSg`/`1t4tkaw4…Zq4g`) **retired** nhưng vẫn nằm rải rác trong doc S59/S66 — khi đọc handover cũ phải nhớ hướng đó đã bỏ. Sheet cơ quan còn giữ để merge data 04-08→10-08.
+- **`fmtDateExport` giờ = `toISODate`** (đổi ngữ nghĩa: trước ra `DD-MMM-YY`, nay ra ISO). Tên giữ nguyên để không phải sửa call-site `*ToRow`. Report Excel human cells chuyển sang `fmtDate` (DD/MM/YYYY) cho dễ đọc.
+- **Dev `lastReview` KHÔNG normalize** (là timestamp date+time). Nếu sau này thêm date-picker cho lastReview thì mới đưa vào `toISODate`.
+- **TD-TEST-02/H13 ĐÃ ĐÓNG**: `verify_history` H13 trước kỳ vọng initiative start = `DD-MMM-YY` (stale từ S56) → S67 sửa thành ISO hôm nay (field là `<input type=date>`). History 47/47.
+- **`my_work` MW6 flaky (TD-TEST-01) còn đó**: fail cả batch lẫn chạy riêng, KHÔNG liên quan ngày (QLDM initiative section timing) — xác nhận fail TRƯỚC mọi thay đổi S67.
+
+---
+
 ## 🆕 DELTA — Session 66 (2026-08-07) — Initiative Category đồng nhất + ES health nâng cấp
 
 ### TD-006 (nối): Category list vẫn code-defined, chưa data/admin-managed 🟢 MEDIUM

@@ -1,3 +1,27 @@
+# SESSION HANDOVER (S67) — 2026-08-10
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `0c55158` (S66) → **sau**: `d8779d9`
+**Version**: v6.34 → **v6.35** (revert GAS) → **v6.36** (`6.36-date-unify-iso-20260810`, `?v=20260810b`)
+
+> Hai việc nối tiếp: (1) **REVERT** backend về tài khoản **cá nhân** (bỏ hướng S59 cơ quan) vì ANBM không xử lý được + noti không chạy trên mạng nội bộ; (2) **đồng nhất logic ngày tháng toàn dự án** (ISO lưu / DD/MM/YYYY hiển thị) + fix dữ liệu copy tay lỗi locale ("26/thg 7/30", modal trống ngày).
+
+## S67.1 — Revert GAS/Sheet về tài khoản cá nhân · commit `54ca398` · v6.35
+- **✅ Task**: trỏ backend về deployment cá nhân cũ. `config.js` `GS_WEBAPP_URL` → `AKfycbydyik…97f2`; `constants.js` `GS_SHEET_ID` + `backend/Config.gs` `SPREADSHEET_ID` → Sheet cũ `1cpg1p_8…56Hk`; `index.html` cache-bust `?v=20260810` (60 refs). Thuần config — deployment cá nhân cũ **vẫn live**, KHÔNG deploy GAS mới.
+- **✅ Decision**: bỏ hẳn hướng migration S59 (tài khoản cơ quan `cb_sptd_7@tpbank.vn`) — ANBM chưa xử lý được + noti/CRUD không chạy trên mạng nội bộ khi trỏ account cơ quan. Giá trị cơ quan (`AKfycbw1…DSg` / `1t4tkaw4…Zq4g`) **retired**; các doc S59/S66 mô tả hướng cơ quan = **đã bỏ**.
+- **⚠️ Data caveat**: dữ liệu tạo/sửa 04-08→10-08 **chỉ nằm ở Sheet cơ quan**. User đã **copy tay** sang Sheet cũ → phát sinh lỗi định dạng ngày (xem S67.2).
+
+## S67.2 — Đồng nhất logic ngày tháng + fix dữ liệu locale · commit `559782d` (+4 fix migration) · v6.36
+- **✅ Task completed**: (1) Gom toàn bộ xử lý ngày về **1 nguồn** trong `helpers.js`: `toISODate(v)` (parser vạn năng → ISO), `fmtDate` (→ DD/MM/YYYY), `parseVNDate`/`fmtDateExport` route qua `toISODate`. Mọi **reader** (task/case/init/dev/issue) normalize ISO vào memory; mọi **writer** ghi ISO; mọi **hiển thị** dùng `fmtDate`. (2) NEW `backend/DateNormalizeMigration.gs` (dryRun/commit) chuẩn hoá cột ngày 5 sheet → ISO. **User đã chạy `commitNormalizeDates()` thành công (build 2026-08-10d).**
+- **✅ Gốc lỗi** "26/thg 7/30" + modal trống ngày: copy tay giữa Sheet biến ô ngày thành Date/serial/locale (`30-thg 7-26`); mỗi entity parse một kiểu, `parseDate` của Task **không nhận** `DD-MMM-YY` → memory không phải ISO → `<input type=date>` không nhận value (mọi field ngày đều type=date, cần ISO).
+- **✅ Files changed (14 source + 2 NEW test/GAS, đã push)**: `helpers.js` (toISODate/fmtDate/parseVNDate/fmtDateExport), `parsers.js` (2 parseDate→toISODate), `api.js` (rawDate + rowToDev/rowToIssue + devToRow/issueToRow), `initiatives.js` (initiativeToRow + parse), `views/initiative-tracker.js` (_initToISO=toISODate, save→toISODate, display fmtDate), `views/action-plan.js` + `views/dev-plan.js` + `views/issue-tracker.js` (display fmtDate), `report.js` (Excel human cells fmtDate), `config.js` v6.36, `index.html` `?v=20260810b`. NEW `backend/DateNormalizeMigration.gs`, `verify_date_unify.mjs` (28/28). MOD `verify_history.mjs` (H13 kỳ vọng ISO), `run_tests.mjs`.
+- **✅ Decision** (phỏng vấn 2 câu): (a) canonical **ISO YYYY-MM-DD** cho storage + memory; (b) hiển thị **DD/MM/YYYY**. (c) `toISODate` permissive (Date obj, Excel serial, ISO, DD-MMM-YY, `DD-thg M-YY`/`DD-tháng`, DD/MM/YYYY) — không throw. (d) Dev **"Review cuối" (`lastReview`) KHÔNG normalize** — là timestamp date+time, không phải date-picker. (e) Migration **bỏ setNumberFormat** (cột kiểu ngày/Tables chặn "không thể đặt định dạng số của cột đã nhập") → chỉ `setValues(ISO)`; khoá Plain-text làm tay nếu cần.
+- **🔧 4 fix migration nối tiếp**: `10c3dd9` (formatDate pattern "(Date)" → nối chuỗi JS), `3262a97` (setNumberFormat best-effort try/catch), `95f31ee` (ghi giá trị trước, khoá text sau), `d8779d9` (**bỏ hẳn setNumberFormat** + banner `_DN_BUILD` để xác nhận đúng bản — nguyên nhân lỗi lặp là editor chạy bản CHƯA lưu / cần Ctrl+S).
+- **⛔ Blocker**: Không (code). Migration đã chạy xong. Data gap 04-08→10-08 do user tự quản (copy tay + migration đã chuẩn hoá).
+- **➡️ Next step**: (1) Hard-reload production badge `v6.36` → ngày hiện **DD/MM/YYYY**, click chi tiết + modal Sửa **điền đủ ngày**. (2) (tùy chọn) set cột ngày → Plain-text trên Sheets UI chống tái diễn. (3) Xác minh noti chạy được trên mạng nội bộ (ANBM có thể chặn cả domain `script.google.com` — CHƯA xác minh). (4) (nợ S57) điền Email `User_Master`. (5) Nếu thiếu bản ghi 04-08→10-08 ở Sheet cũ → merge từ Sheet cơ quan.
+- **🟢 Regression risk**: 🟢 **THẤP** — date refactor gom về 1 helper, có unit-test đầy đủ. `verify_date_unify` **28/28** (mọi format + bug "thg 7" + round-trip). `verify_history` **47/47** (H13 sửa kỳ vọng ISO — trước là DD-MMM-YY stale TD-TEST-02, nay đã đóng). Full suite **26/27** — fail duy nhất `my_work` MW6 = flaky pre-existing TD-TEST-01 (fail cả khi chạy riêng lẫn batch, KHÔNG liên quan ngày; xác nhận đã fail TRƯỚC mọi thay đổi session). Revert = thuần config. ⚠️ `toISODate` giờ nằm trên **mọi** read/write/display path ngày — bug ở đó ảnh hưởng toàn bộ field ngày; đã phủ 28 checks.
+
+---
+
 # SESSION HANDOVER (S66) — 2026-08-07
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `2953e14` (S65 docs) → **sau**: `0c55158`

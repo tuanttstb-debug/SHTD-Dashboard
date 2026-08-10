@@ -1,6 +1,28 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-07 (Session 66 — Initiative Category đồng nhất + ES health nâng cấp)
-**Context**: S66 done. v6.34-init-category-es-health-20260807, `?v=20260807b`. HEAD `0c55158`. `verify_es_init_health` 14/14; full suite 24/25 (chỉ H13 pre-existing). Code pushed. **Thuần frontend — KHÔNG cần GAS deploy.**
+**Prepared**: 2026-08-10 (Session 67 — Revert GAS cá nhân + đồng nhất logic ngày tháng ISO)
+**Context**: S67 done. v6.36-date-unify-iso-20260810, `?v=20260810b`. HEAD `d8779d9`. `verify_date_unify` 28/28; `verify_history` 47/47 (H13 fixed); full suite 26/27 (chỉ my_work MW6 flaky pre-existing). Code pushed. Migration GAS **đã chạy commit xong** (user, build 2026-08-10d). Backend đã revert về **tài khoản cá nhân**.
+
+---
+
+## ✅ COMPLETED S67 — Revert GAS cá nhân + đồng nhất logic ngày tháng
+- [x] **S67.1 Revert**: `config.js` GS_WEBAPP_URL → `AKfycbydyik…97f2` (v6.35); `constants.js` GS_SHEET_ID + `Config.gs` SPREADSHEET_ID → Sheet cũ `1cpg1p_8…56Hk`; cache-bust `?v=20260810`. Bỏ hướng cơ quan S59 (ANBM + noti nội bộ).
+- [x] **S67.2 Date unify**: `helpers.js` `toISODate`/`fmtDate`/`parseVNDate`/`fmtDateExport` — canonical ISO storage+memory, hiển thị DD/MM/YYYY. Mọi reader→ISO memory, writer→ISO, display→fmtDate (parsers/api/initiatives/initiative-tracker/action-plan/dev-plan/issue-tracker/report). v6.36, cache-bust `?v=20260810b`.
+- [x] NEW `backend/DateNormalizeMigration.gs` (dryRun/commit, bỏ setNumberFormat) — **user chạy commit xong**. NEW `verify_date_unify.mjs` 28/28 + run_tests.mjs; `verify_history` H13 → ISO (47/47).
+
+## 🟡 PRIORITY 1 — Smoke test S67 (v6.36) trên production
+| Check | Expected |
+|---|---|
+| Hard-reload (Ctrl+Shift+R) | Badge `v6.36-date-unify-iso-20260810` |
+| Cột ngày mọi view (Task/Case/Issue/Init/Dev) | Hiện **DD/MM/YYYY**, không còn `26/thg 7/30` |
+| Click 1 dòng → popup + modal Sửa | Ngày bắt đầu/kết thúc **điền đủ**, không trống |
+| Thêm mới bất kỳ entity | Ngày lưu vào Sheet dạng ISO `YYYY-MM-DD` |
+| Ô ngày lẻ hiển thị `–` | = giá trị migration không parse được (unparseable, giữ nguyên) → gửi mẫu để bổ sung parser |
+
+## 🟢 PRIORITY 2 — Việc còn treo S67 (tùy chọn)
+- **Chống tái diễn locale**: set cột ngày → Plain-text trên Sheets UI (migration đã bỏ setNumberFormat vì cột kiểu ngày chặn).
+- **Xác minh noti mạng nội bộ**: nếu ANBM chặn cả domain `script.google.com` → đổi account KHÔNG cứu được noti/CRUD; cần xác minh sau reload.
+- **Data gap 04-08→10-08**: nếu thiếu bản ghi ở Sheet cũ → merge từ Sheet cơ quan `1t4tkaw4…Zq4g` (còn giữ). Có thể viết GAS merge-by-ID nếu cần.
+- **(nợ S57)** điền cột Email `User_Master` cho digest.
 
 ---
 
