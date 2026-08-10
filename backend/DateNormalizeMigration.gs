@@ -78,11 +78,14 @@ function _dnToISO(v, tz) {
 function dryRunNormalizeDates() { return _dnRun_(false); }
 function commitNormalizeDates() { return _dnRun_(true); }
 
+var _DN_BUILD = '2026-08-10d (no-setNumberFormat)';
+
 function _dnRun_(commit) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var tz = ss.getSpreadsheetTimeZone() || 'Asia/Ho_Chi_Minh';
   var grand = { changed: 0, unparseable: 0, scanned: 0 };
-  Logger.log('=== DateNormalize %s === tz=%s', commit ? 'COMMIT' : 'DRY-RUN', tz);
+  Logger.log('=== DateNormalize %s === build=%s  tz=%s  sheetId=%s',
+    commit ? 'COMMIT' : 'DRY-RUN', _DN_BUILD, tz, SPREADSHEET_ID);
 
   _DN_TARGETS.forEach(function (tgt) {
     var sh = ss.getSheetByName(tgt.sheet);
@@ -120,18 +123,14 @@ function _dnRun_(commit) {
       samples.forEach(function (s) { Logger.log('      %s', s); });
 
       if (commit) {
-        // 1) Write the normalised ISO values FIRST — this is never blocked by a column
-        //    type, so data is always fixed even if the format step below fails.
+        // Write the normalised ISO values. We deliberately do NOT call setNumberFormat:
+        // when a column has an enforced "column type" (Google Sheets Tables / imported
+        // column) that call throws "không thể đặt định dạng số của cột đã nhập" and would
+        // abort the run. It is not needed for correctness — a typed column stores the ISO
+        // value as a proper Date, and the frontend's toISODate() reads Date cells fine.
+        // To harden against locale recurrence, set the column to Plain-text once by hand
+        // (Sheets UI → Format → Number → Plain text), if the column type allows.
         rng.setValues(out);
-        // 2) Best-effort: lock the column to plain text so ISO strings stay text and never
-        //    re-localise (Jul → "thg 7"). BLOCKED when the column has an enforced "column
-        //    type" (Google Sheets Tables) — that's fine: values are already written, Sheets
-        //    keeps them as proper Date cells, and the frontend's toISODate() reads Dates OK.
-        try {
-          sh.getRange(1, col, sh.getMaxRows(), 1).setNumberFormat('@');
-        } catch (fmtErr) {
-          Logger.log('      ⚠ không khoá được Plain-text cho cột %s (%s) — dữ liệu ISO ĐÃ ghi xong, FE vẫn đọc đúng', col, fmtErr.message);
-        }
       }
     });
   });
