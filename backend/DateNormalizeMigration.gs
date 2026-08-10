@@ -120,17 +120,18 @@ function _dnRun_(commit) {
       samples.forEach(function (s) { Logger.log('      %s', s); });
 
       if (commit) {
-        // Best-effort: lock the column to plain text so ISO strings stay text and never
-        // re-localise (Jul → "thg 7"). This is BLOCKED when the column has an enforced
-        // "column type" (Google Sheets Tables) — that's fine: we still write the ISO
-        // values, Sheets keeps them as proper Date cells, and the frontend's toISODate()
-        // reads Date objects correctly. So we never let a format failure abort the write.
+        // 1) Write the normalised ISO values FIRST — this is never blocked by a column
+        //    type, so data is always fixed even if the format step below fails.
+        rng.setValues(out);
+        // 2) Best-effort: lock the column to plain text so ISO strings stay text and never
+        //    re-localise (Jul → "thg 7"). BLOCKED when the column has an enforced "column
+        //    type" (Google Sheets Tables) — that's fine: values are already written, Sheets
+        //    keeps them as proper Date cells, and the frontend's toISODate() reads Dates OK.
         try {
           sh.getRange(1, col, sh.getMaxRows(), 1).setNumberFormat('@');
         } catch (fmtErr) {
-          Logger.log('      ⚠ không đặt được Plain-text cho cột %s (%s) — vẫn ghi giá trị ISO (cột giữ kiểu ngày, FE vẫn đọc đúng)', col, fmtErr.message);
+          Logger.log('      ⚠ không khoá được Plain-text cho cột %s (%s) — dữ liệu ISO ĐÃ ghi xong, FE vẫn đọc đúng', col, fmtErr.message);
         }
-        rng.setValues(out);
       }
     });
   });
