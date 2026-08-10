@@ -120,8 +120,16 @@ function _dnRun_(commit) {
       samples.forEach(function (s) { Logger.log('      %s', s); });
 
       if (commit) {
-        // Lock whole column to plain text FIRST so ISO strings never auto-convert to Date.
-        sh.getRange(1, col, sh.getMaxRows(), 1).setNumberFormat('@');
+        // Best-effort: lock the column to plain text so ISO strings stay text and never
+        // re-localise (Jul → "thg 7"). This is BLOCKED when the column has an enforced
+        // "column type" (Google Sheets Tables) — that's fine: we still write the ISO
+        // values, Sheets keeps them as proper Date cells, and the frontend's toISODate()
+        // reads Date objects correctly. So we never let a format failure abort the write.
+        try {
+          sh.getRange(1, col, sh.getMaxRows(), 1).setNumberFormat('@');
+        } catch (fmtErr) {
+          Logger.log('      ⚠ không đặt được Plain-text cho cột %s (%s) — vẫn ghi giá trị ISO (cột giữ kiểu ngày, FE vẫn đọc đúng)', col, fmtErr.message);
+        }
         rng.setValues(out);
       }
     });
