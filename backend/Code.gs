@@ -330,6 +330,32 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    // ── H2 Team Management (Quản trị H2) ──
+    // Read gộp toàn domain (mọi role đã login). Write: gate trong h2HandleUpsert/Delete.
+    if (action === 'h2-read-all') {
+      return _jsonResponse({ status: 'ok', data: h2ReadAll() });
+    }
+
+    var H2_UPSERT_MAP = {
+      'h2-config-upsert':    'H2_Config',
+      'h2-objective-upsert': 'H2_Objectives',
+      'h2-kpi-upsert':       'H2_KPIs',
+      'h2-milestone-upsert': 'H2_Milestones',
+      'h2-tracking-upsert':  'H2_MonthlyTracking',
+      'h2-risk-upsert':      'H2_Risks',
+      'h2-dep-upsert':       'H2_Dependencies',
+      'h2-review-upsert':    'H2_Reviews'
+    };
+    var H2_DELETE_MAP = {
+      'h2-objective-delete': 'H2_Objectives',
+      'h2-kpi-delete':       'H2_KPIs',
+      'h2-milestone-delete': 'H2_Milestones',
+      'h2-risk-delete':      'H2_Risks',
+      'h2-dep-delete':       'H2_Dependencies'
+    };
+    if (H2_UPSERT_MAP[action]) return _jsonResponse(h2HandleUpsert(body, tokenData, H2_UPSERT_MAP[action]));
+    if (H2_DELETE_MAP[action]) return _jsonResponse(h2HandleDelete(body, tokenData, H2_DELETE_MAP[action]));
+
     throw new Error('action không hợp lệ: ' + action);
 
   } catch (err) {

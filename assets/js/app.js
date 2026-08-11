@@ -29,6 +29,7 @@ async function startApp() {
   loadIssuesFromCache();
   loadDevFromCache();
   loadNotifsFromCache();
+  if (typeof loadH2FromCache === 'function') loadH2FromCache();
   setupListeners();
   renderAll();
   navigateTo('my-work');
@@ -47,6 +48,7 @@ async function startApp() {
     loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
     readNotifications();                                   // non-blocking — chuông nhắc việc
     setInterval(readNotifications, 5 * 60 * 1000);         // poll mỗi 5 phút
+    if (typeof readH2 === 'function') readH2();             // non-blocking — load domain Quản trị H2 (dormant tới khi có view)
   }
 }
 
