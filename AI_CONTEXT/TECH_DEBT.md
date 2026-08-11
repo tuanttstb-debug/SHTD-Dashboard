@@ -8,6 +8,27 @@
 
 ---
 
+## 🆕 DELTA — Session 68 (2026-08-11) — Hoàn tất Track B Quản trị H2 (Dashboard + Tự đánh giá) + hướng dẫn
+
+### TD-H2-01: Test H2 view = smoke với mock, KHÔNG chạy GAS thật 🟢 MEDIUM
+`verify_h2_dashboard` (24/24) + `verify_h2_review` (20/20) + tracker/core dùng chung harness: stub `window.readH2`, nạp `dbH2` mock, **abort `script.google.com`**. Kiểm được render/RBAC/compute/modal/empty nhưng **KHÔNG** kiểm đường ghi backend thật (`_gasH2Upsert`/`h2-review-upsert`, ownership gate GAS, reassign ID). Riêng H2R7 (save review) còn **stub `window._gasH2Upsert`** để test append cục bộ. → Backend H2 (Concurrency/ownership) chưa có test tự động (GAS không chạy dưới node — xem TD-TEST-04). Giảm thiểu: verify khi user thao tác thật trên PRD; cân nhắc port spec ownership như `verify_id_reassign`.
+
+### TD-H2-02: `H2SeedPilot.gs` được tham chiếu nhưng CHƯA tồn tại (dead reference) ⚪ LOW
+Empty-state của `h2-dashboard.js` gợi ý *"chạy seed pilot (H2SeedPilot.gs)"* nhưng file này **chưa được tạo** (B7 seed Quang/Dung còn nợ). Không vỡ (chỉ là text hướng dẫn) nhưng gây nhầm khi user đi tìm. → Tạo `backend/H2SeedPilot.gs` (B7) hoặc bỏ nhắc tên file trong empty-state.
+
+### TD-H2-03: Track B còn nợ B6 notif-hook + docs 06/07 ⚪ LOW
+Hoàn tất B1–B3 (backend+tracker) + B4 review + B5 dashboard + B8 report. **Còn nợ**: (a) **B6** — hook Notifications cho KPI/milestone (RAG đỏ / mốc quá hạn chưa bắn chuông+email như 5 entity kia); (b) docs `06_DASHBOARD_SPEC`/`07_DATA_MODEL` được nhắc trong framework nhưng chưa có; (c) B7 seed (xem TD-H2-02). Không block — module đã dùng được đầy đủ CRUD + xem + báo cáo.
+
+### TD-DOC-02: ~70 PNG suite khác còn dirty trong working tree ⚪ LOW
+Từ đầu phiên (leftover phiên trước đóng bất thường) ~70 ảnh `test-results/*` của các suite KHÔNG-H2 (action-plan/cp_s36/dev_plan/history/my_work…) hiện `modified` do test tự sinh lại. S68 **cố ý không commit** (noise, không phải thay đổi logic). Muốn tree sạch: `git restore test-results/` (an toàn — ảnh tự sinh) hoặc commit gộp 1 lần "chore: refresh test evidence".
+
+### Ghi chú S68 — nợ có kiểm soát
+- **Ảnh hướng dẫn `docs/img/h2/*.png`** chụp bằng `capture_h2_guide.mjs` với **dữ liệu mock pilot** (Quang/Dung) — không phải data thật. Khi UI H2 đổi phải **chạy lại script** để ảnh khớp; nếu không sẽ lệch giao diện thật. Script ngoài `run_tests.mjs` (không chạy trong CI).
+- **`_gasH2Upsert('review')`** ở `h2-review.js` là optimistic (persist+render trước, await ghi nền sau) như 5 entity kia — lỗi ghi chỉ báo toast, dữ liệu giữ cục bộ. RBAC client (`_h2rCanEdit`) chỉ là lớp UX; **gate thật ở GAS** (`H2_Reviews` owner=Member).
+- **Version bump 6.38→6.39 + cache-bust b→c (65 refs)**: mọi asset H2 phục vụ `?v=20260811c`. Lần deploy H2 tiếp theo phải bump tiếp (đụng i18n/nav/core dùng chung toàn app).
+
+---
+
 ## 🆕 DELTA — Session 67 (2026-08-10) — Revert GAS cá nhân + đồng nhất logic ngày tháng ISO
 
 ### TD-DATE-01: `toISODate` nằm trên MỌI read/write/display path ngày 🟢 MEDIUM

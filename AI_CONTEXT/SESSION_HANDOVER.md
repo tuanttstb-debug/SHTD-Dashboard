@@ -1,6 +1,6 @@
 # SESSION HANDOVER (S68) — 2026-08-11
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main trước**: `daf0421` (S-H2 B3) → **local sau**: `2a84883` (CHƯA push)
+**origin/main trước**: `daf0421` (S-H2 B3) → **sau (ĐÃ push)**: `bee61f8` (3 commit: `2a84883` feature · `a1cdc63` handover · `bee61f8` user guide)
 **Version**: v6.38 → **v6.39** (`6.39-h2-dashboard-review-20260811`, `?v=20260811c`)
 
 > **Khôi phục sau phiên đóng bất thường + hoàn tất Track B (Quản trị H2).** Phiên trước bị đóng giữa lúc chạy test → kết quả & context chưa cập nhật. Rà soát toàn bộ working tree để xác định đã-làm/đang-dở TRƯỚC khi đi tiếp.
@@ -17,9 +17,17 @@
 - **✅ Wiring**: `index.html` nav 2 mục (`h2-dashboard`/`h2-review`) + 2 `<section>` + review modal + report overlay + 2 script tag; `navigation.js` routing + ESC (`_h2rEscClose`, `h2CloseReport`); `i18n.js` nav/page VI+EN; `h2.css` +44 dòng dashboard; `h2-core.js` hook re-render review trong `readH2`.
 - **✅ Tests (NEW)**: `verify_h2_dashboard.mjs` **24/24** (cards/panels/capacity-overload/charts/report/empty/RBAC-lead), `verify_h2_review.mjs` **20/20** (render/RBAC member-vs-lead/modal populate/save-append/empty) + thêm vào `run_tests.mjs`. Version `config.js` v6.39; cache-bust `?v=20260811b`→`c` (65 refs).
 - **✅ Decision**: (a) Bump version + cache-bust vì WIP đụng asset đã cache (i18n/nav/h2-core/css/index). (b) Commit **source + test + evidence h2_dashboard/h2_review/h2_tracker**, **KHÔNG** commit ~70 PNG suite khác bị đổi (đã dirty từ đầu phiên trước — noise). (c) Test dùng lại harness `verify_h2_tracker` (stub `window.readH2`, mock `dbH2`, abort `script.google.com`); dashboard mock thêm member `OverX` 4×P1 để test cờ quá tải deterministic.
-- **⛔ Blocker**: Không. **Thuần frontend + test — KHÔNG cần deploy GAS mới** (backend reviews đã live từ B1). **Commit local `2a84883` CHƯA push** — chờ user xác nhận.
-- **➡️ Next step**: (1) **Push** `2a84883` lên main (chờ xác nhận). (2) Hard-reload → badge `v6.39`; menu "Quản trị H2 · Dashboard" hiện exec cards + chart + Xuất báo cáo BLĐ; "Tự đánh giá" thêm/sửa review, member chỉ thấy của mình. (3) (nợ S67) smoke test v6.36 ngày ISO trên production. (4) ~70 PNG suite khác vẫn dirty trong working tree (không do phiên này) — dọn/khôi phục nếu muốn tree sạch.
+- **⛔ Blocker**: Không. **Thuần frontend + test — KHÔNG cần deploy GAS mới** (backend reviews đã live từ B1). ✅ **ĐÃ push** `2a84883` (+ `a1cdc63` docs).
+- **➡️ Next step**: (1) ✅ Push xong → user smoke test tại **PRD**. (2) Hard-reload → badge `v6.39`; menu "Quản trị H2 · Dashboard" hiện exec cards + chart + Xuất báo cáo BLĐ; "Tự đánh giá" thêm/sửa review, member chỉ thấy của mình. (3) (nợ S67) smoke test v6.36 ngày ISO trên production. (4) ~70 PNG suite khác vẫn dirty trong working tree (không do phiên này) — dọn/khôi phục nếu muốn tree sạch.
 - **🟢 Regression risk**: 🟢 **THẤP** — thuần thêm 2 view mới + wiring additive; view cũ (tracker) không đụng. Full suite **29/31** = baseline y hệt S67 (2 fail duy nhất `my_work` MW6 + `issue_tracker` = flaky batch pre-existing; chạy riêng: my_work **61/62** chỉ MW6, issue_tracker **61/61**). H2: core 14/14, tracker 32/32, dashboard 24/24, review 20/20.
+
+## S68.1 — Hướng dẫn sử dụng Quản trị H2 · KPI (có ảnh minh họa) · commit `bee61f8`
+- **✅ Task**: viết bản hướng dẫn end-user đầy đủ mọi thao tác (yêu cầu user: "outcome dạng doc có ảnh minh họa").
+- **✅ Files (NEW)**: `docs/HUONG_DAN_SU_DUNG_H2_KPI.md` (VI: tổng quan/khái niệm, phân quyền, 3 màn hình với từng thao tác thêm/sửa/xóa Objective·KPI·Milestone + review + dashboard + xuất báo cáo, cách tính RAG/điểm, quy tắc, FAQ); `docs/img/h2/*.png` (**10 ảnh** chụp thật từ UI); `capture_h2_guide.mjs` (script Playwright tái tạo ảnh).
+- **✅ Decision**: ảnh chụp **thật** headless (dữ liệu pilot Quang/Dung), KHÔNG vẽ tay; Markdown ref `img/h2/*.png` → render inline trên GitHub; giữ script để chụp lại khi UI đổi.
+- **⛔ Blocker**: Không. ✅ **ĐÃ push** `bee61f8`.
+- **➡️ Next step**: (tùy chọn) bản EN; chạy `node capture_h2_guide.mjs` cập nhật ảnh khi UI H2 đổi.
+- **🟢 Regression risk**: 🟢 **KHÔNG** — thuần docs + ảnh + script tiện ích (ngoài `run_tests.mjs`, không đụng app).
 
 ---
 

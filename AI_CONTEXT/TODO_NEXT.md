@@ -11,12 +11,13 @@
 - [x] Wiring index.html (nav/section/modal/overlay/script) + navigation.js (route+ESC) + i18n VI/EN + h2.css + h2-core hook
 - [x] `verify_h2_dashboard.mjs` **24/24** + `verify_h2_review.mjs` **20/20** + run_tests.mjs; config v6.39; cache-bust `?v=20260811c` (65 refs)
 - [x] Commit local `2a84883` (source + test + evidence h2_dashboard/review/tracker; loại ~70 PNG suite khác đã dirty từ trước)
+- [x] ✅ **Push xong** — Remote HEAD `bee61f8` (`2a84883` feature · `a1cdc63` handover · `bee61f8` guide)
+- [x] **Hướng dẫn sử dụng** (`bee61f8`): `docs/HUONG_DAN_SU_DUNG_H2_KPI.md` (VI, mọi thao tác) + `docs/img/h2/*.png` (10 ảnh chụp thật qua `capture_h2_guide.mjs`)
 
-## 🔴 PRIORITY 0 — Push + smoke test S68 (chờ user xác nhận push)
+## 🔴 PRIORITY 0 — Smoke test S68 tại PRD (user đang test)
 | Bước | Action | Expected |
 |---|---|---|
-| 1 | `git push origin HEAD:main` (commit `2a84883`) | Remote HEAD = 2a84883 |
-| 2 | Hard-reload (Ctrl+Shift+R) | Badge `v6.39-h2-dashboard-review-20260811` |
+| 1 | Hard-reload (Ctrl+Shift+R) | Badge `v6.39-h2-dashboard-review-20260811` |
 | 3 | Menu "Quản trị H2 · Dashboard" | Exec cards + chart trend/RAG + panel member/pillar/risk/dep/capacity/AI/mgmt; nút "Xuất báo cáo BLĐ" mở overlay copy-ready |
 | 4 | Menu "Quản trị H2 · Tự đánh giá" | Thêm/sửa review; **member chỉ thấy review của mình**, Teamlead thấy tất cả + chọn member; badge Năng lực TB |
 
