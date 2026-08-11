@@ -21,6 +21,7 @@ const TRANSLATIONS = {
     // ── Navigation items ──
     'nav.my-work':             'Công việc của tôi',
     'nav.dev-plan':            'Plan phát triển bản thân',
+    'nav.h2-tracker':          'Quản trị H2 · KPI',
     'nav.executive-summary':   'Tổng hợp BLĐ',
     'nav.bld-queue':           'Phê duyệt BLĐ',
     'nav.initiative-tracker':  'Theo dõi Initiative',
@@ -31,6 +32,7 @@ const TRANSLATIONS = {
     'page.dashboard':          'Executive Dashboard',
     'page.my-work':            'Công việc của tôi',
     'page.dev-plan':           'Plan phát triển bản thân',
+    'page.h2-tracker':         'Quản trị H2 · Theo dõi KPI',
     'page.executive-summary':  'Tổng hợp BLĐ',
     'page.bld-queue':          'Phê duyệt BLĐ',
     'page.case-pipeline':      'Case Pipeline – Cơ hội kinh doanh',
@@ -529,6 +531,7 @@ const TRANSLATIONS = {
     // ── Navigation items ──
     'nav.my-work':             'My Work',
     'nav.dev-plan':            'Personal Dev Plan',
+    'nav.h2-tracker':          'H2 Management · KPI',
     'nav.executive-summary':   'Exec Summary',
     'nav.bld-queue':           'BLĐ Approval',
     'nav.initiative-tracker':  'Initiative Tracker',
@@ -539,6 +542,7 @@ const TRANSLATIONS = {
     'page.dashboard':          'Executive Dashboard',
     'page.my-work':            'My Work',
     'page.dev-plan':           'Personal Development Plan',
+    'page.h2-tracker':         'H2 Management · KPI Tracker',
     'page.executive-summary':  'Exec Summary',
     'page.bld-queue':          'BLĐ Approval Queue',
     'page.case-pipeline':      'Case Pipeline – Business Opportunities',

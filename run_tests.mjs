@@ -12,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
   'verify_h2_core.mjs',         // 14 tests  H2 (Track B) — client core: RAG/achievement/score/capacity/validate + load smoke
+  'verify_h2_tracker.mjs',      // 32 tests  H2 (Track B B3) — tracker view: render/stat/RAG/CRUD modals/RBAC
   'verify_date_unify.mjs',      // 28 tests  S67 — date logic đồng nhất (ISO storage / DD/MM/YYYY display)
   'verify_id_reassign.mjs',     // 17 tests  S65 — guard cấp lại mã khi tạo trùng đồng thời
   'verify_es_init_health.mjs',  // 14 tests  S66 — ES init health: name/acc/filter/popup + category đồng nhất

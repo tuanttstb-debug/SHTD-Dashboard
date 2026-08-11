@@ -8,26 +8,27 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260811">
-<link rel="stylesheet" href="assets/css/base.css?v=20260811">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260811">
-<link rel="stylesheet" href="assets/css/components.css?v=20260811">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260811">
-<link rel="stylesheet" href="assets/css/table.css?v=20260811">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260811">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260811">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260811">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260811">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260811">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260811">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260811">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260811">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260811">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260811">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260811">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260811">
-<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260811">
-<link rel="stylesheet" href="assets/css/notifications.css?v=20260811">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/base.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/components.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/table.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/h2.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/notifications.css?v=20260811b">
 
 </head>
 <body>
@@ -91,6 +92,10 @@
       <div class="nav-item" data-view="dev-plan">
         <i class="fa-solid fa-seedling nav-icon"></i>
         <span class="nav-label" data-i18n="nav.dev-plan">Plan phát triển bản thân</span>
+      </div>
+      <div class="nav-item" data-view="h2-tracker">
+        <i class="fa-solid fa-bullseye nav-icon"></i>
+        <span class="nav-label" data-i18n="nav.h2-tracker">Quản trị H2 · KPI</span>
       </div>
       <div class="nav-item" data-view="dashboard">
         <i class="fa-solid fa-chart-pie nav-icon"></i>
@@ -238,6 +243,7 @@
 
     <!-- ===== DEV PLAN (Plan phát triển bản thân) ===== -->
     <section class="view-section" id="view-dev-plan" style="display:none;"></section>
+    <section class="view-section" id="view-h2-tracker" style="display:none;"></section>
 
     <!-- ===== DASHBOARD ===== -->
     <section class="view-section active" id="view-dashboard">
@@ -1813,6 +1819,93 @@
 <!-- ===== DEV PLAN VIEW OVERLAY ===== -->
 <div id="devViewOverlay" onclick="if(event.target===this)closeDevViewPopup()"></div>
 
+<!-- ===== H2 OBJECTIVE MODAL ===== -->
+<div id="h2ObjModal" class="h2-modal">
+  <div class="h2-modal-box">
+    <div class="h2-modal-header">
+      <div class="h2-modal-title" id="h2ObjModalTitle">Thêm Objective</div>
+      <div class="modal-close" onclick="closeH2ObjModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <input type="hidden" id="h2ObjOrigId">
+    <div class="h2-form-grid">
+      <div class="form-group h2-form-full"><label class="form-label">Tên Objective (outcome) <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="h2ofName" class="form-control" placeholder="VD: Hoàn thiện & mở rộng số hóa BLOL"></div>
+      <div class="form-group h2-form-full"><label class="form-label">WHY (bám Team Objective / giá trị)</label>
+        <textarea id="h2ofWhy" class="form-control" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">Trụ cột</label><select id="h2ofPillar" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Ưu tiên</label><select id="h2ofPriority" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Category</label><select id="h2ofCategory" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Phụ trách (Owner)</label><select id="h2ofOwner" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Trọng số (%)</label><input type="number" id="h2ofWeight" class="form-control" min="0" max="100"></div>
+      <div class="form-group"><label class="form-label">Trạng thái</label><select id="h2ofStatus" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Bắt đầu</label><input type="date" id="h2ofStart" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Hạn</label><input type="date" id="h2ofDue" class="form-control"></div>
+    </div>
+    <div class="h2-form-actions">
+      <button class="btn btn-ghost" onclick="closeH2ObjModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="h2SaveObj()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== H2 KPI MODAL ===== -->
+<div id="h2KpiModal" class="h2-modal">
+  <div class="h2-modal-box">
+    <div class="h2-modal-header">
+      <div class="h2-modal-title" id="h2KpiModalTitle">Thêm KPI</div>
+      <div class="modal-close" onclick="closeH2KpiModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <input type="hidden" id="h2KpiOrigId">
+    <div class="h2-form-grid">
+      <div class="form-group h2-form-full"><label class="form-label">Objective</label><select id="h2kfObjective" class="form-control"></select></div>
+      <div class="form-group h2-form-full"><label class="form-label">Tên KPI (metric đo outcome) <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="h2kfName" class="form-control" placeholder="VD: TAT xử lý bảo lãnh ↓ ≥30%"></div>
+      <div class="form-group"><label class="form-label">Category</label><select id="h2kfType" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Đơn vị</label><input type="text" id="h2kfUnit" class="form-control" placeholder="KH / ngày / % …"></div>
+      <div class="form-group"><label class="form-label">Baseline</label><input type="text" id="h2kfBaseline" class="form-control" placeholder="gốc (hoặc: cần đo T8)"></div>
+      <div class="form-group"><label class="form-label">Target</label><input type="text" id="h2kfTarget" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Trọng số (%)</label><input type="number" id="h2kfWeight" class="form-control" min="0" max="100"></div>
+      <div class="form-group"><label class="form-label">Deadline</label><input type="date" id="h2kfDeadline" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Trạng thái</label><select id="h2kfStatus" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Phụ trách (Owner)</label><select id="h2kfOwner" class="form-control"></select></div>
+      <div class="form-group h2-form-full"><label class="form-label">Evidence (link/mô tả)</label><input type="text" id="h2kfEvidence" class="form-control"></div>
+    </div>
+    <div class="h2-form-actions">
+      <button class="btn btn-ghost" onclick="closeH2KpiModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="h2SaveKpi()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== H2 MILESTONE MODAL ===== -->
+<div id="h2MsModal" class="h2-modal">
+  <div class="h2-modal-box">
+    <div class="h2-modal-header">
+      <div class="h2-modal-title" id="h2MsModalTitle">Thêm Milestone</div>
+      <div class="modal-close" onclick="closeH2MsModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <input type="hidden" id="h2MsOrigId">
+    <div class="h2-form-grid">
+      <div class="form-group h2-form-full"><label class="form-label">KPI</label><select id="h2mfKpi" class="form-control"></select></div>
+      <div class="form-group h2-form-full"><label class="form-label">Tên mốc <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="h2mfName" class="form-control" placeholder="VD: 2 nghiệp vụ go-live"></div>
+      <div class="form-group"><label class="form-label">Tháng</label><select id="h2mfMonth" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Hạn (DueDate)</label><input type="date" id="h2mfDue" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Trạng thái</label><select id="h2mfStatus" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">RAG</label><select id="h2mfRag" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Phụ trách (Owner)</label><select id="h2mfOwner" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Task liên kết (TaskRef)</label><input type="text" id="h2mfTaskRef" class="form-control" placeholder="VD: SO-26-012"></div>
+    </div>
+    <div class="h2-form-actions">
+      <button class="btn btn-ghost" onclick="closeH2MsModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="h2SaveMs()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== H2 OBJECTIVE VIEW OVERLAY ===== -->
+<div id="h2ViewOverlay" onclick="if(event.target===this)closeH2ObjView()"></div>
+
 <!-- ===== MY WORK INITIATIVE POPUP ===== -->
 <div class="overlay" id="mwInitPopup" style="display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)mwCloseInitPopup()">
   <div class="modal" style="max-width:560px;width:95%;max-height:85vh;display:flex;flex-direction:column;">
@@ -1912,47 +2005,48 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260811"></script>
-<script src="assets/js/config.js?v=20260811"></script>
-<script src="assets/js/constants.js?v=20260811"></script>
-<script src="assets/js/helpers.js?v=20260811"></script>
-<script src="assets/js/storage.js?v=20260811"></script>
-<script src="assets/js/parsers.js?v=20260811"></script>
-<script src="assets/js/auth.js?v=20260811"></script>
-<script src="assets/js/api.js?v=20260811"></script>
-<script src="assets/js/ui/toast.js?v=20260811"></script>
-<script src="assets/js/ui/modal.js?v=20260811"></script>
-<script src="assets/js/ui/theme.js?v=20260811"></script>
-<script src="assets/js/ui/navigation.js?v=20260811"></script>
-<script src="assets/js/crud.js?v=20260811"></script>
-<script src="assets/js/bulk.js?v=20260811"></script>
-<script src="assets/js/views/dashboard.js?v=20260811"></script>
-<script src="assets/js/views/tasks.js?v=20260811"></script>
-<script src="assets/js/views/gantt.js?v=20260811"></script>
-<script src="assets/js/views/performance.js?v=20260811"></script>
-<script src="assets/js/views/quickview.js?v=20260811"></script>
-<script src="assets/js/report.js?v=20260811"></script>
-<script src="assets/js/kpi-data.js?v=20260811"></script>
-<script src="assets/js/kpi-parser.js?v=20260811"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260811"></script>
-<script src="assets/js/views/action-plan.js?v=20260811"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260811"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260811"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260811"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260811"></script>
-<script src="assets/js/initiatives.js?v=20260811"></script>
-<script src="assets/js/h2-core.js?v=20260811"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260811"></script>
-<script src="assets/js/views/ai-chat.js?v=20260811"></script>
-<script src="assets/js/views/user-management.js?v=20260811"></script>
-<script src="assets/js/views/executive-summary.js?v=20260811"></script>
-<script src="assets/js/views/bld-queue.js?v=20260811"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260811"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260811"></script>
-<script src="assets/js/views/my-work.js?v=20260811"></script>
-<script src="assets/js/views/dev-plan.js?v=20260811"></script>
-<script src="assets/js/views/notifications.js?v=20260811"></script>
-<script src="assets/js/app.js?v=20260811"></script>
+<script src="assets/js/i18n.js?v=20260811b"></script>
+<script src="assets/js/config.js?v=20260811b"></script>
+<script src="assets/js/constants.js?v=20260811b"></script>
+<script src="assets/js/helpers.js?v=20260811b"></script>
+<script src="assets/js/storage.js?v=20260811b"></script>
+<script src="assets/js/parsers.js?v=20260811b"></script>
+<script src="assets/js/auth.js?v=20260811b"></script>
+<script src="assets/js/api.js?v=20260811b"></script>
+<script src="assets/js/ui/toast.js?v=20260811b"></script>
+<script src="assets/js/ui/modal.js?v=20260811b"></script>
+<script src="assets/js/ui/theme.js?v=20260811b"></script>
+<script src="assets/js/ui/navigation.js?v=20260811b"></script>
+<script src="assets/js/crud.js?v=20260811b"></script>
+<script src="assets/js/bulk.js?v=20260811b"></script>
+<script src="assets/js/views/dashboard.js?v=20260811b"></script>
+<script src="assets/js/views/tasks.js?v=20260811b"></script>
+<script src="assets/js/views/gantt.js?v=20260811b"></script>
+<script src="assets/js/views/performance.js?v=20260811b"></script>
+<script src="assets/js/views/quickview.js?v=20260811b"></script>
+<script src="assets/js/report.js?v=20260811b"></script>
+<script src="assets/js/kpi-data.js?v=20260811b"></script>
+<script src="assets/js/kpi-parser.js?v=20260811b"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260811b"></script>
+<script src="assets/js/views/action-plan.js?v=20260811b"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260811b"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260811b"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260811b"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260811b"></script>
+<script src="assets/js/initiatives.js?v=20260811b"></script>
+<script src="assets/js/h2-core.js?v=20260811b"></script>
+<script src="assets/js/views/h2-tracker.js?v=20260811b"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260811b"></script>
+<script src="assets/js/views/ai-chat.js?v=20260811b"></script>
+<script src="assets/js/views/user-management.js?v=20260811b"></script>
+<script src="assets/js/views/executive-summary.js?v=20260811b"></script>
+<script src="assets/js/views/bld-queue.js?v=20260811b"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260811b"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260811b"></script>
+<script src="assets/js/views/my-work.js?v=20260811b"></script>
+<script src="assets/js/views/dev-plan.js?v=20260811b"></script>
+<script src="assets/js/views/notifications.js?v=20260811b"></script>
+<script src="assets/js/app.js?v=20260811b"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">
