@@ -1,4 +1,34 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-11 (Session 68 — Hoàn tất Track B Quản trị H2: Dashboard + Tự đánh giá)
+**Context**: S68 done. v6.39-h2-dashboard-review-20260811, `?v=20260811c`. **Local HEAD `2a84883` — CHƯA push.** verify_h2_dashboard 24/24 + verify_h2_review 20/20 + core 14/14 + tracker 32/32; full suite 29/31 (2 flaky pre-existing: my_work MW6 61/62 riêng, issue_tracker 61/61 riêng). Thuần frontend + test — không deploy GAS mới (backend reviews live từ B1).
+
+---
+
+## ✅ COMPLETED S68 — Hoàn tất Track B (Quản trị H2): Dashboard + Tự đánh giá + Report
+- [x] **Context recovery**: rà soát working tree sau phiên đóng bất thường → xác định B1–B3 đã commit (`77ce233`,`daf0421`), dashboard/review viết xong nhưng chưa test/commit/doc
+- [x] `views/h2-dashboard.js` — exec summary, member/pillar/objective, risks/deps, capacity (cờ quá tải), AI impact, mgmt actions, chart trend+RAG, **Xuất báo cáo BLĐ (B8)**
+- [x] `views/h2-review.js` — self-review H1/Q3/Q4 + 8 chiều năng lực; RBAC member-vs-lead; save qua `_gasH2Upsert('review')`
+- [x] Wiring index.html (nav/section/modal/overlay/script) + navigation.js (route+ESC) + i18n VI/EN + h2.css + h2-core hook
+- [x] `verify_h2_dashboard.mjs` **24/24** + `verify_h2_review.mjs` **20/20** + run_tests.mjs; config v6.39; cache-bust `?v=20260811c` (65 refs)
+- [x] Commit local `2a84883` (source + test + evidence h2_dashboard/review/tracker; loại ~70 PNG suite khác đã dirty từ trước)
+
+## 🔴 PRIORITY 0 — Push + smoke test S68 (chờ user xác nhận push)
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | `git push origin HEAD:main` (commit `2a84883`) | Remote HEAD = 2a84883 |
+| 2 | Hard-reload (Ctrl+Shift+R) | Badge `v6.39-h2-dashboard-review-20260811` |
+| 3 | Menu "Quản trị H2 · Dashboard" | Exec cards + chart trend/RAG + panel member/pillar/risk/dep/capacity/AI/mgmt; nút "Xuất báo cáo BLĐ" mở overlay copy-ready |
+| 4 | Menu "Quản trị H2 · Tự đánh giá" | Thêm/sửa review; **member chỉ thấy review của mình**, Teamlead thấy tất cả + chọn member; badge Năng lực TB |
+
+## 🟢 PRIORITY 2 — Việc còn treo
+- **(nợ S67)** Smoke test v6.36 ngày ISO trên production (badge → DD/MM/YYYY, modal Sửa điền đủ ngày).
+- **~70 PNG suite khác** vẫn dirty trong working tree (không do S68 — leftover phiên trước). Dọn/`git restore` nếu muốn tree sạch.
+- **(nợ S57)** điền cột Email `User_Master` cho digest.
+- **Track B tùy chọn**: seed pilot GAS (`H2SeedPilot.gs` — được nhắc trong empty-state dashboard, chưa tồn tại); docs `06_DASHBOARD_SPEC`/`07_DATA_MODEL` (chưa có).
+
+---
+
+# (S67) TODO — giữ tham khảo
 **Prepared**: 2026-08-10 (Session 67 — Revert GAS cá nhân + đồng nhất logic ngày tháng ISO)
 **Context**: S67 done. v6.36-date-unify-iso-20260810, `?v=20260810b`. HEAD `d8779d9`. `verify_date_unify` 28/28; `verify_history` 47/47 (H13 fixed); full suite 26/27 (chỉ my_work MW6 flaky pre-existing). Code pushed. Migration GAS **đã chạy commit xong** (user, build 2026-08-10d). Backend đã revert về **tài khoản cá nhân**.
 

@@ -1,3 +1,28 @@
+# SESSION HANDOVER (S68) — 2026-08-11
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `daf0421` (S-H2 B3) → **local sau**: `2a84883` (CHƯA push)
+**Version**: v6.38 → **v6.39** (`6.39-h2-dashboard-review-20260811`, `?v=20260811c`)
+
+> **Khôi phục sau phiên đóng bất thường + hoàn tất Track B (Quản trị H2).** Phiên trước bị đóng giữa lúc chạy test → kết quả & context chưa cập nhật. Rà soát toàn bộ working tree để xác định đã-làm/đang-dở TRƯỚC khi đi tiếp.
+
+## S68.0 — Rà soát trạng thái (context recovery)
+- **Đã commit an toàn (2 commit H2 trước phiên)**: `77ce233` Track B **B1+B2** (backend `H2Service.gs` + client core `h2-core.js`); `daf0421` Track B **B3** (view **Tracker** Objective→KPI→Milestone). Backend `H2Service.gs` **đã có sẵn** sheet `H2_Reviews` + route `h2-review-upsert` + ownership gate; `Code.gs` map đủ route → **backend cho phần dở đã xong từ B1**.
+- **Đang dở (uncommitted, mtime 14:06–14:09 = SAU lần test cuối 12:41)**: 2 view mới `views/h2-dashboard.js` (339 dòng) + `views/h2-review.js` (123 dòng) untracked; wiring `index.html`/`navigation.js`/`i18n.js`/`h2.css`/`h2-core.js` unstaged. **Feature đủ code, load sạch (0 JS error) nhưng CHƯA test/commit/doc.** Đúng chỗ phiên trước bỏ dở: viết test cho 2 view mới.
+- **Kết luận**: không có gì hỏng/xung đột; mọi symbol tham chiếu (`renderH2Dashboard/Review`, `H2_REVIEW_Q`, `H2_CAP_DIMS`…) đều đã định nghĩa.
+
+## S68 — Hoàn tất Track B: Dashboard điều hành + Tự đánh giá + Xuất báo cáo BLĐ · commit `2a84883` · v6.39
+- **✅ Task**: viết test → verify → commit cho 2 view cuối Track B (theo yêu cầu user: chuẩn push workflow).
+- **✅ `h2-dashboard.js`** (executive-first): exec summary 6 card (điểm KPI team / 🟢🟠🔴 / KPI hoàn thành / cần chú ý), panel theo **member / pillar / objective**, **Top Risks / Top Dependencies** (item đang mở), **Capacity** (bảng + cờ ⚠ quá tải khi P1 > max_p1), **AI Impact** (P3-AI), **Management Actions** (KPI Amber/Red + mốc quá hạn), chart **trend T8→T12** + **doughnut RAG** (Chart.js), **Xuất báo cáo BLĐ (B8)** → overlay `#h2ReportOverlay` textarea copy-ready (`h2BuildReportText` 8 mục realtime).
+- **✅ `h2-review.js`**: Tự đánh giá **H1/T7 + Q3/Q4** + **8 chiều năng lực** (1–5, badge TB). Member sở hữu review của mình (lọc theo cột `Member`); **Teamlead/Admin xem tất cả** + chọn member. Modal 8 câu hỏi + 8 cap select. Optimistic save qua `_gasH2Upsert('review')` (backend gate sẵn).
+- **✅ Wiring**: `index.html` nav 2 mục (`h2-dashboard`/`h2-review`) + 2 `<section>` + review modal + report overlay + 2 script tag; `navigation.js` routing + ESC (`_h2rEscClose`, `h2CloseReport`); `i18n.js` nav/page VI+EN; `h2.css` +44 dòng dashboard; `h2-core.js` hook re-render review trong `readH2`.
+- **✅ Tests (NEW)**: `verify_h2_dashboard.mjs` **24/24** (cards/panels/capacity-overload/charts/report/empty/RBAC-lead), `verify_h2_review.mjs` **20/20** (render/RBAC member-vs-lead/modal populate/save-append/empty) + thêm vào `run_tests.mjs`. Version `config.js` v6.39; cache-bust `?v=20260811b`→`c` (65 refs).
+- **✅ Decision**: (a) Bump version + cache-bust vì WIP đụng asset đã cache (i18n/nav/h2-core/css/index). (b) Commit **source + test + evidence h2_dashboard/h2_review/h2_tracker**, **KHÔNG** commit ~70 PNG suite khác bị đổi (đã dirty từ đầu phiên trước — noise). (c) Test dùng lại harness `verify_h2_tracker` (stub `window.readH2`, mock `dbH2`, abort `script.google.com`); dashboard mock thêm member `OverX` 4×P1 để test cờ quá tải deterministic.
+- **⛔ Blocker**: Không. **Thuần frontend + test — KHÔNG cần deploy GAS mới** (backend reviews đã live từ B1). **Commit local `2a84883` CHƯA push** — chờ user xác nhận.
+- **➡️ Next step**: (1) **Push** `2a84883` lên main (chờ xác nhận). (2) Hard-reload → badge `v6.39`; menu "Quản trị H2 · Dashboard" hiện exec cards + chart + Xuất báo cáo BLĐ; "Tự đánh giá" thêm/sửa review, member chỉ thấy của mình. (3) (nợ S67) smoke test v6.36 ngày ISO trên production. (4) ~70 PNG suite khác vẫn dirty trong working tree (không do phiên này) — dọn/khôi phục nếu muốn tree sạch.
+- **🟢 Regression risk**: 🟢 **THẤP** — thuần thêm 2 view mới + wiring additive; view cũ (tracker) không đụng. Full suite **29/31** = baseline y hệt S67 (2 fail duy nhất `my_work` MW6 + `issue_tracker` = flaky batch pre-existing; chạy riêng: my_work **61/62** chỉ MW6, issue_tracker **61/61**). H2: core 14/14, tracker 32/32, dashboard 24/24, review 20/20.
+
+---
+
 # SESSION HANDOVER (S67) — 2026-08-10
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `0c55158` (S66) → **sau**: `d8779d9`
