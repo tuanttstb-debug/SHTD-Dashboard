@@ -62,6 +62,7 @@ async function readH2() {
     persistH2();
     if (typeof renderH2Dashboard === 'function' && _h2ViewVisible('h2-dashboard')) renderH2Dashboard();
     if (typeof renderH2Tracker === 'function' && _h2ViewVisible('h2-tracker')) renderH2Tracker();
+    if (typeof renderH2Review === 'function' && _h2ViewVisible('h2-review')) renderH2Review();
   } catch (e) {
     console.warn('readH2 error:', e.message);
   }

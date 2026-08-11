@@ -8,27 +8,27 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/base.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/components.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/table.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/h2.css?v=20260811b">
-<link rel="stylesheet" href="assets/css/notifications.css?v=20260811b">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/base.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/layout.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/components.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/forms.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/table.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/auth.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/h2.css?v=20260811c">
+<link rel="stylesheet" href="assets/css/notifications.css?v=20260811c">
 
 </head>
 <body>
@@ -93,9 +93,17 @@
         <i class="fa-solid fa-seedling nav-icon"></i>
         <span class="nav-label" data-i18n="nav.dev-plan">Plan phát triển bản thân</span>
       </div>
+      <div class="nav-item" data-view="h2-dashboard">
+        <i class="fa-solid fa-gauge-high nav-icon"></i>
+        <span class="nav-label" data-i18n="nav.h2-dashboard">Quản trị H2 · Dashboard</span>
+      </div>
       <div class="nav-item" data-view="h2-tracker">
         <i class="fa-solid fa-bullseye nav-icon"></i>
         <span class="nav-label" data-i18n="nav.h2-tracker">Quản trị H2 · KPI</span>
+      </div>
+      <div class="nav-item" data-view="h2-review">
+        <i class="fa-solid fa-clipboard-check nav-icon"></i>
+        <span class="nav-label" data-i18n="nav.h2-review">Quản trị H2 · Tự đánh giá</span>
       </div>
       <div class="nav-item" data-view="dashboard">
         <i class="fa-solid fa-chart-pie nav-icon"></i>
@@ -243,7 +251,9 @@
 
     <!-- ===== DEV PLAN (Plan phát triển bản thân) ===== -->
     <section class="view-section" id="view-dev-plan" style="display:none;"></section>
+    <section class="view-section" id="view-h2-dashboard" style="display:none;"></section>
     <section class="view-section" id="view-h2-tracker" style="display:none;"></section>
+    <section class="view-section" id="view-h2-review" style="display:none;"></section>
 
     <!-- ===== DASHBOARD ===== -->
     <section class="view-section active" id="view-dashboard">
@@ -1906,6 +1916,46 @@
 <!-- ===== H2 OBJECTIVE VIEW OVERLAY ===== -->
 <div id="h2ViewOverlay" onclick="if(event.target===this)closeH2ObjView()"></div>
 
+<!-- ===== H2 REVIEW MODAL ===== -->
+<div id="h2ReviewModal" class="h2-modal">
+  <div class="h2-modal-box">
+    <div class="h2-modal-header">
+      <div class="h2-modal-title" id="h2ReviewModalTitle">Thêm review</div>
+      <div class="modal-close" onclick="closeH2ReviewModal()"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <input type="hidden" id="h2rOrigId">
+    <div class="h2-form-grid">
+      <div class="form-group"><label class="form-label">Thành viên</label><select id="h2rMember" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Loại review</label><select id="h2rType" class="form-control"></select></div>
+      <div class="form-group h2-form-full"><label class="form-label">Kỳ (Period)</label><input type="text" id="h2rPeriod" class="form-control" placeholder="H1/2026 · Q3 · Q4"></div>
+      <div class="form-group h2-form-full"><label class="form-label">1. Cam kết kỳ trước</label><textarea id="h2r_Q_commit" class="form-control" rows="2"></textarea></div>
+      <div class="form-group h2-form-full"><label class="form-label">2. Kết quả thực tế</label><textarea id="h2r_Q_actual" class="form-control" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">3. % hoàn thành</label><input type="text" id="h2r_Q_pct" class="form-control"></div>
+      <div class="form-group"><label class="form-label">4. Business impact</label><input type="text" id="h2r_Q_impact" class="form-control"></div>
+      <div class="form-group h2-form-full"><label class="form-label">5. Gap chưa đạt</label><textarea id="h2r_Q_gap" class="form-control" rows="2"></textarea></div>
+      <div class="form-group h2-form-full"><label class="form-label">6. Root cause</label><textarea id="h2r_Q_rootcause" class="form-control" rows="2"></textarea></div>
+      <div class="form-group h2-form-full"><label class="form-label">7. Lesson learned</label><textarea id="h2r_Q_lesson" class="form-control" rows="2"></textarea></div>
+      <div class="form-group h2-form-full"><label class="form-label">8. Điều chỉnh kỳ tới</label><textarea id="h2r_Q_adjust" class="form-control" rows="2"></textarea></div>
+      <div class="form-group h2-form-full"><label class="form-label" style="font-weight:800;">Năng lực quản trị (1–5)</label></div>
+      <div class="form-group"><label class="form-label">Goal Setting</label><select id="h2r_Cap_Goal" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Planning</label><select id="h2r_Cap_Plan" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Prioritization</label><select id="h2r_Cap_Prior" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Ownership</label><select id="h2r_Cap_Own" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Risk Mgmt</label><select id="h2r_Cap_Risk" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Dependency Mgmt</label><select id="h2r_Cap_Dep" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Tracking</label><select id="h2r_Cap_Track" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Execution</label><select id="h2r_Cap_Exec" class="form-control"></select></div>
+    </div>
+    <div class="h2-form-actions">
+      <button class="btn btn-ghost" onclick="closeH2ReviewModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="h2SaveReview()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== H2 REPORT OVERLAY (B8) ===== -->
+<div id="h2ReportOverlay" onclick="if(event.target===this)h2CloseReport()"></div>
+
 <!-- ===== MY WORK INITIATIVE POPUP ===== -->
 <div class="overlay" id="mwInitPopup" style="display:none;align-items:center;justify-content:center;" onclick="if(event.target===this)mwCloseInitPopup()">
   <div class="modal" style="max-width:560px;width:95%;max-height:85vh;display:flex;flex-direction:column;">
@@ -2005,48 +2055,50 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20260811b"></script>
-<script src="assets/js/config.js?v=20260811b"></script>
-<script src="assets/js/constants.js?v=20260811b"></script>
-<script src="assets/js/helpers.js?v=20260811b"></script>
-<script src="assets/js/storage.js?v=20260811b"></script>
-<script src="assets/js/parsers.js?v=20260811b"></script>
-<script src="assets/js/auth.js?v=20260811b"></script>
-<script src="assets/js/api.js?v=20260811b"></script>
-<script src="assets/js/ui/toast.js?v=20260811b"></script>
-<script src="assets/js/ui/modal.js?v=20260811b"></script>
-<script src="assets/js/ui/theme.js?v=20260811b"></script>
-<script src="assets/js/ui/navigation.js?v=20260811b"></script>
-<script src="assets/js/crud.js?v=20260811b"></script>
-<script src="assets/js/bulk.js?v=20260811b"></script>
-<script src="assets/js/views/dashboard.js?v=20260811b"></script>
-<script src="assets/js/views/tasks.js?v=20260811b"></script>
-<script src="assets/js/views/gantt.js?v=20260811b"></script>
-<script src="assets/js/views/performance.js?v=20260811b"></script>
-<script src="assets/js/views/quickview.js?v=20260811b"></script>
-<script src="assets/js/report.js?v=20260811b"></script>
-<script src="assets/js/kpi-data.js?v=20260811b"></script>
-<script src="assets/js/kpi-parser.js?v=20260811b"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260811b"></script>
-<script src="assets/js/views/action-plan.js?v=20260811b"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260811b"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260811b"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260811b"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260811b"></script>
-<script src="assets/js/initiatives.js?v=20260811b"></script>
-<script src="assets/js/h2-core.js?v=20260811b"></script>
-<script src="assets/js/views/h2-tracker.js?v=20260811b"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260811b"></script>
-<script src="assets/js/views/ai-chat.js?v=20260811b"></script>
-<script src="assets/js/views/user-management.js?v=20260811b"></script>
-<script src="assets/js/views/executive-summary.js?v=20260811b"></script>
-<script src="assets/js/views/bld-queue.js?v=20260811b"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260811b"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260811b"></script>
-<script src="assets/js/views/my-work.js?v=20260811b"></script>
-<script src="assets/js/views/dev-plan.js?v=20260811b"></script>
-<script src="assets/js/views/notifications.js?v=20260811b"></script>
-<script src="assets/js/app.js?v=20260811b"></script>
+<script src="assets/js/i18n.js?v=20260811c"></script>
+<script src="assets/js/config.js?v=20260811c"></script>
+<script src="assets/js/constants.js?v=20260811c"></script>
+<script src="assets/js/helpers.js?v=20260811c"></script>
+<script src="assets/js/storage.js?v=20260811c"></script>
+<script src="assets/js/parsers.js?v=20260811c"></script>
+<script src="assets/js/auth.js?v=20260811c"></script>
+<script src="assets/js/api.js?v=20260811c"></script>
+<script src="assets/js/ui/toast.js?v=20260811c"></script>
+<script src="assets/js/ui/modal.js?v=20260811c"></script>
+<script src="assets/js/ui/theme.js?v=20260811c"></script>
+<script src="assets/js/ui/navigation.js?v=20260811c"></script>
+<script src="assets/js/crud.js?v=20260811c"></script>
+<script src="assets/js/bulk.js?v=20260811c"></script>
+<script src="assets/js/views/dashboard.js?v=20260811c"></script>
+<script src="assets/js/views/tasks.js?v=20260811c"></script>
+<script src="assets/js/views/gantt.js?v=20260811c"></script>
+<script src="assets/js/views/performance.js?v=20260811c"></script>
+<script src="assets/js/views/quickview.js?v=20260811c"></script>
+<script src="assets/js/report.js?v=20260811c"></script>
+<script src="assets/js/kpi-data.js?v=20260811c"></script>
+<script src="assets/js/kpi-parser.js?v=20260811c"></script>
+<script src="assets/js/views/kpi-overview.js?v=20260811c"></script>
+<script src="assets/js/views/action-plan.js?v=20260811c"></script>
+<script src="assets/js/views/kpi-progress.js?v=20260811c"></script>
+<script src="assets/js/views/owner-analysis.js?v=20260811c"></script>
+<script src="assets/js/views/branch-analysis.js?v=20260811c"></script>
+<script src="assets/js/views/rm-analysis.js?v=20260811c"></script>
+<script src="assets/js/initiatives.js?v=20260811c"></script>
+<script src="assets/js/h2-core.js?v=20260811c"></script>
+<script src="assets/js/views/h2-tracker.js?v=20260811c"></script>
+<script src="assets/js/views/h2-dashboard.js?v=20260811c"></script>
+<script src="assets/js/views/h2-review.js?v=20260811c"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20260811c"></script>
+<script src="assets/js/views/ai-chat.js?v=20260811c"></script>
+<script src="assets/js/views/user-management.js?v=20260811c"></script>
+<script src="assets/js/views/executive-summary.js?v=20260811c"></script>
+<script src="assets/js/views/bld-queue.js?v=20260811c"></script>
+<script src="assets/js/views/case-pipeline.js?v=20260811c"></script>
+<script src="assets/js/views/issue-tracker.js?v=20260811c"></script>
+<script src="assets/js/views/my-work.js?v=20260811c"></script>
+<script src="assets/js/views/dev-plan.js?v=20260811c"></script>
+<script src="assets/js/views/notifications.js?v=20260811c"></script>
+<script src="assets/js/app.js?v=20260811c"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

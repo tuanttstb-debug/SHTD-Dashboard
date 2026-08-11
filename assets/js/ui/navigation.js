@@ -38,7 +38,7 @@ function setupListeners() {
     const inInput = ['INPUT','TEXTAREA','SELECT'].includes(tag);
 
     if (e.key === 'Escape') {
-      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCpSummaryPopup(); closeInitSummaryPopup(); closeCaseViewPopup(); closeTaskViewPopup(); closeInitViewPopup(); _initCloseModal(); closeIssueModal(); closeIssueViewPopup(); mwCloseInitPopup(); closeDevModal(); closeDevViewPopup(); closeNotifPanel(); _h2EscClose();
+      closeTaskModal(); closeDetailModal(); resolveConfirm(false); closeKbModal(); bldCloseMiniModal(); closeCaseModal(); closeCpSummaryPopup(); closeInitSummaryPopup(); closeCaseViewPopup(); closeTaskViewPopup(); closeInitViewPopup(); _initCloseModal(); closeIssueModal(); closeIssueViewPopup(); mwCloseInitPopup(); closeDevModal(); closeDevViewPopup(); closeNotifPanel(); _h2EscClose(); _h2rEscClose(); if(typeof h2CloseReport==='function')h2CloseReport();
     }
     if (e.ctrlKey && e.key === 'n' && !inInput) { e.preventDefault(); openTaskModal(); }
     if (e.ctrlKey && e.key === 'd') { e.preventDefault(); toggleDark(); }
@@ -92,7 +92,9 @@ function navigateTo(view) {
   if (view === 'initiative-tracker')   renderInitiativeTracker();
   if (view === 'issue-tracker')        renderIssueTracker();
   if (view === 'dev-plan')             renderDevPlan();
+  if (view === 'h2-dashboard')         renderH2Dashboard();
   if (view === 'h2-tracker')           renderH2Tracker();
+  if (view === 'h2-review')            renderH2Review();
   if (view === 'ai-chat')              renderAiChat();
   if (view === 'user-management')      renderUserManagement();
   if (view === 'my-work')              renderMyWork();
