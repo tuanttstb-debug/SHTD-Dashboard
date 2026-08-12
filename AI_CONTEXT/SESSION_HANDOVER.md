@@ -1,3 +1,23 @@
+# SESSION HANDOVER (S69) — 2026-08-12
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `bee61f8` (S68) → **sau (ĐÃ push)**: `72cbe6a`
+**Version**: v6.39 → **v6.40** (`6.40-login-hang-timeout-fix-20260812`, `?v=20260812`)
+
+> **DEBUG — khắc phục treo/khóa đăng nhập.** User báo: đăng nhập bị treo (xoay lâu → màn gần như trắng, không nút Sync, không role/user thật), role đôi khi hiện "Quản trị viên" nhưng không load data; Ctrl+Shift+R vẫn ra trạng thái cũ, **buộc phải clear lịch sử mới đăng nhập lại được**. Phỏng vấn: thỉnh thoảng, **cả 2 mạng** (nội bộ + ngoài).
+
+## S69 — Fix login hang / lock-out khi mạng chậm/bị chặn · commit `72cbe6a` · v6.40
+- **✅ Root cause (xác nhận qua code, KHÔNG phải lỗi role/auth như user đoán)**: (1) **MỌI request GAS không có timeout** — `gasPost`/`doLogin` dùng `fetch` trần → 1 kết nối stall tới `script.google.com` (ANBM/mạng nội bộ có thể giữ kết nối, hoặc GAS cold-start) làm **spin vô hạn**. (2) `autoConnectDB` bật **overlay tải chặn toàn màn** rồi `await` read; fetch treo → `catch{hideLoading}` **không bao giờ chạy** → treo; `btnSync` chỉ hiện khi read **thành công** → thất bại = màn gần trắng, không nút Sync. (3) `startApp` bắn ~7 read nền song song (cases/issues/dev/init/users/notif/h2); **bất kỳ** read trả `AUTH_REQUIRED` → `gasPost` gọi `doLogout()` **xóa phiên** → mất role/user. (4) Reload: phiên còn hạn tự phát lại đúng startup mong manh → lại treo; chỉ **clear site data** (xóa `shtd_auth_v1`) mới thoát. Placeholder `.user-pill` hardcode "Quản trị viên" trong `index.html` là thứ user thấy khi `applyUserToUI` chưa chạy (không phải role thật).
+- **✅ Fix (thuần frontend, theo lựa chọn user: "giữ đăng nhập + data cache + nút Thử lại")**:
+  - `assets/js/auth.js` — NEW `_fetchWithTimeout(url,opts,ms)` (AbortController, `GAS_TIMEOUT_MS=30000`) dùng cho `gasPost` + `doLogin` → hết spin vô hạn, timeout báo lỗi rõ. NEW cờ `_authStartupGrace`: khi bật, `AUTH_REQUIRED` **KHÔNG** `doLogout` (một blip lúc khởi động không được xóa phiên vừa login); ngoài khởi động vẫn logout khi hết hạn thật. Lỗi mạng bọc message tiếng Việt thân thiện.
+  - `assets/js/app.js` — `window.onload` bọc **try/catch** (hết màn trắng nửa vời nếu startup throw). `startApp` bật `_authStartupGrace=true` + `setTimeout` gỡ sau `GAS_TIMEOUT_MS+5s`. `autoConnectDB` catch → NEW `_showStartupRetry(msg)`: giữ phiên + data cache, **hiện `btnSync` = Thử lại**, `dbDot`/`dbStatus`/`sbDb` → "Ngoại tuyến (cache)", toast 8s. `syncDB` thành công → khôi phục trạng thái "đã kết nối" (đặc biệt sau khi retry).
+  - `assets/js/config.js` v6.40; `index.html` cache-bust `?v=20260811c`→`?v=20260812` (65 refs).
+- **✅ Decision**: (a) Timeout **30s** (không 20–25s) để tránh false-timeout khi GAS cold-start hợp lệ; đằng nào retry cũng cứu được. (b) `_authStartupGrace` là **cờ theo cửa sổ thời gian** (không sửa hợp đồng `gasPost` cho mọi caller) → interactive save/change-pw vẫn auto-logout khi hết hạn thật; chỉ startup được miễn. (c) On-fail = **giữ đăng nhập + cache + Sync** (không quay về login, không auto-retry ngầm) — user chọn phương án an toàn nhất, không bao giờ bị khóa. (d) **KHÔNG** đụng placeholder `.user-pill` "Quản trị viên" đợt này (đề xuất blank ở next step — tránh đụng test markup).
+- **⛔ Blocker**: Không. **Thuần frontend — KHÔNG cần deploy GAS mới.** ✅ **ĐÃ push** `72cbe6a`.
+- **➡️ Next step**: (1) Smoke PRD: hard-reload → badge `v6.40`; DevTools **Offline** khi login → trong 30s phải giữ đăng nhập + hiện cache + nút **Sync** (không treo/trắng); bật mạng → Sync → data về; reload khi lỗi → **không bị khóa**, không cần clear history. (2) Nếu vẫn lạ → gửi ảnh Console (đã có log `[SHTD] Khởi động thất bại:` / `Auto-connect thất bại:`). (3) (tùy chọn) blank placeholder `.user-pill` để trang chưa tải không trông như đã login admin.
+- **🟢 Regression risk**: 🟢 **THẤP** — thêm timeout + try/catch + nhánh fail-graceful; happy path không đổi (fetch OK → như cũ). Full suite **30/31** — fail duy nhất `verify_i18n_p7` = **flaky batch** (`ReferenceError: db` do timing; chạy riêng **35/35 PASS**), KHÔNG do thay đổi. Mọi suite load-page khác (my_work/issue_tracker/H2…) xanh. ⚠️ `gasPost` giờ có timeout 30s → nếu GAS thật chậm >30s (hiếm) request sẽ abort thay vì chờ — có Sync retry bù lại.
+
+---
+
 # SESSION HANDOVER (S68) — 2026-08-11
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `daf0421` (S-H2 B3) → **sau (ĐÃ push)**: `bee61f8` (3 commit: `2a84883` feature · `a1cdc63` handover · `bee61f8` user guide)

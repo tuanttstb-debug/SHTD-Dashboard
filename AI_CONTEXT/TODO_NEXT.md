@@ -1,4 +1,33 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-12 (Session 69 — Fix login hang/lock-out khi mạng chậm/bị chặn)
+**Context**: S69 done + **pushed** `72cbe6a`. v6.40-login-hang-timeout-fix-20260812, `?v=20260812`. Full suite **30/31** (fail duy nhất `verify_i18n_p7` = flaky batch, chạy riêng 35/35 PASS). Thuần frontend — **KHÔNG deploy GAS mới**.
+
+---
+
+## ✅ COMPLETED S69 — Fix login hang / lock-out khi mạng chậm/bị chặn
+- [x] **Root cause** (xác nhận qua code): không timeout ở mọi request GAS + overlay tải chặn toàn màn + startup tự phát lại khi reload → 1 blip mạng tới `script.google.com` treo/khóa; chỉ clear site data mới thoát. AUTH_REQUIRED từ read nền startup xóa phiên → mất role/user.
+- [x] `auth.js` — `_fetchWithTimeout` (AbortController `GAS_TIMEOUT_MS=30000`) cho `gasPost`+`doLogin`; cờ `_authStartupGrace` (blip AUTH_REQUIRED lúc khởi động không logout)
+- [x] `app.js` — `window.onload` try/catch; `startApp` bật/tắt grace; `autoConnectDB` lỗi → `_showStartupRetry` (giữ phiên+cache+nút Sync=Thử lại, trạng thái ngoại tuyến); `syncDB` OK khôi phục "đã kết nối"
+- [x] `config.js` v6.40; `index.html` cache-bust `?v=20260812` (65 refs); commit+push `72cbe6a`
+
+## 🔴 PRIORITY 0 — Smoke test S69 (v6.40) trên production
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | Hard-reload (Ctrl+Shift+R) | Badge `v6.40-login-hang-timeout-fix-20260812` |
+| 2 | Đăng nhập bình thường | Data tải OK như cũ |
+| 3 | DevTools (F12) → Network → **Offline** → reload/đăng nhập | Trong ~30s: **giữ đăng nhập** + hiện **data cache** + nút **Sync** + trạng thái "Ngoại tuyến (cache)"; KHÔNG treo, KHÔNG màn trắng |
+| 4 | Bật lại mạng → bấm **Sync** | Data tải lại; trạng thái về "Google Sheets" |
+| 5 | Reload lần nữa khi đang lỗi | **KHÔNG bị khóa**; không cần clear history |
+| 6 | Nếu vẫn lạ | Gửi ảnh Console F12 (log `[SHTD] Khởi động thất bại:` / `Auto-connect thất bại:`) |
+
+## 🟢 PRIORITY 2 — Tùy chọn nối tiếp S69
+- **Blank placeholder `.user-pill`** ("Quản trị viên" hardcode trong `index.html`) → trang chưa `applyUserToUI` không trông như đã login admin. Chưa làm (tránh đụng test markup). Xem TD-AUTH-01.
+- **(nợ S68)** Smoke H2 Dashboard/Review; `H2SeedPilot.gs` chưa tồn tại; docs 06/07.
+- **~70 PNG suite khác** vẫn dirty (leftover) — `git restore test-results/` nếu muốn tree sạch.
+
+---
+
+# (S68) TODO — giữ tham khảo
 **Prepared**: 2026-08-11 (Session 68 — Hoàn tất Track B Quản trị H2: Dashboard + Tự đánh giá)
 **Context**: S68 done. v6.39-h2-dashboard-review-20260811, `?v=20260811c`. **Local HEAD `2a84883` — CHƯA push.** verify_h2_dashboard 24/24 + verify_h2_review 20/20 + core 14/14 + tracker 32/32; full suite 29/31 (2 flaky pre-existing: my_work MW6 61/62 riêng, issue_tracker 61/61 riêng). Thuần frontend + test — không deploy GAS mới (backend reviews live từ B1).
 

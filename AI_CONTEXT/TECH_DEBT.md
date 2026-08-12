@@ -8,6 +8,22 @@
 
 ---
 
+## 🆕 DELTA — Session 69 (2026-08-12) — Fix login hang/lock-out khi mạng chậm/bị chặn
+
+### TD-NET-01: Timeout GAS cứng 30s ở tầng client, KHÔNG có auto-retry ngầm 🟢 MEDIUM
+S69 thêm `_fetchWithTimeout` (AbortController `GAS_TIMEOUT_MS=30000`) cho **`gasPost` + `doLogin`**. Lợi: hết spin vô hạn. **Đánh đổi**: nếu GAS thật chậm >30s (cold-start nặng / Sheet lớn) request sẽ **abort** thay vì chờ → user phải bấm **Sync** (retry thủ công). Chưa có exponential-backoff auto-retry ở tầng chung (AI-chat có retry riêng từ S60, không đụng). Nếu PRD thấy 30s vẫn hay timeout oan → nâng hằng số hoặc thêm 1 lần retry ngầm trước khi hiện banner. Giá trị nằm ở `auth.js` (1 chỗ).
+
+### TD-NET-02: `_authStartupGrace` là cờ theo cửa sổ thời gian (không phải theo-request) 🟢 MEDIUM
+Trong `startApp`, cờ bật rồi `setTimeout` gỡ sau `GAS_TIMEOUT_MS+5s` (~35s). Mục đích: ~7 read nền startup có blip `AUTH_REQUIRED` **không** xóa phiên vừa login. **Rủi ro biên**: nếu phiên **thật sự hết hạn** đúng trong 35s đầu sau khi mở app, `AUTH_REQUIRED` bị nuốt (không logout) tới khi hết grace hoặc lần gọi interactive kế tiếp — chấp nhận được (token 24h, hiếm hết hạn ngay lúc mở). Nếu cần chặt hơn: đổi sang cờ **per-request** (đánh dấu chỉ các read startup) thay vì theo thời gian.
+
+### TD-AUTH-01: Placeholder `.user-pill` hardcode "Quản trị viên" gây hiểu nhầm ⚪ LOW
+`index.html` (~dòng 236) mặc định hiện avatar "AD" + "Quản trị viên" + "TT SP&GPTD" **trước khi** `applyUserToUI` chạy. Khi startup lỗi/chưa xác thực, user thấy **giống đã login admin** dù chưa (chính là "role hiển thị quản trị viên" trong bug report S69). Không vỡ chức năng. → Blank/ẩn placeholder tới khi `applyUserToUI` set user thật. S69 **cố ý chưa sửa** (tránh đụng markup mà test đang assert). Xem PRIORITY 2 (TODO).
+
+### TD-TEST-05: Không có suite tự động cho auth/startup-resilience ⚪ LOW
+Fix S69 (timeout/grace/fail-graceful) **không có test tự động** — `verify_*` mock/abort network chỉ kiểm render từ cache, không mô phỏng "fetch treo rồi timeout" hay "AUTH_REQUIRED nền lúc startup". `debug_login.mjs` chạy với GAS thật (không CI). Verify bằng smoke tay (DevTools Offline). → Cân nhắc suite Playwright chặn route với `delay`/`abort` để assert: timeout→`_showStartupRetry`, grace giữ phiên, Sync khôi phục "connected".
+
+---
+
 ## 🆕 DELTA — Session 68 (2026-08-11) — Hoàn tất Track B Quản trị H2 (Dashboard + Tự đánh giá) + hướng dẫn
 
 ### TD-H2-01: Test H2 view = smoke với mock, KHÔNG chạy GAS thật 🟢 MEDIUM
