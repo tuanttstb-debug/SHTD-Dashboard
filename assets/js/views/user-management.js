@@ -95,7 +95,7 @@ async function renderUserManagement() {
 
 async function _umLoad() {
   try {
-    const res = await gasPost({ action: 'user-list' });
+    const res = await gasPost({ action: 'user-list' }, GAS_READ_TIMEOUT_MS);
     if (res.status !== 'ok') throw new Error(res.error || t('um.err.load'));
     _umHeaders = res.data.header;
     _umUsers   = res.data.rows.map(function(row) {

@@ -48,7 +48,7 @@ function _h2Parse(grid) {
 async function readH2() {
   if (!GS_WEBAPP_URL || typeof getAuthSession === 'function' && !getAuthSession()) return;
   try {
-    const json = await gasPost({ action: 'h2-read-all' });
+    const json = await gasPost({ action: 'h2-read-all' }, GAS_READ_TIMEOUT_MS);
     if (json.status !== 'ok') return;
     const d = json.data || {};
     dbH2.config     = _h2Parse(d.config);

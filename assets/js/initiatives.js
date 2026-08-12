@@ -134,7 +134,7 @@ async function readInitiatives() {
   if (!GS_WEBAPP_URL) return;
   if (!getAuthSession()) return;
   try {
-    const json = await gasPost({ action: 'initiative-read' });
+    const json = await gasPost({ action: 'initiative-read' }, GAS_READ_TIMEOUT_MS);
     if (json.status !== 'ok') throw new Error(json.error || 'initiative-read lỗi');
     _parseInitiativeArray(json.values);
     persist();

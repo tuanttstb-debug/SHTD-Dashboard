@@ -93,7 +93,7 @@ function _parseCaseArray(values) {
 async function readCases() {
   if (!GS_WEBAPP_URL) return false;
   try {
-    const json = await gasPost({ action: 'case-pipeline-read' });
+    const json = await gasPost({ action: 'case-pipeline-read' }, GAS_READ_TIMEOUT_MS);
     if (json.status !== 'ok') throw new Error(json.error || 'unknown');
     _parseCaseArray(json.values);
     persistCases();
@@ -195,7 +195,7 @@ function taskToRow(t) {
 
 async function readFromHandle() {
   if (!GS_WEBAPP_URL) throw new Error('Chưa cấu hình GS_WEBAPP_URL.');
-  const json = await gasPost({ action: 'read' });
+  const json = await gasPost({ action: 'read' }, GAS_READ_TIMEOUT_MS);
   if (json.status !== 'ok') throw new Error('Lỗi đọc: ' + (json.error || 'unknown'));
   _parseArrayIntoDb(json.values);
   if (json.serverTs) db._serverTs = json.serverTs;
@@ -249,7 +249,7 @@ async function syncAction(action) {
     if (GS_WEBAPP_URL) {
       try {
         showLoading('Đang đọc dữ liệu mới nhất từ Sheet…');
-        const json = await gasPost({ action: 'read' });
+        const json = await gasPost({ action: 'read' }, GAS_READ_TIMEOUT_MS);
         if (json.status === 'ok' && json.values) {
           const tempDb = { tasks: [], initiatives: [] };
           const savedDb = db;
@@ -445,7 +445,7 @@ let _appUsers = [];
 async function loadAppUsers() {
   if (!GS_WEBAPP_URL || !getAuthSession()) return;
   try {
-    const res = await gasPost({ action: 'user-list' });
+    const res = await gasPost({ action: 'user-list' }, GAS_READ_TIMEOUT_MS);
     if (res.status !== 'ok' || !res.data) return;
     const { header, rows } = res.data;
     _appUsers = rows
@@ -531,7 +531,7 @@ function _populateUserSelect(selectId, team, currentVal) {
 async function _gasAuditRead(entityId) {
   if (!GS_WEBAPP_URL) return [];
   try {
-    const res = await gasPost({ action: 'audit-read', entityId });
+    const res = await gasPost({ action: 'audit-read', entityId }, GAS_READ_TIMEOUT_MS);
     if (!res || res.status !== 'ok') return [];
     return Array.isArray(res.rows) ? res.rows : [];
   } catch(e) {
@@ -673,7 +673,7 @@ async function _gasIssueDelete(issueId, issueName) {
 async function readIssues() {
   if (!GS_WEBAPP_URL) return;
   try {
-    const json = await gasPost({ action: 'issue-read' });
+    const json = await gasPost({ action: 'issue-read' }, GAS_READ_TIMEOUT_MS);
     if (json.status !== 'ok') return;
     const rows = json.values || [];
     if (rows.length <= 1) { dbIssues = []; persistIssues(); return; }
@@ -765,7 +765,7 @@ async function _gasDevDelete(devId, devName) {
 async function readDev() {
   if (!GS_WEBAPP_URL) return;
   try {
-    const json = await gasPost({ action: 'dev-read' });
+    const json = await gasPost({ action: 'dev-read' }, GAS_READ_TIMEOUT_MS);
     if (json.status !== 'ok') return;
     const rows = json.values || [];
     if (rows.length <= 1) { dbDev = []; persistDev(); return; }
@@ -796,7 +796,7 @@ function loadDevFromCache() {
 async function readNotifications() {
   if (!GS_WEBAPP_URL || !getAuthSession()) return;
   try {
-    const json = await gasPost({ action: 'notif-read' });
+    const json = await gasPost({ action: 'notif-read' }, GAS_READ_TIMEOUT_MS);
     if (json.status !== 'ok') return;
     dbNotifs = Array.isArray(json.notifs) ? json.notifs : [];
     persistNotifs();

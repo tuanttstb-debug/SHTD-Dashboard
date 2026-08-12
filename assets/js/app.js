@@ -24,8 +24,10 @@ window.onload = async () => {
 async function startApp() {
   // Grace window: trong lúc khởi động, 1 read chớp nhoáng lỗi AUTH_REQUIRED KHÔNG
   // được xóa phiên vừa đăng nhập. Gỡ sau khi các read nền có đủ thời gian hoàn tất.
+  // Grace phải phủ HẾT ngân sách read (90s) — các read nền startup chậm trên mạng nội bộ
+  // có thể trả AUTH_REQUIRED muộn; đóng grace ở 35s sẽ xóa oan phiên vừa đăng nhập.
   _authStartupGrace = true;
-  setTimeout(() => { _authStartupGrace = false; }, GAS_TIMEOUT_MS + 5000);
+  setTimeout(() => { _authStartupGrace = false; }, GAS_READ_TIMEOUT_MS + 5000);
 
   // Reset view scopes so each login re-initializes based on role
   _taskScope = null;
@@ -66,7 +68,7 @@ async function startApp() {
 }
 
 async function autoConnectDB() {
-  showLoading('Đang tải dữ liệu từ Google Sheets…');
+  showLoading('Đang tải dữ liệu từ Google Sheets… (mạng nội bộ có thể chậm, vui lòng chờ)');
   try {
     await readFromHandle();
     hideLoading();
@@ -202,7 +204,7 @@ async function connectDB() {
 }
 
 async function syncDB() {
-  showLoading('Đang đồng bộ dữ liệu từ Sheets…');
+  showLoading('Đang đồng bộ dữ liệu từ Sheets… (mạng nội bộ có thể chậm, vui lòng chờ)');
   try {
     await Promise.all([
       readFromHandle(),

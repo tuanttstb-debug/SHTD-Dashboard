@@ -1,3 +1,24 @@
+# SESSION HANDOVER (S71) — 2026-08-12
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `278a68b` (S70) → **sau (ĐÃ push)**: S71
+**Version**: v6.41.2 → **v6.42** (`6.42-internal-net-read-timeout-20260812`, `?v=20260812e`)
+
+> **DEBUG — regression từ S69.** User báo: **timeout khi load dữ liệu trên mạng nội bộ** (phát sinh ngay sau khi sửa treo trang sáng nay = S69). Đăng nhập THÀNH CÔNG (Script auth thông) nhưng **load dữ liệu không được**. Chỉ mạng nội bộ; mạng ngoài performance vẫn đảm bảo.
+
+## S71 — Fix timeout tải dữ liệu mạng nội bộ · v6.42
+- **✅ Root cause (xác nhận qua code)**: S69 thêm `_fetchWithTimeout` với **`GAS_TIMEOUT_MS=30000` áp cho MỌI request** `gasPost`/`doLogin`. `doLogin` (`auth.js`) là request **nhỏ** (chỉ token+user) → kịp <30s ngay cả khi mạng nội bộ bị bóp → **login sống**. Nhưng `readFromHandle`→`gasPost({action:'read'})` (`api.js`) tải **toàn bộ Task_Master** (hàng trăm dòng × 24 cột) — payload lớn; mạng nội bộ ANBM bóp băng thông `script.google.com` → **>30s → AbortController abort → "Máy chủ phản hồi quá lâu"** → `autoConnectDB` catch → `_showStartupRetry`. Mạng ngoài đủ băng thông → read <30s → OK. Trước S69 không timeout → read chậm nhưng vẫn xong (hoặc treo vô hạn = bug S69 sửa); S69 biến "treo" thành "abort 30s" nhưng cắt oan read hợp lệ trên mạng nội bộ.
+- **✅ Fix (thuần FE, chốt qua phỏng vấn 2 câu → read 90s / tương tác 30s / giữ overlay + phụ đề)**:
+  - `auth.js` — NEW `GAS_READ_TIMEOUT_MS=90000`; `gasPost(body, timeoutMs)` nhận timeout tùy chọn (mặc định `GAS_TIMEOUT_MS=30000` cho tương tác). Bulk read truyền 90s → chậm hợp lệ trên mạng nội bộ không bị cắt oan; quá 90s = kết nối chết thật → nút Sync/cache đỡ (thiết kế S69).
+  - Read path truyền `GAS_READ_TIMEOUT_MS`: `api.js` (`read`, `case-pipeline-read`, syncAction-read, `user-list`/loadAppUsers, `issue-read`, `dev-read`, `notif-read`, `audit-read`), `initiatives.js` (`initiative-read`), `h2-core.js` (`h2-read-all`), `kpi-parser.js` (`kpi-read`), `views/user-management.js` (`user-list`). **Writes/upsert/delete GIỮ 30s** (fail nhanh, theo hợp đồng đã chốt với user).
+  - `app.js` — grace-window auth `startApp` `GAS_TIMEOUT_MS+5s`→`GAS_READ_TIMEOUT_MS+5s` (35s→95s): read nền startup chậm trả `AUTH_REQUIRED` muộn không xóa oan phiên vừa login. `autoConnectDB`/`syncDB` showLoading thêm phụ đề "(mạng nội bộ có thể chậm, vui lòng chờ)".
+  - `config.js` v6.42; `index.html` cache-bust `?v=20260812d`→`e` (65 refs).
+- **✅ Decision**: (a) read **90s** (không 60/120) — cân bằng: đủ rộng cho read lớn mạng nội bộ, vẫn bounded để không treo lâu. (b) tương tác (login/đổi mật khẩu/**ghi**) **giữ 30s** → fail nhanh, responsive. (c) UX chờ = **giữ overlay chặn + phụ đề trấn an** (user chọn, không đổi luồng startup sang render-cache-nền). (d) grace-window phải phủ HẾT ngân sách read (95s) tránh logout oan.
+- **⛔ Blocker**: Không. **Thuần frontend — KHÔNG cần deploy GAS mới** (giống S69).
+- **➡️ Next step**: (1) Smoke **trên mạng nội bộ**: hard-reload → badge `v6.42`; login → data tải xong (hết "timeout"). (2) Nếu vẫn timeout → F12 Network → request `exec` (action `read`) mất bao lâu/có xong không → chỉnh số hoặc nghi ANBM chặn hẳn domain. (3) (tùy chọn) cho `ai-chat` ngân sách riêng (LLM dài — TD-NET-01).
+- **🟢 Regression risk**: 🟢 **THẤP** — chỉ nới trần abort cho read (happy path <30s không đổi hành vi) + thêm 1 param tùy chọn backward-compat (caller cũ không truyền → 30s như cũ). Full suite **31/32** = baseline S70 (fail duy nhất `verify_bld_queue` = 404 resource flaky, **đã chứng minh pre-existing qua `git stash`** — không do thay đổi). 6 file JS pass `node --check`. ⚠️ Nếu mạng nội bộ read >90s (hoặc ANBM chặn hẳn `script.google.com`) vẫn abort → cache+Sync đỡ; `ai-chat` vẫn 30s (ngoài phạm vi).
+
+---
+
 # SESSION HANDOVER (S70) — 2026-08-12
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `fd3c78a` (S69) → **sau (ĐÃ push)**: `278a68b` (4 commit: `ed1c5bf` seed · `7aaf01a` task-link · `84c46d9` scope · `278a68b` PIC-match)

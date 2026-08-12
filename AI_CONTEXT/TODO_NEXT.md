@@ -1,6 +1,26 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-12 (Session 70 — Seed KPI pilot H2 + Task↔Milestone linking picker)
-**Context**: S70 done + **pushed** `278a68b` (4 commit: `ed1c5bf` seed · `7aaf01a` task-link · `84c46d9` scope · `278a68b` PIC-match). v6.41.2, `?v=20260812d`. `verify_h2_tasklink` **28/28**; full suite **31/32** (fail duy nhất `verify_bld_queue` = flaky batch, chạy riêng 20/20). **GAS ĐÃ redeploy (user, link không đổi)** cho action task-link.
+**Prepared**: 2026-08-12 (Session 71 — Fix timeout load dữ liệu mạng nội bộ (regression S69))
+**Context**: S71 done. v6.42-internal-net-read-timeout-20260812, `?v=20260812e` (65 refs). Full suite **31/32** (fail duy nhất `verify_bld_queue` = 404 flaky pre-existing, đã chứng minh qua `git stash`). **Thuần frontend — KHÔNG deploy GAS mới.**
+
+---
+
+## ✅ COMPLETED S71 — Fix timeout tải dữ liệu trên mạng nội bộ (regression từ S69)
+- [x] **Gốc**: S69 áp timeout **phẳng 30s** cho MỌI request (`gasPost`). Login (payload nhỏ) sống; nhưng **read** dữ liệu (toàn bộ sheet, payload lớn) trên mạng nội bộ bị ANBM bóp băng thông cần >30s → AbortController cắt oan → "timeout". Mạng ngoài đủ băng thông nên OK.
+- [x] **Fix (thuần FE, chốt qua phỏng vấn user)**: tách timeout theo loại request. `auth.js` NEW `GAS_READ_TIMEOUT_MS=90000` + `gasPost(body, timeoutMs)` (mặc định 30s cho tương tác). Mọi **bulk read** truyền 90s: `read`/`case-pipeline-read`/syncAction-read/`user-list`/`issue-read`/`dev-read`/`notif-read`/`audit-read` (api.js), `initiative-read` (initiatives.js), `h2-read-all` (h2-core.js), `kpi-read` (kpi-parser.js), UM `user-list` (user-management.js). **Writes/upsert/delete GIỮ 30s** (fail nhanh).
+- [x] `app.js` — grace-window auth `35s→95s` (`GAS_READ_TIMEOUT_MS+5s`) để read chậm trả `AUTH_REQUIRED` muộn không xóa oan phiên; 2 overlay (`autoConnectDB`/`syncDB`) thêm phụ đề "mạng nội bộ có thể chậm, vui lòng chờ".
+- [x] `config.js` v6.42; cache-bust `?v=20260812d`→`e` (65 refs). 6 file JS pass `node --check`; full suite 31/32 (bld_queue 404 flaky pre-existing).
+
+## 🔴 PRIORITY 0 — Smoke test S71 trên MẠNG NỘI BỘ
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | Hard-reload (Ctrl+Shift+R) | Badge `v6.42-internal-net-read-timeout-20260812` |
+| 2 | Đăng nhập trên mạng nội bộ | Dữ liệu **tải xong** (không còn "timeout"); overlay có phụ đề "mạng nội bộ có thể chậm" |
+| 3 | Nếu VẪN timeout | F12 → Network → request `exec` (action `read`): xem mất bao lâu / có xong không → gửi số để chỉnh ngân sách (hoặc nghi ANBM chặn hẳn `script.google.com`) |
+| 4 | Login/đổi mật khẩu/ghi (upsert) | Vẫn phản hồi nhanh (giữ 30s), không treo |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S71 (tùy chọn)
+- **`ai-chat` vẫn ở 30s**: câu hỏi AI dài (LLM) trên mạng nội bộ có thể bị cắt; có retry riêng nhưng cân nhắc cho AI ngân sách riêng. Xem TD-NET-01.
+- Nếu read >90s là bình thường trên mạng nội bộ → cân nhắc chuyển startup sang **render cache ngay + sync nền** (option đã đề xuất, user chọn giữ overlay lần này).
 
 ---
 

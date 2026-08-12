@@ -4,7 +4,13 @@ const AUTH_SESSION_KEY = 'shtd_auth_v1';
 
 // Hard cap trên MỌI request tới GAS — chống treo vô hạn khi mạng chậm / bị chặn
 // (ANBM / mạng nội bộ có thể giữ kết nối tới script.google.com mà không trả về).
+// Mặc định 30s cho thao tác TƯƠNG TÁC (login/đổi mật khẩu/ghi) → fail nhanh, không treo.
 const GAS_TIMEOUT_MS = 30000;
+
+// Ngân sách rộng hơn cho các lần TẢI dữ liệu (read) — payload lớn (toàn bộ sheet),
+// trên mạng nội bộ bị bóp băng thông chậm là HỢP LỆ nên không được cắt oan ở 30s.
+// Quá ngân sách này → coi như kết nối chết → nút "Sync/Thử lại" + cache (xử lý ở app.js).
+const GAS_READ_TIMEOUT_MS = 90000;
 
 // Trong lúc khởi động (startApp), KHÔNG tự đăng xuất khi 1 read chớp nhoáng trả AUTH_REQUIRED.
 // Một blip mạng không được phép xóa phiên vừa đăng nhập → app.js bật/tắt cờ này quanh startApp.
@@ -70,14 +76,15 @@ function isCurrentUser(username) {
 
 // ── Shared GAS fetch helper — injects auth token automatically ──
 
-async function gasPost(body) {
+// timeoutMs (tùy chọn): các read lớn truyền GAS_READ_TIMEOUT_MS; mặc định 30s (tương tác).
+async function gasPost(body, timeoutMs) {
   const session = getAuthSession();
   const payload = Object.assign({}, body, { token: session ? session.token : '' });
   const res = await _fetchWithTimeout(GS_WEBAPP_URL, {
     method : 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body   : JSON.stringify(payload),
-  });
+  }, timeoutMs);
   if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
   const json = await res.json();
   if (json.error === 'AUTH_REQUIRED') {

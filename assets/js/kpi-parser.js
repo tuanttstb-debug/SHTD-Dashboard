@@ -114,7 +114,7 @@ function kpiWriteToSheet(payload) {
 
 /* ── GG Sheet: đọc từ tab "KPI_Summary" ── */
 function kpiReadFromSheet() {
-  return gasPost({ action: 'kpi-read' }).then(function(json) {
+  return gasPost({ action: 'kpi-read' }, GAS_READ_TIMEOUT_MS).then(function(json) {
     if (json.status !== 'ok') throw new Error(json.error || 'kpi-read failed');
     return _kpiParseSheetPayload(json.values);
   });
