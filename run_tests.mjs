@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SUITES = [
   'verify_h2_core.mjs',         // 14 tests  H2 (Track B) — client core: RAG/achievement/score/capacity/validate + load smoke
   'verify_h2_tracker.mjs',      // 32 tests  H2 (Track B B3) — tracker view: render/stat/RAG/CRUD modals/RBAC
+  'verify_h2_tasklink.mjs',     // CR         H2 — Task↔Milestone picker: scope/filter/multi-link/detail/RBAC
   'verify_h2_dashboard.mjs',    // 24 tests  H2 (Track B) — dashboard: exec cards/panels/capacity/charts/report/empty
   'verify_h2_review.mjs',       // 20 tests  H2 (Track B) — self-review: cards/modal/save/RBAC/empty
   'verify_date_unify.mjs',      // 28 tests  S67 — date logic đồng nhất (ISO storage / DD/MM/YYYY display)

@@ -99,6 +99,23 @@ async function _gasH2Upsert(entity, obj, isNew) {
   }
 }
 
+/* ── Link Task ↔ Milestone (owner-gated action riêng; chỉ ghi cột TaskRef) ──
+   Optimistic: caller đã mutate dbH2.milestones[*].TaskRef TRƯỚC; hàm này ghi GAS nền. */
+async function _gasH2TaskLink(milestoneId, taskRef, name) {
+  if (!GS_WEBAPP_URL) return;
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.className = 'status-dot syncing';
+  try {
+    const json = await gasPost({ action: 'h2-milestone-tasklink', id: milestoneId, taskRef: taskRef || '', name: name || '' });
+    if (json.status !== 'ok') throw new Error(json.error || 'h2-milestone-tasklink lỗi');
+    if (dot) dot.className = 'status-dot connected';
+    return json.id || milestoneId;
+  } catch (e) {
+    if (dot) dot.className = 'status-dot';
+    toast('⚠️ GAS lỗi: ' + e.message + ' — đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 6000);
+  }
+}
+
 async function _gasH2Delete(entity, id, name) {
   if (!GS_WEBAPP_URL) return;
   const meta = H2_ENTITY[entity];

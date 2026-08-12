@@ -33,6 +33,23 @@ function _h2MsOf(kpiId)   { return (dbH2.milestones || []).filter(m => String(m.
 function _h2RisksOf(kpiId){ return (dbH2.risks || []).filter(r => String(r.KpiID) === String(kpiId)); }
 function _h2DepsOf(kpiId) { return (dbH2.deps || []).filter(d => String(d.KpiID) === String(kpiId)); }
 
+/* Chủ mốc (member) HOẶC lead được quản lý link task của mốc đó. */
+function _h2CanEditMs(m) {
+  if (_h2Lead()) return true;
+  const me = String(_h2Me() || '').toLowerCase();
+  return !!me && String(m.Owner || '').toLowerCase() === me;
+}
+/* TaskRef lưu nhiều mã, phân tách bằng dấu phẩy/chấm phẩy → mảng id đã trim. */
+function _h2TaskRefs(str) {
+  return String(str || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+}
+/* Task mà 1 người đang là Accountable (picAcc) — nguồn cho popup tìm task. */
+function _h2TasksForOwner(owner) {
+  const ow = String(owner || '').toLowerCase();
+  if (!ow || typeof db === 'undefined' || !Array.isArray(db.tasks)) return [];
+  return db.tasks.filter(t => String(t.picAcc || '').toLowerCase() === ow);
+}
+
 function _h2GenId(prefix, list) {
   const yy = String(new Date().getFullYear()).slice(-2);
   const p = prefix + '-' + yy + '-';
@@ -219,7 +236,18 @@ function _h2KpiRow(k) {
 
 function _h2MsRow(m) {
   const lead = _h2Lead();
+  const canEdit = _h2CanEditMs(m);
   const mid = esc(m.ID);
+  const refs = _h2TaskRefs(m.TaskRef);
+  const chips = refs.map(tid => {
+    const tk = (typeof db !== 'undefined' && Array.isArray(db.tasks)) ? db.tasks.find(x => x.id === tid) : null;
+    const nm = tk ? ' · ' + esc(String(tk.name || '').slice(0, 40)) : '';
+    const open = tk ? `openTaskViewPopup('${esc(tid)}')` : '';
+    const unlink = canEdit ? `<button class="h2-ms-unlink" title="Bỏ liên kết" onclick="event.stopPropagation();h2UnlinkTask('${mid}','${esc(tid)}')">&times;</button>` : '';
+    return `<span class="h2-ms-task"><span class="h2-ms-tasklink" title="Xem chi tiết task" onclick="event.stopPropagation();${open}">🔗 ${esc(tid)}${nm}</span>${unlink}</span>`;
+  }).join('');
+  const addBtn = canEdit
+    ? `<button class="btn btn-ghost btn-sm h2-ms-addtask" onclick="event.stopPropagation();openH2TaskPicker('${mid}')" title="Liên kết Task"><i class="fa-solid fa-plus"></i> Task</button>` : '';
   const actions = lead ? `
     <span class="h2-ms-actions">
       <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openH2MsModal('${mid}',null)" title="Sửa"><i class="fa-solid fa-pen"></i></button>
@@ -231,7 +259,7 @@ function _h2MsRow(m) {
     <span class="h2-ms-name">${esc(m.MilestoneName || '(mốc)')}</span>
     <span class="h2-ms-due">${m.DueDate ? fmtDate(m.DueDate) : ''}</span>
     <span class="h2-ms-status">${esc(m.Status || '')}</span>
-    ${m.TaskRef ? `<span class="h2-ms-task" title="Task liên kết">🔗 ${esc(m.TaskRef)}</span>` : ''}
+    <span class="h2-ms-tasks">${chips}${addBtn}</span>
     ${actions}
   </div>`;
 }
@@ -378,7 +406,6 @@ function openH2MsModal(id, kpiId) {
   const set = (fid, v) => { const el = document.getElementById(fid); if (el) el.value = v != null ? v : ''; };
   set('h2mfName', m?.MilestoneName);
   set('h2mfDue', m?.DueDate);
-  set('h2mfTaskRef', m?.TaskRef);
   document.getElementById('h2mfMonth').innerHTML = _h2Opts(H2_MONTHS, m?.Month || 'T8');
   document.getElementById('h2mfStatus').innerHTML = _h2Opts(H2_STATUSES, m?.Status || 'Chưa bắt đầu');
   document.getElementById('h2mfRag').innerHTML = _h2Opts(['', 'GREEN', 'AMBER', 'RED'], m?.RAG || '');
@@ -404,7 +431,8 @@ async function h2SaveMs() {
     Owner: document.getElementById('h2mfOwner')?.value || _h2Me(),
     Status: document.getElementById('h2mfStatus').value,
     RAG: document.getElementById('h2mfRag').value,
-    TaskRef: (document.getElementById('h2mfTaskRef')?.value || '').trim()
+    // TaskRef quản lý qua popup "Liên kết Task" — giữ nguyên khi sửa mốc (không clobber).
+    TaskRef: isNew ? '' : (_h2FindMs(origId)?.TaskRef || '')
   };
   const idx = (dbH2.milestones || []).findIndex(x => String(x.ID) === String(m.ID));
   if (idx >= 0) dbH2.milestones[idx] = m; else dbH2.milestones.push(m);
@@ -421,6 +449,110 @@ async function h2DeleteMs(id) {
   dbH2.milestones = dbH2.milestones.filter(x => String(x.ID) !== String(id));
   persistH2(); renderH2Tracker();
   _gasH2Delete('milestone', id, m.MilestoneName);
+}
+
+/* ══════════════════════ Task ↔ Milestone linking ══════════════════════ */
+let _h2PickerMsId  = null;
+let _h2PickerOwner = '';
+let _h2PickerSel   = new Set();
+let _h2PickerVisible = 0;
+
+async function h2UnlinkTask(msId, taskId) {
+  const m = _h2FindMs(msId); if (!m || !_h2CanEditMs(m)) return;
+  m.TaskRef = _h2TaskRefs(m.TaskRef).filter(id => id !== taskId).join(', ');
+  persistH2(); renderH2Tracker();
+  await _gasH2TaskLink(msId, m.TaskRef, m.MilestoneName);
+}
+
+function openH2TaskPicker(msId) {
+  const m = _h2FindMs(msId); if (!m || !_h2CanEditMs(m)) return;
+  _h2PickerMsId  = msId;
+  _h2PickerOwner = m.Owner || _h2Me();
+  _h2PickerSel   = new Set(_h2TaskRefs(m.TaskRef));
+
+  const tasks  = _h2TasksForOwner(_h2PickerOwner);
+  const inits  = [...new Set(tasks.map(t => t.initiative).filter(Boolean))].sort();
+  const states = [...new Set(tasks.map(t => t.state).filter(Boolean))];
+  const tk = (typeof t === 'function') ? t : (k => k);
+  const initSel = document.getElementById('h2pkInit');
+  const stSel   = document.getElementById('h2pkStatus');
+  if (initSel) initSel.innerHTML = `<option value="">${tk('h2pk.all-init')}</option>` + inits.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join('');
+  if (stSel)   stSel.innerHTML   = `<option value="">${tk('h2pk.all-status')}</option>` + states.map(s => `<option value="${esc(s)}">${esc(typeof tState === 'function' ? tState(s) : s)}</option>`).join('');
+  const srch = document.getElementById('h2pkSearch'); if (srch) srch.value = '';
+  const ov   = document.getElementById('h2pkOverdue'); if (ov) ov.checked = false;
+  const sub  = document.getElementById('h2pkSubtitle');
+  if (sub) sub.textContent = `${m.Month || ''} · ${m.MilestoneName || ''} — ${_h2PickerOwner}`;
+
+  _h2PickerRender();
+  const ovl = document.getElementById('h2TaskPickerOverlay'); if (ovl) ovl.style.display = 'flex';
+  setTimeout(() => document.getElementById('h2pkSearch')?.focus(), 50);
+}
+
+function closeH2TaskPicker() {
+  const o = document.getElementById('h2TaskPickerOverlay'); if (o) o.style.display = 'none';
+  _h2PickerMsId = null;
+}
+
+function _h2PickerCountText() {
+  const tk = (typeof t === 'function') ? t : (k => k);
+  const el = document.getElementById('h2pkCount');
+  if (el) el.textContent = `${_h2PickerVisible} ${tk('h2pk.task')} · ${_h2PickerSel.size} ${tk('h2pk.selected')}`;
+}
+
+function _h2PickerRender() {
+  const wrap = document.getElementById('h2pkList'); if (!wrap) return;
+  const tk = (typeof t === 'function') ? t : (k => k);
+  const q  = (document.getElementById('h2pkSearch')?.value || '').trim().toLowerCase();
+  const fi = document.getElementById('h2pkInit')?.value || '';
+  const fs = document.getElementById('h2pkStatus')?.value || '';
+  const fo = !!document.getElementById('h2pkOverdue')?.checked;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  const tasks = _h2TasksForOwner(_h2PickerOwner).filter(t2 => {
+    if (q && !(String(t2.id).toLowerCase().includes(q) || String(t2.name || '').toLowerCase().includes(q))) return false;
+    if (fi && t2.initiative !== fi) return false;
+    if (fs && t2.state !== fs) return false;
+    if (fo) {
+      const dl = t2.deadline ? new Date(typeof toISODate === 'function' ? toISODate(t2.deadline) : t2.deadline) : null;
+      if (!(dl && !isNaN(dl) && dl < today && t2.state !== 'Hoàn thành')) return false;
+    }
+    return true;
+  });
+  _h2PickerVisible = tasks.length;
+  _h2PickerCountText();
+
+  if (!tasks.length) { wrap.innerHTML = `<div class="h2pk-empty">${tk('h2pk.none')}</div>`; return; }
+  wrap.innerHTML = tasks.map(t2 => {
+    const checked = _h2PickerSel.has(t2.id) ? 'checked' : '';
+    const dl = t2.deadline ? fmtDate(t2.deadline) : '';
+    return `<label class="h2pk-row">
+      <input type="checkbox" class="h2pk-cb" ${checked} onchange="_h2PickerToggle('${esc(t2.id)}',this.checked)">
+      <span class="h2pk-open" title="Xem chi tiết" onclick="event.preventDefault();event.stopPropagation();openTaskViewPopup('${esc(t2.id)}')">
+        <span class="h2pk-id">${esc(t2.id)}</span>
+        <span class="h2pk-name">${esc(t2.name || '')}</span>
+      </span>
+      <span class="h2pk-state">${esc(typeof tState === 'function' ? tState(t2.state) : (t2.state || ''))}</span>
+      <span class="h2pk-dl">${dl}</span>
+    </label>`;
+  }).join('');
+}
+
+function _h2PickerToggle(id, on) {
+  if (on) _h2PickerSel.add(id); else _h2PickerSel.delete(id);
+  _h2PickerCountText();
+}
+
+async function h2PickerSave() {
+  const m = _h2FindMs(_h2PickerMsId);
+  if (!m) { closeH2TaskPicker(); return; }
+  // Giữ thứ tự cũ (những cái còn chọn) rồi nối các task mới chọn.
+  const existing = _h2TaskRefs(m.TaskRef);
+  const ordered  = existing.filter(id => _h2PickerSel.has(id))
+    .concat([...(_h2PickerSel)].filter(id => !existing.includes(id)));
+  m.TaskRef = ordered.join(', ');
+  persistH2(); closeH2TaskPicker(); renderH2Tracker();
+  await _gasH2TaskLink(m.ID, m.TaskRef, m.MilestoneName);
+  renderH2Tracker();
 }
 
 /* ══════════════════════ view popup (read-only) ══════════════════════ */
@@ -472,5 +604,5 @@ function closeH2ObjView() { const el = document.getElementById('h2ViewOverlay');
 
 // Đóng mọi modal/overlay H2 (dùng trong ESC chain của navigation.js)
 function _h2EscClose() {
-  try { closeH2ObjModal(); closeH2KpiModal(); closeH2MsModal(); closeH2ObjView(); } catch (e) {}
+  try { closeH2ObjModal(); closeH2KpiModal(); closeH2MsModal(); closeH2ObjView(); closeH2TaskPicker(); } catch (e) {}
 }

@@ -355,6 +355,8 @@ function doPost(e) {
     };
     if (H2_UPSERT_MAP[action]) return _jsonResponse(h2HandleUpsert(body, tokenData, H2_UPSERT_MAP[action]));
     if (H2_DELETE_MAP[action]) return _jsonResponse(h2HandleDelete(body, tokenData, H2_DELETE_MAP[action]));
+    // Link Task ↔ Milestone (owner-gated: chủ mốc hoặc lead) — chỉ sửa cột TaskRef.
+    if (action === 'h2-milestone-tasklink') return _jsonResponse(h2HandleTaskLink(body, tokenData));
 
     throw new Error('action không hợp lệ: ' + action);
 

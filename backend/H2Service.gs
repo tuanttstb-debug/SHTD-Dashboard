@@ -192,6 +192,45 @@ function h2HandleDelete(body, tokenData, sheetName) {
 }
 
 /**
+ * Liên kết Task vào Milestone (chỉ cập nhật cột TaskRef của H2_Milestones).
+ * RBAC (owner-gated như tracking/review): chủ mốc (Owner == token.u) HOẶC Admin/Teamlead.
+ * body: { id: milestoneId, taskRef: 'SO-26-001, SO-26-002', name }.
+ * Tách riêng khỏi milestone-upsert để member link được task của mình mà KHÔNG
+ * cần quyền sửa toàn bộ mốc (mốc vẫn do lead challenge & duyệt).
+ */
+function h2HandleTaskLink(body, tokenData) {
+  if (!body.id) throw new Error('h2-milestone-tasklink: thiếu id.');
+  var sheetName = 'H2_Milestones';
+  var lead      = (tokenData.r === 'Admin' || tokenData.r === 'Teamlead');
+  var me        = String(tokenData.u || '').toLowerCase();
+  var owner     = _h2Owner(sheetName, body.id);      // null nếu mốc chưa tồn tại
+  if (!lead) {
+    if (owner === null) return { status: 'error', error: 'NOT_FOUND' };
+    if (String(owner).toLowerCase() !== me) return { status: 'error', error: 'FORBIDDEN_NOT_OWNER' };
+  }
+
+  var lock = _acquireWriteLock();
+  try {
+    var sheet   = _h2Sheet(sheetName);
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: 'error', error: 'NOT_FOUND' };
+    var taskRefCol = H2_HEADERS[sheetName].indexOf('TaskRef') + 1;   // 1-based (=10)
+    var ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]).trim() === String(body.id).trim()) {
+        sheet.getRange(i + 2, taskRefCol, 1, 1).setValue(String(body.taskRef || ''));
+        SpreadsheetApp.flush();
+        auditLog(tokenData, 'h2-milestone-tasklink', body.id + ' | ' + String(body.taskRef || ''));
+        return { status: 'ok', id: body.id };
+      }
+    }
+    return { status: 'error', error: 'NOT_FOUND' };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
  * Đọc gộp toàn bộ domain H2 trong 1 lần gọi (giảm round-trip client).
  * Trả về object { config, objectives, kpis, milestones, tracking, risks, deps, reviews }.
  */
