@@ -43,11 +43,14 @@ function _h2CanEditMs(m) {
 function _h2TaskRefs(str) {
   return String(str || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
 }
-/* Task mà 1 người đang là Accountable (picAcc) — nguồn cho popup tìm task. */
+/* Task mà 1 người đang phụ trách = Responsible (picRes) HOẶC Accountable (picAcc)
+   — cùng định nghĩa "Công việc của tôi" (My Work). Nguồn cho popup liên kết task. */
 function _h2TasksForOwner(owner) {
   const ow = String(owner || '').toLowerCase();
   if (!ow || typeof db === 'undefined' || !Array.isArray(db.tasks)) return [];
-  return db.tasks.filter(t => String(t.picAcc || '').toLowerCase() === ow);
+  return db.tasks.filter(t =>
+    String(t.picRes || '').toLowerCase() === ow ||
+    String(t.picAcc || '').toLowerCase() === ow);
 }
 
 function _h2GenId(prefix, list) {

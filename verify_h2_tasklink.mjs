@@ -64,13 +64,17 @@ const H2MOCK = {
   tracking: [], risks: [], deps: [], reviews: []
 };
 
-// db.tasks: 4 của QuangNN3 (accountable) + 1 của DungLQ1 (không được hiện khi owner=Quang)
+// db.tasks (owner=QuangNN3 phụ trách = picRes HOẶC picAcc):
+//   101-104 Quang (Res+Acc) · 105 Quang chỉ Responsible (picAcc=Dung) → PHẢI hiện
+//   106 Quang chỉ Support → KHÔNG hiện · 200 của Dung → KHÔNG hiện
 const TASKS = [
-  { id: 'SO-26-101', name: 'Viết BRD giải toả tạm ứng', picAcc: 'QuangNN3', picRes: 'QuangNN3', team: 'Số', initiative: 'INIT-BLOL', state: 'Đang thực hiện', deadline: future },
-  { id: 'SO-26-102', name: 'UAT nghiệp vụ hồ sơ',       picAcc: 'QuangNN3', picRes: 'QuangNN3', team: 'Số', initiative: 'INIT-BLOL', state: 'Chưa bắt đầu', deadline: past },
-  { id: 'SO-26-103', name: 'Nghiên cứu AI thư BL',      picAcc: 'QuangNN3', picRes: 'QuangNN3', team: 'Số', initiative: 'INIT-AI',   state: 'Đang thực hiện', deadline: future },
-  { id: 'SO-26-104', name: 'Task đã hoàn thành',        picAcc: 'QuangNN3', picRes: 'QuangNN3', team: 'Số', initiative: 'INIT-AI',   state: 'Hoàn thành', deadline: past },
-  { id: 'SO-26-200', name: 'Task của Dung',             picAcc: 'DungLQ1',  picRes: 'DungLQ1',  team: 'Số', initiative: 'INIT-GNOL', state: 'Đang thực hiện', deadline: future },
+  { id: 'SO-26-101', name: 'Viết BRD giải toả tạm ứng', picAcc: 'QuangNN3', picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-BLOL', state: 'Đang thực hiện', deadline: future },
+  { id: 'SO-26-102', name: 'UAT nghiệp vụ hồ sơ',       picAcc: 'QuangNN3', picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-BLOL', state: 'Chưa bắt đầu', deadline: past },
+  { id: 'SO-26-103', name: 'Nghiên cứu AI thư BL',      picAcc: 'QuangNN3', picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-AI',   state: 'Đang thực hiện', deadline: future },
+  { id: 'SO-26-104', name: 'Task đã hoàn thành',        picAcc: 'QuangNN3', picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-AI',   state: 'Hoàn thành', deadline: past },
+  { id: 'SO-26-105', name: 'Task Quang chỉ thực hiện',  picAcc: 'DungLQ1',  picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-BLOL', state: 'Đang thực hiện', deadline: future },
+  { id: 'SO-26-106', name: 'Task Quang chỉ hỗ trợ',     picAcc: 'DungLQ1',  picRes: 'DungLQ1',  picSupport: 'QuangNN3', team: 'Số', initiative: 'INIT-GNOL', state: 'Đang thực hiện', deadline: future },
+  { id: 'SO-26-200', name: 'Task của Dung',             picAcc: 'DungLQ1',  picRes: 'DungLQ1',  picSupport: '', team: 'Số', initiative: 'INIT-GNOL', state: 'Đang thực hiện', deadline: future },
 ];
 
 const browser = await chromium.launch({ headless: true });
@@ -119,7 +123,10 @@ await page.evaluate(() => openH2TaskPicker('MS-26-001'));
 await page.waitForTimeout(200);
 log('TL3-visible', await page.$eval('#h2TaskPickerOverlay', el => el.style.display === 'flex'), 'picker overlay visible');
 let ids = await page.$$eval('#h2pkList .h2pk-id', els => els.map(e => e.textContent));
-log('TL3-scope', ids.length === 4 && !ids.includes('SO-26-200'), `list=${ids.length} (expect 4, không có SO-26-200) → ${ids.join(',')}`);
+log('TL3-scope', ids.length === 5 && !ids.includes('SO-26-200') && !ids.includes('SO-26-106'),
+  `list=${ids.length} (expect 5, loại SO-26-200 & SO-26-106) → ${ids.join(',')}`);
+log('TL3-res', ids.includes('SO-26-105'), 'task user chỉ Responsible (picRes) VẪN hiện (không cần là Accountable)');
+log('TL3-nosupport', !ids.includes('SO-26-106'), 'task user chỉ Support KHÔNG hiện');
 log('TL3-precheck', await page.$$eval('#h2pkList .h2pk-cb', els => els.filter(c => c.checked).length) === 1, 'SO-26-101 đã tick sẵn (đang liên kết)');
 await shot(page, '02_picker_open');
 
