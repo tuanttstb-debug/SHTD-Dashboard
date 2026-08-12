@@ -74,7 +74,14 @@ const TASKS = [
   { id: 'SO-26-104', name: 'Task đã hoàn thành',        picAcc: 'QuangNN3', picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-AI',   state: 'Hoàn thành', deadline: past },
   { id: 'SO-26-105', name: 'Task Quang chỉ thực hiện',  picAcc: 'DungLQ1',  picRes: 'QuangNN3', picSupport: '', team: 'Số', initiative: 'INIT-BLOL', state: 'Đang thực hiện', deadline: future },
   { id: 'SO-26-106', name: 'Task Quang chỉ hỗ trợ',     picAcc: 'DungLQ1',  picRes: 'DungLQ1',  picSupport: 'QuangNN3', team: 'Số', initiative: 'INIT-GNOL', state: 'Đang thực hiện', deadline: future },
+  { id: 'SO-26-107', name: 'Task PIC lưu tên hiển thị', picAcc: 'DungLQ1',  picRes: 'Quang NN3', picSupport: '', team: 'Số', initiative: 'INIT-BLOL', state: 'Đang thực hiện', deadline: future },
   { id: 'SO-26-200', name: 'Task của Dung',             picAcc: 'DungLQ1',  picRes: 'DungLQ1',  picSupport: '', team: 'Số', initiative: 'INIT-GNOL', state: 'Đang thực hiện', deadline: future },
+];
+
+// User directory (User_Master): username ↔ tên hiển thị — để khớp PIC lưu dạng tên.
+const USERS = [
+  { Username: 'QuangNN3', Display_Name: 'Quang NN3', Role: 'User', Team: 'Số', Active: 'TRUE' },
+  { Username: 'DungLQ1',  Display_Name: 'Dung LQ1',  Role: 'User', Team: 'Số', Active: 'TRUE' },
 ];
 
 const browser = await chromium.launch({ headless: true });
@@ -87,7 +94,7 @@ await page.goto(BASE_URL, { waitUntil: 'load', timeout: 15000 });
 await page.waitForTimeout(400);
 
 async function loginAs(role, username) {
-  await page.evaluate(({ mock, tasks, role, username }) => {
+  await page.evaluate(({ mock, tasks, users, role, username }) => {
     window.readH2 = async () => {};
     window.__gas = [];
     window.gasPost = async (payload) => { window.__gas.push(payload); return { status: 'ok', id: payload.id }; };
@@ -95,6 +102,7 @@ async function loginAs(role, username) {
     Object.assign(dbH2, JSON.parse(JSON.stringify(mock)));
     if (typeof db === 'undefined') { window.db = {}; }
     db.tasks = JSON.parse(JSON.stringify(tasks));
+    try { _appUsers = JSON.parse(JSON.stringify(users)); } catch (e) {}
     localStorage.setItem('shtd_auth_v1', JSON.stringify({
       token: 'mock-token', exp: Date.now() + 86400000,
       user: { username, role, team: 'Số', displayName: username }
@@ -102,7 +110,7 @@ async function loginAs(role, username) {
     const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
     try { setupListeners(); } catch (e) {}
     navigateTo('h2-tracker');
-  }, { mock: H2MOCK, tasks: TASKS, role, username });
+  }, { mock: H2MOCK, tasks: TASKS, users: USERS, role, username });
   await page.waitForTimeout(350);
 }
 
@@ -123,9 +131,10 @@ await page.evaluate(() => openH2TaskPicker('MS-26-001'));
 await page.waitForTimeout(200);
 log('TL3-visible', await page.$eval('#h2TaskPickerOverlay', el => el.style.display === 'flex'), 'picker overlay visible');
 let ids = await page.$$eval('#h2pkList .h2pk-id', els => els.map(e => e.textContent));
-log('TL3-scope', ids.length === 5 && !ids.includes('SO-26-200') && !ids.includes('SO-26-106'),
-  `list=${ids.length} (expect 5, loại SO-26-200 & SO-26-106) → ${ids.join(',')}`);
+log('TL3-scope', ids.length === 6 && !ids.includes('SO-26-200') && !ids.includes('SO-26-106'),
+  `list=${ids.length} (expect 6, loại SO-26-200 & SO-26-106) → ${ids.join(',')}`);
 log('TL3-res', ids.includes('SO-26-105'), 'task user chỉ Responsible (picRes) VẪN hiện (không cần là Accountable)');
+log('TL3-dispname', ids.includes('SO-26-107'), 'task PIC lưu TÊN HIỂN THỊ vẫn khớp owner (username)');
 log('TL3-nosupport', !ids.includes('SO-26-106'), 'task user chỉ Support KHÔNG hiện');
 log('TL3-precheck', await page.$$eval('#h2pkList .h2pk-cb', els => els.filter(c => c.checked).length) === 1, 'SO-26-101 đã tick sẵn (đang liên kết)');
 await shot(page, '02_picker_open');

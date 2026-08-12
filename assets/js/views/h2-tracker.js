@@ -43,14 +43,40 @@ function _h2CanEditMs(m) {
 function _h2TaskRefs(str) {
   return String(str || '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
 }
+/* Tập định danh (lowercase) của 1 người = username + display name.
+   Cần vì cột PIC của task có thể lưu theo username HOẶC theo tên hiển thị, còn
+   Owner của mốc là username → so trực tiếp sẽ trượt gần hết. Gom cả 2 dạng để khớp. */
+function _h2OwnerMatchSet(owner) {
+  const ow = String(owner || '').trim().toLowerCase();
+  const set = new Set();
+  if (!ow) return set;
+  set.add(ow);
+  const cu = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if (cu) {
+    const un = String(cu.username || '').toLowerCase();
+    const dn = String(cu.displayName || '').toLowerCase();
+    if (un === ow || dn === ow) { if (un) set.add(un); if (dn) set.add(dn); }
+  }
+  if (typeof _appUsers !== 'undefined' && Array.isArray(_appUsers)) {
+    const u = _appUsers.find(x =>
+      String(x.Username || '').toLowerCase() === ow ||
+      String(x.Display_Name || '').toLowerCase() === ow);
+    if (u) {
+      if (u.Username)     set.add(String(u.Username).toLowerCase());
+      if (u.Display_Name) set.add(String(u.Display_Name).toLowerCase());
+    }
+  }
+  return set;
+}
+
 /* Task mà 1 người đang phụ trách = Responsible (picRes) HOẶC Accountable (picAcc)
-   — cùng định nghĩa "Công việc của tôi" (My Work). Nguồn cho popup liên kết task. */
+   — cùng định nghĩa "Công việc của tôi" (My Work). Khớp theo username hoặc tên hiển thị. */
 function _h2TasksForOwner(owner) {
-  const ow = String(owner || '').toLowerCase();
-  if (!ow || typeof db === 'undefined' || !Array.isArray(db.tasks)) return [];
+  const set = _h2OwnerMatchSet(owner);
+  if (!set.size || typeof db === 'undefined' || !Array.isArray(db.tasks)) return [];
   return db.tasks.filter(t =>
-    String(t.picRes || '').toLowerCase() === ow ||
-    String(t.picAcc || '').toLowerCase() === ow);
+    set.has(String(t.picRes || '').trim().toLowerCase()) ||
+    set.has(String(t.picAcc || '').trim().toLowerCase()));
 }
 
 function _h2GenId(prefix, list) {
