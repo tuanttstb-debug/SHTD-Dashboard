@@ -2,6 +2,30 @@
 
 const AUTH_SESSION_KEY = 'shtd_auth_v1';
 
+// Hard cap trên MỌI request tới GAS — chống treo vô hạn khi mạng chậm / bị chặn
+// (ANBM / mạng nội bộ có thể giữ kết nối tới script.google.com mà không trả về).
+const GAS_TIMEOUT_MS = 30000;
+
+// Trong lúc khởi động (startApp), KHÔNG tự đăng xuất khi 1 read chớp nhoáng trả AUTH_REQUIRED.
+// Một blip mạng không được phép xóa phiên vừa đăng nhập → app.js bật/tắt cờ này quanh startApp.
+let _authStartupGrace = false;
+
+// fetch có timeout qua AbortController: quá hạn → abort + báo lỗi rõ ràng thay vì spin mãi.
+async function _fetchWithTimeout(url, opts, ms) {
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms || GAS_TIMEOUT_MS);
+  try {
+    return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal }));
+  } catch (e) {
+    if (e && e.name === 'AbortError') {
+      throw new Error('Máy chủ phản hồi quá lâu (mạng chậm hoặc bị chặn). Vui lòng thử lại.');
+    }
+    throw new Error('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Session storage ──
 
 function getAuthSession() {
@@ -49,7 +73,7 @@ function isCurrentUser(username) {
 async function gasPost(body) {
   const session = getAuthSession();
   const payload = Object.assign({}, body, { token: session ? session.token : '' });
-  const res = await fetch(GS_WEBAPP_URL, {
+  const res = await _fetchWithTimeout(GS_WEBAPP_URL, {
     method : 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body   : JSON.stringify(payload),
@@ -57,8 +81,12 @@ async function gasPost(body) {
   if (!res.ok) throw new Error('Apps Script lỗi HTTP: ' + res.status);
   const json = await res.json();
   if (json.error === 'AUTH_REQUIRED') {
-    doLogout();
-    throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    // Lúc khởi động: giữ phiên, để startApp hiển thị nút "Thử lại" (một blip mạng
+    // không được xóa phiên vừa đăng nhập). Ngoài khởi động: hết hạn thật → đăng xuất.
+    if (!_authStartupGrace) doLogout();
+    const err = new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    err.code = 'AUTH_REQUIRED';
+    throw err;
   }
   return json;
 }
@@ -66,7 +94,7 @@ async function gasPost(body) {
 // ── Login / logout ──
 
 async function doLogin(username, password) {
-  const res = await fetch(GS_WEBAPP_URL, {
+  const res = await _fetchWithTimeout(GS_WEBAPP_URL, {
     method : 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body   : JSON.stringify({ action: 'auth-login', username, password }),

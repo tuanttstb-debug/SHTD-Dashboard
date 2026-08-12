@@ -9,11 +9,24 @@ window.onload = async () => {
     showLoginScreen();
     return;
   }
-  applyUserToUI(auth.user);
-  await startApp();
+  try {
+    applyUserToUI(auth.user);
+    await startApp();
+  } catch (e) {
+    // Khởi động lỗi (mạng/timeout) KHÔNG được để lại màn hình trắng bị kẹt:
+    // giữ phiên + dữ liệu cache, hiện nút "Thử lại".
+    console.error('[SHTD] Khởi động thất bại:', e);
+    hideLoading();
+    _showStartupRetry(e && e.message);
+  }
 };
 
 async function startApp() {
+  // Grace window: trong lúc khởi động, 1 read chớp nhoáng lỗi AUTH_REQUIRED KHÔNG
+  // được xóa phiên vừa đăng nhập. Gỡ sau khi các read nền có đủ thời gian hoàn tất.
+  _authStartupGrace = true;
+  setTimeout(() => { _authStartupGrace = false; }, GAS_TIMEOUT_MS + 5000);
+
   // Reset view scopes so each login re-initializes based on role
   _taskScope = null;
   _cpScope   = null;
@@ -67,9 +80,24 @@ async function autoConnectDB() {
     toast('✅ Đã tải dữ liệu từ Google Sheets!', 'success');
   } catch(e) {
     hideLoading();
-    toast('⚠️ Không thể tự động tải dữ liệu. Bấm "Kết nối GG Sheets" để thử lại.', 'warning', 6000);
-    console.warn('Auto-connect failed:', e.message);
+    console.warn('[SHTD] Auto-connect thất bại:', e && e.message);
+    _showStartupRetry(e && e.message);   // giữ phiên + dữ liệu cache + nút "Thử lại"
   }
+}
+
+// Khi tải dữ liệu khởi động thất bại (mạng/timeout): KHÔNG đăng xuất, KHÔNG để màn trắng.
+// Giữ giao diện + dữ liệu cache đã render, hiện nút Sync (Thử lại) và trạng thái ngoại tuyến.
+function _showStartupRetry(msg) {
+  const sync = document.getElementById('btnSync');
+  if (sync) sync.style.display = 'inline-flex';         // nút "Sync" = Thử lại (gọi syncDB)
+  const dot = document.getElementById('dbDot');
+  if (dot) dot.className = 'status-dot';                 // bỏ trạng thái "connected"
+  const st = document.getElementById('dbStatus');
+  if (st) st.textContent = 'Chưa tải được — bấm Sync để thử lại';
+  const sb = document.getElementById('sbDb');
+  if (sb) sb.textContent = 'Ngoại tuyến (cache)';
+  toast('⚠️ Chưa tải được dữ liệu' + (msg ? ': ' + msg : '') +
+        ' — đang dùng dữ liệu đã lưu. Bấm "Sync" để thử lại.', 'warning', 8000);
 }
 
 function updateClock() {
@@ -185,6 +213,10 @@ async function syncDB() {
       readNotifications(),
     ]);
     hideLoading(); renderAll();
+    // Sync thành công ⇒ khôi phục trạng thái "đã kết nối" (đặc biệt sau khi _showStartupRetry đổi sang ngoại tuyến)
+    document.getElementById('dbDot').className = 'status-dot connected';
+    document.getElementById('dbStatus').textContent = 'Google Sheets';
+    document.getElementById('sbDb').textContent = 'Google Sheets';
     toast('Đã đồng bộ toàn bộ dữ liệu!', 'success');
   } catch(e) { hideLoading(); toast('Lỗi: ' + e.message, 'error'); }
 }
