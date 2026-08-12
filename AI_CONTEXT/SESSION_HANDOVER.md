@@ -1,3 +1,30 @@
+# SESSION HANDOVER (S70) — 2026-08-12
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `fd3c78a` (S69) → **sau (ĐÃ push)**: `278a68b` (4 commit: `ed1c5bf` seed · `7aaf01a` task-link · `84c46d9` scope · `278a68b` PIC-match)
+**Version**: v6.40 → **v6.41.2** (`6.41.2-h2-tasklink-pic-match-20260812`, `?v=20260812d`)
+
+> **2 việc H2 nối tiếp**: (1) **SEED** dữ liệu KPI H2/2026 pilot QuangNN3 + DungLQ1 vào DB; (2) **DEBUG + CR** liên kết Task ↔ Milestone trong "Quản trị H2 · Theo dõi KPI" (báo lỗi GAS khi lưu → thay bằng popup chọn task, đa task, owner-gated).
+
+## S70.1 — Seed KPI pilot QuangNN3 + DungLQ1 · commit `ed1c5bf` · (giải quyết TD-H2-02)
+- **✅ Task**: NEW `backend/H2SeedPilot.gs` nạp 2 bản KPI đã chuẩn hoá (`data/SAMPLE_QuangNN3_H2.md` + `SAMPLE_DungLQ1_H2.md`, mapping `data/04_MIGRATION_MAPPING.md`) vào 8 sheet H2_*. Pattern `dryRun/commit` như các migration khác — **chạy trong Apps Script editor, KHÔNG redeploy Web App**.
+- **✅ Nội dung**: `h2SeedDryRun()` (log đếm + validate weight=100%/member, P1≤3, Obj≤5, KPI khớp Objective) · `h2SeedCommit()` (ghi idempotent, ID cố định OBJ/KPI/MS/RISK/DEP/TRK/REV-26-###, upsert theo ID) · `h2SeedClearPilot()` (xoá theo owner để seed lại). Sinh **8 Obj · 27 KPI · 28 Milestone · 8 Risk · 9 Dep · 135 Tracking rỗng T8–T12 · 2 Review rỗng**. Giữ nguyên placeholder `[cần đo T8]`/`[target?]`.
+- **✅ Decision**: (a) nguồn = **bản chuẩn hoá MD** (không parse Excel thô). (b) **GAS seed script** (không Node/Web-App importer). (c) nạp **đủ 7 sheet** kể cả tracking rỗng + review rỗng (user chọn). (d) ID prefix khớp `_h2GenId` client → member thêm mới sau seed KHÔNG đụng. (e) validate sandbox-eval qua Node (GAS không chạy được under node) — widths/dup-ID/FK/weight OK.
+- **✅ Username**: `QuangNN3`/`DungLQ1` — khớp mọi tham chiếu repo (um_test fixture, capture_h2_guide, verify_atomic_write). Không đọc được Sheet thật; dryRun log sẽ hiện owner để user đối chiếu.
+- **⛔ Blocker**: Không. User tự chạy `h2SeedCommit()` trong GAS editor.
+
+## S70.2 — DEBUG + CR: Task-picker liên kết Task ↔ Milestone · `7aaf01a`+`84c46d9`+`278a68b` · v6.41→6.41.2
+- **✅ DEBUG (gốc)**: "thêm task-link vào milestone báo thất bại tại GAS khi lưu" (user test **Teamlead**). Đường ghi milestone-upsert đúng logic cho lead → gốc khả dĩ nhất: **route H2 chưa lên deployment cá nhân sau revert S67** (H2 backend commit 08-11 SAU revert 08-10) → `action không hợp lệ`. CR chuyển link sang **action riêng** nên không phụ thuộc milestone-upsert; redeploy H2 lần này khép luôn deploy-gap.
+- **✅ CR (thay TaskRef free-text bằng popup chọn task)**:
+  - **Backend (`7aaf01a`, ĐÃ redeploy — user, link không đổi)**: NEW `h2HandleTaskLink()` (`H2Service.gs`) **owner-gated** (chủ mốc HOẶC Admin/Teamlead) — cập nhật **CHỈ cột TaskRef**; `Code.gs` route `h2-milestone-tasklink`. → member link được task của mình mà không cần quyền sửa toàn bộ mốc.
+  - **FE**: nút **"+ Task"** mỗi mốc (hiện cho chủ mốc + lead) → popup `#h2TaskPickerOverlay`: search theo mã/tên, droplist Initiative, Status, checkbox Quá hạn. **1 mốc ↔ NHIỀU task** (TaskRef gộp phẩy — KHÔNG đổi schema). Chip task click → chi tiết common (`openTaskViewPopup`, z-index 790 < taskViewOverlay 800), × để bỏ liên kết. `h2-core.js` `_gasH2TaskLink` (optimistic). Modal milestone bỏ TaskRef free-text (giữ TaskRef khi sửa mốc).
+  - **Scope task hiển thị (2 lần sửa theo phản hồi)**: `84c46d9` — từ **chỉ picAcc** → **picRes HOẶC picAcc** (định nghĩa "Công việc của tôi"). `278a68b` — thêm khớp theo **username HOẶC tên hiển thị** (`_h2OwnerMatchSet` qua `getCurrentUser`+`_appUsers`) vì cột PIC có thể lưu tên hiển thị còn Owner mốc là username → trước đó "chỉ thấy 1 task".
+- **✅ Decision**: (a) task-link = **action owner-gated riêng** (không nới quyền milestone-upsert — mốc vẫn do lead challenge & duyệt). (b) lưu **nhiều task = CSV trong TaskRef** (không đổi schema H2). (c) phạm vi task = **Res||Acc của CHỦ MỐC** (member link mốc mình→task mình; lead link hộ→task của member). (d) khớp PIC theo **username ∪ display name** để bền với 2 cách lưu. (e) click chip/task = **popup common** có sẵn (không làm popup mới).
+- **⛔ Blocker**: Không. ✅ **GAS đã redeploy (user, link không đổi)**. 4 commit **ĐÃ push**.
+- **➡️ Next step**: (1) Hard-reload PRD → badge `v6.41.2`. (2) Chạy `h2SeedCommit()` (nếu chưa). (3) Smoke: "+ Task" 1 mốc → hiện **mọi task user phụ trách** (Res/Acc), tick nhiều → Lưu → chip giữ sau reload (xác nhận GAS ghi); click chip → chi tiết; × bỏ link; member chỉ "+ Task" mốc mình. (4) Nếu vẫn thiếu task → gửi 1 mẫu: giá trị cột PIC vs username login (có thể alias ngoài User_Master).
+- **🟢 Regression risk**: 🟢 **THẤP** — backend thêm 1 action cô lập (không đụng upsert/delete cũ); FE khu trú `h2-tracker.js`/`h2-core.js`/`index.html`/`h2.css`. `verify_h2_tasklink` **28/28** (scope Res/Acc, tên hiển thị, đa-link, chi tiết, unlink, payload, RBAC) + H2 core/tracker/dashboard/review **KHÔNG đổi**. Full suite **31/32** — fail duy nhất `verify_bld_queue` = **flaky batch** (chạy riêng 20/20, suite nặng nhất; KHÔNG do thay đổi). ⚠️ TaskRef CSV không có FK: task bị xoá → chip vẫn hiện id (không tự dọn); scope khớp username∪display-name là heuristic (alias lạ vẫn trượt).
+
+---
+
 # SESSION HANDOVER (S69) — 2026-08-12
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `bee61f8` (S68) → **sau (ĐÃ push)**: `72cbe6a`

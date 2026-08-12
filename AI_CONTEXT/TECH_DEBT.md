@@ -8,6 +8,25 @@
 
 ---
 
+## 🆕 DELTA — Session 70 (2026-08-12) — Seed KPI pilot H2 + Task↔Milestone linking picker
+
+### ✅ TD-H2-02 RESOLVED: `backend/H2SeedPilot.gs` đã tạo (S70.1)
+Empty-state H2 dashboard nhắc "chạy seed pilot" nay có file thật: `h2SeedDryRun`/`h2SeedCommit`/`h2SeedClearPilot`, idempotent ID cố định, chạy trong Apps Script editor. Nợ B7 seed đóng.
+
+### TD-H2-04: `TaskRef` lưu nhiều task = chuỗi CSV, KHÔNG có FK/tự dọn 🟢 MEDIUM
+S70.2 gộp nhiều task ID vào cột `TaskRef` (phẩy) để không đổi schema H2_Milestones. **Hệ quả**: (a) nếu task bị **xoá** khỏi Task_Master, chip trên mốc **vẫn hiện id** (renderer chỉ mất phần tên, không tự loại). (b) không join chuẩn — không truy vấn ngược "task này thuộc mốc nào". Giảm thiểu: `_h2MsRow` đã tra `db.tasks` để hiện tên (id lạ → chỉ hiện id, click no-op). → Nếu cần sạch: lọc chip theo task còn tồn tại, hoặc tách bảng liên kết H2_TaskLink (đổi schema — cân nhắc sau).
+
+### TD-H2-05: Scope task trong popup = heuristic khớp username ∪ display name 🟢 MEDIUM
+`_h2OwnerMatchSet` (h2-tracker.js) gom username + tên hiển thị của chủ mốc (qua `getCurrentUser` + `_appUsers`) rồi so với `picRes/picAcc`. Cần vì cột PIC lưu **2 namespace lẫn lộn** (username hoặc display name). **Rủi ro biên**: nếu 1 task gán PIC bằng **alias KHÔNG nằm trong User_Master** (viết tắt lạ, sai chính tả) thì vẫn trượt → popup thiếu task đó. Cũng phụ thuộc `_appUsers` đã load cho ca lead-link-hộ-member (ca tự-link thì `getCurrentUser` phủ sẵn). → Fix gốc: chuẩn hoá PIC về canonical username ở mọi writer (mở rộng `_resolvePickerCase`), hoặc thêm cột PIC-username riêng.
+
+### TD-DEPLOY-01: Gốc bug "GAS lỗi khi lưu milestone" (lead) chưa xác nhận 100% ⚪ LOW
+User test **Teamlead** vẫn fail lưu task-link cũ. Đường ghi milestone-upsert đúng logic cho lead → **giả thuyết mạnh nhất = route H2 chưa lên deployment cá nhân** (H2 backend commit 08-11 SAU revert S67 08-10) → `action không hợp lệ`. Chưa lấy được text lỗi chính xác để chốt. CR đã né bằng action riêng + redeploy → khép dù nguyên nhân gì. Nếu tái diễn ở route H2 khác: kiểm deployment cá nhân có đủ code H2Service/Code.gs mới.
+
+### TD-TEST-06: `verify_bld_queue.mjs` gia nhập nhóm flaky-under-batch 🟢 MEDIUM
+S70: `run_tests.mjs` fail `verify_bld_queue` **2 lần**, chạy riêng **20/20 + 0 JS error** cả 2 lần. Suite **nặng nhất** (~50–62s) → áp lực timing batch tràn. Cùng bản chất my_work/issue_tracker/i18n_p7 (fixed `waitForTimeout` + Chromium mới). Nhóm flaky batch hiện tại = **my_work, issue_tracker, bld_queue, i18n_p7**. → Đừng quy fail này cho feature vừa đổi trừ khi đụng `bld-queue.js`. Fix gốc: `waitForSelector`/`expect.poll`.
+
+---
+
 ## 🆕 DELTA — Session 69 (2026-08-12) — Fix login hang/lock-out khi mạng chậm/bị chặn
 
 ### TD-NET-01: Timeout GAS cứng 30s ở tầng client, KHÔNG có auto-retry ngầm 🟢 MEDIUM

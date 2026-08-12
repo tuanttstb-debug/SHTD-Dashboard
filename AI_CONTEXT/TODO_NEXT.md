@@ -1,6 +1,30 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-12 (Session 69 — Fix login hang/lock-out khi mạng chậm/bị chặn)
-**Context**: S69 done + **pushed** `72cbe6a`. v6.40-login-hang-timeout-fix-20260812, `?v=20260812`. Full suite **30/31** (fail duy nhất `verify_i18n_p7` = flaky batch, chạy riêng 35/35 PASS). Thuần frontend — **KHÔNG deploy GAS mới**.
+**Prepared**: 2026-08-12 (Session 70 — Seed KPI pilot H2 + Task↔Milestone linking picker)
+**Context**: S70 done + **pushed** `278a68b` (4 commit: `ed1c5bf` seed · `7aaf01a` task-link · `84c46d9` scope · `278a68b` PIC-match). v6.41.2, `?v=20260812d`. `verify_h2_tasklink` **28/28**; full suite **31/32** (fail duy nhất `verify_bld_queue` = flaky batch, chạy riêng 20/20). **GAS ĐÃ redeploy (user, link không đổi)** cho action task-link.
+
+---
+
+## ✅ COMPLETED S70 — Seed KPI pilot + Task↔Milestone linking picker
+- [x] **S70.1 Seed**: NEW `backend/H2SeedPilot.gs` (`h2SeedDryRun`/`h2SeedCommit`/`h2SeedClearPilot`) nạp 8 sheet H2_* từ `data/SAMPLE_*_H2.md`; idempotent ID cố định; 8 Obj·27 KPI·28 MS·8 Risk·9 Dep·135 Tracking rỗng·2 Review. Validate Node sandbox. Giải quyết TD-H2-02.
+- [x] **S70.2 DEBUG+CR**: backend NEW `h2HandleTaskLink` owner-gated + route `h2-milestone-tasklink`; FE popup "+ Task" (search/filter, đa task, TaskRef CSV), chip→chi tiết common, unlink; `_gasH2TaskLink`. Scope task = Res\|\|Acc chủ mốc khớp username∪display-name.
+- [x] `verify_h2_tasklink.mjs` **28/28** + run_tests.mjs; v6.41→6.41.2; cache-bust `?v=20260812d` (65 refs). ✅ GAS redeployed.
+
+## 🔴 PRIORITY 0 — Smoke test S70 trên production
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | Hard-reload (Ctrl+Shift+R) | Badge `v6.41.2-h2-tasklink-pic-match-20260812` |
+| 2 | (GAS editor) chạy `h2SeedDryRun()` rồi `h2SeedCommit()` nếu chưa seed | Log 0 cảnh báo; 8 sheet H2_* có data QuangNN3+DungLQ1 |
+| 3 | Quản trị H2 · Theo dõi KPI → 1 mốc → nút **"+ Task"** | Popup hiện **mọi task user phụ trách** (Res/Acc); search/Initiative/Status/Quá hạn lọc đúng |
+| 4 | Tick nhiều task → Lưu → reload | Chip giữ (xác nhận GAS ghi); click chip → chi tiết task; × bỏ link |
+| 5 | Đăng nhập **member** (User) | "+ Task" chỉ hiện trên mốc của chính mình, không hiện mốc người khác |
+| 6 | Nếu popup vẫn thiếu task | Gửi 1 mẫu: giá trị cột PIC của task đó vs username login (alias ngoài User_Master?) |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S70 (tùy chọn)
+- **TaskRef CSV không FK**: task bị xoá → chip mốc vẫn hiện id (không tự dọn). Cân nhắc lọc chip theo `db.tasks` tồn tại. Xem TD-H2-04.
+- **B6 notif-hook H2** (RAG đỏ / mốc quá hạn bắn chuông+email) + docs `06_DASHBOARD_SPEC`/`07_DATA_MODEL` vẫn nợ (TD-H2-03).
+- **(nợ S69)** blank placeholder `.user-pill` (TD-AUTH-01); **~70 PNG** leftover `git restore test-results/`.
+
+---
 
 ---
 
