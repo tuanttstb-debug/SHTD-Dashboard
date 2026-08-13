@@ -1,4 +1,26 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-13 (Session 72 — Tuning tổng thể tầng gọi GAS P1–P3)
+**Context**: S72 done. v6.45-gas-tuning-p3-versiongate-20260813, `?v=20260813c`. HEAD `d49d0be` (3 commit P1 `892fe3c` / P2 `c304823` / P3 `d49d0be`). ✅ **GAS redeploy xong (link KHÔNG đổi), smoke PASS.** `verify_startup_nonblocking` **10/10**; full suite 33/33 (2 flaky batch pre-existing: i18n_p6/bld_queue).
+
+---
+
+## ✅ COMPLETED S72 — Tuning tầng gọi GAS (giữ kết nối + mượt khi data lớn)
+- [x] **Gốc**: khởi động bắn ~8 request GAS đồng thời (1 host → xếp hàng + GAS tuần tự hoá; `h2-read-all` mở 8 sheet bắn ngay dù H2 ngủ; Task ~1500 dòng). S71 nới timeout chỉ chữa triệu chứng.
+- [x] **P1 (`892fe3c`, v6.43, thuần FE)**: cache-first không chặn UI (`_startupSync`+`_runPool` concurrency=2 → fan-out **8→2**), lazy-load H2 (`_ensureH2Loaded`), poll notif **5'→15'+visibility**, `GAS_AI_TIMEOUT_MS=120s`. NEW `verify_startup_nonblocking.mjs`.
+- [x] **P2 (`c304823`, v6.44, GAS)**: NEW action `batch-read` gộp 7→**1** + spreadsheet mở 1 lần (8 reader optional `ss`); client `readAll()` + **fallback** read lẻ; `_markConnected()`.
+- [x] **P3 (`d49d0be`, v6.45, GAS)**: NEW `CacheLayer.gs` `DATA_VER`; **version gate** (`notModified` khi không đổi; LIVE khi đổi); bump ver trong `auditLog`+`notifScan`; AI context cache theo ver. Client gửi/lưu `db._dataVer` (loadCache khôi phục).
+- [x] ✅ **GAS redeploy** (thêm `CacheLayer.gs` + Code/Audit/Ai/Notification + reader `ss`), link KHÔNG đổi. Smoke PASS 3 phase.
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S72 (tùy chọn)
+- **P3.3 Archival** (chưa làm): khi Task_Master phình >1500 dòng đáng kể → tách sheet `Task_Archive` (Done cũ), read nóng quét ít dòng. Migration dryRun/commit. Chỉ cần khi data còn phình.
+- **Transfer khi data ĐỔI vẫn nặng** (TD-NET-04): version gate miễn phí khi KHÔNG đổi; khi đổi tải full ~1500 dòng (cache server cố ý bỏ tránh stale). Nếu thành nút thắt: delta-read theo dòng đổi (phức tạp).
+- **⚠️ Sau MIGRATION chạy tay** (DateNormalize/ReportWeek/Seed…): migration KHÔNG bump `DATA_VER` → client có thể `notModified` oan → **hard-reload** (hoặc thêm `_bumpDataVer()` cuối migration). Xem TD-NET-03.
+- **Test backend GAS** (TD-TEST-07): batch-read/version-gate/cache chỉ verify qua MOCK; đường GAS thật = smoke tay.
+- **(nợ cũ)** ~70 PNG `test-results` dirty → `git restore test-results/`; blank `.user-pill` (TD-AUTH-01).
+
+---
+
+# (S71) TODO — giữ tham khảo
 **Prepared**: 2026-08-12 (Session 71 — Fix timeout load dữ liệu mạng nội bộ (regression S69))
 **Context**: S71 done. v6.42-internal-net-read-timeout-20260812, `?v=20260812e` (65 refs). Full suite **31/32** (fail duy nhất `verify_bld_queue` = 404 flaky pre-existing, đã chứng minh qua `git stash`). **Thuần frontend — KHÔNG deploy GAS mới.**
 

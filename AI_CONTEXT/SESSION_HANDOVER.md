@@ -1,3 +1,32 @@
+# SESSION HANDOVER (S72) — 2026-08-13
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `c498ad7` (S71) → **sau (ĐÃ push)**: `d49d0be` (3 commit: `892fe3c` P1 · `c304823` P2 · `d49d0be` P3)
+**Version**: v6.42 → **v6.45** (`6.45-gas-tuning-p3-versiongate-20260813`, `?v=20260813c`)
+
+> **TUNING TỔNG THỂ TẦNG GỌI GAS (3 phase).** User báo S71 (nới read timeout 90s) KHÔNG giải quyết timeout/mất kết nối mạng nội bộ; nghi do H2 + data lớn. **Rà soát (xác nhận qua code)**: khởi động (`startApp`) bắn **~8 request GAS đồng thời** tới 1 host → trình duyệt xếp hàng (~6 kết nối/host) + GAS "Execute as Me" **tuần tự hoá** (tổng ≈ TỔNG các read) + mỗi read tự `openById` nguội + **không có CacheService**; `h2-read-all` (nặng nhất, mở spreadsheet 8 lần) bắn ngay dù view H2 ngủ. Data thật: Task **~1500** dòng, Case/Init ~500, còn lại 50–70. Ưu tiên #1 = **LUÔN giữ kết nối**. **✅ GAS đã redeploy (user, link KHÔNG đổi), smoke test PASS cả 3 phase.** Kế hoạch đầy đủ: `AI_CONTEXT/GAS_TUNING_PLAN.md`.
+
+## S72.1 — Phase 1: cache-first + lazy H2 + concurrency pool · commit `892fe3c` · v6.43 (thuần FE)
+- **✅ Task**: startup KHÔNG chặn UI; gỡ request nặng nhất khỏi cơn bão khởi động.
+- **✅ Files**: `app.js` (NEW `_startupSync`+`_runPool` concurrency=2 → fan-out **8→2**; `autoConnectDB` bỏ overlay chặn màn — chỉ đổi status-dot; poll notif **5'→15' + chỉ khi tab hiển thị**; **bỏ `readH2()` khỏi startup**), `h2-core.js` (`_h2Loaded`/`_ensureH2Loaded` lazy), `navigation.js` (hook 3 nav H2), `auth.js`+`views/ai-chat.js` (NEW `GAS_AI_TIMEOUT_MS=120000`), `config.js`, `index.html`. NEW `verify_startup_nonblocking.mjs`.
+- **✅ Decision**: cache-first (ĐẢO quyết định S71 giữ overlay); H2 load-1-lần khi mở view (không poll liên tục — user chọn); **AI chat KHÔNG phải nguyên nhân mất kết nối** (gọi on-demand, không ở startup) → chỉ cấp timeout riêng.
+
+## S72.2 — Phase 2: batch-read gộp 7→1 request · commit `c304823` · v6.44 (cần GAS)
+- **✅ Task**: gộp mọi read domain nóng vào **1 request**; mở spreadsheet **1 lần**.
+- **✅ Files backend (9)**: `Code.gs` (NEW action `batch-read`), 8 reader nhận **optional `ss`** (Sheet/CasePipeline/Issue/DevPlan/Initiative/User/Notification/H2Service; default `openById` → endpoint lẻ **backward-compat**), `h2ReadAll(ss)` mở 1 lần thay 8. **Client**: `api.js` NEW `readAll()` phân phối vào mọi db; `app.js` `_startupSync`/`syncDB` dùng batch với **FALLBACK read lẻ** khi batch chưa hỗ trợ; `_markConnected()` dùng chung.
+- **✅ Decision**: giữ endpoint lẻ (rollback + fallback); client fallback → push client **trước/sau** deploy GAS đều không phá app.
+
+## S72.3 — Phase 3: version gate + AI context cache · commit `d49d0be` · v6.45 (cần GAS)
+- **✅ Task**: request gộp gần như **miễn phí khi dữ liệu KHÔNG đổi** (thắng transfer lớn nhất mạng nội bộ).
+- **✅ Files**: NEW `backend/CacheLayer.gs` (`_dataVer`/`_bumpDataVer` + gzip cache helper cap 100KB/key); `Code.gs` batch-read **VERSION GATE** (client gửi `ver`; khớp `DATA_VER` → `{notModified:true}` gần 0 payload; đổi → đọc **LIVE**); `AuditService.gs` bump ver **trong `auditLog` (SAU write-commit)**; `NotificationService.gs` bump ở `notifScan`; `AiService.gs` cache context theo ver (gzip, skip >cap) + share 1 lần mở spreadsheet. **Client**: `api.js` gửi/lưu `db._dataVer`; `storage.js` `loadCache` khôi phục ver.
+- **✅ Decision**: (a) bump ver trong `auditLog` (sau commit) — **KHÔNG** bump trước dispatch (tránh race latch dữ liệu cũ). (b) **BỎ cache sheet-đọc ở server** — version gate đã đủ; khi đổi đọc LIVE để **không bao giờ trả dữ liệu cũ**. (c) AI cache theo ver (skip nếu >cap → build live như cũ).
+
+## Chung S72
+- **⛔ Blocker**: Không. ✅ **GAS đã redeploy** (thêm `CacheLayer.gs` + cập nhật Code/Audit/Ai/Notification + 8 reader `ss`), **link KHÔNG đổi**. Smoke test PASS 3 phase.
+- **➡️ Next step**: (1) Theo dõi PRD mạng nội bộ (F12 Network): data không đổi → `batch-read` trả `notModified` nhỏ; data đổi → **1** request full. (2) (tùy chọn P3.3) **archival** Task Done sang sheet riêng khi Task_Master phình >1500. (3) Nếu thêm đường ghi mới: PHẢI qua `auditLog` hoặc gọi `_bumpDataVer()` (xem TD-NET-03).
+- **🟢 Regression risk**: 🟢 **THẤP–TRUNG BÌNH**. FE additive + fallback; backend thêm action mới + `ss` optional (endpoint lẻ nguyên vẹn). `verify_startup_nonblocking` **10/10** (batch + fallback + version gate). Full suite **33/33** (2 lần chạy có blip `i18n_p6`/`bld_queue` = flaky batch pre-existing, standalone PASS). ⚠️ **Version gate phụ thuộc mọi write gọi `auditLog`** để bump ver — migration chạy tay trong editor KHÔNG bump → sau migration cần hard-reload (xem TD-NET-03). ⚠️ Data ĐỔI vẫn tải full ~1500 dòng (cache server cố ý bỏ tránh stale — TD-NET-04).
+
+---
+
 # SESSION HANDOVER (S71) — 2026-08-12
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `278a68b` (S70) → **sau (ĐÃ push)**: S71

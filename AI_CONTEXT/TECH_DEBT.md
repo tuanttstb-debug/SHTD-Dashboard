@@ -8,6 +8,28 @@
 
 ---
 
+## 🆕 DELTA — Session 72 (2026-08-13) — Tuning tầng gọi GAS (P1 cache-first · P2 batch-read · P3 version gate)
+
+### ✅ TD-NET-01 giảm nhẹ: ai-chat có ngân sách timeout riêng (P1)
+NEW `GAS_AI_TIMEOUT_MS=120000` (auth.js) cho ai-chat — LLM + `buildContext`(1500 task) vượt 30s là bình thường; abort message tiếng Việt trước đây KHÔNG khớp regex retry → giờ đỡ bằng ngân sách rộng. Read chung vẫn 90s, interactive/write 30s. **AI chat KHÔNG phải nguyên nhân mất kết nối** (on-demand, không ở startup).
+
+### TD-NET-03: Version gate phụ thuộc MỌI write gọi `auditLog` để bump `DATA_VER` 🟡 HIGH
+P3: `batch-read` trả `{notModified}` khi client `ver === DATA_VER`. `DATA_VER` bump trong `auditLog()` (sau write-commit) + `notifScan`. **Rủi ro**: đường ghi MỚI mà quên `auditLog` (hoặc ghi sheet trực tiếp NGOÀI doPost — vd migration `DateNormalize`/`ReportWeek`/`H2Seed` chạy tay trong editor) → ver KHÔNG đổi → client `notModified` oan → **thấy dữ liệu cũ tới lần write kế**. Giảm thiểu: mọi write action trong `Code.gs` hiện đều gọi `auditLog`. → **Quy tắc**: writer mới PHẢI qua `auditLog` HOẶC gọi `_bumpDataVer()`; sau migration chạy tay → hard-reload (clear localStorage) hoặc thêm `_bumpDataVer()` cuối migration.
+
+### TD-NET-04: Data ĐỔI vẫn transfer full (không delta); cache sheet-đọc server cố ý BỎ 🟢 MEDIUM
+Version gate miễn phí khi KHÔNG đổi. Khi ĐỔI (bất kỳ write) → ver đổi → client tải **full** mọi domain (Task ~1500 dòng) trong 1 batch. **Cố ý không** cache sheet-đọc ở server (bản gốc plan có `_cachedRead` gzip — đã bỏ) vì race read-xen-giữa-write có thể **latch dữ liệu cũ dưới ver mới** → 6h stale. Đổi lại: mỗi lần đổi đọc LIVE → luôn tươi. Team ~7 người: 1 write của A → 6 người kia tải full ở batch kế (chấp nhận được). → Nếu transfer-khi-đổi thành nút thắt: delta-read theo dòng thay đổi (thêm cột updatedAt / đổi schema) — phức tạp, cân nhắc sau.
+
+### TD-TEST-07: batch-read / version-gate / AI-cache CHỈ verify qua MOCK 🟢 MEDIUM
+`verify_startup_nonblocking.mjs` (10/10) mock route `script.google.com` → kiểm **CLIENT** (readAll gửi/lưu ver, `notModified` giữ cache, fallback read lẻ, concurrency≤2, lazy H2) nhưng KHÔNG chạy GAS thật (handler `batch-read`, `_dataVer`/`_bumpDataVer`, gzip cache, `ss` chia sẻ, bump trong `auditLog`). Backend chỉ `node --check` + review. Đường GAS thật verify bằng smoke tay (đã PASS). Cùng bản chất TD-TEST-04 (GAS không chạy dưới node). → Nếu cần: port logic version-gate ra spec test kiểu `verify_id_reassign`.
+
+### TD-NET-05: `_authStartupGrace` nới lên ~95s (P1) — cửa sổ nuốt `AUTH_REQUIRED` dài hơn ⚪ LOW
+P1 đổi grace `GAS_TIMEOUT_MS+5s`→`GAS_READ_TIMEOUT_MS+5s` (35s→95s) để read nền chậm không xóa oan phiên vừa login. Nới rộng TD-NET-02: nếu phiên **thật sự** hết hạn trong ~95s đầu sau khi mở app, `AUTH_REQUIRED` bị nuốt tới hết grace / lần interactive kế. Token 24h nên hiếm. Nếu cần chặt: cờ per-request (đánh dấu chỉ read startup) thay vì theo thời gian.
+
+### Ghi chú S72 — nợ có kiểm soát
+Batch-read/version-gate = thêm action + `ss` optional; endpoint lẻ nguyên vẹn → rollback = client quay lại read lẻ (không cần revert GAS). Server `_cachedRead` đã bỏ (chỉ còn AI-context cache theo ver, skip nếu >100KB). Bump-timing đã sửa từ "trước dispatch" (racy) → "trong auditLog, sau commit".
+
+---
+
 ## 🆕 DELTA — Session 70 (2026-08-12) — Seed KPI pilot H2 + Task↔Milestone linking picker
 
 ### ✅ TD-H2-02 RESOLVED: `backend/H2SeedPilot.gs` đã tạo (S70.1)
