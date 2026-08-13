@@ -11,6 +11,7 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
+  'verify_startup_nonblocking.mjs', // 6 tests  GAS tuning P1 — cache-first, lazy H2, concurrency pool ≤2
   'verify_h2_core.mjs',         // 14 tests  H2 (Track B) — client core: RAG/achievement/score/capacity/validate + load smoke
   'verify_h2_tracker.mjs',      // 32 tests  H2 (Track B B3) — tracker view: render/stat/RAG/CRUD modals/RBAC
   'verify_h2_tasklink.mjs',     // CR         H2 — Task↔Milestone picker: scope/filter/multi-link/detail/RBAC

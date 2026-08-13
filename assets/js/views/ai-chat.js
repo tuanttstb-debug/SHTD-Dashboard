@@ -162,7 +162,8 @@ async function _aiPostWithRetry(payload) {
   var attempts = 3, lastErr;
   for (var a = 0; a < attempts; a++) {
     try {
-      return await gasPost(payload);
+      // Ngân sách timeout riêng (dài) cho AI — buildContext(1500 task) + Gemini vượt 30s là bình thường.
+      return await gasPost(payload, GAS_AI_TIMEOUT_MS);
     } catch (err) {
       lastErr = err;
       if (!/HTTP: [45]\d\d|Failed to fetch|NetworkError/i.test(err.message)) break; // lỗi không phải transient → không retry

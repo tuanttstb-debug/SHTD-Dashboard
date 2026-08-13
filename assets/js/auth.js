@@ -12,6 +12,10 @@ const GAS_TIMEOUT_MS = 30000;
 // Quá ngân sách này → coi như kết nối chết → nút "Sync/Thử lại" + cache (xử lý ở app.js).
 const GAS_READ_TIMEOUT_MS = 90000;
 
+// Ngân sách RIÊNG cho ai-chat: server phải buildContext (đọc toàn bộ Task ~1500 dòng)
+// RỒI mới gọi Gemini (LLM chậm) → 30s quá chật, dễ abort oan. AI là read-only nên chờ lâu an toàn.
+const GAS_AI_TIMEOUT_MS = 120000;
+
 // Trong lúc khởi động (startApp), KHÔNG tự đăng xuất khi 1 read chớp nhoáng trả AUTH_REQUIRED.
 // Một blip mạng không được phép xóa phiên vừa đăng nhập → app.js bật/tắt cờ này quanh startApp.
 let _authStartupGrace = false;

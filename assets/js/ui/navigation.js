@@ -92,9 +92,9 @@ function navigateTo(view) {
   if (view === 'initiative-tracker')   renderInitiativeTracker();
   if (view === 'issue-tracker')        renderIssueTracker();
   if (view === 'dev-plan')             renderDevPlan();
-  if (view === 'h2-dashboard')         renderH2Dashboard();
-  if (view === 'h2-tracker')           renderH2Tracker();
-  if (view === 'h2-review')            renderH2Review();
+  if (view === 'h2-dashboard')         { if (typeof _ensureH2Loaded === 'function') _ensureH2Loaded(); renderH2Dashboard(); }
+  if (view === 'h2-tracker')           { if (typeof _ensureH2Loaded === 'function') _ensureH2Loaded(); renderH2Tracker(); }
+  if (view === 'h2-review')            { if (typeof _ensureH2Loaded === 'function') _ensureH2Loaded(); renderH2Review(); }
   if (view === 'ai-chat')              renderAiChat();
   if (view === 'user-management')      renderUserManagement();
   if (view === 'my-work')              renderMyWork();

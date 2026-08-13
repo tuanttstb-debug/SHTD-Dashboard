@@ -52,26 +52,51 @@ async function startApp() {
   setInterval(updateClock, 30000);
 
   if (GS_WEBAPP_URL) {
-    await autoConnectDB();
-    readInitiatives(); // non-blocking
-    readCases();       // non-blocking — load Case_Pipeline sau tasks
-    readIssues();      // non-blocking — load Issue_Tracker
-    readDev().then(() => {   // non-blocking — load Dev_Plan; refresh My Work if visible
-      if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
-      if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
-    });
-    loadAppUsers();    // non-blocking — populate Team/PIC dropdowns in modals
-    readNotifications();                                   // non-blocking — chuông nhắc việc
-    setInterval(readNotifications, 5 * 60 * 1000);         // poll mỗi 5 phút
-    if (typeof readH2 === 'function') readH2();             // non-blocking — load domain Quản trị H2 (dormant tới khi có view)
+    // CACHE-FIRST: KHÔNG await — UI đã render từ cache; đồng bộ chạy NỀN, không chặn màn.
+    _startupSync();
+    // Poll chuông nhẹ: 15' + chỉ khi tab đang hiển thị (đỡ đè request lên thao tác tương tác).
+    setInterval(() => { if (document.visibilityState === 'visible') readNotifications(); }, 15 * 60 * 1000);
   }
 }
 
+// Đồng bộ nền lúc khởi động (cache-first). Gộp mọi read domain nóng qua pool concurrency=2
+// → hết fan-out ~8 request đè cùng lúc lên 1 host GAS (nguyên nhân xếp hàng/timeout mạng nội bộ).
+// H2 KHÔNG nằm ở đây — lazy-load khi mở view (h2-core.js _ensureH2Loaded).
+async function _startupSync() {
+  const jobs = [
+    autoConnectDB,          // Task_Master = tín hiệu "kết nối" (cập nhật dot / nút Thử lại)
+    readInitiatives,
+    readCases,
+    readIssues,
+    () => readDev().then(() => {
+      if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
+      if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
+    }),
+    loadAppUsers,
+    readNotifications,
+  ];
+  await _runPool(jobs, 2);
+  renderAll();   // render gộp 1 lần sau khi các domain nền đã về
+}
+
+// Concurrency pool: chạy tối đa `size` job cùng lúc. Lỗi 1 job không chặn job khác.
+async function _runPool(jobs, size) {
+  const queue = jobs.slice();
+  const worker = async () => {
+    while (queue.length) {
+      const job = queue.shift();
+      try { await job(); } catch (e) { console.warn('[startupSync] job lỗi:', e && e.message); }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(size || 2, queue.length) }, worker));
+}
+
 async function autoConnectDB() {
-  showLoading('Đang tải dữ liệu từ Google Sheets… (mạng nội bộ có thể chậm, vui lòng chờ)');
+  // CACHE-FIRST: KHÔNG showLoading chặn màn — UI đã hiện dữ liệu cache. Chỉ báo trạng thái "đang đồng bộ".
+  const dot0 = document.getElementById('dbDot'); if (dot0) dot0.className = 'status-dot syncing';
+  const sb0  = document.getElementById('sbDb');  if (sb0)  sb0.textContent  = 'Đang đồng bộ…';
   try {
     await readFromHandle();
-    hideLoading();
     renderAll();
     document.getElementById('btnConnect').innerHTML = '<i class="fa-brands fa-google"></i> Đã kết nối';
     document.getElementById('btnConnect').className = 'btn btn-success-soft btn-sm';
@@ -79,9 +104,7 @@ async function autoConnectDB() {
     document.getElementById('dbDot').className = 'status-dot connected';
     document.getElementById('dbStatus').textContent = 'Google Sheets';
     document.getElementById('sbDb').textContent = 'Google Sheets';
-    toast('✅ Đã tải dữ liệu từ Google Sheets!', 'success');
   } catch(e) {
-    hideLoading();
     console.warn('[SHTD] Auto-connect thất bại:', e && e.message);
     _showStartupRetry(e && e.message);   // giữ phiên + dữ liệu cache + nút "Thử lại"
   }

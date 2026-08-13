@@ -35,6 +35,16 @@ const H2_ENTITY = {
 
 let dbH2 = { config: [], objectives: [], kpis: [], milestones: [], tracking: [], risks: [], deps: [], reviews: [] };
 
+// Lazy-load: domain H2 KHÔNG tải lúc khởi động (request nặng nhất — mở 8 sheet).
+// Chỉ tải lần đầu khi user mở 1 view H2 (navigation.js gọi _ensureH2Loaded). Cache hiện ngay,
+// readH2 refresh nền + re-render. Load 1 lần/phiên (không poll liên tục — theo lựa chọn user).
+let _h2Loaded = false;
+function _ensureH2Loaded() {
+  if (_h2Loaded || typeof readH2 !== 'function') return;
+  _h2Loaded = true;
+  readH2();   // async — tự re-render view H2 đang mở khi xong
+}
+
 /* ── Parse 2D grid (row0 = header từ server) → mảng object keyed theo header ── */
 function _h2Parse(grid) {
   if (!Array.isArray(grid) || grid.length < 2) return [];
