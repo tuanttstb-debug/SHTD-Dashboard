@@ -72,6 +72,27 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', values: result.values, serverTs: result.serverTs });
     }
 
+    // ── batch-read: gộp nhiều domain trong 1 request, MỞ SPREADSHEET 1 LẦN ──
+    // Thay ~7 request khởi động (mỗi cái tự openById) bằng 1. Client fallback về read lẻ
+    // nếu action này chưa có (GAS chưa redeploy) → deploy không phá app ở cả 2 chiều.
+    if (action === 'batch-read') {
+      var _bss  = SpreadsheetApp.openById(SPREADSHEET_ID);
+      var _want = (body.domains && body.domains.length)
+        ? body.domains
+        : ['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs'];
+      var _pick = {}; for (var _bi = 0; _bi < _want.length; _bi++) _pick[_want[_bi]] = true;
+      var _bd = {};
+      if (_pick.tasks)       { var _tr = sheetRead(_bss); _bd.tasks = { values: _tr.values }; }
+      if (_pick.cases)        _bd.cases       = { values: caseRead(_bss) };
+      if (_pick.issues)       _bd.issues      = { values: issueRead(_bss) };
+      if (_pick.dev)          _bd.dev         = { values: devRead(_bss) };
+      if (_pick.initiatives)  _bd.initiatives = { values: initiativeRead(_bss) };
+      if (_pick.users)        _bd.users       = userList(_bss);
+      if (_pick.notifs)       _bd.notifs      = notifRead(tokenData.u, _bss);
+      if (_pick.h2)           _bd.h2          = h2ReadAll(_bss);
+      return _jsonResponse({ status: 'ok', serverTs: _getTaskTs(), data: _bd });
+    }
+
     if (action === 'write') {
       if (!body.values || !Array.isArray(body.values) || body.values.length < 2) {
         throw new Error('Payload write thiếu hoặc rỗng.');

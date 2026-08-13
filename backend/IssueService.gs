@@ -17,8 +17,8 @@ var ISSUE_HEADER = [
  * Đọc toàn bộ Issue_Tracker dưới dạng mảng 2D (display values).
  * Tự tạo sheet với header nếu chưa tồn tại.
  */
-function issueRead() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function issueRead(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(ISSUE_SHEET_NAME);
 
   if (!sheet) {

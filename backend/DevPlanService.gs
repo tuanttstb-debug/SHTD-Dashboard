@@ -18,8 +18,8 @@ var DEV_HEADER = [
  * Đọc toàn bộ Dev_Plan dưới dạng mảng 2D (display values).
  * Tự tạo sheet với header nếu chưa tồn tại.
  */
-function devRead() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function devRead(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(DEV_SHEET_NAME);
 
   if (!sheet) {

@@ -83,9 +83,12 @@
 
 ---
 
-## 4. PHASE 2 — Backend `batch-read` gộp (cần deploy GAS)
+## 4. PHASE 2 — Backend `batch-read` gộp (cần deploy GAS) — ✅ ĐÃ TRIỂN KHAI 2026-08-13
 
 > Cú fix cấu trúc: gộp 7–8 request → **1**, mở spreadsheet **1 lần**. Thắng lớn nhất về latency mạng nội bộ.
+>
+> **Trạng thái**: code xong, syntax OK (9 file .gs + client), full suite **33/33** + `verify_startup_nonblocking` **8/8** (concurrency khởi động **1**, có test fallback). v6.44, `?v=20260813b`. **CHƯA deploy GAS** — client có **fallback read lẻ** nên push client trước deploy KHÔNG phá app (batch-read chưa có → tự dùng đường cũ). Sau khi user redeploy GAS → startup còn **1 request**.
+> **⚠️ Việc thủ công còn lại**: user copy 9 file backend vào Apps Script editor → Deploy New version (URL không đổi).
 
 ### 2.1 Endpoint mới `batch-read`
 **Contract:**

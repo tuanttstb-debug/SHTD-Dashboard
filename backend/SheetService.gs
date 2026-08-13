@@ -13,8 +13,8 @@ function _setTaskTs() {
   PropertiesService.getScriptProperties().setProperty('TASK_WRITE_TS', String(Date.now()));
 }
 
-function sheetRead() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function sheetRead(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) throw new Error('Không tìm thấy sheet: ' + SHEET_NAME);
 

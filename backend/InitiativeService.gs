@@ -11,8 +11,8 @@ var INI_SHEET_NAME = 'Initiative_Master';
  * Tạo sheet mới với header nếu chưa tồn tại.
  * @returns {string[][]}
  */
-function initiativeRead() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function initiativeRead(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(INI_SHEET_NAME);
 
   if (!sheet) {

@@ -22,8 +22,8 @@ var CASE_HEADER = [
  * Tự tạo sheet với header nếu chưa tồn tại.
  * @returns {string[][]}
  */
-function caseRead() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function caseRead(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(CASE_SHEET_NAME);
 
   if (!sheet) {

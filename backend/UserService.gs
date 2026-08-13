@@ -4,8 +4,8 @@
  * Return all users from User_Master, excluding Password_Hash column.
  * Returns { header: [...], rows: [[...], ...] }
  */
-function userList() {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function userList(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(USER_SHEET_NAME);
   if (!sheet) throw new Error('Không tìm thấy sheet User_Master.');
 

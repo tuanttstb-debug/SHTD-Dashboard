@@ -62,8 +62,8 @@ var _NOTIF_CASE_GRP = {
 
 /* ══════════════ Sheet helpers ══════════════ */
 
-function _notifSheet_() {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+function _notifSheet_(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(NOTIF_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(NOTIF_SHEET_NAME);
@@ -237,9 +237,9 @@ function _notifMakeRec_(username, type, etype, id, title, dueStr) {
 
 /* ══════════════ Client API: read / mark-read ══════════════ */
 
-function notifRead(username) {
+function notifRead(username, ss) {
   var u = String(username || '').toLowerCase();
-  var sheet = _notifSheet_();
+  var sheet = _notifSheet_(ss);
   var last = sheet.getLastRow();
   if (last < 2) return [];
   var data = sheet.getRange(2, 1, last - 1, NOTIF_HEADER.length).getValues();

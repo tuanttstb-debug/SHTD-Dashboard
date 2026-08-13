@@ -63,6 +63,24 @@ async function startApp() {
 // → hết fan-out ~8 request đè cùng lúc lên 1 host GAS (nguyên nhân xếp hàng/timeout mạng nội bộ).
 // H2 KHÔNG nằm ở đây — lazy-load khi mở view (h2-core.js _ensureH2Loaded).
 async function _startupSync() {
+  // Phase 2: THỬ 1 request gộp (batch-read) trước.
+  let ok = false;
+  try {
+    ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);
+  } catch (e) {
+    // Lỗi MẠNG (timeout/fetch) → giữ cache + nút "Thử lại"; KHÔNG fallback (tránh double-timeout).
+    console.warn('[SHTD] batch-read lỗi mạng:', e && e.message);
+    _showStartupRetry(e && e.message);
+    return;
+  }
+  if (ok) {
+    _markConnected();
+    if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
+    if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
+    renderAll();
+    return;
+  }
+  // batch-read CHƯA hỗ trợ (GAS chưa redeploy) → fallback read lẻ qua pool concurrency=2 (Phase 1).
   const jobs = [
     autoConnectDB,          // Task_Master = tín hiệu "kết nối" (cập nhật dot / nút Thử lại)
     readInitiatives,
@@ -77,6 +95,16 @@ async function _startupSync() {
   ];
   await _runPool(jobs, 2);
   renderAll();   // render gộp 1 lần sau khi các domain nền đã về
+}
+
+// Đặt UI về trạng thái "đã kết nối" (dùng chung: batch-read OK / autoConnectDB OK / syncDB OK).
+function _markConnected() {
+  const bc = document.getElementById('btnConnect');
+  if (bc) { bc.innerHTML = '<i class="fa-brands fa-google"></i> Đã kết nối'; bc.className = 'btn btn-success-soft btn-sm'; }
+  const bs = document.getElementById('btnSync'); if (bs) bs.style.display = 'inline-flex';
+  const dot = document.getElementById('dbDot'); if (dot) dot.className = 'status-dot connected';
+  const ds = document.getElementById('dbStatus'); if (ds) ds.textContent = 'Google Sheets';
+  const sb = document.getElementById('sbDb'); if (sb) sb.textContent = 'Google Sheets';
 }
 
 // Concurrency pool: chạy tối đa `size` job cùng lúc. Lỗi 1 job không chặn job khác.
@@ -98,12 +126,7 @@ async function autoConnectDB() {
   try {
     await readFromHandle();
     renderAll();
-    document.getElementById('btnConnect').innerHTML = '<i class="fa-brands fa-google"></i> Đã kết nối';
-    document.getElementById('btnConnect').className = 'btn btn-success-soft btn-sm';
-    document.getElementById('btnSync').style.display = 'inline-flex';
-    document.getElementById('dbDot').className = 'status-dot connected';
-    document.getElementById('dbStatus').textContent = 'Google Sheets';
-    document.getElementById('sbDb').textContent = 'Google Sheets';
+    _markConnected();
   } catch(e) {
     console.warn('[SHTD] Auto-connect thất bại:', e && e.message);
     _showStartupRetry(e && e.message);   // giữ phiên + dữ liệu cache + nút "Thử lại"
@@ -229,19 +252,17 @@ async function connectDB() {
 async function syncDB() {
   showLoading('Đang đồng bộ dữ liệu từ Sheets… (mạng nội bộ có thể chậm, vui lòng chờ)');
   try {
-    await Promise.all([
-      readFromHandle(),
-      readCases(),
-      readIssues(),
-      readDev(),
-      readInitiatives(),
-      readNotifications(),
-    ]);
+    // Phase 2: 1 request gộp. Nếu GAS chưa hỗ trợ → fallback read lẻ.
+    const ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);
+    if (!ok) {
+      await Promise.all([
+        readFromHandle(), readCases(), readIssues(), readDev(), readInitiatives(), readNotifications(),
+      ]);
+    }
+    // Sync = mốc "bắt buộc cập nhật" → refresh H2 nếu đã mở trong phiên (không load liên tục).
+    if (_h2Loaded && typeof readH2 === 'function') readH2();
     hideLoading(); renderAll();
-    // Sync thành công ⇒ khôi phục trạng thái "đã kết nối" (đặc biệt sau khi _showStartupRetry đổi sang ngoại tuyến)
-    document.getElementById('dbDot').className = 'status-dot connected';
-    document.getElementById('dbStatus').textContent = 'Google Sheets';
-    document.getElementById('sbDb').textContent = 'Google Sheets';
+    _markConnected();   // khôi phục "đã kết nối" (đặc biệt sau khi _showStartupRetry đổi sang ngoại tuyến)
     toast('Đã đồng bộ toàn bộ dữ liệu!', 'success');
   } catch(e) { hideLoading(); toast('Lỗi: ' + e.message, 'error'); }
 }

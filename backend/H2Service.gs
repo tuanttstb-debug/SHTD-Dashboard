@@ -49,8 +49,8 @@ var H2_CONFIG_DEFAULTS = [
 ];
 
 /** Lấy sheet theo tên, tự tạo + ghi header (+ seed Config) nếu chưa có. */
-function _h2Sheet(sheetName) {
-  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+function _h2Sheet(sheetName, ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(sheetName);
   var header = H2_HEADERS[sheetName];
   if (!header) throw new Error('H2: sheet không hợp lệ: ' + sheetName);
@@ -67,8 +67,8 @@ function _h2Sheet(sheetName) {
 }
 
 /** Đọc toàn bộ 1 sheet H2 dưới dạng mảng 2D (display values). */
-function _h2Read(sheetName) {
-  var sheet   = _h2Sheet(sheetName);
+function _h2Read(sheetName, ss) {
+  var sheet   = _h2Sheet(sheetName, ss);
   var header  = H2_HEADERS[sheetName];
   var lastRow = sheet.getLastRow();
   if (lastRow < 1) return [header];
@@ -234,15 +234,16 @@ function h2HandleTaskLink(body, tokenData) {
  * Đọc gộp toàn bộ domain H2 trong 1 lần gọi (giảm round-trip client).
  * Trả về object { config, objectives, kpis, milestones, tracking, risks, deps, reviews }.
  */
-function h2ReadAll() {
+function h2ReadAll(ss) {
+  ss = ss || SpreadsheetApp.openById(SPREADSHEET_ID);   // mở 1 lần cho cả 8 sheet (trước: 8 lần)
   return {
-    config:     _h2Read('H2_Config'),
-    objectives: _h2Read('H2_Objectives'),
-    kpis:       _h2Read('H2_KPIs'),
-    milestones: _h2Read('H2_Milestones'),
-    tracking:   _h2Read('H2_MonthlyTracking'),
-    risks:      _h2Read('H2_Risks'),
-    deps:       _h2Read('H2_Dependencies'),
-    reviews:    _h2Read('H2_Reviews')
+    config:     _h2Read('H2_Config', ss),
+    objectives: _h2Read('H2_Objectives', ss),
+    kpis:       _h2Read('H2_KPIs', ss),
+    milestones: _h2Read('H2_Milestones', ss),
+    tracking:   _h2Read('H2_MonthlyTracking', ss),
+    risks:      _h2Read('H2_Risks', ss),
+    deps:       _h2Read('H2_Dependencies', ss),
+    reviews:    _h2Read('H2_Reviews', ss)
   };
 }

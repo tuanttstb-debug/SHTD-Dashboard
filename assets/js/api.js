@@ -208,6 +208,69 @@ async function readFromHandle() {
   return true;
 }
 
+/* ══════════════════════════════════════════
+   BATCH READ (Phase 2) — gộp mọi domain nóng vào 1 request GAS.
+   Trả:
+     true       = batch-read OK, đã phân phối vào các db + persist.
+     false      = GAS chưa hỗ trợ batch-read (chưa redeploy) → caller fallback read lẻ.
+     (throw)    = lỗi MẠNG (timeout/fetch) → caller hiện "Thử lại", KHÔNG fallback (tránh double-timeout).
+══════════════════════════════════════════ */
+async function readAll(domains) {
+  if (!GS_WEBAPP_URL || !getAuthSession()) return false;
+  // Lỗi mạng ở gasPost sẽ THROW ra ngoài (caller xử lý) — không nuốt để tránh fallback double-timeout.
+  const json = await gasPost({ action: 'batch-read', domains: domains || null }, GAS_READ_TIMEOUT_MS);
+  if (!json || json.status !== 'ok' || !json.data) {
+    console.warn('batch-read chưa hỗ trợ (GAS chưa redeploy?):', json && json.error);
+    return false;   // GAS SỐNG nhưng chưa có action → fallback read lẻ an toàn
+  }
+  const d = json.data;
+  // Mỗi domain bọc riêng: 1 domain lỗi parse không kéo đổ các domain khác.
+  try {
+    if (d.tasks && Array.isArray(d.tasks.values)) {
+      _parseArrayIntoDb(d.tasks.values);
+      if (json.serverTs) db._serverTs = json.serverTs;
+      if (db.deletedIds && db.deletedIds.length) {
+        const serverIds = new Set(db.tasks.map(t => t.id));
+        db.deletedIds = db.deletedIds.filter(id => !serverIds.has(id));
+      }
+      persist();
+    }
+  } catch (e) { console.warn('readAll tasks:', e.message); }
+  try { if (d.initiatives && Array.isArray(d.initiatives.values)) { _parseInitiativeArray(d.initiatives.values); persist(); } } catch (e) { console.warn('readAll initiatives:', e.message); }
+  try { if (d.cases && Array.isArray(d.cases.values)) { _parseCaseArray(d.cases.values); persistCases(); } } catch (e) { console.warn('readAll cases:', e.message); }
+  try {
+    if (d.issues && Array.isArray(d.issues.values)) {
+      const rows = d.issues.values;
+      dbIssues = rows.length <= 1 ? [] : rows.slice(1).map(rowToIssue).filter(i => i.id);
+      persistIssues();
+    }
+  } catch (e) { console.warn('readAll issues:', e.message); }
+  try {
+    if (d.dev && Array.isArray(d.dev.values)) {
+      const rows = d.dev.values;
+      dbDev = rows.length <= 1 ? [] : rows.slice(1).map(rowToDev).filter(x => x.id);
+      persistDev();
+    }
+  } catch (e) { console.warn('readAll dev:', e.message); }
+  try {
+    if (d.users && Array.isArray(d.users.rows)) {
+      const header = d.users.header || [];
+      _appUsers = d.users.rows
+        .map(row => { const o = {}; header.forEach((h, i) => { o[h] = row[i]; }); return o; })
+        .filter(u => String(u.Active).toLowerCase() !== 'false');
+      if (typeof _resolvePickerCase === 'function') _resolvePickerCase();
+    }
+  } catch (e) { console.warn('readAll users:', e.message); }
+  try {
+    if (Array.isArray(d.notifs)) {
+      dbNotifs = d.notifs;
+      persistNotifs();
+      if (typeof renderNotifBell === 'function') renderNotifBell();
+    }
+  } catch (e) { console.warn('readAll notifs:', e.message); }
+  return true;
+}
+
 // Local-only mutation: update cache + re-render, no GAS write.
 // Used for individual Task CRUD and bulk Task operations.
 // Only Excel import (handleImport) goes through syncAction to write GAS.

@@ -1,14 +1,17 @@
 /**
- * verify_startup_nonblocking.mjs — Phase 1 GAS tuning (cache-first, lazy H2, pool)
+ * verify_startup_nonblocking.mjs — GAS tuning P1 (cache-first, lazy H2, pool) + P2 (batch-read)
  *
- *  SNB1 – Startup KHÔNG gọi 'h2-read-all' (H2 lazy-load, không nằm trong cơn bão khởi động)
- *  SNB2 – Startup có gọi các read domain nóng (read, initiative-read, case-pipeline-read,
- *         issue-read, dev-read, user-list, notif-read)
- *  SNB3 – Concurrency request GAS lúc khởi động ≤ 2 (pool giới hạn — hết fan-out 8 đồng thời)
- *  SNB4 – Cache-first: loadingOverlay KHÔNG bị bật chặn màn trong lúc đang đồng bộ nền;
- *         view mặc định (my-work) đã hiển thị ngay (render trước khi read resolve)
- *  SNB5 – Lazy H2: sau khi mở view H2 → 'h2-read-all' MỚI được gọi (đúng 1 lần)
- *  SNB6 – Không có JS error khi load
+ *  Scenario A — batch-read HỖ TRỢ (GAS đã redeploy):
+ *   SNB1 – Khởi động gọi ĐÚNG 1 'batch-read', KHÔNG gọi read lẻ (read/case-pipeline-read/…)
+ *   SNB2 – Khởi động KHÔNG gọi 'h2-read-all' (H2 lazy)
+ *   SNB3 – Concurrency request GAS lúc khởi động ≤ 2
+ *   SNB4 – Cache-first: loadingOverlay KHÔNG chặn màn + view my-work đã hiển thị ngay
+ *   SNB5 – Lazy H2: mở view H2 → 'h2-read-all' MỚI được gọi (đúng 1 lần)
+ *   SNB6 – Không có JS error
+ *
+ *  Scenario B — batch-read CHƯA hỗ trợ (GAS chưa redeploy) → FALLBACK:
+ *   SNB7 – batch-read trả lỗi → client fallback gọi các read lẻ (read + case-pipeline-read + …)
+ *   SNB8 – Fallback không có JS error
  *
  * Run: node verify_startup_nonblocking.mjs
  */
@@ -42,78 +45,102 @@ function log(id, ok, msg) {
   if (ok) passed++; else failed++;
 }
 
-const browser = await chromium.launch();
-const page    = await browser.newPage();
-const jsErrors = [];
-page.on('pageerror', e => jsErrors.push(e.message));
+// Payload batch-read hợp lệ (đủ shape cho readAll phân phối)
+const BATCH_DATA = {
+  tasks:       { values: [['ID', 'Task/Deliverable']] },
+  cases:       { values: [['ID']] },
+  issues:      { values: [['ID']] },
+  dev:         { values: [['ID']] },
+  initiatives: { values: [['ID', 'Tên Initiative / Milestone']] },
+  users:       { header: ['Username', 'Active'], rows: [['tester', 'true']] },
+  notifs:      [],
+};
+const H2_DATA = {
+  config: [['Key']], objectives: [['ID']], kpis: [['ID']], milestones: [['ID']],
+  tracking: [['ID']], risks: [['ID']], deps: [['ID']], reviews: [['ID']],
+};
 
-// ── Ghi nhận mọi request GAS + đo concurrency ──
-const actions   = [];        // { action, t } theo thứ tự bắt đầu
-let inflight    = 0;
-let maxInflight = 0;
+async function bootPage(browser, { batchSupported }) {
+  const page     = await browser.newPage();
+  const jsErrors = [];
+  const actions  = [];
+  let inflight = 0, maxInflight = 0;
+  page.on('pageerror', e => jsErrors.push(e.message));
 
-await page.route('**script.google.com**', async (route) => {
-  let action = '?';
-  try { action = (JSON.parse(route.request().postData() || '{}').action || '?').toLowerCase(); } catch {}
-  actions.push({ action, t: Date.now() });
-  inflight++; if (inflight > maxInflight) maxInflight = inflight;
+  await page.route('**script.google.com**', async (route) => {
+    let action = '?';
+    try { action = (JSON.parse(route.request().postData() || '{}').action || '?').toLowerCase(); } catch {}
+    actions.push(action);
+    inflight++; if (inflight > maxInflight) maxInflight = inflight;
+    await new Promise(r => setTimeout(r, 120));   // giữ chậm để lộ concurrency
 
-  // Giữ response chậm để lộ concurrency (nếu fan-out sẽ thấy inflight cao)
-  await new Promise(r => setTimeout(r, 150));
+    let body;
+    if (action === 'batch-read') {
+      body = batchSupported
+        ? { status: 'ok', serverTs: '0', data: BATCH_DATA }
+        : { status: 'error', error: 'action không hợp lệ: batch-read' };   // giả lập GAS chưa redeploy
+    } else if (action === 'h2-read-all') {
+      body = { status: 'ok', data: H2_DATA };
+    } else {
+      // read lẻ (fallback) + user-list/notif-read
+      body = { status: 'ok', values: [['ID']], data: { header: [], rows: [] }, notifs: [], serverTs: '0' };
+    }
+    inflight--;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  });
 
-  // Trả JSON hợp lệ tối thiểu cho mọi action đọc
-  const body = {
-    status:  'ok',
-    values:  [['ID']],
-    data:    { header: [], rows: [],
-               config: [['Key']], objectives: [['ID']], kpis: [['ID']], milestones: [['ID']],
-               tracking: [['ID']], risks: [['ID']], deps: [['ID']], reviews: [['ID']] },
-    notifs:  [],
-    serverTs:'0',
-  };
-  inflight--;
-  await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
-});
+  await page.addInitScript(() => {
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({
+      token: 'test-token',
+      user:  { username: 'tester', displayName: 'Tester', role: 'Admin', team: 'BC' },
+      exp:   Date.now() + 3600000,
+    }));
+  });
 
-// Phiên đăng nhập giả (client-only) để startApp chạy nhánh mạng
-await page.addInitScript(() => {
-  localStorage.setItem('shtd_auth_v1', JSON.stringify({
-    token: 'test-token',
-    user:  { username: 'tester', displayName: 'Tester', role: 'Admin', team: 'BC' },
-    exp:   Date.now() + 3600000,
+  await page.goto(BASE_URL, { waitUntil: 'load' });
+  const immediate = await page.evaluate(() => ({
+    myWorkShown:     document.getElementById('view-my-work')?.style.display === 'contents',
+    overlayBlocking: document.getElementById('loadingOverlay')?.classList.contains('visible') === true,
   }));
-});
+  await page.waitForTimeout(1400);
+  return { page, jsErrors, actions, maxInflight, immediate };
+}
 
-await page.goto(BASE_URL, { waitUntil: 'load' });
+const browser = await chromium.launch();
 
-// Ngay sau load (trước khi read chậm resolve): view mặc định đã render + overlay không chặn
-const immediate = await page.evaluate(() => ({
-  myWorkShown:    document.getElementById('view-my-work')?.style.display === 'contents',
-  overlayBlocking: document.getElementById('loadingOverlay')?.classList.contains('visible') === true,
-}));
+// ── Scenario A: batch-read hỗ trợ ──
+{
+  const { page, jsErrors, actions, maxInflight, immediate } = await bootPage(browser, { batchSupported: true });
+  const indivReads = ['read', 'case-pipeline-read', 'issue-read', 'dev-read', 'initiative-read', 'user-list', 'notif-read'];
+  const batchCount = actions.filter(a => a === 'batch-read').length;
+  const indivFired = indivReads.filter(a => actions.includes(a));
 
-// Chờ pool khởi động chạy xong (7 job × 150ms / 2 ≈ 600ms) + biên an toàn
-await page.waitForTimeout(1600);
+  log('SNB1', batchCount === 1 && indivFired.length === 0,
+      `batch-read=${batchCount}, read lẻ nổ=${indivFired.length ? indivFired.join(',') : 'không'} (kỳ vọng 1 & 0)`);
+  log('SNB2', !actions.includes('h2-read-all'), `h2-read-all lúc khởi động: ${actions.includes('h2-read-all') ? 'CÓ' : 'KHÔNG'} (kỳ vọng KHÔNG)`);
+  log('SNB3', maxInflight <= 2, `concurrency tối đa = ${maxInflight} (kỳ vọng ≤ 2)`);
+  log('SNB4', immediate.myWorkShown && !immediate.overlayBlocking,
+      `my-work hiển thị=${immediate.myWorkShown}, overlay chặn=${immediate.overlayBlocking}`);
 
-const startupActions = actions.map(a => a.action);
-const H2_AT_STARTUP  = startupActions.includes('h2-read-all');
-const expectedReads  = ['read', 'initiative-read', 'case-pipeline-read', 'issue-read', 'dev-read', 'user-list', 'notif-read'];
-const missingReads   = expectedReads.filter(a => !startupActions.includes(a));
+  const beforeH2 = actions.filter(a => a === 'h2-read-all').length;
+  await page.evaluate(() => { if (typeof navigateTo === 'function') navigateTo('h2-tracker'); });
+  await page.waitForTimeout(500);
+  const h2After = actions.filter(a => a === 'h2-read-all').length;
+  log('SNB5', beforeH2 === 0 && h2After === 1, `h2-read-all trước=${beforeH2}, sau mở H2=${h2After} (kỳ vọng 0→1)`);
+  log('SNB6', jsErrors.length === 0, jsErrors.length ? 'JS errors: ' + jsErrors.join(' | ') : 'Không có JS error');
+  await page.close();
+}
 
-log('SNB1', !H2_AT_STARTUP, `Khởi động ${H2_AT_STARTUP ? 'CÓ' : 'KHÔNG'} gọi h2-read-all (kỳ vọng KHÔNG)`);
-log('SNB2', missingReads.length === 0, `Read domain nóng: ${missingReads.length ? 'thiếu ' + missingReads.join(',') : 'đủ ' + expectedReads.length}`);
-log('SNB3', maxInflight <= 2, `Concurrency tối đa lúc khởi động = ${maxInflight} (kỳ vọng ≤ 2)`);
-log('SNB4', immediate.myWorkShown && !immediate.overlayBlocking,
-    `Cache-first: my-work hiển thị=${immediate.myWorkShown}, overlay chặn=${immediate.overlayBlocking} (kỳ vọng shown & !blocking)`);
-
-// ── Lazy H2: mở view H2 → h2-read-all mới được gọi ──
-const beforeH2 = actions.filter(a => a.action === 'h2-read-all').length;
-await page.evaluate(() => { if (typeof navigateTo === 'function') navigateTo('h2-tracker'); });
-await page.waitForTimeout(600);
-const afterH2 = actions.filter(a => a.action === 'h2-read-all').length;
-
-log('SNB5', beforeH2 === 0 && afterH2 === 1, `h2-read-all: trước mở H2=${beforeH2}, sau=${afterH2} (kỳ vọng 0→1)`);
-log('SNB6', jsErrors.length === 0, jsErrors.length ? 'JS errors: ' + jsErrors.join(' | ') : 'Không có JS error');
+// ── Scenario B: batch-read chưa hỗ trợ → fallback read lẻ ──
+{
+  const { page, jsErrors, actions } = await bootPage(browser, { batchSupported: false });
+  const mustFallback = ['read', 'case-pipeline-read', 'issue-read', 'dev-read', 'initiative-read'];
+  const firedFallback = mustFallback.filter(a => actions.includes(a));
+  log('SNB7', actions.includes('batch-read') && firedFallback.length === mustFallback.length,
+      `sau batch-read lỗi, read lẻ fallback nổ: ${firedFallback.length}/${mustFallback.length} (${firedFallback.join(',')})`);
+  log('SNB8', jsErrors.length === 0, jsErrors.length ? 'JS errors: ' + jsErrors.join(' | ') : 'Không có JS error');
+  await page.close();
+}
 
 console.log(`\n${passed}/${passed + failed} checks passed`);
 await browser.close();
