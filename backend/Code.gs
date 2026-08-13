@@ -60,6 +60,9 @@ function doPost(e) {
       return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
     }
 
+    // ── (Phase 3) DATA_VER bump nằm trong auditLog() → bump SAU KHI ghi đã commit (đúng thứ tự,
+    // tránh race "bump trước-ghi" khiến read xen giữa latch dữ liệu cũ). auditLog gọi ở mọi write.
+
     if (action === 'change-password') {
       if (!body.oldPassword || !body.newPassword) throw new Error('Thiếu thông tin đổi mật khẩu.');
       changePassword(tokenData, body.oldPassword, body.newPassword);
@@ -76,13 +79,20 @@ function doPost(e) {
     // Thay ~7 request khởi động (mỗi cái tự openById) bằng 1. Client fallback về read lẻ
     // nếu action này chưa có (GAS chưa redeploy) → deploy không phá app ở cả 2 chiều.
     if (action === 'batch-read') {
+      var _cur = _dataVer();
+      // VERSION GATE: client gửi ver đã biết; khớp → dữ liệu KHÔNG đổi → không gửi lại payload lớn.
+      if (body.ver && String(body.ver) === _cur) {
+        return _jsonResponse({ status: 'ok', ver: _cur, notModified: true });
+      }
       var _bss  = SpreadsheetApp.openById(SPREADSHEET_ID);
       var _want = (body.domains && body.domains.length)
         ? body.domains
         : ['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs'];
       var _pick = {}; for (var _bi = 0; _bi < _want.length; _bi++) _pick[_want[_bi]] = true;
       var _bd = {};
-      if (_pick.tasks)       { var _tr = sheetRead(_bss); _bd.tasks = { values: _tr.values }; }
+      // Đọc LIVE (mở spreadsheet 1 lần). Không cache sheet ở server: version gate đã lo phần
+      // "không đổi = không tải"; khi ĐỔI thì phải trả dữ liệu mới → đọc live để luôn tươi (không stale).
+      if (_pick.tasks)       _bd.tasks       = { values: sheetRead(_bss).values };
       if (_pick.cases)        _bd.cases       = { values: caseRead(_bss) };
       if (_pick.issues)       _bd.issues      = { values: issueRead(_bss) };
       if (_pick.dev)          _bd.dev         = { values: devRead(_bss) };
@@ -90,7 +100,7 @@ function doPost(e) {
       if (_pick.users)        _bd.users       = userList(_bss);
       if (_pick.notifs)       _bd.notifs      = notifRead(tokenData.u, _bss);
       if (_pick.h2)           _bd.h2          = h2ReadAll(_bss);
-      return _jsonResponse({ status: 'ok', serverTs: _getTaskTs(), data: _bd });
+      return _jsonResponse({ status: 'ok', ver: _cur, serverTs: _getTaskTs(), data: _bd });
     }
 
     if (action === 'write') {

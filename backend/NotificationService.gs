@@ -415,6 +415,7 @@ function notifScan() {
   if (toAppend.length) {
     sheet.getRange(sheet.getLastRow() + 1, 1, toAppend.length, NOTIF_HEADER.length).setValues(toAppend);
     SpreadsheetApp.flush();
+    if (typeof _bumpDataVer === 'function') _bumpDataVer();   // noti mới → client batch kế tiếp lấy lại (hết version gate)
   }
 
   _notifPurge_(sheet);

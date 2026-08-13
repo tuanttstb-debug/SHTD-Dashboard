@@ -26,6 +26,10 @@ function auditLog(tokenData, action, summary) {
     ];
 
     sheet.appendRow(row);
+
+    // (Phase 3) auditLog chạy SAU KHI write đã commit → điểm bump DATA_VER đúng thứ tự:
+    // đổi version để version gate hết khớp + AI context cache tự làm mới. Chỉ write mới gọi auditLog.
+    if (typeof _bumpDataVer === 'function') _bumpDataVer();
   } catch (e) {
     // Audit failure must never break the main action
     Logger.log('auditLog error: ' + e.message);

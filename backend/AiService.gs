@@ -2,11 +2,21 @@
 // GEMINI_API_KEY phải được set trong Script Properties trước khi dùng.
 
 function buildContext(tokenData) {
+  // (Phase 3) Cache context theo DATA_VER: các câu hỏi liên tiếp khi dữ liệu KHÔNG đổi
+  // dùng lại context (bỏ 3 lần đọc sheet + build 1500-task index). Context lớn > cap →
+  // _cachePutJson tự bỏ qua → build live như cũ (không regression).
+  var _ctxKey = 'aictx|' + (typeof _dataVer === 'function' ? _dataVer() : '0');
+  if (typeof _cacheGetJson === 'function') {
+    var _hit = _cacheGetJson(_ctxKey);
+    if (_hit && typeof _hit.ctx === 'string') return _hit.ctx;
+  }
+
   var lines = [];
+  var _ss = SpreadsheetApp.openById(SPREADSHEET_ID);   // mở 1 lần, chia sẻ cho các reader
 
   // Task data + số liệu tính sẵn (S59 Tier 2)
   try {
-    var taskResult = sheetRead();
+    var taskResult = sheetRead(_ss);
     var taskRows = taskResult.values;
     if (taskRows && taskRows.length > 1) {
       // Số liệu deterministic tính ở server — LLM dùng cho câu hỏi đếm/thống kê (đừng tự đếm dòng thô).
@@ -36,7 +46,7 @@ function buildContext(tokenData) {
 
   // Initiative data
   try {
-    var initRows = initiativeRead();
+    var initRows = initiativeRead(_ss);
     if (initRows && initRows.length > 1) {
       lines.push('\n=== INITIATIVE & MILESTONE (' + (initRows.length - 1) + ' mục) ===');
       for (var k = 0; k < initRows.length; k++) lines.push(initRows[k].join(' | '));
@@ -46,7 +56,9 @@ function buildContext(tokenData) {
   // (S59) Audit_Log đã BỎ khỏi context AI — nặng token, hiếm cần cho câu hỏi task/KPI;
   // giảm payload → doPost nhanh hơn, hạ xác suất lỗi 404 tầng vận chuyển Web App.
 
-  return lines.join('\n');
+  var _ctx = lines.join('\n');
+  if (typeof _cachePutJson === 'function') _cachePutJson(_ctxKey, { ctx: _ctx });   // bỏ qua nếu > cap
+  return _ctx;
 }
 
 // ── Số liệu tính sẵn cho AI (S59 Tier 2) ──

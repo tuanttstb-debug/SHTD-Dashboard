@@ -217,12 +217,19 @@ async function readFromHandle() {
 ══════════════════════════════════════════ */
 async function readAll(domains) {
   if (!GS_WEBAPP_URL || !getAuthSession()) return false;
+  const body = { action: 'batch-read', domains: domains || null };
+  // (Phase 3) Gửi version đã biết CHỈ khi client đang có dữ liệu → server bỏ qua nếu không đổi.
+  if (db._dataVer && db.tasks && db.tasks.length) body.ver = db._dataVer;
   // Lỗi mạng ở gasPost sẽ THROW ra ngoài (caller xử lý) — không nuốt để tránh fallback double-timeout.
-  const json = await gasPost({ action: 'batch-read', domains: domains || null }, GAS_READ_TIMEOUT_MS);
-  if (!json || json.status !== 'ok' || !json.data) {
+  const json = await gasPost(body, GAS_READ_TIMEOUT_MS);
+  if (!json || json.status !== 'ok') {
     console.warn('batch-read chưa hỗ trợ (GAS chưa redeploy?):', json && json.error);
     return false;   // GAS SỐNG nhưng chưa có action → fallback read lẻ an toàn
   }
+  if (json.ver) db._dataVer = json.ver;
+  // notModified: dữ liệu KHÔNG đổi kể từ lần đọc trước → giữ nguyên cache, chỉ lưu version.
+  if (json.notModified) { persist(); return true; }
+  if (!json.data) return false;
   const d = json.data;
   // Mỗi domain bọc riêng: 1 domain lỗi parse không kéo đổ các domain khác.
   try {

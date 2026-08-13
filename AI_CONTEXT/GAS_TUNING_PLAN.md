@@ -132,9 +132,14 @@ POST { action: 'batch-read', domains?: ['tasks','cases','issues','dev','initiati
 
 ---
 
-## 5. PHASE 3 — Cache + trim payload (cần deploy GAS)
+## 5. PHASE 3 — Version gate + AI context cache (cần deploy GAS) — ✅ ĐÃ TRIỂN KHAI 2026-08-13
 
-> Sau khi đã gộp request, làm read **ấm** dưới 1s và chặn phình data dài hạn.
+> **Trạng thái**: code xong, syntax OK, `verify_startup_nonblocking` **10/10** (thêm SNB9/10 version gate), full suite pass (2 fail = flaky batch, standalone OK). v6.45, `?v=20260813c`. **CẦN deploy GAS** (thêm file mới `CacheLayer.gs` + 4 file sửa). Client có version + fallback → an toàn push trước deploy.
+>
+> **Chốt thiết kế (khác plan gốc — an toàn hơn)**: thay vì cache từng sheet ở server (rủi ro stale do race read-xen-write), dùng **VERSION GATE**: server giữ `DATA_VER` (property, bump SAU KHI write commit — trong `auditLog` + `notifScan`). `batch-read` nhận `ver` client; **khớp → `{notModified:true}`** (gần 0 payload — thắng lớn nhất transfer mạng nội bộ); **đổi → đọc LIVE** (luôn tươi, không stale). Client gửi/lưu/persist `db._dataVer` (`loadCache` khôi phục). **AI context cache** theo `DATA_VER` (gzip, bỏ qua nếu > cap) — câu hỏi liên tiếp khi data không đổi bỏ 3 lần đọc sheet + build index. **Bỏ** cache sheet-đọc ở server (version gate đã đủ; đọc live khi đổi để tránh stale).
+> **⚠️ Deploy**: thêm file **`CacheLayer.gs`** + cập nhật `Code.gs`, `AuditService.gs`, `AiService.gs`, `NotificationService.gs` → Deploy New version.
+>
+> *(Ghi chú cũ bên dưới = ý tưởng ban đầu; đã thay bằng version gate ở trên.)*
 
 ### 3.1 `CacheService` phía GAS
 - Bọc mỗi reader: `CacheService.getScriptCache().get(key)`; key = `sheet + '|' + version`. Miss → đọc sheet, `put(key, json, 60)` (TTL 60s).
