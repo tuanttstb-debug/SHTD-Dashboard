@@ -1,3 +1,25 @@
+# SESSION HANDOVER (S73) — 2026-08-14
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `d49d0be` (S72) → **sau (ĐÃ push)**: `01c12cd` (3 commit: `a0b7418` v6.46 → `e15f99b` REVERT v6.47 → `01c12cd` RAG col v6.48)
+**Version**: v6.45 → v6.46 (ownership-load) → **REVERT v6.47** → **v6.48** (`6.48-task-rag-column-persist-20260814`, `?v=20260814c`)
+
+> **DEBUG 2 nhịp.** (1) Thử "ownership-first scoped load" (v6.46) → **GÂY MẤT DỮ LIỆU trên PRD** → REVERT (v6.47). (2) Truy gốc thật user báo "RAG bấm ở Công việc của tôi không lưu" = **Task_Master THIẾU cột RAG** → thêm cột + hợp nhất RAG=`t.status` (v6.48).
+
+## S73.1 — v6.46 ownership-first scoped load → **REVERT** (v6.47) · `a0b7418`→`e15f99b`
+- **✅/❌ Task**: implement Phase A (dirty-guard `_dirtyTasks`) + B (My Work `_mwFlushActive`) + C (batch-read `scope=mine` + full-load nền `ensureAllTasks`). Test `verify_ownership_load` 8/8, push `a0b7418`. User báo **Ctrl+Shift+R + Sync mất data (mọi role)** → **revert toàn bộ** về known-good v6.45 (`e15f99b`).
+- **✅ Decision**: scoped `'mine'` read có thể trả ÍT/RỖNG dòng (team lookup rỗng / PIC lưu display-name ≠ username) → `_parseArrayIntoDb(<2)` đặt `db.tasks=[]` **+ persist cache rỗng**; full-load nền ~1500 dòng dễ **timeout mạng nội bộ** → không cứu được. Revert **client-only** là đủ (GAS v6.46 còn live vô hại vì client v6.47 không gửi `scope` → server luôn `'all'`) → **KHÔNG cần redeploy GAS để cứu**. Sheet AN TOÀN (chỉ lỗi load client).
+- **🟢 Regression risk**: revert = về đúng v6.45; `verify_startup_nonblocking` **10/10**. Phase A/B (dirty-guard) không còn cần vì gốc thật là schema RAG (S73.2), không phải race read/write.
+
+## S73.2 — Fix RAG column (v6.48) · commit `01c12cd`
+- **✅ Task**: "RAG bấm My Work → audit log CÓ update nhưng sheet không đổi → reload/Sync về trắng". **Gốc (verify từng dòng)**: Task_Master **không có cột RAG**; `taskToRow` (24 cột) **bỏ qua cả `t.status` lẫn `t.rag`** → RAG không được ghi; parser suy `t.status` từ Trạng thái; My Work dùng riêng `t.rag` (Xanh/Vàng/Đỏ) **không hề load/lưu**. Field khác (state/%/kết quả) có cột → **vẫn lưu bình thường, KHÔNG mất data task**.
+- **✅ Files (7 source + 3 test)**: `constants.js` (DB_COLS **24→25** +`'RAG'`, `GS_RANGE` A1:X→**A1:Y**), `api.js` (`taskToRow[24]=t.status`), `views/my-work.js` (`_mwRagDots`/`mwQuickSaveRag`/card đọc-ghi **`t.status`** Green/Amber/Red, bỏ `t.rag`), `config.js` v6.48, `index.html` `?v=20260814c` (65 refs). NEW `backend/RagColumnMigration.gs` + `verify_task_rag.mjs` (5/5). MOD `verify_my_work.mjs` (MW17/20/21→status, fixture H01 status='Red'), `verify_atomic_write.mjs` (row 24→25), `run_tests.mjs`.
+- **✅ Decision (user chốt qua 2 câu)**: (a) **HỢP NHẤT 1 RAG = `t.status`** (Green/Amber/Red — nguồn đã dùng sẵn ở dashboard/action-plan `rag:t.status`/modal `fRag`); My Work dots trỏ vào đó, nhãn/màu VN giữ nguyên. (b) Thêm **cột 25 'RAG' (Y)**; parser `_parseArrayIntoDb` **tự map** header 'rag'→`t.status` (KHÔNG đổi hàm đọc). (c) GAS đọc/ghi **cột động** (`getLastColumn`/`row.length`) → **KHÔNG cần redeploy Web App**. (d) migration set Y1='RAG' + backfill từ Trạng thái + `_bumpDataVer()`; user chọn "tôi viết GAS migration".
+- **⛔ Blocker**: Không (code). **Cần user chạy `commitAddRag()` trong Apps Script editor** để Y1 có header 'RAG' (taskToRow ghi cột 25 nhưng parser map theo TÊN header → phải tồn tại). `dryRunAddRag()` cảnh báo nếu sheet ≠ 24 cột (chống ghi lệch — `taskToRow` **positional**).
+- **➡️ Next step**: (1) Hard-reload → badge **v6.48**. (2) `dryRunAddRag()` → 0 cảnh báo → `commitAddRag()`. (3) Smoke: bấm RAG My Work → reload/Sync **GIỮ nguyên**; RAG **đồng bộ** My Work↔Dashboard↔Action Plan↔modal.
+- **🟢 Regression risk**: 🟢 **THẤP–TRUNG BÌNH** — mọi hiển thị RAG task đã dùng `t.status` sẵn (chỉ My Work là outlier đổi). `verify_task_rag` **5/5**, `my_work` **62/62**, `atomic_write` **41/41**, `action_plan` 24/24; full **33/34** (đỏ duy nhất `bld_queue` = **timing-flaky pre-existing** `page.click` timeout, mọi assertion BLD gồm canBLD/yKienBLD PASS). ⚠️ `taskToRow` **positional** → cột RAG PHẢI ở đúng cột 25 (Y); migration hardcode `RAG_TARGET_COL=25` + cảnh báo lệch. ⚠️ Chạy client v6.48 **trước** migration: task-upsert ghi giá trị vào ô Y nhưng Y1 header trống → read chưa map (RAG mặc định Green) tới khi `commitAddRag()`.
+
+---
+
 # SESSION HANDOVER (S72) — 2026-08-13
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `c498ad7` (S71) → **sau (ĐÃ push)**: `d49d0be` (3 commit: `892fe3c` P1 · `c304823` P2 · `d49d0be` P3)

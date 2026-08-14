@@ -8,6 +8,22 @@
 
 ---
 
+## 🆕 DELTA — Session 73 (2026-08-14) — REVERT ownership-load (mất data) + Fix cột RAG Task_Master
+
+### TD-SCHEMA-01: `taskToRow` ghi theo VỊ TRÍ — cột mới phải append cuối + migration set header 🟡 HIGH
+S73.2 thêm cột 25 'RAG' (Y). `taskToRow`/`_parseArrayIntoDb` NGƯỢC nhau: **ghi positional** (index cố định) nhưng **đọc theo TÊN header** (`ci(['rag',...])`). ⇒ 2 ràng buộc: (a) cột mới PHẢI thêm ở **cuối** DB_COLS/taskToRow (chèn giữa làm lệch mọi cột sau); (b) sheet PHẢI có **đúng thứ tự** A→X khớp DB_COLS[0..23] và RAG ở đúng **cột 25** — `RagColumnMigration.gs` hardcode `RAG_TARGET_COL=25` + `dryRunAddRag()` cảnh báo nếu `lastCol≠24`. (c) Đọc cần **header Y1='RAG'** tồn tại mới map → chạy client v6.48 trước `commitAddRag()` thì RAG ghi vào ô Y nhưng chưa đọc lại được. → Sau này thêm field: append cuối + viết migration set header, ĐỪNG chèn giữa.
+
+### TD-LOAD-01: Ownership-first scoped load ĐÃ REVERT — không tái áp thô 🟡 HIGH
+S73.1 (v6.46) batch-read `scope=mine` → **mất data PRD**: scoped read trả ÍT/RỖNG → `_parseArrayIntoDb(values<2)` đặt `db.tasks=[]` **và persist cache rỗng**; full-load nền (~1500 dòng) timeout mạng nội bộ → không phục hồi; ảnh hưởng cả role không-scope do cache rỗng lan. **Reverted** (`e15f99b`). **Bài học**: một read PHẠM VI HẸP/RỖNG **không được** ghi đè + persist lên cache đầy. Nếu tái làm: (a) chỉ scope khi cache LẠNH (`db.tasks.length===0`); (b) full-load phải **delta/nhỏ** (không phải toàn bộ 1500 dòng); (c) không bao giờ persist tập rút gọn như dữ liệu đủ. Xem [[ownership-load-dataloss]].
+
+### ✅ Gốc thật "update không lưu" = schema, KHÔNG phải version-gate/scoped-load
+Trước khi nghi version-gate / scoped-load, **kiểm tra SCHEMA**: `taskToRow`/`DB_COLS` có serialize field đó không. RAG bấm ở My Work (`t.rag`) + `t.status` đều KHÔNG có cột → ghi mất âm thầm (audit log vẫn ghi vì dòng CÓ được upsert, chỉ thiếu cột). Đã hợp nhất RAG=`t.status` + thêm cột (v6.48).
+
+### TD-COSMETIC-01: `exportExcel` `ws['!cols']` thiếu width cho cột RAG ⚪ LOW
+`app.js exportExcel` mảng `!cols` vốn đã ngắn (23 vs 24), nay 25 cột → cột RAG lấy default width. Cosmetic, cột vẫn xuất đúng giá trị.
+
+---
+
 ## 🆕 DELTA — Session 72 (2026-08-13) — Tuning tầng gọi GAS (P1 cache-first · P2 batch-read · P3 version gate)
 
 ### ✅ TD-NET-01 giảm nhẹ: ai-chat có ngân sách timeout riêng (P1)

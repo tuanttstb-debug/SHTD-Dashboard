@@ -1,4 +1,30 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-14 (Session 73 — REVERT ownership-load + Fix cột RAG Task_Master)
+**Context**: S73 done. v6.48-task-rag-column-persist-20260814, `?v=20260814c`. HEAD `01c12cd` (`a0b7418` v6.46 → `e15f99b` REVERT v6.47 → `01c12cd` RAG col v6.48). `verify_task_rag` **5/5**, `my_work` **62/62**, `atomic_write` **41/41**; full suite **33/34** (chỉ `bld_queue` timing-flaky). Client v6.48 **thuần FE + migration** — GAS đọc/ghi cột động nên **KHÔNG cần redeploy Web App**.
+
+---
+
+## ✅ COMPLETED S73
+- [x] **S73.1 Ownership-load (v6.46) → REVERT (v6.47)**: Phase A/B/C (dirty-guard + My Work flush + batch-read `scope=mine` + full-load nền). Test 8/8, push `a0b7418`. User báo **mất data khi Ctrl+Shift+R/Sync (mọi role)** → **revert toàn bộ** về v6.45 (`e15f99b`). Gốc: scoped read trả rỗng → `db.tasks=[]` + persist cache rỗng; full-load nền timeout không cứu. Revert client-only đủ (không cần redeploy GAS). **KHÔNG tái áp** (xem TD-LOAD-01).
+- [x] **S73.2 Fix cột RAG (v6.48)** `01c12cd`: Task_Master thiếu cột RAG → `taskToRow` bỏ qua → RAG bấm My Work không lưu. **Hợp nhất RAG=`t.status`** (Green/Amber/Red); My Work dots đổi sang t.status; +cột 25 'RAG' (Y); parser tự map header 'rag'→status. NEW `RagColumnMigration.gs` + `verify_task_rag.mjs`.
+
+## 🔴 PRIORITY 0 — Chạy migration RAG + smoke (S73.2)
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | Apps Script editor → thêm `RagColumnMigration.gs` → chạy **`dryRunAddRag()`** | Logger: RAG col=**25 (Y)**, State col, phân bố backfill, **0 cảnh báo**. Nếu cảnh báo "lệch cột / lastCol≠24" → **DỪNG, gửi log** (taskToRow positional) |
+| 2 | 0 cảnh báo → chạy **`commitAddRag()`** | set Y1='RAG' + backfill từ Trạng thái + bump DATA_VER |
+| 3 | Hard-reload (Ctrl+Shift+R) | badge `v6.48-task-rag-column-persist-20260814` |
+| 4 | My Work → bấm RAG (🟢🟡🔴) 1 task → reload/Sync | RAG **GIỮ nguyên** (đã ghi sheet cột Y) |
+| 5 | Đối chiếu RAG My Work ↔ Dashboard ↔ Action Plan ↔ modal Sửa | Cùng 1 giá trị (đồng bộ) |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S73 (tùy chọn)
+- **exportExcel `ws['!cols']`** thiếu 1 width cho cột RAG (cosmetic — cột vẫn xuất, default width).
+- **Phase A/B (dirty-guard)** đã bỏ theo revert — chỉ làm lại nếu xác nhận có race optimistic-write THẬT (gốc bug thật là schema RAG, không phải race).
+- **(nợ cũ)** ~70 PNG `test-results` dirty → `git restore test-results/`; blank `.user-pill` (TD-AUTH-01); `bld_queue` timing-flaky (TD-TEST-06).
+
+---
+
+# (S72) TODO — giữ tham khảo
 **Prepared**: 2026-08-13 (Session 72 — Tuning tổng thể tầng gọi GAS P1–P3)
 **Context**: S72 done. v6.45-gas-tuning-p3-versiongate-20260813, `?v=20260813c`. HEAD `d49d0be` (3 commit P1 `892fe3c` / P2 `c304823` / P3 `d49d0be`). ✅ **GAS redeploy xong (link KHÔNG đổi), smoke PASS.** `verify_startup_nonblocking` **10/10**; full suite 33/33 (2 flaky batch pre-existing: i18n_p6/bld_queue).
 
