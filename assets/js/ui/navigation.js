@@ -70,16 +70,7 @@ function closeSidebar() {
   document.getElementById('sidebarOverlay').classList.remove('visible');
 }
 
-// (Phase C) Các màn cần TOÀN BỘ task (không chỉ "của tôi"): mở màn nào trong nhóm này thì bảo đảm
-// đã full-load (an toàn khi full-load nền lúc khởi động chưa xong/thất bại). Dedupe trong ensureAllTasks.
-const _VIEWS_NEED_ALL_TASKS = new Set([
-  'dashboard', 'tasks', 'gantt', 'performance', 'executive-summary', 'kpi-overview',
-  'kpi-progress', 'owner-analysis', 'branch-analysis', 'rm-analysis', 'action-plan',
-  'bld-queue', 'initiative-tracker',
-]);
-
 function navigateTo(view) {
-  if (_VIEWS_NEED_ALL_TASKS.has(view) && typeof ensureAllTasks === 'function') ensureAllTasks();
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelector(`[data-view="${view}"]`)?.classList.add('active');
   document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
