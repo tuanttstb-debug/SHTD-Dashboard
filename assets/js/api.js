@@ -190,6 +190,7 @@ function taskToRow(t) {
     /* 21 Cross-team        */ t.crossTeam      || 'N',
     /* 22 Highlight         */ t.highlight      || 'N',
     /* 23 Ý kiến BLĐ        */ t.yKienBLD       || '',
+    /* 24 RAG (Health)      */ t.status         || 'Green',
   ];
 }
 

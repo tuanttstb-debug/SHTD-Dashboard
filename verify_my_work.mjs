@@ -106,7 +106,7 @@ const MOCK_TASKS = [
   // highlight=Y → should sort first
   { id:'T-26-H01', name:'Highlight task picAcc', initiative:'INI-01', category:'Dev',
     milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:OVERDUE,
-    state:'Đang thực hiện', progress:'40', highlight:'Y', rag:'Đỏ', result:'', tuanBC:'', canBLD:'', status:'' },
+    state:'Đang thực hiện', progress:'40', highlight:'Y', rag:'Đỏ', result:'', tuanBC:'', canBLD:'', status:'Red' },
   // picRes match
   { id:'T-26-H02', name:'Task picRes match', initiative:'INI-01', category:'Test',
     milestone:'', team:'CV1', picAcc:'OtherUser', picRes:'TuanTT4', endDate:SOON,
@@ -445,26 +445,26 @@ await shot(page, 'MW19-quick-save-state');
 /* ══════════════════════════════════════════
    MW20 — Quick save RAG: dot gets active class
 ══════════════════════════════════════════ */
-// T-26-H03 has rag='' (Xanh). Assign Vàng.
-await page.evaluate(() => mwQuickSaveRag('T-26-H03', 'Vàng'));
+// RAG hợp nhất vào t.status (Green/Amber/Red). Gán Amber (dot 🟡 Vàng).
+await page.evaluate(() => mwQuickSaveRag('T-26-H03', 'Amber'));
 await page.waitForTimeout(200);
 const ragAfter = await page.evaluate(() => {
   const t = db.tasks.find(x => x.id === 'T-26-H03');
-  return t ? t.rag : null;
+  return t ? t.status : null;
 });
-log('MW20-rag-saved', ragAfter === 'Vàng', `RAG set to Vàng for T-26-H03, db.tasks.rag=${ragAfter}`);
+log('MW20-rag-saved', ragAfter === 'Amber', `RAG set to Amber for T-26-H03, db.tasks.status=${ragAfter}`);
 
 /* ══════════════════════════════════════════
    MW21 — Quick save RAG toggle: clicking active clears
 ══════════════════════════════════════════ */
-// T-26-H01 has rag='Đỏ'. Clicking active 'Đỏ' dot should clear to ''
+// T-26-H01 có status='Red'. Bấm lại dot 'Đỏ' đang active → clear về ''
 await page.evaluate(() => mwQuickSaveRag('T-26-H01', '')); // '' = clearing active
 await page.waitForTimeout(200);
 const ragCleared = await page.evaluate(() => {
   const t = db.tasks.find(x => x.id === 'T-26-H01');
-  return t ? t.rag : 'NOT_FOUND';
+  return t ? t.status : 'NOT_FOUND';
 });
-log('MW21-rag-toggle-clear', ragCleared === '', `RAG cleared for T-26-H01 (rag=${ragCleared})`);
+log('MW21-rag-toggle-clear', ragCleared === '', `RAG cleared for T-26-H01 (status=${ragCleared})`);
 
 /* ══════════════════════════════════════════
    MW22 — Progress toggle shows input

@@ -232,10 +232,12 @@ function mwDevReviewSave(id) {
 
 function _mwRagDots(taskId, currentRag) {
   const id = esc(taskId);
+  // Giá trị = t.status (Green/Amber/Red) — nguồn RAG DUY NHẤT, đồng bộ dashboard/action-plan/modal
+  // và LƯU được vào cột RAG của Task_Master. Nhãn/màu vẫn hiển thị tiếng Việt.
   const dots = [
-    { val: 'Xanh', cls: 'active-xanh', title: '🟢 Xanh' },
-    { val: 'Vàng', cls: 'active-vang', title: '🟡 Vàng' },
-    { val: 'Đỏ',   cls: 'active-do',   title: '🔴 Đỏ' },
+    { val: 'Green', cls: 'active-xanh', title: '🟢 Xanh' },
+    { val: 'Amber', cls: 'active-vang', title: '🟡 Vàng' },
+    { val: 'Red',   cls: 'active-do',   title: '🔴 Đỏ' },
   ];
   const html = dots.map(d => {
     const isActive = currentRag === d.val;
@@ -270,7 +272,7 @@ function _mwBuildTaskCard(task) {
   </div>
   <div class="mw-controls">
     <select class="mw-state-sel" onchange="mwQuickSaveState('${id}',this.value)">${opts}</select>
-    ${_mwRagDots(task.id, task.rag)}
+    ${_mwRagDots(task.id, task.status)}
   </div>
   <div class="mw-controls">
     <div class="mw-prog-wrap">
@@ -533,8 +535,8 @@ function mwQuickSaveState(taskId, val) {
 
 function mwQuickSaveRag(taskId, val) {
   const t = _mwFindTask(taskId);
-  if (!t || t.rag === val) return;
-  t.rag = val;
+  if (!t || t.status === val) return;
+  t.status = val;   // RAG = t.status (Green/Amber/Red) → lưu vào cột RAG qua taskToRow
   _mwInlineSave(t);
   // Lightweight: only update the dots in this card
   const card = document.querySelector(`.mw-task-card[data-id="${CSS.escape(taskId)}"]`);
