@@ -470,9 +470,24 @@ function _mwBuildCaseSection(cases) {
 
 // ── Main render ──
 
+// Trước khi dựng lại toàn bộ DOM My Work, "xả" field đang được gõ (input/textarea/select
+// trong view-my-work) bằng cách blur → kích hoạt onblur/onchange quick-save. Nếu không, một
+// render nền (full-load, poll, quick-save field khác) sẽ HỦY input đang gõ dở → mất giá trị
+// chưa lưu (không bao giờ tới sheet). Kết hợp với _dirtyTasks (api.js) → edit vừa xả được bảo
+// toàn qua read nền ngay sau đó.
+function _mwFlushActive() {
+  const el = document.activeElement;
+  if (!el || typeof el.blur !== 'function') return;
+  const root = document.getElementById('view-my-work');
+  if (root && root.contains(el) && ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
+    el.blur();   // onblur (progress/result/dev) hoặc mất focus → lưu giá trị đang gõ
+  }
+}
+
 function renderMyWork() {
   const root = document.getElementById('view-my-work');
   if (!root) return;
+  _mwFlushActive();   // lưu field đang gõ trước khi thay innerHTML (chống mất edit)
 
   const user = getCurrentUser();
   if (!user) {

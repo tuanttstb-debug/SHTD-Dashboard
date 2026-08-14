@@ -63,10 +63,18 @@ async function startApp() {
 // → hết fan-out ~8 request đè cùng lúc lên 1 host GAS (nguyên nhân xếp hàng/timeout mạng nội bộ).
 // H2 KHÔNG nằm ở đây — lazy-load khi mở view (h2-core.js _ensureH2Loaded).
 async function _startupSync() {
+  // (Phase C) Ownership-first: User thường load "của tôi" (payload nhỏ, tránh timeout mạng nội bộ)
+  // → My Work dùng được NGAY; rồi full-load nền để mọi màn tổng thể + badge đúng. Admin/Teamlead
+  // cần dữ liệu toàn đội → load full luôn. Nếu cache đã là 'all' thì không cần scope lại.
+  const _u    = (typeof getCurrentUser === 'function' ? getCurrentUser() : null) || {};
+  const _role = _u.role || 'User';
+  const _canScope = (_role !== 'Admin' && _role !== 'Teamlead');
+  const _useMine  = _canScope && db._tasksScope !== 'all';
+
   // Phase 2: THỬ 1 request gộp (batch-read) trước.
   let ok = false;
   try {
-    ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);
+    ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs'], _useMine ? 'mine' : 'all');
   } catch (e) {
     // Lỗi MẠNG (timeout/fetch) → giữ cache + nút "Thử lại"; KHÔNG fallback (tránh double-timeout).
     console.warn('[SHTD] batch-read lỗi mạng:', e && e.message);
@@ -78,6 +86,8 @@ async function _startupSync() {
     if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
     if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
     renderAll();
+    // Đã có "của tôi" → kéo TOÀN BỘ task ở NỀN (không chặn) để Dashboard/Gantt/KPI/badge đúng.
+    if (_useMine) ensureAllTasks();
     return;
   }
   // batch-read CHƯA hỗ trợ (GAS chưa redeploy) → fallback read lẻ qua pool concurrency=2 (Phase 1).
@@ -94,7 +104,38 @@ async function _startupSync() {
     readNotifications,
   ];
   await _runPool(jobs, 2);
+  db._tasksScope = 'all';   // fallback read lẻ luôn tải đầy đủ task
   renderAll();   // render gộp 1 lần sau khi các domain nền đã về
+}
+
+// (Phase C) Đảm bảo db.tasks là TOÀN BỘ (không chỉ "của tôi"). Gọi:
+//  - ở nền ngay sau mine-load lúc khởi động;
+//  - khi mở một màn tổng thể (Dashboard/Gantt/KPI…) nếu full-load trước đó chưa xong/thất bại.
+// Dedupe qua _allTasksLoading; nếu đã 'all' thì trả ngay. Version-gated nên khi dữ liệu không đổi
+// gần như miễn phí (server trả notModified).
+let _allTasksLoading = null;
+function ensureAllTasks() {
+  // CHỈ full-load khi đang giữ dữ liệu phạm vi 'mine' (đã biết là thiếu). scope 'all' = đã đủ;
+  // undefined = chưa từng scoped-load (vd cache trực tiếp / test inject) → KHÔNG tự ý tải đè.
+  if (db._tasksScope !== 'mine') return Promise.resolve(true);
+  if (_allTasksLoading) return _allTasksLoading;
+  _allTasksLoading = (async () => {
+    let ok = false;
+    try {
+      ok = await readAll(['tasks'], 'all');   // chỉ cần TASK full — domain khác đã full từ mine-load
+      if (!ok) {
+        // GAS chưa hỗ trợ batch-read → fallback đọc task đầy đủ qua action 'read'.
+        try { await readFromHandle(); db._tasksScope = 'all'; ok = true; } catch (_) { ok = false; }
+      }
+    } catch (e) {
+      console.warn('[SHTD] full-load task nền lỗi:', e && e.message);
+      return false;
+    }
+    if (ok) { persist(); renderAll(); }
+    return ok;
+  })();
+  _allTasksLoading = _allTasksLoading.finally(() => { _allTasksLoading = null; });
+  return _allTasksLoading;
 }
 
 // Đặt UI về trạng thái "đã kết nối" (dùng chung: batch-read OK / autoConnectDB OK / syncDB OK).
@@ -253,11 +294,12 @@ async function syncDB() {
   showLoading('Đang đồng bộ dữ liệu từ Sheets… (mạng nội bộ có thể chậm, vui lòng chờ)');
   try {
     // Phase 2: 1 request gộp. Nếu GAS chưa hỗ trợ → fallback read lẻ.
-    const ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);
+    const ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);  // scope mặc định 'all'
     if (!ok) {
       await Promise.all([
         readFromHandle(), readCases(), readIssues(), readDev(), readInitiatives(), readNotifications(),
       ]);
+      db._tasksScope = 'all';   // fallback read lẻ tải đầy đủ task
     }
     // Sync = mốc "bắt buộc cập nhật" → refresh H2 nếu đã mở trong phiên (không load liên tục).
     if (_h2Loaded && typeof readH2 === 'function') readH2();

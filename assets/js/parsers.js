@@ -262,6 +262,9 @@ function _parseArrayIntoDb(values) {
     db.initiatives = [...iMap.entries()].map(([id]) => ({ id, name: id }));
   }
   _resolvePickerCase();
+  // Read nền vừa thay TOÀN BỘ db.tasks bằng dữ liệu server → phủ lại các bản ghi đang sửa
+  // (quick-save chưa kịp commit) để edit không bị lật (xem _dirtyTasks trong api.js).
+  if (typeof _reapplyDirtyTasks === 'function') _reapplyDirtyTasks();
 }
 
 // Resolve t.picRes → canonical Username từ _appUsers (case-insensitive lookup).

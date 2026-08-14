@@ -215,18 +215,22 @@ async function readFromHandle() {
      false      = GAS chưa hỗ trợ batch-read (chưa redeploy) → caller fallback read lẻ.
      (throw)    = lỗi MẠNG (timeout/fetch) → caller hiện "Thử lại", KHÔNG fallback (tránh double-timeout).
 ══════════════════════════════════════════ */
-async function readAll(domains) {
+async function readAll(domains, scope) {
   if (!GS_WEBAPP_URL || !getAuthSession()) return false;
-  const body = { action: 'batch-read', domains: domains || null };
-  // (Phase 3) Gửi version đã biết CHỈ khi client đang có dữ liệu → server bỏ qua nếu không đổi.
-  if (db._dataVer && db.tasks && db.tasks.length) body.ver = db._dataVer;
+  scope = (scope === 'mine') ? 'mine' : 'all';
+  const body = { action: 'batch-read', domains: domains || null, scope };
+  // (Phase 3 + C) Version-gate CHỈ khi cache hiện tại ĐÚNG scope đang xin — nếu khác scope
+  // (vd cache 'mine' nhưng đang xin 'all'), KHÔNG gửi ver để tránh notModified giữ nhầm cache cũ.
+  const sameScope = (db._tasksScope || 'all') === scope;
+  const knownVer  = (scope === 'mine') ? db._dataVerMine : db._dataVer;
+  if (sameScope && knownVer && db.tasks && db.tasks.length) body.ver = knownVer;
   // Lỗi mạng ở gasPost sẽ THROW ra ngoài (caller xử lý) — không nuốt để tránh fallback double-timeout.
   const json = await gasPost(body, GAS_READ_TIMEOUT_MS);
   if (!json || json.status !== 'ok') {
     console.warn('batch-read chưa hỗ trợ (GAS chưa redeploy?):', json && json.error);
     return false;   // GAS SỐNG nhưng chưa có action → fallback read lẻ an toàn
   }
-  if (json.ver) db._dataVer = json.ver;
+  if (json.ver) { if (scope === 'mine') db._dataVerMine = json.ver; else db._dataVer = json.ver; }
   // notModified: dữ liệu KHÔNG đổi kể từ lần đọc trước → giữ nguyên cache, chỉ lưu version.
   if (json.notModified) { persist(); return true; }
   if (!json.data) return false;
@@ -235,6 +239,7 @@ async function readAll(domains) {
   try {
     if (d.tasks && Array.isArray(d.tasks.values)) {
       _parseArrayIntoDb(d.tasks.values);
+      db._tasksScope = scope;   // đánh dấu phạm vi dữ liệu task đang giữ ('mine' | 'all')
       if (json.serverTs) db._serverTs = json.serverTs;
       if (db.deletedIds && db.deletedIds.length) {
         const serverIds = new Set(db.tasks.map(t => t.id));
@@ -276,6 +281,33 @@ async function readAll(domains) {
     }
   } catch (e) { console.warn('readAll notifs:', e.message); }
   return true;
+}
+
+/* ══════════════════════════════════════════
+   DIRTY-GUARD — bảo vệ ghi optimistic khỏi bị read nền ghi đè.
+   Một quick-save ở "Công việc của tôi" (task-upsert fire-and-forget) mutate db.tasks cục bộ
+   RỒI mới ghi GAS. Trong lúc đó, read nền (batch-read/readFromHandle lúc khởi động / full-load /
+   poll) trả dữ liệu server CŨ (chưa kịp commit) và _parseArrayIntoDb() thay TOÀN BỘ db.tasks →
+   edit vừa sửa bị lật lại → user tưởng "không lưu được". Giữ bản ghi đang sửa ở đây; sau mỗi lần
+   parse read nền, phủ lại các bản ghi này lên dữ liệu server (last-writer-wins theo dòng đang sửa).
+   Xóa khỏi map khi write xác nhận thành công (server đã có bản mới → read sau trả đúng).
+══════════════════════════════════════════ */
+let _dirtyTasks = new Map();   // id → task object cục bộ có thay đổi chưa xác nhận / đang bay
+
+function _markTaskDirty(task) {
+  if (task && task.id) _dirtyTasks.set(task.id, task);
+}
+function _clearTaskDirty(id) {
+  if (id) _dirtyTasks.delete(id);
+}
+// Phủ lại bản ghi đang sửa lên db.tasks (gọi cuối _parseArrayIntoDb — sau khi server đã thay mảng).
+function _reapplyDirtyTasks() {
+  if (!_dirtyTasks.size || !Array.isArray(db.tasks)) return;
+  const pos = new Map(db.tasks.map((t, i) => [t.id, i]));
+  _dirtyTasks.forEach((localT, id) => {
+    if (pos.has(id)) db.tasks[pos.get(id)] = localT;
+    else db.tasks.push(localT);
+  });
 }
 
 // Local-only mutation: update cache + re-render, no GAS write.
@@ -445,6 +477,8 @@ function _adoptReassignedId(rec, newId, persistFn, renderFn) {
 
 async function _gasTaskUpsert(task, oldId) {
   if (!GS_WEBAPP_URL) return;
+  _markTaskDirty(task);            // giữ bản đang sửa → read nền không ghi đè
+  const dirtyKey = task.id;        // khóa dirty theo id lúc bắt đầu (có thể bị reassign sau khi lưu)
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
@@ -456,8 +490,11 @@ async function _gasTaskUpsert(task, oldId) {
     if (json.status !== 'ok') throw new Error(json.error || 'task-upsert lỗi');
     _adoptReassignedId(task, json.id, persist, () => { if (typeof renderAll === 'function') renderAll(); });
     if (json.serverTs) { db._serverTs = json.serverTs; persist(); }
+    _clearTaskDirty(dirtyKey);                                  // ghi xong → hết dirty
+    if (json.id && json.id !== dirtyKey) _clearTaskDirty(json.id); // dọn cả id mới nếu bị reassign
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
+    // KHÔNG clear dirty: giữ bản cục bộ để read nền không nuốt; lần Sync/lưu sau đẩy lên server.
     if (dot) dot.className = 'status-dot';
     toast('⚠️ GAS lỗi: ' + e.message + ' — task đã lưu cục bộ. Nhớ đồng bộ khi online.', 'warning', 6000);
   }

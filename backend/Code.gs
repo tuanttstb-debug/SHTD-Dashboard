@@ -79,10 +79,15 @@ function doPost(e) {
     // Thay ~7 request khởi động (mỗi cái tự openById) bằng 1. Client fallback về read lẻ
     // nếu action này chưa có (GAS chưa redeploy) → deploy không phá app ở cả 2 chiều.
     if (action === 'batch-read') {
+      // scope 'mine' = chỉ task của user + team, đang mở (gồm quá hạn) → payload nhỏ cho lần load đầu.
+      // Chỉ cho phép User thường scope; Admin/Teamlead luôn đọc full (cần dữ liệu toàn đội).
+      var _scope = (body.scope === 'mine' && tokenData.r !== 'Admin' && tokenData.r !== 'Teamlead')
+        ? 'mine' : 'all';
       var _cur = _dataVer();
-      // VERSION GATE: client gửi ver đã biết; khớp → dữ liệu KHÔNG đổi → không gửi lại payload lớn.
-      if (body.ver && String(body.ver) === _cur) {
-        return _jsonResponse({ status: 'ok', ver: _cur, notModified: true });
+      // VERSION GATE theo TỪNG scope: mine gắn thêm '|mine|<user>' để mine-ver và all-ver không đụng nhau.
+      var _verKey = (_scope === 'mine') ? (_cur + '|mine|' + tokenData.u) : _cur;
+      if (body.ver && String(body.ver) === _verKey) {
+        return _jsonResponse({ status: 'ok', ver: _verKey, scope: _scope, notModified: true });
       }
       var _bss  = SpreadsheetApp.openById(SPREADSHEET_ID);
       var _want = (body.domains && body.domains.length)
@@ -92,7 +97,14 @@ function doPost(e) {
       var _bd = {};
       // Đọc LIVE (mở spreadsheet 1 lần). Không cache sheet ở server: version gate đã lo phần
       // "không đổi = không tải"; khi ĐỔI thì phải trả dữ liệu mới → đọc live để luôn tươi (không stale).
-      if (_pick.tasks)       _bd.tasks       = { values: sheetRead(_bss).values };
+      if (_pick.tasks) {
+        if (_scope === 'mine') {
+          var _myTeam = resolveUserTeam(_bss, tokenData.u);
+          _bd.tasks = { values: taskRowsScopedMine(_bss, tokenData.u, _myTeam) };
+        } else {
+          _bd.tasks = { values: sheetRead(_bss).values };
+        }
+      }
       if (_pick.cases)        _bd.cases       = { values: caseRead(_bss) };
       if (_pick.issues)       _bd.issues      = { values: issueRead(_bss) };
       if (_pick.dev)          _bd.dev         = { values: devRead(_bss) };
@@ -100,7 +112,7 @@ function doPost(e) {
       if (_pick.users)        _bd.users       = userList(_bss);
       if (_pick.notifs)       _bd.notifs      = notifRead(tokenData.u, _bss);
       if (_pick.h2)           _bd.h2          = h2ReadAll(_bss);
-      return _jsonResponse({ status: 'ok', ver: _cur, serverTs: _getTaskTs(), data: _bd });
+      return _jsonResponse({ status: 'ok', ver: _verKey, scope: _scope, serverTs: _getTaskTs(), data: _bd });
     }
 
     if (action === 'write') {
