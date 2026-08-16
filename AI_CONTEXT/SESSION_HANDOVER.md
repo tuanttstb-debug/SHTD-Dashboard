@@ -1,6 +1,6 @@
 # SESSION HANDOVER (S74) — 2026-08-16
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
-**origin/main trước**: `d64b330` (S73) → **sau (ĐÃ push)**: S74
+**origin/main trước**: `d64b330` (S73) → **sau (ĐÃ push)**: `006ed60` (S74)
 **Version**: v6.48 → **v6.49** (`6.49-notif-retract-closed-20260816`, `?v=20260816`)
 
 > **DEBUG — email/chuông nhắc việc hiện task ĐÃ ĐÓNG.** User báo task đã đóng vẫn còn nhắc việc + nghi trỏ nhầm DB. **Rà soát**: (a) trỏ DB **ĐÚNG** — `Config.gs SPREADSHEET_ID=1cpg1p_8…56Hk` = Sheet tổng cá nhân hiện hành, khớp client; mọi reader noti `openById` cùng ID. (b) Gốc thật: **notification KHÔNG được thu hồi khi entity chuyển sang done** — `notifScan` chỉ BỎ QUA task done khi sinh candidate MỚI, nhưng nhắc `overdue`/`due-*` đã ghi vào sheet `Notifications` khi task còn mở thì **nằm lại vĩnh viễn**; `_notifPurge_` chỉ xóa dòng đã-đọc & >30 ngày; `notifRead`/client chỉ lọc `!read`, không đối chiếu trạng thái sống. Đóng task chỉ **append** dòng "closed", không gỡ nhắc cũ.
