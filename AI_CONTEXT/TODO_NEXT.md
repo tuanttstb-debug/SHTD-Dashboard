@@ -1,4 +1,30 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-16 (Session 74 — Fix email/chuông nhắc việc hiện task đã đóng: RETRACT)
+**Context**: S74 done. v6.49-notif-retract-closed-20260816, `?v=20260816`. ✅ **GAS redeployed (link KHÔNG đổi)**. `verify_notif_retract` **19/19** (sandbox chạy hàm GAS thật) + `verify_notifications` 21/21. Backend-only + test + version bump.
+
+---
+
+## ✅ COMPLETED S74 — Notification retract (task đã đóng vẫn nhắc)
+- [x] **Gốc**: noti KHÔNG thu hồi khi entity chuyển done — `notifScan` chỉ bỏ qua task done khi sinh candidate MỚI; nhắc `overdue`/`due-*` đã ghi khi còn mở thì nằm lại (chỉ `_notifPurge_` xóa khi đã-đọc & >30 ngày); đóng task chỉ append "closed". Trỏ DB **ĐÚNG** (không phải nguyên nhân).
+- [x] **Fix RETRACT 3 tầng** (`backend/NotificationService.gs`): (1) real-time `notifOnWrite` `nowDone`→`_notifRetractEntity_()`; (2) daily `notifScan` `_notifLiveState_()`+`_notifRetractStale_()` (trước digest → email sạch, tự chữa tồn kho + đóng ngoài app); (3) `notifRetractStalePreview()` dry-run. Chỉ due-types; retract=mark-read; bump `DATA_VER`.
+- [x] `verify_notif_retract.mjs` **19/19** (NEW) + `run_tests.mjs`; `config.js` v6.49; `index.html` `?v=20260816` (65 refs). ✅ **GAS redeployed**.
+
+## 🔴 PRIORITY 0 — Dọn backlog + smoke (S74)
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | (GAS editor) `notifRetractStalePreview()` | Log số nhắc due/overdue sẽ thu hồi + mẫu `[done]/[missing]` |
+| 2 | `notifScan()` chạy tay 1 lần | Dọn backlog ngay (không chờ trigger 8h); log `thu hồi N` |
+| 3 | Hard-reload (Ctrl+Shift+R) | Badge `v6.49-notif-retract-closed-20260816` |
+| 4 | Đóng 1 task đang có nhắc overdue → chuông/reload | Nhắc task đó **biến mất** (không còn task đã đóng trong chuông) |
+| 5 | Digest sáng kế | Không còn nhắc task đã đóng |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S74 (tùy chọn)
+- **Gap task đóng NGOÀI app** (sửa Sheet tay/migration): chỉ sạch ở lần `notifScan` kế (daily). Nếu cần tức thì → thêm live-filter trong `notifRead` (đọc lại entity mỗi poll — nghịch tuning S72, cân nhắc). Xem TD-NOTIF-01.
+- **(nợ S57)** điền cột Email `User_Master` cho digest.
+
+---
+
+# (S73) TODO — giữ tham khảo
 **Prepared**: 2026-08-14 (Session 73 — REVERT ownership-load + Fix cột RAG Task_Master)
 **Context**: S73 done. v6.48-task-rag-column-persist-20260814, `?v=20260814c`. HEAD `01c12cd` (`a0b7418` v6.46 → `e15f99b` REVERT v6.47 → `01c12cd` RAG col v6.48). `verify_task_rag` **5/5**, `my_work` **62/62**, `atomic_write` **41/41**; full suite **33/34** (chỉ `bld_queue` timing-flaky). Client v6.48 **thuần FE + migration** — GAS đọc/ghi cột động nên **KHÔNG cần redeploy Web App**.
 

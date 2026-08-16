@@ -40,6 +40,10 @@ var _NOTIF_LABEL = {
   initiative:'Initiative', milestone:'Milestone', dev:'Dev Plan'
 };
 
+// Các loại nhắc "còn sống theo hạn" — phải thu hồi khi entity đóng/biến mất.
+// (created/closed KHÔNG nằm đây: đó là thông báo sự kiện 1 lần, không phụ thuộc hạn.)
+var _NOTIF_DUE_TYPES = { 'due-3d':1, 'due-1d':1, 'due-today':1, 'overdue':1 };
+
 var _NOTIF_MMM = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
 
 // Case_Pipeline stage → group (đồng bộ với constants.js CASE_STAGE_GROUP).
@@ -287,6 +291,73 @@ function notifMarkRead(username, ids, markAll) {
   return true;
 }
 
+/* ══════════════ Retraction: thu hồi nhắc due/overdue khi entity đã đóng ══════════════ */
+
+// Mark-read mọi nhắc due/overdue CHƯA đọc của 1 entity (mọi recipient).
+// Dùng real-time khi entity vừa được đóng/hoàn thành trong app.
+function _notifRetractEntity_(sheet, etype, id) {
+  sheet = sheet || _notifSheet_();
+  var last = sheet.getLastRow();
+  if (last < 2) return 0;
+  var range = sheet.getRange(2, 1, last - 1, NOTIF_HEADER.length);
+  var data = range.getValues();
+  var now = new Date().toISOString();
+  var eid = String(id).trim();
+  var changed = 0;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][9]) continue;                             // đã đọc
+    if (!_NOTIF_DUE_TYPES[String(data[i][2])]) continue;  // chỉ due/overdue
+    if (String(data[i][3]) !== etype) continue;           // EntityType
+    if (String(data[i][4]).trim() !== eid) continue;      // EntityID
+    data[i][9] = now; changed++;
+  }
+  if (changed) { range.setValues(data); SpreadsheetApp.flush(); }
+  return changed;
+}
+
+// Tập trạng thái sống của mọi entity: exist[key]=1 (còn tồn tại), done[key]=1 (đã đóng).
+// key = etype|id (etype đã phân biệt milestone vs initiative như _notifRowType).
+function _notifLiveState_() {
+  var exist = {}, done = {};
+  var types = ['task', 'case', 'issue', 'initiative', 'dev'];
+  for (var t = 0; t < types.length; t++) {
+    var entityType = types[t];
+    var cfg = _NOTIF_CFG[entityType];
+    var values;
+    try { values = _notifReadEntity_(entityType); } catch (e) { values = null; }
+    if (!values || values.length < 2) continue;
+    for (var i = 1; i < values.length; i++) {
+      var r = values[i];
+      var id = String(r[cfg.id] || '').trim();
+      if (!id) continue;
+      var etype = _notifRowType(entityType, id, r, cfg);
+      var key = etype + '|' + id;
+      exist[key] = 1;
+      if (_notifIsDone(etype, r[cfg.status], r, cfg)) done[key] = 1;
+    }
+  }
+  return { exist: exist, done: done };
+}
+
+// Thu hồi mọi nhắc due/overdue chưa đọc mà entity nay đã done HOẶC không còn tồn tại.
+// Tự chữa cả tồn kho lịch sử + task đóng ngoài app (sửa Sheet tay / migration).
+function _notifRetractStale_(sheet, live) {
+  var last = sheet.getLastRow();
+  if (last < 2) return 0;
+  var range = sheet.getRange(2, 1, last - 1, NOTIF_HEADER.length);
+  var data = range.getValues();
+  var now = new Date().toISOString();
+  var changed = 0;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][9]) continue;
+    if (!_NOTIF_DUE_TYPES[String(data[i][2])]) continue;
+    var key = String(data[i][3]) + '|' + String(data[i][4]).trim();
+    if (live.done[key] || !live.exist[key]) { data[i][9] = now; changed++; }
+  }
+  if (changed) { range.setValues(data); SpreadsheetApp.flush(); }
+  return changed;
+}
+
 /* ══════════════ Real-time: created / closed (gọi từ doPost) ══════════════ */
 
 // Đọc trạng thái trước khi ghi. Trả null nếu lỗi (→ bỏ qua, không noti sai).
@@ -324,6 +395,8 @@ function notifOnWrite(entityType, id, row, prior) {
 
     var eventType = null;
     var nowDone = _notifIsDone(etype, status, row, cfg);
+    // Entity vừa đóng/hoàn thành → gỡ ngay mọi nhắc due/overdue cũ còn treo (mọi recipient).
+    if (nowDone) _notifRetractEntity_(null, etype, id);
     if (!prior.existed) eventType = 'created';
     else if (nowDone && !prior.done) eventType = 'closed';
     if (!eventType) return;
@@ -415,14 +488,20 @@ function notifScan() {
   if (toAppend.length) {
     sheet.getRange(sheet.getLastRow() + 1, 1, toAppend.length, NOTIF_HEADER.length).setValues(toAppend);
     SpreadsheetApp.flush();
-    if (typeof _bumpDataVer === 'function') _bumpDataVer();   // noti mới → client batch kế tiếp lấy lại (hết version gate)
+  }
+
+  // Thu hồi nhắc due/overdue của entity nay đã đóng / biến mất (tự chữa tồn kho + đóng ngoài app).
+  var retracted = _notifRetractStale_(sheet, _notifLiveState_());
+
+  if ((toAppend.length || retracted) && typeof _bumpDataVer === 'function') {
+    _bumpDataVer();   // noti đổi → client batch kế tiếp lấy lại (hết version gate)
   }
 
   _notifPurge_(sheet);
   var mailed = _notifSendDigests_(sheet, users);
 
-  Logger.log('notifScan: +' + toAppend.length + ' noti mới, gửi ' + mailed + ' email digest.');
-  return { created: toAppend.length, emailed: mailed };
+  Logger.log('notifScan: +' + toAppend.length + ' noti mới, thu hồi ' + retracted + ', gửi ' + mailed + ' email digest.');
+  return { created: toAppend.length, retracted: retracted, emailed: mailed };
 }
 
 // Xóa noti đã đọc & tạo > 30 ngày (giữ sheet gọn).
@@ -530,6 +609,31 @@ function installNotifTrigger() {
   }
   ScriptApp.newTrigger('notifScan').timeBased().atHour(8).everyDays(1).create();
   Logger.log('✅ Đã cài trigger notifScan mỗi ngày ~8h.');
+}
+
+// Dry-run: đếm nhắc due/overdue SẼ bị thu hồi (entity đã done / biến mất). KHÔNG ghi sheet.
+// Chạy trước để soi tồn kho; sau đó chạy notifScan() (hoặc chờ trigger sáng) để dọn thật.
+function notifRetractStalePreview() {
+  var sheet = _notifSheet_();
+  var last = sheet.getLastRow();
+  if (last < 2) { Logger.log('Notifications rỗng.'); return { stale: 0, samples: [] }; }
+  var live = _notifLiveState_();
+  var data = sheet.getRange(2, 1, last - 1, NOTIF_HEADER.length).getValues();
+  var stale = 0, samples = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][9]) continue;
+    if (!_NOTIF_DUE_TYPES[String(data[i][2])]) continue;
+    var key = String(data[i][3]) + '|' + String(data[i][4]).trim();
+    if (live.done[key] || !live.exist[key]) {
+      stale++;
+      if (samples.length < 30) {
+        samples.push((live.done[key] ? '[done]    ' : '[missing] ') + data[i][1] + ' → ' + data[i][7]);
+      }
+    }
+  }
+  Logger.log('notifRetractStalePreview — sẽ thu hồi: ' + stale + ' nhắc due/overdue.');
+  for (var s = 0; s < samples.length; s++) Logger.log('• ' + samples[s]);
+  return { stale: stale, samples: samples };
 }
 
 // Dry-run: log số noti sẽ sinh, KHÔNG ghi sheet / KHÔNG gửi email.

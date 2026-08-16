@@ -1,3 +1,21 @@
+# SESSION HANDOVER (S74) — 2026-08-16
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**origin/main trước**: `d64b330` (S73) → **sau (ĐÃ push)**: S74
+**Version**: v6.48 → **v6.49** (`6.49-notif-retract-closed-20260816`, `?v=20260816`)
+
+> **DEBUG — email/chuông nhắc việc hiện task ĐÃ ĐÓNG.** User báo task đã đóng vẫn còn nhắc việc + nghi trỏ nhầm DB. **Rà soát**: (a) trỏ DB **ĐÚNG** — `Config.gs SPREADSHEET_ID=1cpg1p_8…56Hk` = Sheet tổng cá nhân hiện hành, khớp client; mọi reader noti `openById` cùng ID. (b) Gốc thật: **notification KHÔNG được thu hồi khi entity chuyển sang done** — `notifScan` chỉ BỎ QUA task done khi sinh candidate MỚI, nhưng nhắc `overdue`/`due-*` đã ghi vào sheet `Notifications` khi task còn mở thì **nằm lại vĩnh viễn**; `_notifPurge_` chỉ xóa dòng đã-đọc & >30 ngày; `notifRead`/client chỉ lọc `!read`, không đối chiếu trạng thái sống. Đóng task chỉ **append** dòng "closed", không gỡ nhắc cũ.
+
+## S74 — Fix nhắc việc task đã đóng: cơ chế RETRACT 3 tầng · v6.49 (GAS — ĐÃ redeploy, link không đổi)
+- **✅ Task**: thu hồi (mark-read) nhắc `due-3d/due-1d/due-today/overdue` khi entity done HOẶC biến mất, ở 3 tầng: (1) **real-time** `notifOnWrite` — `nowDone` → `_notifRetractEntity_()` gỡ ngay nhắc treo của entity (mọi recipient); (2) **daily self-heal** `notifScan` — `_notifLiveState_()` (tập `exist`/`done` mọi entity) + `_notifRetractStale_()` gỡ mọi nhắc due/overdue mà entity nay done/mất, chạy **TRƯỚC** `_notifSendDigests_` nên email cũng sạch → **tự chữa tồn kho lịch sử + task đóng ngoài app** (sửa Sheet tay/migration); (3) **dry-run** `notifRetractStalePreview()` soi backlog.
+- **✅ Files (1 source + 1 test + 3 wiring)**: `backend/NotificationService.gs` (NEW const `_NOTIF_DUE_TYPES`; NEW `_notifRetractEntity_`/`_notifLiveState_`/`_notifRetractStale_`/`notifRetractStalePreview`; MOD `notifOnWrite` retract-on-done, `notifScan` retract pass + bump `DATA_VER` khi thu hồi + log/return `retracted`). NEW `verify_notif_retract.mjs`. MOD `run_tests.mjs`, `config.js` v6.49, `index.html` `?v=20260816` (65 refs).
+- **✅ Decision**: (a) chỉ thu hồi **due-types** — `created`/`closed` là sự kiện 1 lần, giữ nguyên. (b) **retract = mark-read** (set ReadTs), KHÔNG xóa dòng → giữ dấu vết; `_notifPurge_` dọn sau 30 ngày như cũ. (c) KHÔNG lọc live-state trong `notifRead` (mỗi poll 15' → tránh đọc lại toàn bộ entity, nghịch tuning S72); 2 tầng real-time + daily đã phủ. Gap nhỏ: task đóng NGOÀI app chỉ sạch ở lần scan kế (chấp nhận). (d) bump `DATA_VER` khi có thu hồi → chuông client lấy bản sạch ở batch kế.
+- **✅ Test**: `verify_notif_retract.mjs` **19/19** — nạp **NGUYÊN VĂN** `NotificationService.gs` vào sandbox Node (`new Function` + stub SpreadsheetApp/Utilities/MailApp/entity-readers + fake sheet) → chạy **hàm GAS THẬT** (không port tay → không drift): live-state phân loại task/dev/milestone, retract done/missing, giữ task mở, bỏ created/read-sẵn, real-time onWrite close, tích hợp `notifScan` (retracted=2 + bump). `verify_notifications` (UI) **21/21** không đổi. GAS parse OK (qua sandbox eval).
+- **⛔ Blocker**: Không. ✅ **GAS đã redeploy (user, link KHÔNG đổi).** Tầng scan chỉ cần Save code; tầng real-time (`notifOnWrite` trong `doPost`) cần redeploy — đã xong.
+- **➡️ Next step**: (1) (GAS editor) `notifRetractStalePreview()` soi số nhắc stale → `notifScan()` chạy tay 1 lần dọn backlog ngay (không chờ trigger 8h). (2) Hard-reload → badge `v6.49`; đóng 1 task đang có nhắc overdue → chuông + digest kế **hết** nhắc task đó. (3) (nợ) điền Email `User_Master` cho digest.
+- **🟢 Regression risk**: 🟢 **THẤP** — thuần thêm tầng thu hồi (mark-read), không đụng sinh candidate/parse/deep-link/mark-read cũ; retract chỉ chạm cột ReadTs của `Notifications`. `verify_notif_retract` 19/19, `verify_notifications` 21/21. ⚠️ `_notifLiveState_` đọc lại 5 entity mỗi `notifScan` (job ngày, không perf-critical). ⚠️ Nếu `_notifIsDone` sai ngưỡng cho 1 entity → có thể thu hồi oan/sót (dùng chung định nghĩa với `_notifSkipDue` sinh candidate nên nhất quán). Xem TD-NOTIF-01.
+
+---
+
 # SESSION HANDOVER (S73) — 2026-08-14
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `d49d0be` (S72) → **sau (ĐÃ push)**: `01c12cd` (3 commit: `a0b7418` v6.46 → `e15f99b` REVERT v6.47 → `01c12cd` RAG col v6.48)

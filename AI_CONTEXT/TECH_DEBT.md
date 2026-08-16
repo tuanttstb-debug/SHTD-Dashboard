@@ -8,6 +8,19 @@
 
 ---
 
+## 🆕 DELTA — Session 74 (2026-08-16) — Fix nhắc việc task đã đóng (RETRACT)
+
+### TD-NOTIF-01: Task đóng NGOÀI app chỉ sạch ở lần `notifScan` kế; retract phụ thuộc `_notifIsDone` 🟢 MEDIUM
+S74 thêm thu hồi nhắc due/overdue 3 tầng. **Gap còn lại**: (a) task đóng **ngoài app** (sửa Sheet tay / migration set trạng thái) KHÔNG qua `doPost` → không có real-time retract → chỉ sạch ở **lần `notifScan` daily kế** (chấp nhận). Nếu cần tức thì: live-filter trong `notifRead` — nhưng phải đọc lại 5 entity **mỗi poll 15'** (nghịch tuning S72 P1 giảm read) → cố ý KHÔNG làm. (b) Retract dùng chung `_notifIsDone`/`_notifSkipDue` với sinh candidate → **nhất quán** (done sinh-noti = done thu-hồi), nhưng nếu ngưỡng done sai cho 1 entity thì **cả hai** cùng sai (sinh oan + không thu hồi được đúng). (c) `_notifLiveState_` đọc lại 5 entity mỗi `notifScan` — job ngày, không perf-critical; nếu gộp được với `_notifDueCandidates_` (đang đọc trùng) thì tiết kiệm 5 read/scan.
+
+### ✅ "Task đã đóng vẫn nhắc" = thiếu THU HỒI, KHÔNG phải trỏ nhầm DB
+Rà soát trỏ DB **ĐÚNG** ngay (`Config.gs SPREADSHEET_ID` khớp client + mọi reader cùng `openById`). Gốc thật: vòng đời noti chỉ **sinh** (skip done) + **purge theo thời gian**, thiếu **retract khi entity chuyển done**. → Khi triệu chứng "X còn hiện dù đã đóng/xong": kiểm **lifecycle có bước retract/invalidate không**, đừng vội nghi nguồn dữ liệu.
+
+### TD-TEST-08: verify_notif_retract chạy hàm GAS THẬT qua sandbox `new Function` — pattern tái dùng ⚪ LOW
+`verify_notif_retract.mjs` nạp nguyên văn `NotificationService.gs` + stub GAS APIs (SpreadsheetApp/Utilities/MailApp/Logger) + fake sheet 2D-array + entity-readers → **không port tay** (tránh drift kiểu `verify_id_reassign` phải sync 2 bản). Có thể tái dùng cho các GAS service khác (Concurrency/Notification/Audit). Hạn chế: chỉ phủ hàm thuần-logic; API GAS thật (LockService, MailApp gửi thật, trigger) vẫn phải smoke tay.
+
+---
+
 ## 🆕 DELTA — Session 73 (2026-08-14) — REVERT ownership-load (mất data) + Fix cột RAG Task_Master
 
 ### TD-SCHEMA-01: `taskToRow` ghi theo VỊ TRÍ — cột mới phải append cuối + migration set header 🟡 HIGH
