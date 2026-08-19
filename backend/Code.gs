@@ -55,7 +55,7 @@ function doPost(e) {
     }
 
     // ── role gate: Admin-only actions ──
-    var ADMIN_ONLY = ['kpi-write', 'user-create', 'user-update', 'user-reset-password'];
+    var ADMIN_ONLY = ['kpi-write', 'user-create', 'user-update', 'user-reset-password', 'send-report'];
     if (ADMIN_ONLY.indexOf(action) !== -1 && tokenData.r !== 'Admin') {
       return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
     }
@@ -359,6 +359,18 @@ function doPost(e) {
     if (action === 'notif-mark-read') {
       notifMarkRead(tokenData.u, Array.isArray(body.ids) ? body.ids : [], body.all === true);
       return _jsonResponse({ status: 'ok' });
+    }
+
+    // ── Gửi báo cáo tuần qua email (Admin-only). HTML dựng ở AIOS build_email.js;
+    //    GAS tự phân giải người nhận từ User_Master: To=CuongVM1, Cc=Teamlead active. ──
+    if (action === 'send-report') {
+      var _rep = sendWeeklyReport_(body.html, body.subject, {
+        toUsername: body.toUsername,
+        dryRun: body.dryRun === true
+      });
+      auditLog(tokenData, 'send-report',
+        (_rep.sent ? 'sent' : 'dry') + ' to=' + _rep.to + ' cc=' + _rep.count);
+      return _jsonResponse({ status: 'ok', report: _rep });
     }
 
     // ── H2 Team Management (Quản trị H2) ──

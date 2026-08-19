@@ -1,3 +1,16 @@
+# SESSION HANDOVER (S75) — 2026-08-19
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+
+## S75 — Tính năng GỬI BÁO CÁO TUẦN qua email (action GAS `send-report`) · CHƯA redeploy
+- **✅ Task**: Thêm tính năng gửi báo cáo tuần định kỳ qua email. Template HTML (đã DUYỆT) được dựng ở AIOS `weekly-report/build_email.js`; SHTD backend là bên GỬI. **To** = user `CuongVM1`; **Cc** = mọi user `Role=Teamlead`, `Active≠false`, có Email (loại trùng địa chỉ To). GAS tự phân giải người nhận từ `User_Master` (nguồn sự thật server-side) rồi `MailApp.sendEmail` — mẫu như digest ở `NotificationService.gs`.
+- **✅ Files (2 source + 1 test + 1 runner)**: NEW `backend/ReportEmailService.gs` (`_reportRecipients_` phân giải To/Cc dedup; `sendWeeklyReport_` gửi/`dryRun`; const `REPORT_TO_USERNAME='CuongVM1'`/`REPORT_CC_ROLE='Teamlead'`/`REPORT_FROM_NAME`). MOD `backend/Code.gs` (route `send-report` **Admin-only** + thêm vào `ADMIN_ONLY`). NEW `verify_send_report.mjs`. MOD `run_tests.mjs`. *(AIOS phía dựng+gọi: `03_Skills/weekly-report/send_email.js` mới + `run.js --send` + `fetch_gas.js` export helper — repo AIOS, commit riêng.)*
+- **✅ Decision**: (a) Kiến trúc **AIOS dựng + GAS gửi** (không port logic aggregate 5 mảng sang GAS → tránh nhân đôi/lệch bản, đúng "1 nguồn sự thật"; template đã duyệt tái dùng). (b) Người nhận phân giải **server-side** từ `User_Master` (không để AIOS tự gom). (c) `send-report` **Admin-only** + hỗ trợ `dryRun` (soi To/Cc trước khi bắn). (d) Định kỳ = scheduled task AIOS chiều thứ 6 gọi `run.js --send` (đã có lịch build). (e) Data-boundary: HTML chứa tên KH (nội bộ) gửi email nội bộ qua GAS của ngân hàng — cùng miền tin cậy với Sheets nguồn, không lên cloud ngoài.
+- **✅ Test**: `verify_send_report.mjs` **7/7** — nạp NGUYÊN VĂN `ReportEmailService.gs` vào sandbox Node (stub `SpreadsheetApp`/`MailApp`) → chạy hàm GAS THẬT: To=CuongVM1, Cc teamlead active/loại inactive-no mail-non lead, To-cũng-lead loại khỏi Cc, dedup email trùng, To không tồn tại → NÉM (không gửi), dryRun không gọi MailApp, gửi thật đúng payload `{to,cc,subject,htmlBody}`, html rỗng → NÉM. GAS parse OK (qua sandbox eval). AIOS side đã thử `send_email.js --dry` tới GAS live: login OK, POST trả `action không hợp lệ` (đúng — chưa redeploy).
+- **⛔ Blocker**: **GAS CHƯA redeploy** — `backend/*.gs` là patch merge tay vào Apps Script rồi redeploy (link không đổi). Trước khi redeploy, `--send`/`--dry` sẽ báo `action không hợp lệ: send-report`.
+- **➡️ Next step**: (1) **[TT] merge `ReportEmailService.gs` + route `send-report` vào Apps Script deployed → redeploy** Web App. (2) **[TT] điền Email cho `CuongVM1` + các user Teamlead trong `User_Master`** (nợ cũ S74 "điền Email User_Master" — feature này phụ thuộc trực tiếp). (3) `node send_email.js --dry` (AIOS) để soi To/Cc thật → rồi `node run.js --send` chạy thử 1 kỳ. (4) Đưa `run.js --send` vào scheduled task thứ 6.
+
+---
+
 # SESSION HANDOVER (S74) — 2026-08-16
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **origin/main trước**: `d64b330` (S73) → **sau (ĐÃ push)**: `006ed60` (S74)
