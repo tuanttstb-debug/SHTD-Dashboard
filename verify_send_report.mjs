@@ -11,6 +11,9 @@
  *  SR5 – dryRun → trả người nhận, sent=false, MailApp KHÔNG được gọi
  *  SR6 – gửi thật → MailApp gọi 1 lần đúng {to, cc, subject, htmlBody}; sent=true
  *  SR7 – html rỗng → NÉM lỗi
+ *  SR8 – Report_Config đổi To_Username + Cc_Role (nhiều role, phẩy) → phân giải theo config
+ *  SR9 – Cc_Extra thêm email ngoài role, dedup (khác hoa) với địa chỉ role
+ *  SR10 – Enabled=false → dry-run OK, gửi thật NÉM lỗi & KHÔNG gửi
  *
  * Run: node verify_send_report.mjs
  */
@@ -29,8 +32,9 @@ function throws(fn) { try { fn(); return false; } catch (e) { return true; } }
 function makeSheet(rows) {
   return { getDataRange() { return { getValues() { return rows.map(r => r.slice()); } }; } };
 }
-function buildEnv(userRows) {
+function buildEnv(userRows, configRows) {
   const registry = { User_Master: makeSheet(userRows) };
+  if (configRows) registry.Report_Config = makeSheet(configRows);
   const fakeSS = { getSheetByName(n) { return registry[n] || null; } };
   const mails = [];
   const factory = new Function(
@@ -121,6 +125,51 @@ const HDR = ['Username', 'Display_Name', 'Email', 'Role', 'Active'];
   const { api, mails } = buildEnv([HDR, ['CuongVM1', 'C', 'cuong@bank.vn', 'User', true]]);
   const threw = throws(() => api.sendWeeklyReport_('   ', 'x', {}));
   log('SR7', threw && mails.length === 0, `threw=${threw}`);
+}
+
+const CFG_HDR = ['Key', 'Value', 'Ghi chú'];
+
+/* ── SR8: Report_Config đổi To_Username + Cc_Role (nhiều role) ── */
+{
+  const { api } = buildEnv([HDR,
+    ['bossX', 'Boss X', 'boss@bank.vn', 'User', true],
+    ['leadA', 'A', 'a@bank.vn', 'Teamlead', true],
+    ['mgrB', 'B', 'b@bank.vn', 'Manager', true],
+    ['CuongVM1', 'C', 'cuong@bank.vn', 'Teamlead', true],   // KHÔNG còn là To → vào Cc (Teamlead)
+  ], [CFG_HDR,
+    ['To_Username', 'bossX', ''],
+    ['Cc_Role', 'Teamlead, Manager', ''],
+  ]);
+  const r = api._reportRecipients_();
+  log('SR8', r.toEmail === 'boss@bank.vn' &&
+    JSON.stringify(r.cc) === JSON.stringify(['a@bank.vn', 'b@bank.vn', 'cuong@bank.vn']),
+    `To=${r.toEmail} Cc=${JSON.stringify(r.cc)}`);
+}
+
+/* ── SR9: Cc_Extra thêm email ngoài role, dedup với role ── */
+{
+  const { api } = buildEnv([HDR,
+    ['CuongVM1', 'C', 'cuong@bank.vn', 'User', true],
+    ['leadA', 'A', 'a@bank.vn', 'Teamlead', true],
+  ], [CFG_HDR,
+    ['Cc_Extra', 'extra@bank.vn, A@bank.vn', ''],   // A@bank.vn trùng leadA (khác hoa) → dedup
+  ]);
+  const r = api._reportRecipients_();
+  log('SR9', r.cc.length === 2 && r.cc.indexOf('extra@bank.vn') !== -1 &&
+    r.cc.filter(e => e.toLowerCase() === 'a@bank.vn').length === 1,
+    `Cc=${JSON.stringify(r.cc)}`);
+}
+
+/* ── SR10: Enabled=false → dry OK, gửi thật NÉM lỗi, không gửi ── */
+{
+  const { api, mails } = buildEnv([HDR,
+    ['CuongVM1', 'C', 'cuong@bank.vn', 'User', true],
+    ['leadA', 'A', 'a@bank.vn', 'Teamlead', true],
+  ], [CFG_HDR, ['Enabled', 'false', '']]);
+  const dry = api.sendWeeklyReport_('<b>hi</b>', 'x', { dryRun: true });
+  const threw = throws(() => api.sendWeeklyReport_('<b>hi</b>', 'x', {}));
+  log('SR10', dry.sent === false && dry.enabled === false && threw && mails.length === 0,
+    `dry.enabled=${dry.enabled} threw=${threw} mails=${mails.length}`);
 }
 
 console.log(`\n${failed ? '❌ FAIL' : '✅ PASS'} — ${passed} passed, ${failed} failed`);
