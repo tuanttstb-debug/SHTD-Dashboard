@@ -528,12 +528,44 @@ var _NOTIF_GROUP_ORDER = [
   { key: 'closed',    types: ['closed'],             label: 'Đã hoàn thành' }
 ];
 
+// Username KHÔNG nhận email digest nhắc việc (vẫn nhận chuông trong app + vẫn nhận
+// email BÁO CÁO ĐỊNH KỲ riêng qua ReportEmailService). Cấu hình động qua
+// Report_Config.Digest_Suppress (username cách nhau dấu phẩy); nếu KHÔNG có key đó
+// trong sheet thì fallback hằng số bên dưới.
+var _NOTIF_DIGEST_SUPPRESS_DEFAULT = ['cuongvm1'];
+
+function _notifDigestSuppressSet_() {
+  var set = {};
+  var foundKey = false;
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Report_Config');
+    if (sheet) {
+      var data = sheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0] || '').trim() === 'Digest_Suppress') {
+          foundKey = true;
+          String(data[i][1] || '').split(',').forEach(function (u) {
+            var v = u.trim().toLowerCase();
+            if (v) set[v] = 1;
+          });
+        }
+      }
+    }
+  } catch (e) { Logger.log('_notifDigestSuppressSet_ error: ' + e.message); }
+  if (!foundKey) {
+    _NOTIF_DIGEST_SUPPRESS_DEFAULT.forEach(function (u) { set[String(u).toLowerCase()] = 1; });
+  }
+  return set;
+}
+
 function _notifSendDigests_(sheet, users) {
   var last = sheet.getLastRow();
   if (last < 2) return 0;
   var range = sheet.getRange(2, 1, last - 1, NOTIF_HEADER.length);
   var data = range.getValues();
   var today = _notifToday_();
+  var suppress = _notifDigestSuppressSet_();   // user không nhận email digest
 
   // Gom bản ghi chưa đọc & chưa gửi hôm nay theo user.
   var byUser = {};       // user → [ {rowIdx, type, message} ]
@@ -550,8 +582,10 @@ function _notifSendDigests_(sheet, users) {
     if (!byUser.hasOwnProperty(uk)) continue;
     var info = users[uk];
     var items = byUser[uk];
-    // Đánh dấu đã email hôm nay dù có gửi được hay không (tránh spam khi thiếu email).
+    // Đánh dấu đã email hôm nay dù có gửi được hay không (tránh spam khi thiếu email
+    // hoặc user bị suppress → không xử lý lại lô này ở lần scan sau).
     for (var m = 0; m < items.length; m++) data[items[m].rowIdx][10] = today;
+    if (suppress[uk]) continue;                          // user bị loại khỏi email nhắc việc
     if (!info || !info.email || (info.active === false)) continue;
 
     var body = _notifDigestHtml_(info.display, items);

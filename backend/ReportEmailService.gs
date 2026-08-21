@@ -36,7 +36,8 @@ function setupReportConfig() {
     ['To_Username', REPORT_TO_USERNAME,     'Username người nhận chính (To), phải khớp User_Master'],
     ['Cc_Role',     REPORT_CC_ROLE,         'Role được Cc; nhiều role cách nhau dấu phẩy (vd: Teamlead,Manager)'],
     ['Cc_Extra',    '',                     'Email Cc thêm ngoài role, cách nhau dấu phẩy (tùy chọn)'],
-    ['From_Name',   REPORT_FROM_NAME,       'Tên hiển thị người gửi']
+    ['From_Name',   REPORT_FROM_NAME,       'Tên hiển thị người gửi'],
+    ['Digest_Suppress', 'CuongVM1',         'Username KHÔNG nhận email NHẮC VIỆC (digest) — vẫn nhận báo cáo này + chuông. Nhiều username cách nhau dấu phẩy; để trống = không loại ai']
   ];
   sheet.getRange(1, 1, rows.length, 3).setValues(rows);
   sheet.getRange(1, 1, 1, 3).setFontWeight('bold');

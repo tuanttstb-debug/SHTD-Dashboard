@@ -21,6 +21,47 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* ── Header tools: view toggle + Admin team droplist ── */
+.mw-header-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mw-team-filter {
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-1);
+  cursor: pointer;
+}
+.mw-team-filter:focus { outline: 2px solid var(--primary); border-color: transparent; }
+.mw-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.mw-view-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: none;
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .14s, color .14s;
+}
+.mw-view-btn + .mw-view-btn { border-left: 1px solid var(--border); }
+.mw-view-btn:hover  { background: var(--surface2, rgba(0,0,0,.03)); }
+.mw-view-btn.active { background: var(--primary); color: #fff; }
+
 .mw-greeting {
   font-size: 18px;
   font-weight: 800;
@@ -586,10 +627,146 @@
   gap: 8px;
 }
 
+/* ── Kanban board (stretch-to-fill, per UI_CONCEPT) ── */
+.mw-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.mw-kb-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface2, rgba(0,0,0,.02));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  min-width: 0;
+}
+.mw-kb-col-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 4px 6px;
+  border-bottom: 2px solid transparent;
+}
+.mw-kb-col-head.kb-todo { color: #d97706; border-bottom-color: rgba(245,158,11,.35); }
+.mw-kb-col-head.kb-proc { color: #2563eb; border-bottom-color: rgba(59,130,246,.35); }
+.mw-kb-col-head.kb-done { color: #16a34a; border-bottom-color: rgba(34,197,94,.35); }
+.mw-kb-col-title { flex: 1; min-width: 0; }
+.mw-kb-col-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--surface);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.mw-kb-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 40px;
+}
+.mw-kb-empty { padding: 16px 12px; font-size: 12px; }
+
+/* Overload banner at top of In-process column */
+.mw-kb-overwarn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 6px;
+  padding: 6px 8px;
+  line-height: 1.35;
+}
+
+/* Kanban card */
+.mw-kb-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: box-shadow .14s, transform .1s;
+}
+.mw-kb-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.mw-kb-card.is-overload { border-left: 3px solid #ef4444; }
+.mw-kb-card-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.mw-kb-id {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: 'DM Mono', monospace;
+}
+.mw-kb-rag {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.mw-kb-rag.rag-green { background: #22c55e; }
+.mw-kb-rag.rag-amber { background: #f59e0b; }
+.mw-kb-rag.rag-red   { background: #ef4444; }
+.mw-kb-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.mw-kb-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mw-kb-pic {
+  font-size: 11px;
+  color: var(--text-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mw-kb-pic.pic-over { color: #dc2626; font-weight: 700; }
+.mw-kb-overbadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgba(239,68,68,.14);
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
 /* ── Dark mode ── */
 [data-theme="dark"] .mw-result-area {
   background: rgba(255,255,255,.04);
 }
+[data-theme="dark"] .mw-kb-col { background: rgba(255,255,255,.03); }
+[data-theme="dark"] .mw-kb-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.4); }
 [data-theme="dark"] .mw-task-card:hover,
 [data-theme="dark"] .mw-init-card:hover,
 [data-theme="dark"] .mw-case-card:hover,
@@ -605,6 +782,8 @@
   .mw-case-grid  { grid-template-columns: 1fr; }
   .mw-urgent-cols { grid-template-columns: 1fr; }
   .mw-urgent-name { max-width: 150px; }
+  .mw-kanban { grid-template-columns: 1fr; }
+  .mw-header-tools { margin-left: 0; width: 100%; }
 }
 @media (max-width: 480px) {
   .mw-state-sel { min-width: 110px; }

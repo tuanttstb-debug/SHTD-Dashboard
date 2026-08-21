@@ -14,6 +14,7 @@
  *  NR7  – notifOnWrite: entity đóng → gỡ nhắc due/overdue cũ + append 'closed'
  *  NR8  – notifOnWrite: entity vẫn mở → không gỡ, không sự kiện
  *  NR9  – notifScan (integration): result.retracted đúng + stale rows thành đã đọc
+ *  NR10 – digest suppress: CuongVM1 KHÔNG nhận email nhắc việc; user thường vẫn nhận
  *
  * Run: node verify_notif_retract.mjs
  */
@@ -103,7 +104,8 @@ function buildEnv({ notifRows, tasks, cases, issues, inits, dev, users }) {
     SRC + '\n;return {' +
       'notifOnWrite:notifOnWrite, notifScan:notifScan, notifRead:notifRead,' +
       '_notifRetractEntity_:_notifRetractEntity_, _notifRetractStale_:_notifRetractStale_,' +
-      '_notifLiveState_:_notifLiveState_, _notifIsDone:_notifIsDone, _notifSheet_:_notifSheet_' +
+      '_notifLiveState_:_notifLiveState_, _notifIsDone:_notifIsDone, _notifSheet_:_notifSheet_,' +
+      '_notifSendDigests_:_notifSendDigests_, _notifDigestSuppressSet_:_notifDigestSuppressSet_' +
     '};'
   );
   const api = factory(
@@ -242,6 +244,29 @@ console.log('══════════════════════�
   log('NR9-done',    !!byId['sc-done'] && !!byId['sc-missing'], 'stale rows (done+missing) thành đã đọc');
   log('NR9-open',    !byId['sc-open'], 'nhắc của task mở vẫn chưa đọc');
   log('NR9-bump',    env._bumped >= 1, 'DATA_VER được bump khi có thu hồi');
+}
+
+/* ══ NR10 — digest email suppress (CuongVM1 no nhắc-việc email, keep report email) ══ */
+{
+  const H = ['NotifID', 'Username', 'Type', 'EntityType', 'EntityID', 'Title', 'DueDate', 'Message', 'CreatedTs', 'ReadTs', 'EmailedDate'];
+  const mkrow = (id, user, type) => [id, user, type, 'task', 'E-' + id, 'title', '', '[x] ' + type, NOW, '', ''];
+  const notifRows = [H, mkrow('d-cuong', 'cuongvm1', 'overdue'), mkrow('d-tuan', 'tuan', 'overdue')];
+  const { api, notifSheet, mails } = buildEnv({ notifRows, tasks: TASKS, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  // No Report_Config sheet in env → _notifDigestSuppressSet_ falls back to default ['cuongvm1'].
+  const suppress = api._notifDigestSuppressSet_();
+  const users = {
+    cuongvm1: { username: 'CuongVM1', display: 'Cuong', email: 'cuong@x', active: true },
+    tuan:     { username: 'Tuan',     display: 'Tuan',  email: 'tuan@x',  active: true }
+  };
+  const sent = api._notifSendDigests_(notifSheet, users);
+  const toCuong = mails.some(m => m.to === 'cuong@x');
+  const toTuan  = mails.some(m => m.to === 'tuan@x');
+  const byId = {}; notifSheet._rows.slice(1).forEach(r => { byId[r[0]] = r[10]; });
+  log('NR10-default-set',    !!suppress['cuongvm1'],  'suppress-set mặc định gồm cuongvm1');
+  log('NR10-suppress-cuong', !toCuong,                'CuongVM1 KHÔNG nhận email digest nhắc việc');
+  log('NR10-send-tuan',      toTuan,                  'user thường vẫn nhận email digest');
+  log('NR10-marked',         !!byId['d-cuong'] && !!byId['d-tuan'], 'cả 2 dòng vẫn đánh dấu EmailedDate (không lặp lô sau)');
+  log('NR10-sent-count',     sent === 1,              `sent=${sent} (chỉ 1 email — user thường)`);
 }
 
 console.log('\n──────────────────────────────────────────────');

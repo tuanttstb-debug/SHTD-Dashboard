@@ -9,6 +9,14 @@ const _MW_PO_TEAMS   = new Set(['BL', 'CV1', 'CV2', 'Số']);
 const _MW_PTKD_TEAMS = new Set(['PTKD MB', 'PTKD MN']);
 const _MW_QLDM_TEAMS = new Set(['QLDM']);
 
+// ── View mode (List ⇄ Kanban) + Admin team filter — persisted ──
+let _mwView       = (typeof localStorage !== 'undefined' && localStorage.getItem('shtd_mw_view')) || 'list';
+let _mwTeamFilter = null;          // Admin droplist; null → mặc định = team của Admin
+
+const MW_FTE_MAX           = 3;    // FTE chạy đồng thời ≥ ngưỡng này → cảnh báo đỏ
+const MW_KANBAN_CLOSED_CAP = 15;   // số task "vừa đóng" hiển thị tối đa ở cột Closed
+const MW_TEAM_ALL          = '__all__';
+
 function _mwRoleView(user) {
   if (!user) return 'po';
   if (_MW_PTKD_TEAMS.has(user.team)) return 'ptkd';
@@ -42,28 +50,49 @@ function _mwDeadlineBadge(endDate) {
 
 // ── Data getters ──
 
-function _mwGetMyTasks(user) {
-  if (!user) return [];
-  const uname = user.username;
-  const uteam = user.team;
+// Role-aware scope cho My Work (nguồn DUY NHẤT — dùng cho cả List lẫn Kanban):
+//   • Admin    : toàn TRUNG TÂM; lọc theo teamFilter (droplist) — mặc định = team của Admin.
+//   • Teamlead : toàn TEAM của mình (task cá nhân ∪ team) — giữ nguyên "view full" như cũ.
+//   • User/khác: CHỈ task CÁ NHÂN (mình là Responsible HOẶC Accountable).
+function _mwTaskInScope(task, user, teamFilter) {
+  const role = user.role;
+  if (role === 'Admin') {
+    if (teamFilter && teamFilter !== MW_TEAM_ALL) return task.team === teamFilter;
+    return true;
+  }
+  const mine = _mwCmpUser(task.picAcc, user.username) || _mwCmpUser(task.picRes, user.username);
+  if (role === 'Teamlead') return mine || task.team === user.team;
+  return mine;   // User: chỉ task cá nhân
+}
 
-  return (db.tasks || [])
-    .filter(t =>
-      _mwCmpUser(t.picAcc, uname) ||
-      _mwCmpUser(t.picRes, uname) ||
-      t.team === uteam
-    )
-    .sort((a, b) => {
-      const aDone = a.state === 'Hoàn thành';
-      const bDone = b.state === 'Hoàn thành';
-      if (aDone !== bDone) return aDone ? 1 : -1;
-      const aHl = a.highlight === 'Y';
-      const bHl = b.highlight === 'Y';
-      if (aHl !== bHl) return aHl ? -1 : 1;
-      const aD = a.endDate || '9999-99-99';
-      const bD = b.endDate || '9999-99-99';
-      return aD < bD ? -1 : aD > bD ? 1 : 0;
-    });
+function _mwSortTasks(list) {
+  return list.sort((a, b) => {
+    const aDone = a.state === 'Hoàn thành';
+    const bDone = b.state === 'Hoàn thành';
+    if (aDone !== bDone) return aDone ? 1 : -1;
+    const aHl = a.highlight === 'Y';
+    const bHl = b.highlight === 'Y';
+    if (aHl !== bHl) return aHl ? -1 : 1;
+    const aD = a.endDate || '9999-99-99';
+    const bD = b.endDate || '9999-99-99';
+    return aD < bD ? -1 : aD > bD ? 1 : 0;
+  });
+}
+
+// teamFilter chỉ áp cho Admin (droplist Kanban); các role khác bỏ qua.
+function _mwScopedTasks(user, teamFilter) {
+  if (!user) return [];
+  return _mwSortTasks((db.tasks || []).filter(t => _mwTaskInScope(t, user, teamFilter)));
+}
+
+// Admin: mặc định lọc theo team của chính Admin; có thể đổi qua droplist → MW_TEAM_ALL.
+function _mwEffectiveTeamFilter(user) {
+  if (!user || user.role !== 'Admin') return null;
+  return _mwTeamFilter || user.team || MW_TEAM_ALL;
+}
+
+function _mwGetMyTasks(user) {
+  return _mwScopedTasks(user, _mwEffectiveTeamFilter(user));
 }
 
 function _mwGetUrgent(tasks, cases) {
@@ -470,6 +499,134 @@ function _mwBuildCaseSection(cases) {
 </div>`;
 }
 
+// ── Kanban view (To-do / In-process / Closed) ──
+
+// Chia scope task thành 3 cột theo trạng thái.
+//   To-do    = chưa xong & chưa "Đang thực hiện" (Chưa bắt đầu / Tạm dừng / Blocked / HT chuẩn bị)
+//   Process  = "Đang thực hiện"
+//   Closed   = "Hoàn thành"
+function _mwKanbanColumns(tasks) {
+  const IN_PROGRESS = 'Đang thực hiện';
+  const DONE        = 'Hoàn thành';
+  const todo   = tasks.filter(t => t.state !== IN_PROGRESS && t.state !== DONE);
+  const inProc = tasks.filter(t => t.state === IN_PROGRESS);
+  const done   = tasks.filter(t => t.state === DONE);
+
+  // To-do: quá hạn trước, rồi gần đến hạn nhất (deadline tăng dần, không có ngày → cuối).
+  todo.sort((a, b) => (_mwDiffDays(a.endDate) ?? 1e9) - (_mwDiffDays(b.endDate) ?? 1e9));
+  // Closed: "vừa đóng" lên đầu — proxy theo Deadline giảm dần (Task_Master không có ngày đóng).
+  done.sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
+
+  return { todo, inProc, done: done.slice(0, MW_KANBAN_CLOSED_CAP), doneTotal: done.length };
+}
+
+// Đếm task "Đang thực hiện" theo picRes → tập FTE đang chạy ≥ MW_FTE_MAX task đồng thời.
+function _mwOverloadedFtes(inProc) {
+  const counts = {};
+  inProc.forEach(t => {
+    const p = (t.picRes || '').trim().toLowerCase();
+    if (!p) return;
+    counts[p] = (counts[p] || 0) + 1;
+  });
+  const over = new Set();
+  Object.keys(counts).forEach(p => { if (counts[p] >= MW_FTE_MAX) over.add(p); });
+  return { counts, over };
+}
+
+function _mwKanbanCard(task, overSet) {
+  const id     = esc(task.id);
+  const isOver = task.picRes && overSet.has(task.picRes.trim().toLowerCase());
+  const ragCls = { Green: 'rag-green', Amber: 'rag-amber', Red: 'rag-red' }[task.status] || '';
+  return `
+<div class="mw-kb-card${isOver ? ' is-overload' : ''}" onclick="openTaskViewPopup('${id}')">
+  <div class="mw-kb-card-top">
+    <span class="mw-kb-id">${id}</span>
+    ${ragCls ? `<span class="mw-kb-rag ${ragCls}"></span>` : ''}
+    ${_mwDeadlineBadge(task.endDate)}
+  </div>
+  <div class="mw-kb-name" title="${esc(task.name)}">${esc(task.name)}</div>
+  <div class="mw-kb-meta">
+    ${task.picRes ? `<span class="mw-kb-pic${isOver ? ' pic-over' : ''}"><i class="fa-solid fa-user"></i> ${esc(task.picRes)}</span>` : ''}
+    ${isOver ? `<span class="mw-kb-overbadge" title="FTE đang chạy ≥${MW_FTE_MAX} task đồng thời"><i class="fa-solid fa-triangle-exclamation"></i> ${t('mw.kb.overload')}</span>` : ''}
+  </div>
+</div>`;
+}
+
+function _mwKanbanCol(cls, icon, title, list, overSet, headExtra) {
+  const body = list.length === 0
+    ? `<div class="mw-empty mw-kb-empty">${t('mw.kb.empty-col')}</div>`
+    : list.map(tk => _mwKanbanCard(tk, overSet)).join('');
+  return `
+<div class="mw-kb-col">
+  <div class="mw-kb-col-head ${cls}">
+    <i class="fa-solid ${icon}"></i>
+    <span class="mw-kb-col-title">${title}</span>
+    <span class="mw-kb-col-count">${list.length}</span>
+  </div>
+  ${headExtra || ''}
+  <div class="mw-kb-col-body">${body}</div>
+</div>`;
+}
+
+function _mwBuildKanban(tasks) {
+  const { todo, inProc, done } = _mwKanbanColumns(tasks);
+  const { over } = _mwOverloadedFtes(inProc);
+
+  // Cảnh báo tổng ở đầu cột "Đang thực hiện" khi có FTE quá tải (liệt kê tên).
+  let procWarn = '';
+  if (over.size) {
+    const names = [...over].map(p => {
+      const orig = inProc.find(x => (x.picRes || '').trim().toLowerCase() === p);
+      return esc(orig ? orig.picRes : p);
+    }).join(', ');
+    procWarn = `
+    <div class="mw-kb-overwarn" title="Ngưỡng ${MW_FTE_MAX} task đồng thời">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>${t('mw.kb.overload-warn')}: ${names}</span>
+    </div>`;
+  }
+
+  return `
+<div class="mw-kanban">
+  ${_mwKanbanCol('kb-todo', 'fa-clipboard-list',   t('mw.kb.todo'),       todo,   over)}
+  ${_mwKanbanCol('kb-proc', 'fa-spinner',          t('mw.kb.inprogress'), inProc, over, procWarn)}
+  ${_mwKanbanCol('kb-done', 'fa-circle-check',      t('mw.kb.done'),       done,   over)}
+</div>`;
+}
+
+// ── Header tools (view toggle + Admin team droplist) ──
+
+function _mwViewToggleHtml() {
+  const btn = (mode, icon, label) =>
+    `<button class="mw-view-btn${_mwView === mode ? ' active' : ''}" onclick="mwSetView('${mode}')">
+      <i class="fa-solid ${icon}"></i> ${label}</button>`;
+  return `<div class="mw-view-toggle">
+    ${btn('list',   'fa-list',          t('mw.view.list'))}
+    ${btn('kanban', 'fa-table-columns', t('mw.view.kanban'))}
+  </div>`;
+}
+
+function _mwTeamFilterHtml(user, teamFilter) {
+  if (!user || user.role !== 'Admin') return '';
+  const teams = (typeof TEAM_LIST !== 'undefined' && Array.isArray(TEAM_LIST)) ? TEAM_LIST : [];
+  const opt = (val, lbl) =>
+    `<option value="${esc(val)}"${teamFilter === val ? ' selected' : ''}>${esc(lbl)}</option>`;
+  const opts = [opt(MW_TEAM_ALL, t('mw.team.all'))]
+    .concat(teams.map(tm => opt(tm, tm))).join('');
+  return `<select class="mw-team-filter" title="${t('mw.team.filter')}" onchange="mwSetTeamFilter(this.value)">${opts}</select>`;
+}
+
+function mwSetView(mode) {
+  _mwView = mode === 'kanban' ? 'kanban' : 'list';
+  try { localStorage.setItem('shtd_mw_view', _mwView); } catch (e) {}
+  renderMyWork();
+}
+
+function mwSetTeamFilter(val) {
+  _mwTeamFilter = val || MW_TEAM_ALL;
+  renderMyWork();
+}
+
 // ── Main render ──
 
 function renderMyWork() {
@@ -482,30 +639,44 @@ function renderMyWork() {
     return;
   }
 
-  const roleView    = _mwRoleView(user);
-  const myTasks     = _mwGetMyTasks(user);
-  const myCases     = roleView === 'ptkd' ? _mwGetMyCases(user) : [];
-  const urgent      = _mwGetUrgent(myTasks, myCases);
-  const champTasks  = _mwGetChampionTasks(myTasks);
-  const devReview   = _mwGetDevReview(user);
-
-  const section3 = roleView === 'ptkd'
-    ? _mwBuildCaseSection(myCases)
-    : _mwBuildInitSection(_mwGetMyInits(user));
+  const roleView   = _mwRoleView(user);
+  const teamFilter = _mwEffectiveTeamFilter(user);
+  const myTasks    = _mwScopedTasks(user, teamFilter);
 
   const roleLabel = { po: 'PO', ptkd: 'PTKD', qldm: 'QLDM' }[roleView] || '';
   const todayStr  = new Date().toLocaleDateString('vi-VN', {
     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
   });
 
-  root.innerHTML = `
-<div class="mw-page">
+  const header = `
   <div class="mw-page-header">
     <div>
       <div class="mw-greeting">${t('mw.greeting')} ${esc(user.displayName || user.username)} 👋</div>
       <div class="mw-sub">${esc(user.team)} · ${esc(roleLabel)} view · ${todayStr}</div>
     </div>
-  </div>
+    <div class="mw-header-tools">
+      ${_mwTeamFilterHtml(user, teamFilter)}
+      ${_mwViewToggleHtml()}
+    </div>
+  </div>`;
+
+  if (_mwView === 'kanban') {
+    root.innerHTML = `<div class="mw-page">${header}${_mwBuildKanban(myTasks)}</div>`;
+    return;
+  }
+
+  const myCases    = roleView === 'ptkd' ? _mwGetMyCases(user) : [];
+  const urgent     = _mwGetUrgent(myTasks, myCases);
+  const champTasks = _mwGetChampionTasks(myTasks);
+  const devReview  = _mwGetDevReview(user);
+
+  const section3 = roleView === 'ptkd'
+    ? _mwBuildCaseSection(myCases)
+    : _mwBuildInitSection(_mwGetMyInits(user));
+
+  root.innerHTML = `
+<div class="mw-page">
+  ${header}
   ${_mwBuildChampionSection(champTasks)}
   ${_mwBuildDevReviewSection(devReview)}
   ${_mwBuildUrgentSection(urgent)}

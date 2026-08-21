@@ -1,6 +1,28 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-16 (Session 74 — Fix email/chuông nhắc việc hiện task đã đóng: RETRACT)
-**Context**: S74 done. v6.49-notif-retract-closed-20260816, `?v=20260816`. ✅ **GAS redeployed (link KHÔNG đổi)**. `verify_notif_retract` **19/19** (sandbox chạy hàm GAS thật) + `verify_notifications` 21/21. Backend-only + test + version bump.
+**Prepared**: 2026-08-21 (Session 76 — My Work role-scope + Kanban + loại email nhắc việc CuongVM1)
+**Context**: S76 done (code). v6.50-mywork-kanban-personal-scope-20260821, `?v=20260821`. `verify_my_work` **78/78**, `verify_notif_retract` **24/24**, full suite **35/36** (chỉ `issue_tracker` flaky batch — standalone 61/61). Item 2+3 thuần FE; **Item 1 (loại email nhắc việc CuongVM1) CHƯA redeploy GAS**.
+
+## ✅ COMPLETED S76
+- [x] **Item 2** — `_mwScopedTasks` role-aware: User=`picRes∪picAcc`, Teamlead=team (giữ cũ), Admin=all-center + droplist (mặc định team Admin). Bỏ `t.team===uteam` áp-mọi-role.
+- [x] **Item 3** — toggle List⇄Kanban (persist), 3 cột To-do/In-process/Closed, FTE≥3 (picRes) badge đỏ + banner, Closed proxy Deadline desc cap 15, droplist team cho Admin. CSS + i18n +11 key.
+- [x] **Item 1** — `NotificationService._notifDigestSuppressSet_` (Report_Config.Digest_Suppress, fallback `['cuongvm1']`) + `_notifSendDigests_` bỏ gửi user suppress (vẫn mark EmailedDate). `ReportEmailService.setupReportConfig` +dòng Digest_Suppress.
+- [x] Tests + version bump v6.50 + cache-bust `?v=20260821` (65 refs).
+
+## 🔴 PRIORITY 0 — Redeploy GAS (Item 1) + smoke
+| Bước | Action | Expected |
+|---|---|---|
+| 1 | Hard-reload PRD (Ctrl+Shift+R) | Badge `v6.50-mywork-kanban-personal-scope-20260821` |
+| 2 | User thường vào **Công việc của tôi** | Chỉ thấy task mình (picRes/picAcc), KHÔNG còn cả team |
+| 3 | Teamlead / Admin vào My Work | Teamlead = full team; Admin có droplist (mặc định team mình) + "Tất cả trung tâm" |
+| 4 | Bấm toggle **Kanban** | 3 cột; To-do quá-hạn trên đầu; In-process banner đỏ + badge "Quá tải" khi 1 người ≥3 task "Đang thực hiện"; "Vừa đóng" mới nhất trên cùng |
+| 5 | **[TT] Redeploy GAS** (patch `NotificationService.gs` + `ReportEmailService.gs` → redeploy Web App, link KHÔNG đổi) | route/digest mới live |
+| 6 | (GAS editor) `setupReportConfig()` nếu chưa có sheet Report_Config | sheet có dòng `Digest_Suppress=CuongVM1` (chỉnh trực tiếp để đổi) |
+| 7 | Digest sáng kế | CuongVM1 **không** nhận email nhắc việc; vẫn nhận chuông + (khi bật) email báo cáo |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp
+- **(nợ S75)** redeploy route `send-report` + điền Email `User_Master` (CuongVM1 + Teamlead) cho báo cáo định kỳ — **gộp cùng lượt redeploy Item 1**.
+- **Closed Date thật**: "Vừa đóng" hiện xếp theo Deadline (proxy). Nếu cần chính xác thời điểm đóng → thêm cột Closed Date + set khi state→Hoàn thành (schema change như RAG S73).
+- `issue_tracker` flaky batch (loginOverlay chặn pointer khi song song) — thay `page.click` bằng chờ overlay ẩn (TD-TEST).
 
 ---
 

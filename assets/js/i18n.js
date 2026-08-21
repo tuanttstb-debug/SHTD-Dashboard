@@ -316,6 +316,16 @@ const TRANSLATIONS = {
     'mw.init.popup-empty':        'Chưa có initiative nào.',
     'mw.case.title':              'Case Pipeline của team',
     'mw.case.empty':              'Chưa có case active nào của team.',
+    'mw.view.list':               'Danh sách',
+    'mw.view.kanban':             'Kanban',
+    'mw.team.all':                'Tất cả trung tâm',
+    'mw.team.filter':             'Lọc theo team',
+    'mw.kb.todo':                 'Cần thực hiện',
+    'mw.kb.inprogress':           'Đang thực hiện',
+    'mw.kb.done':                 'Vừa đóng',
+    'mw.kb.empty-col':            'Không có task',
+    'mw.kb.overload':             'Quá tải',
+    'mw.kb.overload-warn':        'FTE chạy ≥3 task đồng thời',
 
     // ── Dashboard ──
     'db.filter.all':        '📊 Tất cả task',
@@ -840,6 +850,16 @@ const TRANSLATIONS = {
     'mw.init.popup-empty':        'No initiatives.',
     'mw.case.title':              'Team Case Pipeline',
     'mw.case.empty':              'No active cases for team.',
+    'mw.view.list':               'List',
+    'mw.view.kanban':             'Kanban',
+    'mw.team.all':                'All center',
+    'mw.team.filter':             'Filter by team',
+    'mw.kb.todo':                 'To-do',
+    'mw.kb.inprogress':           'In progress',
+    'mw.kb.done':                 'Recently closed',
+    'mw.kb.empty-col':            'No tasks',
+    'mw.kb.overload':             'Overloaded',
+    'mw.kb.overload-warn':        'FTE running ≥3 tasks concurrently',
 
     // ── Dashboard ──
     'db.filter.all':        '📊 All Tasks',

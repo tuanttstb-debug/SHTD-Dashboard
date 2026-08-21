@@ -155,10 +155,28 @@ const CASE_STAGE_GROUP_MOCK = {
   'Đề xuất phê duyệt':'active', 'Chờ giải ngân':'pending', 'Đã ký HĐ':'done',
 };
 
-/* ── Auth users ── */
-const USER_PO   = { username:'TuanTT4', role:'Admin', team:'Số',     displayName:'Tuấn TT (PO)' };
-const USER_PTKD = { username:'TuanPT',  role:'Staff', team:'PTKD MB', displayName:'Tuấn PT (PTKD)' };
-const USER_QLDM = { username:'LeVanA',  role:'Staff', team:'QLDM',    displayName:'Lê Văn A (QLDM)' };
+/* ── Auth users ──
+   USER_PO is a Teamlead so the classic ownership tests (picAcc/picRes/team ∪) hold —
+   Teamlead keeps the "view full team" behavior. Member/Admin get their own scope below. */
+const USER_PO     = { username:'TuanTT4', role:'Teamlead', team:'Số',     displayName:'Tuấn TT (PO)' };
+const USER_PTKD   = { username:'TuanPT',  role:'Staff',    team:'PTKD MB', displayName:'Tuấn PT (PTKD)' };
+const USER_QLDM   = { username:'LeVanA',  role:'Staff',    team:'QLDM',    displayName:'Lê Văn A (QLDM)' };
+// S76: role-aware scope
+const USER_MEMBER = { username:'TuanTT4', role:'User',     team:'Số',     displayName:'Tuấn TT (Member)' }; // personal-only
+const USER_ADMIN  = { username:'TuanTT4', role:'Admin',    team:'Số',     displayName:'Tuấn TT (Admin)' };  // all-center + droplist
+const USER_LEAD_SO = { username:'Lead',   role:'Teamlead', team:'Số',     displayName:'Lead Số' };
+
+/* ── Kanban dataset (deterministic FTE overload): MemA has 3 in-process → overloaded ── */
+const KB_TASKS = [
+  { id:'K-01', name:'MemA inproc soon',    team:'Số', picAcc:'Lead', picRes:'MemA', endDate:SOON,    state:'Đang thực hiện', progress:'20', highlight:'N', status:'Green', initiative:'', milestone:'', result:'' },
+  { id:'K-02', name:'MemA inproc later',   team:'Số', picAcc:'Lead', picRes:'MemA', endDate:LATER,   state:'Đang thực hiện', progress:'30', highlight:'N', status:'Amber', initiative:'', milestone:'', result:'' },
+  { id:'K-03', name:'MemA inproc overdue', team:'Số', picAcc:'Lead', picRes:'MemA', endDate:OVERDUE, state:'Đang thực hiện', progress:'10', highlight:'N', status:'Red',   initiative:'', milestone:'', result:'' },
+  { id:'K-04', name:'MemB inproc soon',    team:'Số', picAcc:'Lead', picRes:'MemB', endDate:SOON,    state:'Đang thực hiện', progress:'50', highlight:'N', status:'',      initiative:'', milestone:'', result:'' },
+  { id:'K-05', name:'Todo overdue',        team:'Số', picAcc:'Lead', picRes:'MemB', endDate:OVERDUE, state:'Chưa bắt đầu',   progress:'0',  highlight:'N', status:'',      initiative:'', milestone:'', result:'' },
+  { id:'K-06', name:'Todo soon',           team:'Số', picAcc:'Lead', picRes:'MemB', endDate:SOON,    state:'Blocked',        progress:'0',  highlight:'N', status:'',      initiative:'', milestone:'', result:'' },
+  { id:'K-07', name:'Closed recent',       team:'Số', picAcc:'Lead', picRes:'MemA', endDate:LATER,   state:'Hoàn thành',     progress:'100',highlight:'N', status:'Green', initiative:'', milestone:'', result:'' },
+  { id:'K-08', name:'Closed old',          team:'Số', picAcc:'Lead', picRes:'MemA', endDate:OVERDUE, state:'Hoàn thành',     progress:'100',highlight:'N', status:'Green', initiative:'', milestone:'', result:'' },
+];
 
 /* ════════════════════════════════════════════ */
 const browser  = await chromium.launch({ headless: true });
@@ -704,6 +722,88 @@ const urgentTitleVI = await page.evaluate(() => {
 log('MW39-greeting-vi',      greetingVI.startsWith('Xin chào,'), `VI greeting: "${greetingVI}"`);
 log('MW39-urgent-title-vi',  urgentTitleVI === 'Cần làm ngay',   `Urgent title VI: "${urgentTitleVI}"`);
 await shot(page, 'MW39-lang-vi');
+
+/* ══════════════════════════════════════════
+   MW40 — Role scope: Member (role=User) sees ONLY personal tasks (picRes ∪ picAcc)
+══════════════════════════════════════════ */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'m', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: MOCK_TASKS, user: USER_MEMBER });
+await page.evaluate(() => { if (typeof mwSetView === 'function') mwSetView('list'); navigateTo('my-work'); });
+await page.waitForTimeout(400);
+const memberIds = await page.$$eval('.mw-task-card', els => els.map(e => e.getAttribute('data-id')));
+log('MW40-member-picacc', memberIds.includes('T-26-H01'), 'Member sees own picAcc task T-26-H01');
+log('MW40-member-picres', memberIds.includes('T-26-H02'), 'Member sees own picRes task T-26-H02');
+log('MW40-member-no-team', !memberIds.includes('T-26-H03'), 'Member does NOT see team-only task T-26-H03 (OtherUser)');
+log('MW40-member-no-x01',  !memberIds.includes('T-26-X01'), 'Member does NOT see unrelated task T-26-X01');
+await shot(page, 'MW40-member-scope');
+
+/* ══════════════════════════════════════════
+   MW41 — Role scope: Admin sees all-center; droplist defaults to own team, "Tất cả" widens
+══════════════════════════════════════════ */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'a', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: MOCK_TASKS, user: USER_ADMIN });
+await page.evaluate(() => { if (typeof mwSetTeamFilter === 'function') mwSetTeamFilter('Số'); navigateTo('my-work'); });
+await page.waitForTimeout(300);
+const adminDroplist = await page.$('.mw-team-filter');
+const adminTeamIds  = await page.$$eval('.mw-task-card', els => els.map(e => e.getAttribute('data-id')));
+log('MW41-admin-droplist', !!adminDroplist, 'Admin sees team droplist in header');
+log('MW41-admin-team-scope', adminTeamIds.includes('T-26-H03') && !adminTeamIds.includes('T-26-X01'),
+  `Admin filtered to team Số: has H03(Số), excludes X01(BL) [${adminTeamIds.join(',')}]`);
+// Widen to all-center
+await page.evaluate(() => mwSetTeamFilter('__all__'));
+await page.waitForTimeout(300);
+const adminAllIds = await page.$$eval('.mw-task-card', els => els.map(e => e.getAttribute('data-id')));
+log('MW41-admin-all-center', adminAllIds.includes('T-26-X01'),
+  `Admin "Tất cả trung tâm" shows cross-team X01 [${adminAllIds.join(',')}]`);
+await shot(page, 'MW41-admin-scope');
+
+/* ══════════════════════════════════════════
+   KB — Kanban view (toggle, 3 columns, ordering, FTE overload)
+══════════════════════════════════════════ */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'k', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(400);
+
+const kbBoard = await page.$('.mw-kanban');
+const kbCols  = await page.$$('.mw-kb-col');
+log('KB1-board',   !!kbBoard,           'Kanban board (.mw-kanban) rendered after toggle');
+log('KB1-3-cols',  kbCols.length === 3, `Kanban has 3 columns (got ${kbCols.length})`);
+
+const kbData = await page.$$eval('.mw-kb-col', els => els.map(c => ({
+  title: c.querySelector('.mw-kb-col-title')?.textContent?.trim(),
+  count: c.querySelector('.mw-kb-col-count')?.textContent?.trim(),
+  ids:   [...c.querySelectorAll('.mw-kb-card')].map(k => k.querySelector('.mw-kb-id')?.textContent?.trim()),
+  over:  [...c.querySelectorAll('.mw-kb-card.is-overload')].map(k => k.querySelector('.mw-kb-id')?.textContent?.trim()),
+})));
+const kbTodo = kbData.find(c => c.title === 'Cần thực hiện') || { ids:[] };
+const kbProc = kbData.find(c => c.title === 'Đang thực hiện') || { ids:[], over:[] };
+const kbDone = kbData.find(c => c.title === 'Vừa đóng')      || { ids:[] };
+
+log('KB2-todo-members', kbTodo.ids.includes('K-05') && kbTodo.ids.includes('K-06'), `To-do has K-05,K-06 [${kbTodo.ids.join(',')}]`);
+log('KB2-todo-overdue-first', kbTodo.ids[0] === 'K-05', `To-do overdue (K-05) first [${kbTodo.ids.join(',')}]`);
+log('KB3-proc-count', kbProc.ids.length === 4, `In-process has 4 tasks [${kbProc.ids.join(',')}]`);
+log('KB4-fte-overload', kbProc.over.includes('K-01') && kbProc.over.includes('K-02') && kbProc.over.includes('K-03'),
+  `MemA's 3 in-process cards flagged overload [${kbProc.over.join(',')}]`);
+log('KB4-fte-not-overload', !kbProc.over.includes('K-04'), 'MemB (1 task) NOT flagged overload');
+log('KB5-done-recent-first', kbDone.ids[0] === 'K-07', `Closed: recent (K-07, latest deadline) first [${kbDone.ids.join(',')}]`);
+
+const kbWarn = await page.$eval('.mw-kb-overwarn', el => el.textContent).catch(() => '');
+log('KB6-overwarn-banner', kbWarn.includes('MemA'), `Overload banner lists MemA [${kbWarn.trim()}]`);
+await shot(page, 'KB-kanban-board');
+
+// Reset to list view so state does not leak
+await page.evaluate(() => mwSetView('list'));
+await page.waitForTimeout(200);
 
 /* ══════════════════════════════════════════
    MW25 — No JS errors
