@@ -8,6 +8,28 @@
 
 ---
 
+## 🆕 DELTA — Session 76 (2026-08-21) — My Work role-scope + Kanban · email nhắc việc CuongVM1 · 2 CR UI
+
+### TD-MW-01: My Work scope theo ROLE — đổi hành vi có chủ ý; nới role phải sửa 1 chỗ 🟢 MEDIUM
+`_mwTaskInScope(task, user, teamFilter)` (my-work.js) là **nguồn scope DUY NHẤT** cho cả List + Kanban: User=`picRes∪picAcc`, Teamlead=`mine∪team`, Admin=all-center(+teamFilter, mặc định team Admin). **Đổi hành vi**: trước đây MỌI role thấy cả team (`t.team===uteam`) → nay user thường (non-Admin/Teamlead) CHỈ thấy task cá nhân. → Nếu sau này có role mới cần team-view (vd 'Manager'/'Lead phụ') PHẢI thêm nhánh trong `_mwTaskInScope` (đừng sửa rải rác). Role check dựa `user.role` chuỗi 'Admin'/'Teamlead' — khớp `isAdmin()`/`canImport()`; role lạ → rơi vào personal-only.
+
+### TD-MW-02: "Vừa đóng" (Kanban) xếp theo Deadline = PROXY, không phải ngày đóng thật 🟢 MEDIUM
+Task_Master KHÔNG có cột ngày đóng → cột Closed sort `endDate` giảm dần làm proxy "đóng gần nhất" (user chốt proxy thay vì thêm cột). **Hệ quả**: task hoàn thành sớm nhưng deadline xa sẽ đứng TRÊN task vừa đóng có deadline gần — không phản ánh đúng thứ tự đóng thực. → Nếu cần chính xác: thêm cột **Closed Date** (set khi state→Hoàn thành, như cột RAG S73 — xem [[TD-SCHEMA-01]] positional taskToRow) + migration backfill. CR1 đã bỏ cap 15 → cột cuộn dọc `max-height:520px`, không mất task.
+
+### TD-NOTIF-02: Digest-suppress fallback HARDCODE `['cuongvm1']` nếu thiếu key sheet ⚪ LOW
+`_notifDigestSuppressSet_()` (NotificationService.gs) đọc `Report_Config.Digest_Suppress`; **nếu KHÔNG có dòng đó** trong sheet → fallback hằng `['cuongvm1']`. Chủ ý để tính năng chạy đúng ngay cả khi chưa `setupReportConfig()`. → Muốn đổi/bỏ suppress: thêm dòng `Digest_Suppress` vào sheet (kể cả để TRỐNG = không loại ai) — khi key TỒN TẠI, sheet là nguồn sự thật, hằng số bị bỏ qua. Suppress chỉ chặn EMAIL digest; chuông + email báo cáo định kỳ KHÔNG đụng.
+
+### TD-H2-06: Task-link table (CR2) tái dùng `init-task-table`/`prog-*` toàn cục + lệ thuộc field task 🟢 MEDIUM
+CR2 dựng bảng task dưới mốc H2 bằng class **toàn cục** `init-task-table` (initiative.css) + `prog-*` (components.css) để "giống concept Theo dõi Initiative". **Coupling**: đổi CSS init-task-table sẽ ảnh hưởng cả H2. Deadline đọc `tk.endDate || tk.deadline` (task thật dùng `endDate`); %HT/RAG rỗng nếu task thiếu `progress`/`status`. ⚠️ **Latent (pre-existing)**: `_h2PickerRender` (popup chọn task) vẫn đọc `t2.deadline` cho filter/hiển thị overdue — nhưng parser Task sinh `endDate` (không có `deadline`) → **overdue filter/ngày trong popup có thể trượt trên dữ liệu thật**; CR2 table đã né bằng `endDate||deadline` nhưng popup CHƯA sửa. → Cân nhắc thống nhất field ngày của task (`endDate`) trong toàn bộ h2-tracker.
+
+### TD-H2-04 (cập nhật): TaskRef CSV không FK — nay HIỆN RÕ task đã xoá
+CR2 table hiển thị dòng "(không tìm thấy task)" cho ref không resolve được (thay vì im lặng như chip cũ) → dễ phát hiện + bấm × dọn. Vẫn chưa **tự dọn**; bản chất CSV-no-FK giữ nguyên (xem mục TD-H2-04 S70).
+
+### TD-TEST-08 (mở rộng): `verify_notif_retract` phủ thêm `_notifSendDigests_` (NR10 digest-suppress)
+Pattern sandbox GAS-thật mở rộng thêm 2 export (`_notifSendDigests_`/`_notifDigestSuppressSet_`) → verify suppress bằng hàm GAS THẬT. `verify_issue_tracker` vẫn **flaky batch** (loginOverlay chặn pointer khi chạy song song; standalone 61/61) — nợ TD-TEST chuyển `page.click` sang chờ overlay ẩn.
+
+---
+
 ## 🆕 DELTA — Session 74 (2026-08-16) — Fix nhắc việc task đã đóng (RETRACT)
 
 ### TD-NOTIF-01: Task đóng NGOÀI app chỉ sạch ở lần `notifScan` kế; retract phụ thuộc `_notifIsDone` 🟢 MEDIUM
