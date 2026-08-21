@@ -8,6 +8,12 @@
 - [x] **Item 1** — `NotificationService._notifDigestSuppressSet_` (Report_Config.Digest_Suppress, fallback `['cuongvm1']`) + `_notifSendDigests_` bỏ gửi user suppress (vẫn mark EmailedDate). `ReportEmailService.setupReportConfig` +dòng Digest_Suppress.
 - [x] Tests + version bump v6.50 + cache-bust `?v=20260821` (65 refs).
 
+## ✅ COMPLETED S76.1 — 2 CR UI (thuần FE, v6.51, `?v=20260821b`)
+- [x] **CR1** — Kanban cột "Vừa đóng" bỏ cap 15 → hiện TẤT CẢ trong khung `max-height:520px` cuộn dọc + đếm tổng (`.mw-kb-col-body-scroll`, chỉ cột Closed). `verify_my_work` +KB7 → **82/82**.
+- [x] **CR2** — H2 "Theo dõi KPI" task-link: bảng đầy đủ giống concept "Theo dõi Initiative" (`init-task-table`), toggle `≡ N task ▾` (giữ mở qua `_h2OpenMsTasks`), cột Mã·Task·Trạng thái+RAG·PIC·%HT·Deadline+badge quá hạn + unlink. `NEW _h2BuildMsTaskTable/h2ToggleMsTasks`. `verify_h2_tasklink` **29/29**. KHÔNG đụng backend/RBAC.
+- [x] Full suite **35/36** (issue_tracker flaky batch, standalone 61/61). KHÔNG cần deploy GAS.
+- **Smoke**: hard-reload → badge `v6.51`; Kanban "Vừa đóng" cuộn khi >~8 task; H2·KPI bấm "N task ▾" → bảng đầy đủ thuộc tính, badge "Quá hạn" đỏ, × bỏ link.
+
 ## 🔴 PRIORITY 0 — Redeploy GAS (Item 1) + smoke
 | Bước | Action | Expected |
 |---|---|---|

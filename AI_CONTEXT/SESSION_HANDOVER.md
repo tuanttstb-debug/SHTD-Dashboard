@@ -13,6 +13,15 @@
 - **➡️ Next step**: (1) Hard-reload PRD → badge `v6.50`. (2) Smoke: user thường vào My Work → chỉ thấy task mình; Teamlead thấy cả team; Admin có droplist (mặc định team mình) + "Tất cả trung tâm". (3) Toggle Kanban → 3 cột, FTE ≥3 badge đỏ, "Vừa đóng" mới nhất trên cùng. (4) **[TT] redeploy GAS** (NotificationService+ReportEmailService) → chạy `setupReportConfig()` (nếu chưa có sheet) để có dòng `Digest_Suppress`; digest sáng kế **không** gửi CuongVM1. (5) (nợ S75) redeploy `send-report` + điền Email `User_Master` cho báo cáo định kỳ.
 - **🟢 Regression risk**: 🟢 **THẤP** — FE additive (scope refactor giữ nguyên hành vi Teamlead; List view các section cũ không đổi); GAS thêm 1 tầng lọc gửi mail (không đụng sinh/thu-hồi noti hay chuông). Full suite 35/36 (flaky pre-existing). ⚠️ **Đổi hành vi CÓ CHỦ Ý**: user thường (non-Admin/Teamlead) từ nay chỉ thấy task cá nhân ở My Work (đúng yêu cầu). ⚠️ "Vừa đóng" xếp theo Deadline (proxy) — nếu cần chính xác thời điểm đóng, phải thêm cột Closed Date (đã cân nhắc, user chọn proxy).
 
+## S76.1 — 2 CR UI (thuần FE) · v6.51 (`6.51-kanban-closed-scroll-h2-tasklink-table-20260821`, `?v=20260821b`)
+> **CR1 (Kanban Closed)** + **CR2 (H2 task-link table)**. Cả 2 thuần FE — chỉ hard-reload, KHÔNG cần redeploy GAS.
+
+- **✅ CR1 — cột "Vừa đóng" (Kanban My Work)**: bỏ cap cứng 15 (`MW_KANBAN_CLOSED_CAP` xóa) → hiển thị **TẤT CẢ** task đã đóng trong **khung cao cố định `max-height:520px` cuộn dọc**, header đếm tổng. `_mwKanbanCol(...scroll)` thêm class `.mw-kb-col-body-scroll` (chỉ cột Closed). `my-work.js` + `my-work.css`.
+- **✅ CR2 — task-link ở "Quản trị H2 · Theo dõi KPI"** (`views/h2-tracker.js` + `h2.css`): thay chip tối giản `🔗 mã · tên` bằng **bảng task đầy đủ giống concept "Theo dõi Initiative"** (`init-task-table` tái dùng). Mỗi mốc có nút toggle **`≡ N task ▾`** mở/gập panel `.h2-ms-task-panel` (giữ trạng thái mở qua re-render bằng `_h2OpenMsTasks` Set; tự mở sau khi link/unlink). Bảng cột: **Mã · Task · Trạng thái+RAG · PIC (Res /Acc) · %HT (progress bar) · Deadline + badge "Quá hạn"** + nút × bỏ link (canEdit). Row click → `openTaskViewPopup`. Task đã xoá → dòng "(không tìm thấy)". NEW `_h2BuildMsTaskTable`/`h2ToggleMsTasks`; RBAC + `h2-milestone-tasklink` KHÔNG đổi.
+- **✅ Test**: `verify_my_work` **82/82** (+KB7 cột Closed 25 task không cap + scroll). `verify_h2_tasklink` **29/29** (chip→bảng: TL2-chip/TL2-table-attrs/TL7 cập nhật selector `.h2-tk-row`/`.h2-tk-id`; RBAC/picker/unlink/payload nguyên vẹn). `verify_h2_tracker` 32/32, `issue_tracker` 61/61 standalone. Full suite **35/36** (chỉ `issue_tracker` flaky batch). v6.51, `?v=20260821b`.
+- **➡️ Next**: hard-reload → badge `v6.51`; Kanban cột "Vừa đóng" cuộn khi >~8 task; H2·KPI mở "N task ▾" thấy bảng đầy đủ thuộc tính. KHÔNG cần deploy GAS.
+- **🟢 Regression risk**: 🟢 **THẤP** — thuần FE, tái dùng `init-task-table`/`prog-*` toàn cục; H2 backend/route/RBAC không đụng. ⚠️ H2 panel task **mặc định gập** (trước hiện chip inline) — theo đúng concept Initiative; toggle giữ trạng thái mở.
+
 ---
 
 # SESSION HANDOVER (S75) — 2026-08-19

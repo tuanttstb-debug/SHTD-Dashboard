@@ -14,7 +14,6 @@ let _mwView       = (typeof localStorage !== 'undefined' && localStorage.getItem
 let _mwTeamFilter = null;          // Admin droplist; null → mặc định = team của Admin
 
 const MW_FTE_MAX           = 3;    // FTE chạy đồng thời ≥ ngưỡng này → cảnh báo đỏ
-const MW_KANBAN_CLOSED_CAP = 15;   // số task "vừa đóng" hiển thị tối đa ở cột Closed
 const MW_TEAM_ALL          = '__all__';
 
 function _mwRoleView(user) {
@@ -515,9 +514,10 @@ function _mwKanbanColumns(tasks) {
   // To-do: quá hạn trước, rồi gần đến hạn nhất (deadline tăng dần, không có ngày → cuối).
   todo.sort((a, b) => (_mwDiffDays(a.endDate) ?? 1e9) - (_mwDiffDays(b.endDate) ?? 1e9));
   // Closed: "vừa đóng" lên đầu — proxy theo Deadline giảm dần (Task_Master không có ngày đóng).
+  // Hiển thị TẤT CẢ (không cap) — cột cuộn dọc trong khung cố định để dễ theo dõi khi nhiều.
   done.sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
 
-  return { todo, inProc, done: done.slice(0, MW_KANBAN_CLOSED_CAP), doneTotal: done.length };
+  return { todo, inProc, done };
 }
 
 // Đếm task "Đang thực hiện" theo picRes → tập FTE đang chạy ≥ MW_FTE_MAX task đồng thời.
@@ -552,10 +552,11 @@ function _mwKanbanCard(task, overSet) {
 </div>`;
 }
 
-function _mwKanbanCol(cls, icon, title, list, overSet, headExtra) {
+function _mwKanbanCol(cls, icon, title, list, overSet, headExtra, scroll) {
   const body = list.length === 0
     ? `<div class="mw-empty mw-kb-empty">${t('mw.kb.empty-col')}</div>`
     : list.map(tk => _mwKanbanCard(tk, overSet)).join('');
+  const bodyCls = scroll ? 'mw-kb-col-body mw-kb-col-body-scroll' : 'mw-kb-col-body';
   return `
 <div class="mw-kb-col">
   <div class="mw-kb-col-head ${cls}">
@@ -564,7 +565,7 @@ function _mwKanbanCol(cls, icon, title, list, overSet, headExtra) {
     <span class="mw-kb-col-count">${list.length}</span>
   </div>
   ${headExtra || ''}
-  <div class="mw-kb-col-body">${body}</div>
+  <div class="${bodyCls}">${body}</div>
 </div>`;
 }
 
@@ -590,7 +591,7 @@ function _mwBuildKanban(tasks) {
 <div class="mw-kanban">
   ${_mwKanbanCol('kb-todo', 'fa-clipboard-list',   t('mw.kb.todo'),       todo,   over)}
   ${_mwKanbanCol('kb-proc', 'fa-spinner',          t('mw.kb.inprogress'), inProc, over, procWarn)}
-  ${_mwKanbanCol('kb-done', 'fa-circle-check',      t('mw.kb.done'),       done,   over)}
+  ${_mwKanbanCol('kb-done', 'fa-circle-check',      t('mw.kb.done'),       done,   over, '', true)}
 </div>`;
 }
 

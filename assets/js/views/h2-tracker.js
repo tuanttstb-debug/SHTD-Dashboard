@@ -268,13 +268,11 @@ function _h2MsRow(m) {
   const canEdit = _h2CanEditMs(m);
   const mid = esc(m.ID);
   const refs = _h2TaskRefs(m.TaskRef);
-  const chips = refs.map(tid => {
-    const tk = (typeof db !== 'undefined' && Array.isArray(db.tasks)) ? db.tasks.find(x => x.id === tid) : null;
-    const nm = tk ? ' · ' + esc(String(tk.name || '').slice(0, 40)) : '';
-    const open = tk ? `openTaskViewPopup('${esc(tid)}')` : '';
-    const unlink = canEdit ? `<button class="h2-ms-unlink" title="Bỏ liên kết" onclick="event.stopPropagation();h2UnlinkTask('${mid}','${esc(tid)}')">&times;</button>` : '';
-    return `<span class="h2-ms-task"><span class="h2-ms-tasklink" title="Xem chi tiết task" onclick="event.stopPropagation();${open}">🔗 ${esc(tid)}${nm}</span>${unlink}</span>`;
-  }).join('');
+  const isOpen = _h2OpenMsTasks.has(m.ID);
+  const toggleBtn = `<button class="h2-ms-tasktoggle${refs.length ? '' : ' empty'}" onclick="event.stopPropagation();h2ToggleMsTasks('${mid}')" title="Task liên kết">
+      <i class="fa-solid fa-list-check"></i> ${refs.length} task
+      <i class="fa-solid fa-chevron-${isOpen ? 'up' : 'down'}" style="font-size:9px;margin-left:2px;"></i>
+    </button>`;
   const addBtn = canEdit
     ? `<button class="btn btn-ghost btn-sm h2-ms-addtask" onclick="event.stopPropagation();openH2TaskPicker('${mid}')" title="Liên kết Task"><i class="fa-solid fa-plus"></i> Task</button>` : '';
   const actions = lead ? `
@@ -282,15 +280,74 @@ function _h2MsRow(m) {
       <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openH2MsModal('${mid}',null)" title="Sửa"><i class="fa-solid fa-pen"></i></button>
       <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();h2DeleteMs('${mid}')" title="Xóa"><i class="fa-solid fa-trash"></i></button>
     </span>` : '';
-  return `<div class="h2-ms-row">
-    <span class="h2-ms-month">${esc(m.Month || '—')}</span>
-    ${m.RAG ? _h2RagBadge(String(m.RAG).toUpperCase()) : ''}
-    <span class="h2-ms-name">${esc(m.MilestoneName || '(mốc)')}</span>
-    <span class="h2-ms-due">${m.DueDate ? fmtDate(m.DueDate) : ''}</span>
-    <span class="h2-ms-status">${esc(m.Status || '')}</span>
-    <span class="h2-ms-tasks">${chips}${addBtn}</span>
-    ${actions}
+  return `<div class="h2-ms-block">
+    <div class="h2-ms-row">
+      <span class="h2-ms-month">${esc(m.Month || '—')}</span>
+      ${m.RAG ? _h2RagBadge(String(m.RAG).toUpperCase()) : ''}
+      <span class="h2-ms-name">${esc(m.MilestoneName || '(mốc)')}</span>
+      <span class="h2-ms-due">${m.DueDate ? fmtDate(m.DueDate) : ''}</span>
+      <span class="h2-ms-status">${esc(m.Status || '')}</span>
+      <span class="h2-ms-tasks">${toggleBtn}${addBtn}</span>
+      ${actions}
+    </div>
+    <div class="h2-ms-task-panel${isOpen ? ' open' : ''}" id="h2-ms-tasks-${mid}">
+      ${_h2BuildMsTaskTable(m, canEdit)}
+    </div>
   </div>`;
+}
+
+/* Bảng task liên kết dưới mốc — cùng concept "Theo dõi Initiative" (init-task-table):
+   Mã | Task | Trạng thái + RAG | PIC (Res/Acc) | %HT | Deadline + quá hạn | (bỏ link). */
+function _h2BuildMsTaskTable(m, canEdit) {
+  const mid = esc(m.ID);
+  const refs = _h2TaskRefs(m.TaskRef);
+  if (!refs.length) {
+    return `<div class="h2-ms-notask">Chưa có task liên kết.${canEdit
+      ? ` <button class="btn btn-ghost btn-sm" style="color:var(--primary);" onclick="event.stopPropagation();openH2TaskPicker('${mid}')"><i class="fa-solid fa-plus"></i> Liên kết Task</button>` : ''}</div>`;
+  }
+  const rows = refs.map(tid => {
+    const tk = (typeof db !== 'undefined' && Array.isArray(db.tasks)) ? db.tasks.find(x => x.id === tid) : null;
+    const unlink = canEdit
+      ? `<td class="h2-tk-actcell" onclick="event.stopPropagation()"><button class="h2-ms-unlink" title="Bỏ liên kết" onclick="h2UnlinkTask('${mid}','${esc(tid)}')">&times;</button></td>` : '';
+    if (!tk) {
+      return `<tr class="h2-tk-row h2-tk-missing" title="Task không còn tồn tại">
+        <td><span class="init-task-id h2-tk-id">${esc(tid)}</span></td>
+        <td colspan="4" style="color:var(--text-3);font-style:italic;">(không tìm thấy task)</td>
+        ${unlink}
+      </tr>`;
+    }
+    const dl      = tk.endDate || tk.deadline || '';
+    const prog    = Math.min(Math.max(parseInt(tk.progress) || 0, 0), 100);
+    const overdue = (typeof isOverdue === 'function') && isOverdue(dl, tk.progress);
+    const rag     = tk.status ? _h2RagBadge(String(tk.status).toUpperCase()) : '';
+    const state   = (typeof stateChip === 'function') ? stateChip(tk.state) : esc(tk.state || '');
+    const acc     = (tk.picAcc && tk.picAcc !== tk.picRes)
+      ? ` <span class="h2-tk-acc" title="Accountable">/ ${esc(tk.picAcc)}</span>` : '';
+    return `<tr class="h2-tk-row" onclick="openTaskViewPopup('${esc(tid)}')" title="Xem task ${esc(tid)}">
+      <td><span class="init-task-id h2-tk-id">${esc(tid)}</span></td>
+      <td><span class="init-task-name" title="${esc(tk.name || '')}">${esc(tk.name || '')}</span></td>
+      <td class="h2-tk-state">${state}${rag}</td>
+      <td class="h2-tk-pic"><span title="Responsible">${esc(tk.picRes || '–')}</span>${acc}</td>
+      <td><div class="prog-wrap"><div class="prog-bar" style="width:64px;"><div class="prog-fill" style="width:${prog}%;"></div></div><span class="prog-pct">${prog}%</span></div></td>
+      <td class="h2-tk-dl"${overdue ? ' style="color:var(--danger);font-weight:700;"' : ''}>${dl ? fmtDate(dl) : '–'}${overdue ? ` <span class="h2-tk-overdue">Quá hạn</span>` : ''}</td>
+      ${unlink}
+    </tr>`;
+  }).join('');
+  const thAct = canEdit ? '<th></th>' : '';
+  return `<table class="init-task-table h2-tk-table">
+    <thead><tr><th>Mã</th><th>Task</th><th>Trạng thái</th><th>PIC</th><th>%HT</th><th>Deadline</th>${thAct}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function h2ToggleMsTasks(mid) {
+  const panel = document.getElementById('h2-ms-tasks-' + mid);
+  if (!panel) return;
+  const willOpen = !panel.classList.contains('open');
+  panel.classList.toggle('open', willOpen);
+  if (willOpen) _h2OpenMsTasks.add(mid); else _h2OpenMsTasks.delete(mid);
+  const chev = panel.parentElement && panel.parentElement.querySelector('.h2-ms-tasktoggle .fa-chevron-down, .h2-ms-tasktoggle .fa-chevron-up');
+  if (chev) { chev.classList.toggle('fa-chevron-up', willOpen); chev.classList.toggle('fa-chevron-down', !willOpen); }
 }
 
 /* ══════════════════════ filters ══════════════════════ */
@@ -485,10 +542,12 @@ let _h2PickerMsId  = null;
 let _h2PickerOwner = '';
 let _h2PickerSel   = new Set();
 let _h2PickerVisible = 0;
+let _h2OpenMsTasks = new Set();   // ID milestone đang mở panel task (giữ qua re-render)
 
 async function h2UnlinkTask(msId, taskId) {
   const m = _h2FindMs(msId); if (!m || !_h2CanEditMs(m)) return;
   m.TaskRef = _h2TaskRefs(m.TaskRef).filter(id => id !== taskId).join(', ');
+  _h2OpenMsTasks.add(msId);   // giữ panel mở để thấy kết quả sau khi bỏ link
   persistH2(); renderH2Tracker();
   await _gasH2TaskLink(msId, m.TaskRef, m.MilestoneName);
 }
@@ -579,6 +638,7 @@ async function h2PickerSave() {
   const ordered  = existing.filter(id => _h2PickerSel.has(id))
     .concat([...(_h2PickerSel)].filter(id => !existing.includes(id)));
   m.TaskRef = ordered.join(', ');
+  _h2OpenMsTasks.add(m.ID);   // mở panel để thấy task vừa liên kết
   persistH2(); closeH2TaskPicker(); renderH2Tracker();
   await _gasH2TaskLink(m.ID, m.TaskRef, m.MilestoneName);
   renderH2Tracker();

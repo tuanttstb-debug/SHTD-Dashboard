@@ -672,6 +672,18 @@
   gap: 8px;
   min-height: 40px;
 }
+/* Cột "Vừa đóng" có thể rất dài → khung cao cố định, cuộn dọc bên trong để dễ theo dõi. */
+.mw-kb-col-body-scroll {
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.mw-kb-col-body-scroll::-webkit-scrollbar { width: 8px; }
+.mw-kb-col-body-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+}
+.mw-kb-col-body-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 .mw-kb-empty { padding: 16px 12px; font-size: 12px; }
 
 /* Overload banner at top of In-process column */

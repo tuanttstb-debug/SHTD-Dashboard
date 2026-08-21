@@ -123,7 +123,22 @@ for (const [id, sel] of [['overlay', '#h2TaskPickerOverlay'], ['search', '#h2pkS
 
 /* TL2 — lead: + Task trên mọi milestone (2) + chip TaskRef sẵn (SO-26-101) */
 log('TL2-addbtn', (await page.$$('.h2-ms-addtask')).length === 2, `nút "+ Task" = ${(await page.$$('.h2-ms-addtask')).length} (expect 2)`);
-log('TL2-chip', (await page.$$eval('.h2-ms-task .h2-ms-tasklink', els => els.map(e => e.textContent))).some(t => t.includes('SO-26-101')), 'chip SO-26-101 hiện trên MS-26-001');
+log('TL2-chip', (await page.$$eval('.h2-tk-id', els => els.map(e => e.textContent))).some(t => t.includes('SO-26-101')), 'task SO-26-101 hiện trong bảng task của MS-26-001');
+// CR2: bảng task đầy đủ thuộc tính (concept Theo dõi Initiative) — mã/tên/PIC/deadline
+const tl2cols = await page.$$eval('.h2-ms-block', blocks => {
+  const b = blocks.find(x => (x.querySelector('.h2-ms-name') || {}).textContent?.includes('2 nghiệp vụ'));
+  if (!b) return null;
+  const r = b.querySelector('.h2-tk-row');
+  return r ? {
+    hasId:   !!r.querySelector('.h2-tk-id'),
+    hasName: !!r.querySelector('.init-task-name'),
+    hasPic:  !!r.querySelector('.h2-tk-pic'),
+    hasProg: !!r.querySelector('.prog-fill'),
+    hasDl:   !!r.querySelector('.h2-tk-dl'),
+  } : null;
+});
+log('TL2-table-attrs', tl2cols && tl2cols.hasId && tl2cols.hasName && tl2cols.hasPic && tl2cols.hasProg && tl2cols.hasDl,
+  `bảng task có đủ Mã/Tên/PIC/%HT/Deadline [${JSON.stringify(tl2cols)}]`);
 await shot(page, '01_tracker_chips');
 
 /* TL3 — open picker → visible + chỉ task của owner QuangNN3 (4 task, không có SO-26-200) */
@@ -170,11 +185,11 @@ await page.waitForTimeout(250);
 const ref = await page.evaluate(() => _h2FindMs('MS-26-001').TaskRef);
 log('TL7-ref', ['SO-26-101', 'SO-26-102', 'SO-26-103'].every(x => ref.includes(x)), `TaskRef="${ref}"`);
 log('TL7-closed', await page.$eval('#h2TaskPickerOverlay', el => el.style.display === 'none'), 'overlay đóng sau lưu');
-const chipCount = await page.$$eval('.h2-ms-row', rows => {
-  const r = rows.find(x => x.querySelector('.h2-ms-tasklink'));
-  return r ? r.querySelectorAll('.h2-ms-tasklink').length : 0;
+const chipCount = await page.$$eval('.h2-ms-block', blocks => {
+  const b = blocks.find(x => (x.querySelector('.h2-ms-name') || {}).textContent?.includes('2 nghiệp vụ'));
+  return b ? b.querySelectorAll('.h2-tk-row').length : 0;
 });
-log('TL7-chips', chipCount >= 3, `chip trên MS-26-001 = ${chipCount} (expect ≥3)`);
+log('TL7-chips', chipCount >= 3, `task rows trên MS-26-001 = ${chipCount} (expect ≥3)`);
 await shot(page, '03_after_link');
 
 /* TL8 — bấm task trong popup → mở taskViewOverlay (chi tiết common) */

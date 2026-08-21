@@ -801,6 +801,37 @@ const kbWarn = await page.$eval('.mw-kb-overwarn', el => el.textContent).catch((
 log('KB6-overwarn-banner', kbWarn.includes('MemA'), `Overload banner lists MemA [${kbWarn.trim()}]`);
 await shot(page, 'KB-kanban-board');
 
+/* ── KB7 — CR1: cột "Vừa đóng" hiển thị TẤT CẢ (không cap 15) trong khung cuộn ── */
+const KB7_TASKS = [];
+for (let i = 1; i <= 25; i++) {
+  KB7_TASKS.push({
+    id: `KD-${String(i).padStart(2, '0')}`, name: `Closed ${i}`, team: 'Số',
+    picAcc: 'Lead', picRes: 'MemA', endDate: isoDate(-i), state: 'Hoàn thành',
+    progress: '100', highlight: 'N', status: 'Green', initiative: '', milestone: '', result: '',
+  });
+}
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token: 'k7', exp: Date.now() + 86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB7_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(300);
+const kb7 = await page.$$eval('.mw-kb-col', els => {
+  const done = els.find(c => c.querySelector('.mw-kb-col-title')?.textContent?.trim() === 'Vừa đóng');
+  return done ? {
+    count: done.querySelector('.mw-kb-col-count')?.textContent?.trim(),
+    cards: done.querySelectorAll('.mw-kb-card').length,
+    scroll: !!done.querySelector('.mw-kb-col-body-scroll'),
+    firstId: done.querySelector('.mw-kb-card .mw-kb-id')?.textContent?.trim(),
+  } : null;
+});
+log('KB7-count-total', kb7 && kb7.count === '25', `Closed count = ${kb7?.count} (all 25, no cap)`);
+log('KB7-all-rendered', kb7 && kb7.cards === 25, `All 25 closed cards rendered (got ${kb7?.cards})`);
+log('KB7-scroll-body', kb7 && kb7.scroll, 'Closed column body is scrollable (.mw-kb-col-body-scroll)');
+log('KB7-recent-first', kb7 && kb7.firstId === 'KD-01', `Most-recent closed (KD-01, latest deadline) first [${kb7?.firstId}]`);
+await shot(page, 'KB7-closed-scroll');
+
 // Reset to list view so state does not leak
 await page.evaluate(() => mwSetView('list'));
 await page.waitForTimeout(200);
