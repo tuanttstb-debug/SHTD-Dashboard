@@ -18,6 +18,7 @@ const SUITES = [
   'verify_h2_tasklink.mjs',     // CR         H2 — Task↔Milestone picker: scope/filter/multi-link/detail/RBAC
   'verify_h2_dashboard.mjs',    // 24 tests  H2 (Track B) — dashboard: exec cards/panels/capacity/charts/report/empty
   'verify_h2_review.mjs',       // 20 tests  H2 (Track B) — self-review: cards/modal/save/RBAC/empty
+  'verify_date_guard.mjs',      // 29 tests  S77 — DateGuard: chống lệch định dạng ngày tái phát (onEdit+daily)
   'verify_date_unify.mjs',      // 28 tests  S67 — date logic đồng nhất (ISO storage / DD/MM/YYYY display)
   'verify_id_reassign.mjs',     // 17 tests  S65 — guard cấp lại mã khi tạo trùng đồng thời
   'verify_es_init_health.mjs',  // 14 tests  S66 — ES init health: name/acc/filter/popup + category đồng nhất

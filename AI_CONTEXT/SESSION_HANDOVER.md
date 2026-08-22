@@ -1,3 +1,17 @@
+# SESSION HANDOVER (S77) — 2026-08-22
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
+**Version**: v6.51 (backend-only — KHÔNG bump client)
+
+## S77 — DateGuard: chống lệch định dạng ngày TẬN GỐC (backend + test)
+- **Task completed**: Truy vết nghi vấn "sửa nhầm file / thiếu deploy GAS" của vụ báo cáo tuần AIOS hiện deadline sai (`BL1-026` email 31/07 vs DB 31/08). **Kết luận có bằng chứng**: (1) deadline trong email **100% do AIOS dựng** (`aggregate.js parseVNDate+fmtDMY` → `build_email.js` HTML); GAS SHTD `ReportEmailService.sendWeeklyReport_` chỉ **relay** (`htmlBody: html` param "đã dựng ở AIOS", dòng 156/179) — KHÔNG parse/format ngày → sửa ở AIOS là **đúng file**, không cần deploy GAS là **đúng chủ đích** (không file GAS nào đổi). (2) parser AIOS đã verify đúng (`"31-thg 8-26"`→`Date.UTC(2026,7,31)`→`31/08/2026`, UTC nhất quán). (3) Gốc = **snapshot cũ** (đã guard bên AIOS hôm trước). **Việc phiên này**: bịt **rủi ro nền** — dữ liệu ngày trong Sheet có thể bị Google localise lại sau sửa tay/paste; `DateNormalizeMigration.gs` chỉ dọn 1 lần → dựng **DateGuard 2 tầng** chống tái phát.
+- **Files changed**: NEW `backend/DateGuard.gs` (onEdit real-time + daily scan + install/uninstall/selftest; tái dùng `_dnToISO`/`_DN_TARGETS`), NEW `verify_date_guard.mjs` (29/29), `run_tests.mjs` (+đăng ký). AI_CONTEXT (4 file). **KHÔNG đụng FE source** (audit `assets/js` xác nhận writer→`fmtDateExport`, reader→`toISODate` đã chuẩn từ S67.2; các `new Date()` là tính toán trên memory ISO). Không commit ~85 PNG `test-results` dirty (leftover cũ).
+- **Decision made**: (1) Fix ở **tầng dữ liệu (GAS trigger)** để cả dashboard lẫn báo cáo AIOS hưởng lợi, thay vì chỉ vá từng consumer. (2) **CHỈ rewrite** chuỗi locale/serial lệch & parse được; Date hợp lệ/ISO/rỗng bỏ qua (ít churn); không parse được → **giữ + log** (không phá dữ liệu ngân hàng). (3) `setNumberFormat('@')` **best-effort try/catch** — né lỗi "cột kiểu đã nhập" đã khiến S67.2 bỏ khoá plain-text. (4) daily @7h **trước** `notifScan`@8h để digest/báo cáo đọc dữ liệu sạch. (5) Không bump APP_VERSION (backend thuần).
+- **Blocker**: không. **✅ [TT] đã hoàn tất phía GAS** (dán DateGuard.gs + `commitNormalizeDates()` + `installDateGuardTriggers()` + `dailyDateGuard()` chạy tay).
+- **Next step**: [TT] nghiệm thu vào **kỳ gửi email tới** — deadline trong email khớp DB; thử sửa 1 ô ngày kiểu `31-thg 8-26` trên Sheet → reload → thành `2026-08-31` (real-time). [CC] (tuỳ chọn) mở rộng guard cho **8 sheet H2_*** nếu KPI cũng nhập ngày tay; gộp `_dnToISO` thành 1 nguồn nếu tách module chung.
+- **Regression risk**: **Thấp/không**. Toàn file MỚI, độc lập — 0 đổi FE, 0 đổi route/handler GAS đang chạy. Guard chỉ chuẩn hoá ĐÚNG các cột ngày đã quản lý; programmatic write không kích onEdit (không vòng lặp); idempotent (verify DG9). `verify_date_guard` 29/29; guard **không** chạy tự động trong test suite trình duyệt nên không ảnh hưởng suite cũ.
+
+---
+
 # SESSION HANDOVER (S76) — 2026-08-21
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **Version**: v6.49 → **v6.50** (`6.50-mywork-kanban-personal-scope-20260821`, `?v=20260821`)

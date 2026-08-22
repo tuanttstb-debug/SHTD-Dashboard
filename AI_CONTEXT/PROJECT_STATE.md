@@ -1,7 +1,9 @@
 # PROJECT STATE
-**As of**: 2026-08-21 (Session 76 — My Work role-scope + Kanban + email nhắc việc; +S76.1 CR Kanban Closed scroll + H2 task-link table)
-**Version**: v6.51 (`APP_VERSION = '6.51-kanban-closed-scroll-h2-tasklink-table-20260821'`, `index.html ?v=20260821b`)
-**Remote HEAD (main)**: S76 (`6a9146f`, đã push) — S76.1 chờ push phiên này
+**As of**: 2026-08-22 (Session 77 — DateGuard: chống lệch định dạng ngày tái phát; +S76/S76.1 trước đó)
+**Version**: v6.51 (`APP_VERSION = '6.51-kanban-closed-scroll-h2-tasklink-table-20260821'`, `index.html ?v=20260821b`) — S77 backend-only, KHÔNG bump client
+**Remote HEAD (main)**: S77 chờ push phiên này (trên `ee3204a` S76.1)
+
+> **S77 (DateGuard — chống lệch định dạng ngày TẬN GỐC, backend + test)**: Truy vết vụ báo cáo tuần AIOS hiện deadline sai (`BL1-026` 31/07 vs DB 31/08) → chốt **parser đúng + GAS `send-report` chỉ relay HTML**; gốc là **snapshot cũ** (đã guard bên AIOS) + rủi ro nền là **dữ liệu ngày trong Sheet có thể bị Google localise lại** ("31-thg 8-26"/serial) sau khi sửa tay/paste — `DateNormalizeMigration.gs` chỉ dọn 1 lần. **Fix 2 tầng, thuần backend (KHÔNG redeploy Web App):** NEW `backend/DateGuard.gs` — (1) installable **`dateGuardOnEdit`** viết lại ISO tại chỗ khi ô ngày cột quản lý bị sửa/paste (kể cả ngoài app); (2) time-based **`dailyDateGuard()`** @7h (trước `notifScan` 8h) quét 5 sheet dọn sót + log ô không parse. CHỈ rewrite chuỗi locale/serial lệch & parse được; Date hợp lệ / ISO / rỗng → bỏ qua; không hiểu → GIỮ + log. `setNumberFormat('@')` best-effort try/catch (né lỗi "cột kiểu đã nhập" của S67.2). Tái dùng `_dnToISO`/`_DN_TARGETS`. `installDateGuardTriggers()`/`uninstall`/`dateGuardSelfTest`. **FE reader/writer đã sạch** (S67.2 route hết qua `toISODate`/`fmtDateExport`) — chỉ audit, 0 đổi. `verify_date_guard.mjs` **29/29** (sandbox Node chạy hàm GAS thật). **✅ [TT] đã cài GAS + chạy migration + trigger.** Nghiệm thu cuối: kỳ gửi email tới.
 
 > **S76.1 (2 CR UI — thuần FE)**: **CR1** cột "Vừa đóng" (Kanban My Work) bỏ cap 15 → hiện TẤT CẢ trong khung `max-height:520px` cuộn dọc + đếm tổng (`.mw-kb-col-body-scroll`). **CR2** task-link ở "Quản trị H2 · Theo dõi KPI": thay chip tối giản bằng **bảng đầy đủ giống concept "Theo dõi Initiative"** (`init-task-table`) — toggle `≡ N task ▾` mở panel (giữ trạng thái qua `_h2OpenMsTasks`); cột Mã·Task·Trạng thái+RAG·PIC·%HT·Deadline+badge quá hạn + unlink. `verify_my_work` 82/82, `verify_h2_tasklink` 29/29, full 35/36 (issue_tracker flaky). v6.51, `?v=20260821b`. KHÔNG cần deploy GAS.
 

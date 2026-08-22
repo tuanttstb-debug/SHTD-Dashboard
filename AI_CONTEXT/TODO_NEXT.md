@@ -1,4 +1,27 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-22 (Session 77 — DateGuard chống lệch định dạng ngày tận gốc)
+**Context**: S77 done. Backend-only (KHÔNG bump client). NEW `backend/DateGuard.gs` + `verify_date_guard.mjs` **29/29**. ✅ [TT] đã cài GAS (migration + trigger). FE đã sạch (audit, 0 đổi).
+
+## ✅ COMPLETED S77 — DateGuard (2 tầng: onEdit real-time + daily scan)
+- [x] Truy vết vụ báo cáo AIOS deadline sai → chứng minh **AIOS đúng file, GAS chỉ relay HTML, không cần deploy** (xem HANDOVER S77).
+- [x] NEW `backend/DateGuard.gs`: `dateGuardOnEdit` (viết lại ISO khi sửa cột ngày quản lý) + `dailyDateGuard()`@7h + `installDateGuardTriggers`/`uninstall`/`dateGuardSelfTest`. Tái dùng `_dnToISO`/`_DN_TARGETS`.
+- [x] Audit FE reader/writer → đã chuẩn S67.2 (writer→`fmtDateExport`, reader→`toISODate`); 0 đổi.
+- [x] `verify_date_guard.mjs` 29/29 + `run_tests.mjs`. ✅ **[TT] đã cài GAS + chạy migration + trigger.**
+
+## 🟡 PRIORITY 1 — Nghiệm thu S77 (kỳ gửi email tới)
+| Check | Expected |
+|---|---|
+| Kỳ báo cáo tuần AIOS kế | Deadline trong email **khớp DB** (không lệch như `BL1-026`) |
+| Sửa 1 ô ngày kiểu `31-thg 8-26` trên Sheet → reload | Thành `2026-08-31` (onEdit real-time) |
+| (GAS editor) xem log `dailyDateGuard` sáng kế | fix/bad hợp lý; ô "bad" (không parse) được liệt kê để rà tay |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S77 (tùy chọn)
+- **TD-DATE-02**: cột "kiểu đã nhập" chặn khoá '@' → hiển thị có thể localise (giá trị nền vẫn đúng). Gỡ column-type trên Sheet nếu muốn hiển thị ISO tuyệt đối.
+- **TD-DATE-03**: mở rộng guard cho 8 sheet H2_* nếu KPI nhập ngày tay.
+
+---
+
+# (S76) TODO — giữ tham khảo
 **Prepared**: 2026-08-21 (Session 76 — My Work role-scope + Kanban + loại email nhắc việc CuongVM1)
 **Context**: S76 done (code). v6.50-mywork-kanban-personal-scope-20260821, `?v=20260821`. `verify_my_work` **78/78**, `verify_notif_retract` **24/24**, full suite **35/36** (chỉ `issue_tracker` flaky batch — standalone 61/61). Item 2+3 thuần FE; **Item 1 (loại email nhắc việc CuongVM1) CHƯA redeploy GAS**.
 

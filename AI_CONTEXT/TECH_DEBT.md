@@ -8,6 +8,19 @@
 
 ---
 
+## 🆕 DELTA — Session 77 (2026-08-22) — DateGuard chống lệch định dạng ngày tái phát
+
+### ✅ TD-DATE-01 (đóng): dữ liệu ngày có thể localise lại sau migration 1 lần → nay có guard 2 tầng
+`DateNormalizeMigration.gs` chỉ dọn ngày về ISO **một lần**; sau đó sửa tay/paste/copy vào ô ngày có thể khiến Google Sheets lưu lại kiểu locale ("31-thg 8-26")/serial → consumer (báo cáo tuần AIOS, export) đọc lệch. **Đóng bằng** NEW `backend/DateGuard.gs`: installable `dateGuardOnEdit` (real-time viết lại ISO khi sửa cột ngày quản lý) + `dailyDateGuard()` @7h (safety-net quét 5 sheet + log ô không parse). ✅ [TT] đã cài trigger. Verify `verify_date_guard.mjs` 29/29.
+
+### TD-DATE-02: khoá plain-text bị chặn trên "cột kiểu đã nhập" 🟢 MEDIUM
+`setNumberFormat('@')` ném lỗi trên cột có enforced column-type (Sheets Tables/imported) — lý do S67.2 bỏ khoá. Guard bọc try/catch nên **ISO vẫn ghi** nhưng cột đó có thể **hiển thị** lại theo locale (giá trị nền vẫn là Date/ISO hợp lệ → consumer đọc đúng qua `toISODate`/`parseVNDate`; chỉ là hiển thị trên Sheet). **Hướng (tuỳ chọn):** nếu muốn hiển thị ISO tuyệt đối → gỡ enforced column-type trên Sheet UI rồi để guard khoá '@'. Ưu tiên thấp — không ảnh hưởng tính đúng dữ liệu.
+
+### TD-DATE-03: guard chưa phủ 8 sheet H2_* (KPI) ⚪ LOW
+`_DN_TARGETS` (và guard) chỉ gồm 5 sheet core (Task/Case/Initiative/Issue/Dev) — đúng nơi deadline báo cáo tuần lấy. Nếu H2 KPI nhập ngày tay và cần chuẩn hoá → thêm target H2_* vào `_DN_TARGETS`. Ngoài phạm vi hiện tại.
+
+---
+
 ## 🆕 DELTA — Session 76 (2026-08-21) — My Work role-scope + Kanban · email nhắc việc CuongVM1 · 2 CR UI
 
 ### TD-MW-01: My Work scope theo ROLE — đổi hành vi có chủ ý; nới role phải sửa 1 chỗ 🟢 MEDIUM
