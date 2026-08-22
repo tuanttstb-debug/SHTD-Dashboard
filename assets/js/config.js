@@ -5,4 +5,4 @@
 const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec';
 
 // Build version — tăng số này mỗi lần deploy để phát hiện browser cache stale
-const APP_VERSION = '6.51-kanban-closed-scroll-h2-tasklink-table-20260821';
+const APP_VERSION = '6.52-mywork-kanban-todo-states-scroll-person-filter-20260822';

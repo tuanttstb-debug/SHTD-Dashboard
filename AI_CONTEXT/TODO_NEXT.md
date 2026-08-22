@@ -1,4 +1,28 @@
 # TODO — NEXT SESSION
+**Prepared**: 2026-08-22 (Session 78 — CR Kanban My Work: 4 trạng thái To-do + scroll đồng nhất + filter nhân sự)
+**Context**: S78 done (thuần FE). v6.52, `?v=20260822`. `verify_my_work` **91/91**. KHÔNG cần redeploy GAS — chỉ hard-reload.
+
+## ✅ COMPLETED S78 — CR Kanban "Công việc của tôi" (thuần FE, v6.52)
+- [x] Cột "Cần thực hiện" gộp đúng 4 trạng thái (Chưa bắt đầu / Hoàn thành chuẩn bị / Tạm dừng / Blocked) — constant `MW_KB_TODO_STATES`, giữ negative-filter → không mất task lạ.
+- [x] Scroll đồng nhất cả 3 cột Kanban (`.mw-kb-col-body-scroll`, `max-height:520px`).
+- [x] Filter theo nhân sự (Teamlead/Admin): `_mwPersonFilterHtml`/`mwSetPersonFilter`, distinct picRes/picAcc trong scope, áp cả List+Kanban qua `_mwScopedTasks`; reset khi đổi team; User thường ẩn droplist.
+- [x] i18n +2 key VI/EN; bump v6.52 + cache-bust `?v=20260822` (65 refs). `verify_my_work` **91/91** (+KB8/KB9/PF1–PF5).
+
+## 🟡 PRIORITY 1 — Nghiệm thu S78 (hard-reload PRD → badge v6.52)
+| Check | Expected |
+|---|---|
+| Kanban cột "Cần thực hiện" | Gồm task Tạm dừng / Blocked / HT chuẩn bị / Chưa bắt đầu |
+| To-do + In-process nhiều task | Cuộn dọc trong khung (không kéo dài trang) như cột "Vừa đóng" |
+| (Teamlead/Admin) chọn 1 nhân sự ở droplist | Board thu về đúng task người đó (Res/Acc) ở cả List lẫn Kanban |
+| User thường | KHÔNG thấy droplist nhân sự |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S78 (tùy chọn)
+- [CC] Nếu cần thứ tự "đóng gần nhất" chính xác → thêm cột **Closed Date** (TD-MW-02) thay proxy Deadline desc.
+- [CC] Cân nhắc **persist person filter** theo phiên (localStorage) nếu [TT] thấy tiện; hiện in-memory reset khi reload.
+
+---
+
+# (S77) TODO — giữ tham khảo
 **Prepared**: 2026-08-22 (Session 77 — DateGuard chống lệch định dạng ngày tận gốc)
 **Context**: S77 done. Backend-only (KHÔNG bump client). NEW `backend/DateGuard.gs` + `verify_date_guard.mjs` **29/29**. ✅ [TT] đã cài GAS (migration + trigger). FE đã sạch (audit, 0 đổi).
 

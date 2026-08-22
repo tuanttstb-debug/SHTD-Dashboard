@@ -832,8 +832,85 @@ log('KB7-scroll-body', kb7 && kb7.scroll, 'Closed column body is scrollable (.mw
 log('KB7-recent-first', kb7 && kb7.firstId === 'KD-01', `Most-recent closed (KD-01, latest deadline) first [${kb7?.firstId}]`);
 await shot(page, 'KB7-closed-scroll');
 
+/* ── KB8 — CR: cột "Cần thực hiện" gộp ĐỦ 4 trạng thái (Chưa bắt đầu / HT chuẩn bị / Tạm dừng / Blocked) ── */
+const KB8_TASKS = [
+  { id:'TS-01', name:'Chưa bắt đầu',        team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(3), state:'Chưa bắt đầu',        progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-02', name:'Hoàn thành chuẩn bị', team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(4), state:'Hoàn thành chuẩn bị', progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-03', name:'Tạm dừng',            team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(5), state:'Tạm dừng',            progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-04', name:'Blocked',             team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(6), state:'Blocked',             progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-05', name:'Đang thực hiện',      team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(7), state:'Đang thực hiện',      progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-06', name:'Hoàn thành',          team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(8), state:'Hoàn thành',          progress:'100', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+];
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'k8', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB8_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(300);
+const kb8 = await page.$$eval('.mw-kb-col', els => els.map(c => ({
+  title: c.querySelector('.mw-kb-col-title')?.textContent?.trim(),
+  ids:   [...c.querySelectorAll('.mw-kb-card')].map(k => k.querySelector('.mw-kb-id')?.textContent?.trim()),
+  scroll: !!c.querySelector('.mw-kb-col-body-scroll'),
+})));
+const kb8Todo = kb8.find(c => c.title === 'Cần thực hiện') || { ids:[] };
+const kb8Proc = kb8.find(c => c.title === 'Đang thực hiện') || { ids:[] };
+const kb8Done = kb8.find(c => c.title === 'Vừa đóng')       || { ids:[] };
+log('KB8-todo-4states',
+  ['TS-01','TS-02','TS-03','TS-04'].every(id => kb8Todo.ids.includes(id)),
+  `To-do gộp đủ 4 trạng thái [${kb8Todo.ids.join(',')}]`);
+log('KB8-todo-no-leak',
+  !kb8Todo.ids.includes('TS-05') && !kb8Todo.ids.includes('TS-06'),
+  `To-do KHÔNG lẫn In-process/Done [${kb8Todo.ids.join(',')}]`);
+log('KB8-proc-done-split',
+  kb8Proc.ids.length === 1 && kb8Done.ids.length === 1,
+  `In-process=1, Done=1 [${kb8Proc.ids.join(',')}|${kb8Done.ids.join(',')}]`);
+
+/* ── KB9 — CR: cả 3 cột đều dùng khung cuộn (.mw-kb-col-body-scroll) ── */
+log('KB9-all-cols-scroll', kb8.length === 3 && kb8.every(c => c.scroll),
+  `Cả 3 cột có body cuộn [${kb8.map(c => c.scroll).join(',')}]`);
+await shot(page, 'KB8-todo-states-scroll');
+
+/* ── PF — CR: filter theo nhân sự (Teamlead review nhanh 1 người) ── */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'pf', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(300);
+const pfDroplist = await page.$('.mw-person-filter');
+const pfOptions  = await page.$$eval('.mw-person-filter option', els => els.map(o => o.textContent.trim()));
+log('PF1-droplist', !!pfDroplist, 'Teamlead thấy droplist lọc nhân sự (.mw-person-filter)');
+log('PF2-options', pfOptions.includes('MemA') && pfOptions.includes('MemB') && pfOptions.includes('Lead'),
+  `Droplist gồm nhân sự trong team [${pfOptions.join(',')}]`);
+// Lọc theo MemB → chỉ task MemB là Res/Acc (K-04, K-05, K-06)
+await page.evaluate(() => mwSetPersonFilter('MemB'));
+await page.waitForTimeout(300);
+const pfIds = await page.$$eval('.mw-kb-card .mw-kb-id', els => els.map(e => e.textContent.trim()));
+log('PF3-filter-person',
+  ['K-04','K-05','K-06'].every(id => pfIds.includes(id)) && !pfIds.includes('K-01') && !pfIds.includes('K-07'),
+  `Lọc MemB → chỉ task của MemB [${pfIds.join(',')}]`);
+// Về "tất cả nhân sự" → khôi phục đủ
+await page.evaluate(() => mwSetPersonFilter('__all__'));
+await page.waitForTimeout(200);
+const pfAllIds = await page.$$eval('.mw-kb-card .mw-kb-id', els => els.map(e => e.textContent.trim()));
+log('PF4-reset-all', pfAllIds.includes('K-01') && pfAllIds.includes('K-04'),
+  `"Tất cả nhân sự" khôi phục đủ task [${pfAllIds.length} card]`);
+// Member thường KHÔNG có droplist nhân sự
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'pf5', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB_TASKS, user: USER_MEMBER });
+await page.evaluate(() => { navigateTo('my-work'); });
+await page.waitForTimeout(200);
+const pfMemberDroplist = await page.$('.mw-person-filter');
+log('PF5-member-no-droplist', !pfMemberDroplist, 'User thường KHÔNG có droplist nhân sự');
+await shot(page, 'PF-person-filter');
+
 // Reset to list view so state does not leak
-await page.evaluate(() => mwSetView('list'));
+await page.evaluate(() => { if (typeof mwSetPersonFilter === 'function') mwSetPersonFilter('__all__'); mwSetView('list'); });
 await page.waitForTimeout(200);
 
 /* ══════════════════════════════════════════

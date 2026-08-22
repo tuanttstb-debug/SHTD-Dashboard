@@ -8,6 +8,16 @@
 
 ---
 
+## 🆕 DELTA — Session 78 (2026-08-22) — CR Kanban My Work: 4 trạng thái To-do + scroll đồng nhất + filter nhân sự
+
+### TD-MW-03: Filter nhân sự lấy distinct từ pic free-text + in-memory (không persist) ⚪ LOW
+Droplist "Lọc theo nhân sự" (`_mwTeamPeople`) sinh danh sách **distinct từ `picRes`/`picAcc` của task trong scope** — là **free-text** (có thể là username hoặc display-name tùy dữ liệu nhập), KHÔNG chuẩn hoá theo `User_Master`. Hệ quả: nếu một người bị nhập 2 kiểu tên khác nhau → hiện 2 dòng droplist; khớp lọc dùng `_mwCmpUser` (so không phân biệt hoa/thường) nên vẫn đúng theo từng chuỗi. `_mwPersonFilter` **in-memory** (không lưu localStorage) → reload mất lựa chọn (chủ ý: tránh kẹt người đã rời team; reset khi Admin đổi team). **Hướng (tuỳ chọn):** nếu cần chuẩn → resolve pic về username qua `_appUsers` trước khi distinct; persist theo phiên nếu [TT] muốn. Ưu tiên thấp — không ảnh hưởng tính đúng.
+
+### TD-MW-02 (nhắc lại, chưa đổi): "Vừa đóng" xếp theo Deadline = proxy (Task_Master không có ngày đóng)
+CR S78 không đụng phần này. Vẫn dùng `endDate` giảm dần làm proxy "đóng gần nhất". Nếu cần chính xác → thêm cột Closed Date + migration (xem TD-MW-02 mục Session 76).
+
+---
+
 ## 🆕 DELTA — Session 77 (2026-08-22) — DateGuard chống lệch định dạng ngày tái phát
 
 ### ✅ TD-DATE-01 (đóng): dữ liệu ngày có thể localise lại sau migration 1 lần → nay có guard 2 tầng

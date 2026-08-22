@@ -9,12 +9,22 @@ const _MW_PO_TEAMS   = new Set(['BL', 'CV1', 'CV2', 'Số']);
 const _MW_PTKD_TEAMS = new Set(['PTKD MB', 'PTKD MN']);
 const _MW_QLDM_TEAMS = new Set(['QLDM']);
 
-// ── View mode (List ⇄ Kanban) + Admin team filter — persisted ──
-let _mwView       = (typeof localStorage !== 'undefined' && localStorage.getItem('shtd_mw_view')) || 'list';
-let _mwTeamFilter = null;          // Admin droplist; null → mặc định = team của Admin
+// ── View mode (List ⇄ Kanban) + Admin team filter + person filter — persisted ──
+let _mwView         = (typeof localStorage !== 'undefined' && localStorage.getItem('shtd_mw_view')) || 'list';
+let _mwTeamFilter   = null;        // Admin droplist; null → mặc định = team của Admin
+let _mwPersonFilter = null;        // Teamlead/Admin: lọc theo 1 nhân sự (Res/Acc); null → tất cả
 
 const MW_FTE_MAX           = 3;    // FTE chạy đồng thời ≥ ngưỡng này → cảnh báo đỏ
 const MW_TEAM_ALL          = '__all__';
+const MW_PERSON_ALL        = '__all__';
+
+// Trạng thái Kanban (canonical, khớp droplist state ở modal task):
+//   • "Cần thực hiện" (To-do) = 4 trạng thái CR liệt kê: Chưa bắt đầu · Hoàn thành chuẩn bị · Tạm dừng · Blocked.
+//   • "Đang thực hiện" (In-process) = MW_KB_INPROGRESS.
+//   • "Vừa đóng" (Closed) = MW_KB_DONE.
+const MW_KB_INPROGRESS  = 'Đang thực hiện';
+const MW_KB_DONE        = 'Hoàn thành';
+const MW_KB_TODO_STATES = new Set(['Chưa bắt đầu', 'Hoàn thành chuẩn bị', 'Tạm dừng', 'Blocked']);
 
 function _mwRoleView(user) {
   if (!user) return 'po';
@@ -78,10 +88,39 @@ function _mwSortTasks(list) {
   });
 }
 
-// teamFilter chỉ áp cho Admin (droplist Kanban); các role khác bỏ qua.
-function _mwScopedTasks(user, teamFilter) {
+// Chỉ Teamlead/Admin mới thấy nhiều người → mới có droplist lọc theo nhân sự.
+function _mwCanFilterPeople(user) {
+  return !!user && (user.role === 'Admin' || user.role === 'Teamlead');
+}
+
+// personFilter khớp khi nhân sự là Responsible HOẶC Accountable (so khớp không phân biệt hoa/thường).
+function _mwPersonMatch(task, personFilter) {
+  if (!personFilter || personFilter === MW_PERSON_ALL) return true;
+  return _mwCmpUser(task.picRes, personFilter) || _mwCmpUser(task.picAcc, personFilter);
+}
+
+// teamFilter chỉ áp cho Admin (droplist team); personFilter áp cho Teamlead/Admin (droplist nhân sự).
+function _mwScopedTasks(user, teamFilter, personFilter) {
   if (!user) return [];
-  return _mwSortTasks((db.tasks || []).filter(t => _mwTaskInScope(t, user, teamFilter)));
+  return _mwSortTasks((db.tasks || []).filter(t =>
+    _mwTaskInScope(t, user, teamFilter) && _mwPersonMatch(t, personFilter)));
+}
+
+// Danh sách nhân sự (Res/Acc) DISTINCT trong phạm vi role (đã áp teamFilter, CHƯA áp person)
+// → nguồn cho droplist lọc nhanh; giữ nguyên cách viết hoa gặp đầu tiên, sắp theo alphabet.
+function _mwTeamPeople(user, teamFilter) {
+  if (!user) return [];
+  const seen = new Map();   // key thường-hoá → nhãn hiển thị gốc
+  (db.tasks || []).forEach(t => {
+    if (!_mwTaskInScope(t, user, teamFilter)) return;
+    [t.picRes, t.picAcc].forEach(p => {
+      const v = (p || '').trim();
+      if (!v) return;
+      const k = v.toLowerCase();
+      if (!seen.has(k)) seen.set(k, v);
+    });
+  });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b, 'vi'));
 }
 
 // Admin: mặc định lọc theo team của chính Admin; có thể đổi qua droplist → MW_TEAM_ALL.
@@ -90,8 +129,13 @@ function _mwEffectiveTeamFilter(user) {
   return _mwTeamFilter || user.team || MW_TEAM_ALL;
 }
 
+// personFilter hiệu lực chỉ khi role được phép lọc nhân sự (User thường bỏ qua).
+function _mwEffectivePersonFilter(user) {
+  return _mwCanFilterPeople(user) ? _mwPersonFilter : null;
+}
+
 function _mwGetMyTasks(user) {
-  return _mwScopedTasks(user, _mwEffectiveTeamFilter(user));
+  return _mwScopedTasks(user, _mwEffectiveTeamFilter(user), _mwEffectivePersonFilter(user));
 }
 
 function _mwGetUrgent(tasks, cases) {
@@ -501,15 +545,14 @@ function _mwBuildCaseSection(cases) {
 // ── Kanban view (To-do / In-process / Closed) ──
 
 // Chia scope task thành 3 cột theo trạng thái.
-//   To-do    = chưa xong & chưa "Đang thực hiện" (Chưa bắt đầu / Tạm dừng / Blocked / HT chuẩn bị)
+//   To-do    = Chưa bắt đầu / Hoàn thành chuẩn bị / Tạm dừng / Blocked (MW_KB_TODO_STATES)
+//              + mọi trạng thái lạ khác (không phải In-process/Done) → không mất task nào.
 //   Process  = "Đang thực hiện"
 //   Closed   = "Hoàn thành"
 function _mwKanbanColumns(tasks) {
-  const IN_PROGRESS = 'Đang thực hiện';
-  const DONE        = 'Hoàn thành';
-  const todo   = tasks.filter(t => t.state !== IN_PROGRESS && t.state !== DONE);
-  const inProc = tasks.filter(t => t.state === IN_PROGRESS);
-  const done   = tasks.filter(t => t.state === DONE);
+  const todo   = tasks.filter(t => t.state !== MW_KB_INPROGRESS && t.state !== MW_KB_DONE);
+  const inProc = tasks.filter(t => t.state === MW_KB_INPROGRESS);
+  const done   = tasks.filter(t => t.state === MW_KB_DONE);
 
   // To-do: quá hạn trước, rồi gần đến hạn nhất (deadline tăng dần, không có ngày → cuối).
   todo.sort((a, b) => (_mwDiffDays(a.endDate) ?? 1e9) - (_mwDiffDays(b.endDate) ?? 1e9));
@@ -587,15 +630,16 @@ function _mwBuildKanban(tasks) {
     </div>`;
   }
 
+  // Cả 3 cột dùng CHUNG khung cuộn dọc cố định (đồng nhất concept): nhiều task không kéo dài trang.
   return `
 <div class="mw-kanban">
-  ${_mwKanbanCol('kb-todo', 'fa-clipboard-list',   t('mw.kb.todo'),       todo,   over)}
-  ${_mwKanbanCol('kb-proc', 'fa-spinner',          t('mw.kb.inprogress'), inProc, over, procWarn)}
-  ${_mwKanbanCol('kb-done', 'fa-circle-check',      t('mw.kb.done'),       done,   over, '', true)}
+  ${_mwKanbanCol('kb-todo', 'fa-clipboard-list',   t('mw.kb.todo'),       todo,   over, '',       true)}
+  ${_mwKanbanCol('kb-proc', 'fa-spinner',          t('mw.kb.inprogress'), inProc, over, procWarn, true)}
+  ${_mwKanbanCol('kb-done', 'fa-circle-check',      t('mw.kb.done'),       done,   over, '',       true)}
 </div>`;
 }
 
-// ── Header tools (view toggle + Admin team droplist) ──
+// ── Header tools (view toggle + Admin team droplist + person droplist) ──
 
 function _mwViewToggleHtml() {
   const btn = (mode, icon, label) =>
@@ -617,6 +661,19 @@ function _mwTeamFilterHtml(user, teamFilter) {
   return `<select class="mw-team-filter" title="${t('mw.team.filter')}" onchange="mwSetTeamFilter(this.value)">${opts}</select>`;
 }
 
+// Droplist lọc theo nhân sự — hỗ trợ Teamlead/Admin review nhanh 1 người trong team/trung tâm.
+function _mwPersonFilterHtml(user, teamFilter, personFilter) {
+  if (!_mwCanFilterPeople(user)) return '';
+  const people = _mwTeamPeople(user, teamFilter);
+  if (!people.length) return '';
+  const cur = personFilter || MW_PERSON_ALL;
+  const opt = (val, lbl) =>
+    `<option value="${esc(val)}"${cur === val ? ' selected' : ''}>${esc(lbl)}</option>`;
+  const opts = [opt(MW_PERSON_ALL, t('mw.person.all'))]
+    .concat(people.map(p => opt(p, p))).join('');
+  return `<select class="mw-team-filter mw-person-filter" title="${t('mw.person.filter')}" onchange="mwSetPersonFilter(this.value)">${opts}</select>`;
+}
+
 function mwSetView(mode) {
   _mwView = mode === 'kanban' ? 'kanban' : 'list';
   try { localStorage.setItem('shtd_mw_view', _mwView); } catch (e) {}
@@ -625,6 +682,12 @@ function mwSetView(mode) {
 
 function mwSetTeamFilter(val) {
   _mwTeamFilter = val || MW_TEAM_ALL;
+  _mwPersonFilter = null;   // đổi team → reset nhân sự (danh sách người đổi theo)
+  renderMyWork();
+}
+
+function mwSetPersonFilter(val) {
+  _mwPersonFilter = val || MW_PERSON_ALL;
   renderMyWork();
 }
 
@@ -640,9 +703,10 @@ function renderMyWork() {
     return;
   }
 
-  const roleView   = _mwRoleView(user);
-  const teamFilter = _mwEffectiveTeamFilter(user);
-  const myTasks    = _mwScopedTasks(user, teamFilter);
+  const roleView     = _mwRoleView(user);
+  const teamFilter   = _mwEffectiveTeamFilter(user);
+  const personFilter = _mwEffectivePersonFilter(user);
+  const myTasks      = _mwScopedTasks(user, teamFilter, personFilter);
 
   const roleLabel = { po: 'PO', ptkd: 'PTKD', qldm: 'QLDM' }[roleView] || '';
   const todayStr  = new Date().toLocaleDateString('vi-VN', {
@@ -657,6 +721,7 @@ function renderMyWork() {
     </div>
     <div class="mw-header-tools">
       ${_mwTeamFilterHtml(user, teamFilter)}
+      ${_mwPersonFilterHtml(user, teamFilter, personFilter)}
       ${_mwViewToggleHtml()}
     </div>
   </div>`;
