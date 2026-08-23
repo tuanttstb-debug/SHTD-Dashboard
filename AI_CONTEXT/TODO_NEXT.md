@@ -1,6 +1,25 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-22 (Session 78 — CR Kanban My Work: 4 trạng thái To-do + scroll đồng nhất + filter nhân sự)
-**Context**: S78 done (thuần FE). v6.52, `?v=20260822`. `verify_my_work` **91/91**. KHÔNG cần redeploy GAS — chỉ hard-reload.
+**Prepared**: 2026-08-23 (Session 79 — DEBUG email nhắc việc lệch ngày/định dạng: fix tận gốc 3 tầng)
+**Context**: S79 done (backend-only). v6.52 giữ nguyên. `verify_notif_retract` **41/41**, `verify_notifications` **21/21**. ✅ [TT] đã redeploy GAS (link không đổi).
+
+## ✅ COMPLETED S79 — Email nhắc việc lệch ngày/tháng + định dạng (backend)
+- [x] Truy vết `NotificationService.gs` → 2 lỗi gốc: (A) NotifID không gồm ngày → không cập nhật khi deadline đổi + không thu hồi khi deadline dời khỏi ngưỡng; (B) `_notifMessage_` echo ngày thô theo locale ô.
+- [x] NEW `_notifFmtDue()` → chuẩn hoá DD/MM/YYYY (thủ công, không lệch TZ, parse fail giữ nguyên).
+- [x] `_notifMessage_` + `_notifMakeRec_` dùng `_notifFmtDue` (Message + cột DueDate).
+- [x] NEW `_notifReconcileDue_` thay `_notifRetractStale_` trong `notifScan`: làm tươi ngày + thu hồi moved-away/done/mất.
+- [x] `verify_notif_retract` **41/41** (+NR11–14); `verify_notifications` **21/21**. ✅ [TT] redeploy GAS.
+
+## 🟡 PRIORITY 1 — Nghiệm thu S79
+| Check | Expected |
+|---|---|
+| [TT] chạy tay `notifScan()` 1 lần (GAS editor) | Log `làm tươi N, thu hồi M`; tồn kho noti dọn ngay |
+| Kỳ digest kế | Ngày đúng **DD/MM/YYYY**, hết chuỗi locale "31-Jul-26" thô |
+| Task đã dời deadline sang tương lai | KHÔNG còn bị nhắc "Quá hạn" trong email/chuông |
+| Task còn overdue thật (deadline quá khứ) | Vẫn nhắc, ngày hiển thị khớp deadline hiện tại |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S79 (tùy chọn)
+- [CC] Gộp `_notifFmtDue` (backend) với `toISODate`/`fmtDate` (FE) thành 1 nguồn nếu tách module chung — xem TD-NOTIF-03.
+
 
 ## ✅ COMPLETED S78 — CR Kanban "Công việc của tôi" (thuần FE, v6.52)
 - [x] Cột "Cần thực hiện" gộp đúng 4 trạng thái (Chưa bắt đầu / Hoàn thành chuẩn bị / Tạm dừng / Blocked) — constant `MW_KB_TODO_STATES`, giữ negative-filter → không mất task lạ.

@@ -13,8 +13,12 @@
  *  NR6  – _notifRetractStale_: KHÔNG đụng bản ghi đã đọc sẵn
  *  NR7  – notifOnWrite: entity đóng → gỡ nhắc due/overdue cũ + append 'closed'
  *  NR8  – notifOnWrite: entity vẫn mở → không gỡ, không sự kiện
- *  NR9  – notifScan (integration): result.retracted đúng + stale rows thành đã đọc
+ *  NR9  – notifScan (integration, reconcile): giữ+làm tươi task còn hạn; thu hồi moved-away+done+missing
  *  NR10 – digest suppress: CuongVM1 KHÔNG nhận email nhắc việc; user thường vẫn nhận
+ *  NR11 – _notifFmtDue: chuẩn hoá mọi ngày về DD/MM/YYYY (fix "nhầm định dạng")
+ *  NR12 – _notifMessage_: luôn xuất DD/MM/YYYY, không echo locale thô
+ *  NR13 – reconcile REFRESH: deadline đổi (vẫn overdue) → làm tươi ngày trong message (fix "nhầm tháng")
+ *  NR14 – reconcile RETRACT: deadline dời tương lai → thu hồi nhắc overdue sai
  *
  * Run: node verify_notif_retract.mjs
  */
@@ -105,7 +109,9 @@ function buildEnv({ notifRows, tasks, cases, issues, inits, dev, users }) {
       'notifOnWrite:notifOnWrite, notifScan:notifScan, notifRead:notifRead,' +
       '_notifRetractEntity_:_notifRetractEntity_, _notifRetractStale_:_notifRetractStale_,' +
       '_notifLiveState_:_notifLiveState_, _notifIsDone:_notifIsDone, _notifSheet_:_notifSheet_,' +
-      '_notifSendDigests_:_notifSendDigests_, _notifDigestSuppressSet_:_notifDigestSuppressSet_' +
+      '_notifSendDigests_:_notifSendDigests_, _notifDigestSuppressSet_:_notifDigestSuppressSet_,' +
+      '_notifFmtDue:_notifFmtDue, _notifMessage_:_notifMessage_,' +
+      '_notifReconcileDue_:_notifReconcileDue_, _notifDueCandidates_:_notifDueCandidates_' +
     '};'
   );
   const api = factory(
@@ -228,22 +234,31 @@ console.log('══════════════════════�
   log('NR8-noevt', r.length === 1, 'không append sự kiện thừa');
 }
 
-/* ══ NR9 — notifScan integration ══ */
+/* ══ NR9 — notifScan integration (reconcile: giữ+làm tươi / thu hồi moved-away+done+missing) ══ */
 {
+  const TODAY = new Date().toISOString().slice(0, 10);   // ISO → due-today
+  const tasksNr9 = [TASK_HDR,
+    taskRow('T-DUE',   'Task Due Today', TODAY, 0,   'Đang thực hiện', 'tuan', 'tuan'), // còn hạn hôm nay → giữ
+    taskRow('T-MOVED', 'Task Moved',     FUT,   0,   'Đang thực hiện', 'tuan', 'tuan'), // deadline dời xa → moved-away
+    taskRow('T-DONE',  'Task Done',      FUT,   100, 'Hoàn thành',     'tuan', 'tuan')  // done
+  ];
   const notifRows = [
     ['NotifID', 'Username', 'Type', 'EntityType', 'EntityID', 'Title', 'DueDate', 'Message', 'CreatedTs', 'ReadTs', 'EmailedDate'],
-    nrow('sc-done',    'overdue',   'task', 'T-DONE', false, NOW),
-    nrow('sc-open',    'due-today', 'task', 'T-OPEN', false, NOW),
-    nrow('sc-missing', 'overdue',   'task', 'T-GONE', false, NOW)
+    nrow('tuan|task|T-DUE|due-today', 'due-today', 'task', 'T-DUE',   false, NOW), // giữ + làm tươi
+    nrow('tuan|task|T-MOVED|overdue', 'overdue',   'task', 'T-MOVED', false, NOW), // thu hồi (moved-away)
+    nrow('tuan|task|T-DONE|overdue',  'overdue',   'task', 'T-DONE',  false, NOW), // thu hồi (done)
+    nrow('tuan|task|T-GONE|overdue',  'overdue',   'task', 'T-GONE',  false, NOW)  // thu hồi (missing)
   ];
-  const { api, notifSheet, env } = buildEnv({ notifRows, tasks: TASKS, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  const { api, notifSheet, env } = buildEnv({ notifRows, tasks: tasksNr9, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
   const res = api.notifScan();
   const byId = {};
-  notifSheet._rows.slice(1).forEach(r => { byId[r[0]] = r[9]; });
-  log('NR9-result',  res.retracted === 2, `notifScan.retracted = ${res.retracted} (expected 2)`);
-  log('NR9-done',    !!byId['sc-done'] && !!byId['sc-missing'], 'stale rows (done+missing) thành đã đọc');
-  log('NR9-open',    !byId['sc-open'], 'nhắc của task mở vẫn chưa đọc');
-  log('NR9-bump',    env._bumped >= 1, 'DATA_VER được bump khi có thu hồi');
+  notifSheet._rows.slice(1).forEach(r => { byId[r[0]] = { read: r[9], msg: r[7], due: r[6] }; });
+  log('NR9-retract-count', res.retracted === 3, `notifScan.retracted = ${res.retracted} (expected 3: moved+done+missing)`);
+  log('NR9-moved',   !!byId['tuan|task|T-MOVED|overdue'].read, 'overdue của task deadline dời TƯƠNG LAI → thu hồi (fix gốc)');
+  log('NR9-done',    !!byId['tuan|task|T-DONE|overdue'].read && !!byId['tuan|task|T-GONE|overdue'].read, 'done + missing → thu hồi');
+  log('NR9-keep',    !byId['tuan|task|T-DUE|due-today'].read, 'nhắc của task VẪN đến hạn hôm nay được GIỮ (chưa đọc)');
+  log('NR9-refresh', res.refreshed === 1 && byId['tuan|task|T-DUE|due-today'].due !== '', 'nhắc còn hạn được LÀM TƯƠI (DueDate/message cập nhật từ live)');
+  log('NR9-bump',    env._bumped >= 1, 'DATA_VER được bump khi có thay đổi');
 }
 
 /* ══ NR10 — digest email suppress (CuongVM1 no nhắc-việc email, keep report email) ══ */
@@ -267,6 +282,62 @@ console.log('══════════════════════�
   log('NR10-send-tuan',      toTuan,                  'user thường vẫn nhận email digest');
   log('NR10-marked',         !!byId['d-cuong'] && !!byId['d-tuan'], 'cả 2 dòng vẫn đánh dấu EmailedDate (không lặp lô sau)');
   log('NR10-sent-count',     sent === 1,              `sent=${sent} (chỉ 1 email — user thường)`);
+}
+
+/* ══ NR11 — _notifFmtDue: chuẩn hoá mọi ngày về DD/MM/YYYY ══ */
+{
+  const { api } = buildEnv({ notifRows: [['h']], tasks: TASKS, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  log('NR11-mmm-en',  api._notifFmtDue('31-Jul-26')  === '31/07/2026', 'locale Anh "31-Jul-26" → 31/07/2026');
+  log('NR11-mmm-aug', api._notifFmtDue('24-Jul-26')  === '24/07/2026', '"24-Jul-26" → 24/07/2026');
+  log('NR11-iso',     api._notifFmtDue('2026-08-31')  === '31/08/2026', 'ISO "2026-08-31" → 31/08/2026');
+  log('NR11-slash',   api._notifFmtDue('21/08/2026')  === '21/08/2026', 'DD/MM/YYYY giữ nguyên chuẩn');
+  log('NR11-empty',   api._notifFmtDue('')            === '',           'rỗng → rỗng');
+  log('NR11-bad',     api._notifFmtDue('không-ngày')  === 'không-ngày', 'không parse được → GIỮ NGUYÊN (không phá)');
+}
+
+/* ══ NR12 — _notifMessage_ luôn xuất DD/MM/YYYY (không echo locale thô) ══ */
+{
+  const { api } = buildEnv({ notifRows: [['h']], tasks: TASKS, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  const m = api._notifMessage_('task', 'overdue', 'Cập nhật user', '31-Jul-26');
+  log('NR12-has-slash', m.indexOf('31/07/2026') !== -1, 'message overdue chứa 31/07/2026');
+  log('NR12-no-raw',    m.indexOf('31-Jul-26') === -1,   'message KHÔNG còn "31-Jul-26" thô');
+}
+
+/* ══ NR13 — reconcile REFRESH: deadline đổi (vẫn overdue) → làm tươi ngày trong message ══ */
+{
+  const OVD = '2026-08-20';   // quá khứ (hôm nay 2026-08-2x+) → vẫn overdue → có candidate
+  const tasks13 = [TASK_HDR, taskRow('T-RE', 'Task Refresh', OVD, 0, 'Đang thực hiện', 'tuan', 'tuan')];
+  const notifRows = [
+    ['NotifID', 'Username', 'Type', 'EntityType', 'EntityID', 'Title', 'DueDate', 'Message', 'CreatedTs', 'ReadTs', 'EmailedDate'],
+    // bản ghi cũ mang ngày SAI (locale/tháng cũ)
+    ['tuan|task|T-RE|overdue', 'tuan', 'overdue', 'task', 'T-RE', 'Task Refresh', '31-Jul-26',
+     '[Task] ⚠️ Đã quá hạn: "Task Refresh" (hạn 31-Jul-26)', NOW, '', '']
+  ];
+  const { api, notifSheet } = buildEnv({ notifRows, tasks: tasks13, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  const cands = api._notifDueCandidates_('task');
+  const rec = api._notifReconcileDue_(notifSheet, cands);
+  const row = notifSheet._rows.slice(1).find(r => r[0] === 'tuan|task|T-RE|overdue');
+  log('NR13-refreshed', rec.refreshed === 1 && rec.retracted === 0, `refreshed=${rec.refreshed} retracted=${rec.retracted} (1/0)`);
+  log('NR13-newdate',   String(row[7]).indexOf('20/08/2026') !== -1, 'message làm tươi theo deadline live → 20/08/2026');
+  log('NR13-nostale',   String(row[7]).indexOf('31-Jul-26') === -1,  'message KHÔNG còn ngày cũ "31-Jul-26"');
+  log('NR13-duecol',    String(row[6]) === '20/08/2026',             'cột DueDate cũng cập nhật DD/MM/YYYY');
+  log('NR13-unread',    !row[9],                                     'vẫn CHƯA đọc (task còn quá hạn — không thu hồi)');
+}
+
+/* ══ NR14 — reconcile RETRACT: deadline dời TƯƠNG LAI → task không còn overdue → thu hồi ══ */
+{
+  const tasks14 = [TASK_HDR, taskRow('T-FWD', 'Task Forward', FUT, 0, 'Đang thực hiện', 'tuan', 'tuan')];
+  const notifRows = [
+    ['NotifID', 'Username', 'Type', 'EntityType', 'EntityID', 'Title', 'DueDate', 'Message', 'CreatedTs', 'ReadTs', 'EmailedDate'],
+    ['tuan|task|T-FWD|overdue', 'tuan', 'overdue', 'task', 'T-FWD', 'Task Forward', '31-Jul-26',
+     '[Task] ⚠️ Đã quá hạn: "Task Forward" (hạn 31-Jul-26)', NOW, '', '']
+  ];
+  const { api, notifSheet } = buildEnv({ notifRows, tasks: tasks14, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  const cands = api._notifDueCandidates_('task');
+  const rec = api._notifReconcileDue_(notifSheet, cands);
+  const row = notifSheet._rows.slice(1).find(r => r[0] === 'tuan|task|T-FWD|overdue');
+  log('NR14-retracted', rec.retracted === 1 && rec.refreshed === 0, `retracted=${rec.retracted} refreshed=${rec.refreshed} (1/0)`);
+  log('NR14-read',      !!row[9], 'nhắc overdue của task nay hạn tương lai bị thu hồi (mark-read) → email hết nhắc sai');
 }
 
 console.log('\n──────────────────────────────────────────────');

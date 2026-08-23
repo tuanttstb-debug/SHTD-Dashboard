@@ -8,6 +8,16 @@
 
 ---
 
+## 🆕 DELTA — Session 79 (2026-08-23) — Email nhắc việc lệch ngày/tháng + định dạng (fix tận gốc)
+
+### ✅ TD-NOTIF-DATE (đóng): email/chuông digest hiện ngày cũ + lẫn định dạng locale
+Gốc trong `backend/NotificationService.gs`: (A) `NotifID = user|etype|id|type` KHÔNG gồm ngày → deadline đổi thì `notifScan` bỏ qua (append idempotent) + `_notifRetractStale_` chỉ thu hồi khi entity done/mất, không khi deadline dời khỏi ngưỡng (overdue→tương lai) → email vẫn nhắc quá hạn với ngày cũ; (B) `_notifMessage_` echo `dueStr` thô → định dạng theo locale ô Sheet ("31-Jul-26" vs "21/08/2026"). **Đóng bằng** 3 tầng thuần backend: NEW `_notifFmtDue()` (chuẩn hoá DD/MM/YYYY, thủ công không lệch TZ, parse fail giữ nguyên) + `_notifMessage_`/`_notifMakeRec_` dùng nó + NEW `_notifReconcileDue_` (làm tươi ngày khi deadline đổi · thu hồi khi deadline dời/done/mất) thay `_notifRetractStale_` trong `notifScan`. ✅ [TT] đã redeploy GAS. Verify `verify_notif_retract` 41/41 + `verify_notifications` 21/21.
+
+### TD-NOTIF-03: `_notifFmtDue` (backend) tách biệt với `toISODate`/`fmtDate` (FE) ⚪ LOW
+Chuẩn hoá ngày nay tồn tại **2 nơi độc lập**: FE `helpers.js` (`toISODate`/`fmtDate`, canonical ISO storage — S67.2) và backend `NotificationService._notifFmtDue` (DD/MM/YYYY cho hiển thị noti). Không trùng chức năng (khác lớp) nhưng cùng "vạn năng parse ngày" → nếu gặp định dạng lạ mới phải sửa 2 chỗ. **Hướng (tuỳ chọn):** nếu tách module date chung backend thì gộp `_notifFmtDue` + `_dnToISO` (DateGuard) + parser báo cáo về 1 nguồn. Ưu tiên thấp — hiện đều verify độc lập, không lệch.
+
+---
+
 ## 🆕 DELTA — Session 78 (2026-08-22) — CR Kanban My Work: 4 trạng thái To-do + scroll đồng nhất + filter nhân sự
 
 ### TD-MW-03: Filter nhân sự lấy distinct từ pic free-text + in-memory (không persist) ⚪ LOW

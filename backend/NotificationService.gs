@@ -105,6 +105,20 @@ function _notifParseDate(s) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+// Chuẩn hoá chuỗi ngày về ĐỊNH DẠNG HIỂN THỊ DUY NHẤT: DD/MM/YYYY.
+// Dựng thủ công từ ngày đã parse (KHÔNG dùng Utilities.formatDate → nhất quán mọi
+// môi trường + không lệch timezone). Không parse được → GIỮ NGUYÊN (không phá dữ liệu).
+// Đây là lớp chống "nhầm định dạng" (vd ô Sheet locale Anh "31-Jul-26" vs "21/08/2026").
+function _notifFmtDue(dueStr) {
+  var s = String(dueStr == null ? '' : dueStr).trim();
+  if (!s) return '';
+  var d = _notifParseDate(s);
+  if (!d) return s;
+  var dd = ('0' + d.getDate()).slice(-2);
+  var mm = ('0' + (d.getMonth() + 1)).slice(-2);
+  return dd + '/' + mm + '/' + d.getFullYear();
+}
+
 // Số ngày từ hôm nay (midnight) tới due (midnight). Âm = quá hạn.
 function _notifDaysUntil(due) {
   var today = new Date(); today.setHours(0, 0, 0, 0);
@@ -161,11 +175,12 @@ function _notifRecipients_(row, cfg) {
 function _notifMessage_(etype, type, title, dueStr) {
   var lbl = '[' + (_NOTIF_LABEL[etype] || etype) + '] ';
   var t = title || '';
+  var due = _notifFmtDue(dueStr);   // luôn hiển thị DD/MM/YYYY
   switch (type) {
-    case 'due-3d':    return lbl + '⏰ Còn 3 ngày đến hạn: "' + t + '" (' + dueStr + ')';
-    case 'due-1d':    return lbl + '⏰ Còn 1 ngày đến hạn: "' + t + '" (' + dueStr + ')';
+    case 'due-3d':    return lbl + '⏰ Còn 3 ngày đến hạn: "' + t + '" (' + due + ')';
+    case 'due-1d':    return lbl + '⏰ Còn 1 ngày đến hạn: "' + t + '" (' + due + ')';
     case 'due-today': return lbl + '🔥 Đến hạn hôm nay: "' + t + '"';
-    case 'overdue':   return lbl + '⚠️ Đã quá hạn: "' + t + '" (hạn ' + dueStr + ')';
+    case 'overdue':   return lbl + '⚠️ Đã quá hạn: "' + t + '" (hạn ' + due + ')';
     case 'created':   return lbl + '🆕 Công việc mới được giao: "' + t + '"';
     case 'closed':    return lbl + '✅ Đã hoàn thành/đóng: "' + t + '"';
   }
@@ -234,7 +249,7 @@ function _notifMakeRec_(username, type, etype, id, title, dueStr) {
     entityType: etype,
     entityId: String(id),
     title: title || String(id),
-    dueDate: dueStr || '',
+    dueDate: _notifFmtDue(dueStr || ''),
     message: _notifMessage_(etype, type, title || String(id), dueStr || '')
   };
 }
@@ -356,6 +371,47 @@ function _notifRetractStale_(sheet, live) {
   }
   if (changed) { range.setValues(data); SpreadsheetApp.flush(); }
   return changed;
+}
+
+// Đối chiếu nhắc due/overdue ĐANG treo với candidate HIỆN TẠI (tính từ deadline live).
+// Xử lý TẬN GỐC vụ "email hiện ngày/tháng cũ" khi deadline entity bị sửa sau khi noti sinh:
+//   • Có candidate cùng NotifID nhưng message/ngày lệch  → LÀM TƯƠI (ghi lại DueDate + Message
+//     theo deadline live, định dạng DD/MM/YYYY) — vì NotifID = user|etype|id|type KHÔNG gồm
+//     ngày nên append idempotent không tự cập nhật được.
+//   • KHÔNG còn candidate loại đó (deadline đã dời khỏi ngưỡng: overdue→tương lai, due-3d→còn
+//     5 ngày…) HOẶC entity đã done / biến mất  → THU HỒI (mark-read) để email không nhắc sai.
+// Bao trùm _notifRetractStale_ cho các loại due: entity done → _notifSkipDue bỏ → không sinh
+// candidate → rơi vào nhánh else → thu hồi; entity mất → cũng không có candidate → thu hồi.
+// (Không cần đọc lại _notifLiveState_: mọi ca stale đều rơi vào "không còn candidate".)
+// candByNid: map NotifID → rec (candidate hiện tại) từ cands đã tính trong notifScan.
+function _notifReconcileDue_(sheet, cands) {
+  var last = sheet.getLastRow();
+  if (last < 2) return { refreshed: 0, retracted: 0 };
+  var candByNid = {};
+  for (var c = 0; c < cands.length; c++) candByNid[cands[c].notifId] = cands[c];
+  var range = sheet.getRange(2, 1, last - 1, NOTIF_HEADER.length);
+  var data = range.getValues();
+  var now = new Date().toISOString();
+  var refreshed = 0, retracted = 0, changed = false;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][9]) continue;                             // đã đọc → bỏ
+    if (!_NOTIF_DUE_TYPES[String(data[i][2])]) continue;  // chỉ due/overdue (created/closed giữ)
+    var nid = String(data[i][0]);
+    var cand = candByNid[nid];
+    if (cand) {
+      // Entity vẫn ở đúng ngưỡng due này → làm tươi nếu ngày/định dạng lệch bản lưu.
+      if (String(data[i][6]) !== String(cand.dueDate) || String(data[i][7]) !== String(cand.message)) {
+        data[i][6] = cand.dueDate;
+        data[i][7] = cand.message;
+        refreshed++; changed = true;
+      }
+    } else {
+      // Không còn candidate loại này (deadline dời khỏi ngưỡng, đã done, hoặc biến mất) → thu hồi.
+      data[i][9] = now; retracted++; changed = true;
+    }
+  }
+  if (changed) { range.setValues(data); SpreadsheetApp.flush(); }
+  return { refreshed: refreshed, retracted: retracted };
 }
 
 /* ══════════════ Real-time: created / closed (gọi từ doPost) ══════════════ */
@@ -490,18 +546,23 @@ function notifScan() {
     SpreadsheetApp.flush();
   }
 
-  // Thu hồi nhắc due/overdue của entity nay đã đóng / biến mất (tự chữa tồn kho + đóng ngoài app).
-  var retracted = _notifRetractStale_(sheet, _notifLiveState_());
+  // Đối chiếu nhắc due/overdue đang treo với deadline LIVE:
+  //   • làm tươi ngày/định dạng khi deadline đổi (fix email hiện ngày cũ),
+  //   • thu hồi khi deadline dời khỏi ngưỡng / entity done / biến mất.
+  // (Bao trùm _notifRetractStale_ cho các loại due; tận dụng cands đã tính ở trên.)
+  var rec = _notifReconcileDue_(sheet, cands);
+  var retracted = rec.retracted;
 
-  if ((toAppend.length || retracted) && typeof _bumpDataVer === 'function') {
+  if ((toAppend.length || retracted || rec.refreshed) && typeof _bumpDataVer === 'function') {
     _bumpDataVer();   // noti đổi → client batch kế tiếp lấy lại (hết version gate)
   }
 
   _notifPurge_(sheet);
   var mailed = _notifSendDigests_(sheet, users);
 
-  Logger.log('notifScan: +' + toAppend.length + ' noti mới, thu hồi ' + retracted + ', gửi ' + mailed + ' email digest.');
-  return { created: toAppend.length, retracted: retracted, emailed: mailed };
+  Logger.log('notifScan: +' + toAppend.length + ' noti mới, làm tươi ' + rec.refreshed +
+             ', thu hồi ' + retracted + ', gửi ' + mailed + ' email digest.');
+  return { created: toAppend.length, refreshed: rec.refreshed, retracted: retracted, emailed: mailed };
 }
 
 // Xóa noti đã đọc & tạo > 30 ngày (giữ sheet gọn).
