@@ -1,0 +1,940 @@
+/**
+ * verify_my_work.mjs  —  S42 My Work personalized dashboard smoke tests
+ *
+ *  MW1  – HTML: nav item, view section present
+ *  MW2  – Default landing: after startApp(), view-my-work is shown (not dashboard)
+ *  MW3  – Page header: greeting + user name + team shown
+ *  MW4  – PO view (team=Số): init section visible, no case section
+ *  MW5  – PTKD view (team=PTKD MB): case section visible, no init section
+ *  MW6  – QLDM view (team=QLDM): init section visible (same as PO)
+ *  MW7  – Task ownership: picAcc match → task appears
+ *  MW8  – Task ownership: picRes match → task appears
+ *  MW9  – Task ownership: team match → task appears
+ *  MW10 – Task ownership: no match → task excluded
+ *  MW11 – Highlight=Y sorts first (before non-highlight)
+ *  MW12 – Urgent section: overdue task appears (diff < 0)
+ *  MW13 – Urgent section: soon task appears (0 < diff <= 7)
+ *  MW14 – Urgent section: done task excluded even if overdue
+ *  MW15 – Deadline badge: overdue shows "Quá hạn" label
+ *  MW16 – Deadline badge: soon shows "Còn Xngày" label
+ *  MW17 – RAG dots rendered on task card
+ *  MW18 – G+M keyboard shortcut navigates to my-work
+ *  MW19 – Quick save state: mwQuickSaveState updates db.tasks + re-renders
+ *  MW20 – Quick save RAG: mwQuickSaveRag updates dot class in DOM directly
+ *  MW21 – mwQuickSaveRag toggle: clicking active dot clears RAG
+ *  MW22 – Progress toggle: mwToggleProgress shows input, hides label
+ *  MW23 – Quick save progress: mwQuickSaveProgress clamps 0-100, updates bar fill
+ *  MW24 – Quick save result: mwQuickSaveResult updates task.result, no re-render
+ *  MW25 – No JS errors throughout
+ *  MW26 – Initiative popup HTML: #mwInitPopup + list + count elements exist
+ *  MW27 – Initiative popup opens when mwOpenInitPopup() called
+ *  MW28 – Popup content shows all root initiatives (incl. other-user's)
+ *  MW29 – ESC keydown closes initiative popup
+ *  MW30 – Champion section visible when highlight=Y tasks exist (PO view)
+ *  MW31 – highlight=Y non-done tasks appear in champion section
+ *  MW32 – highlight=N task excluded from champion section
+ *  MW33 – done highlight=Y task excluded from champion section
+ *  MW34 – unfilled result shows "⚠️ Chưa cập nhật"; filled shows "✅ Đã cập nhật"
+ *  MW35 – mwRefreshChampionStatus updates badge in DOM without re-render
+ *  MW36 – i18n EN: greeting shows "Hello,"
+ *  MW37 – i18n EN: section titles switch to English (Action Needed, My Tasks, Weekly Champion)
+ *  MW38 – i18n EN: overdue deadline badge shows "Overdue"
+ *  MW39 – i18n VI: setLang('vi') restores Vietnamese labels
+ *
+ * Run: node verify_my_work.mjs
+ * EVD: test-results/my_work/
+ */
+
+import { chromium } from 'playwright';
+import http         from 'http';
+import fs           from 'fs';
+import path         from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PORT      = 3042;
+const BASE_URL  = `http://localhost:${PORT}`;
+const EVD_DIR   = path.join(__dirname, 'test-results', 'my_work');
+
+if (!fs.existsSync(EVD_DIR)) fs.mkdirSync(EVD_DIR, { recursive: true });
+
+/* ── HTTP server ── */
+const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  const fp  = path.join(__dirname, url === '/' ? 'index.html' : url);
+  try {
+    const data = fs.readFileSync(fp);
+    const ext  = path.extname(fp);
+    const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'text/plain';
+    res.writeHead(200, { 'Content-Type': mime + '; charset=utf-8' });
+    res.end(data);
+  } catch { res.writeHead(404); res.end('404'); }
+});
+server.listen(PORT);
+
+/* ── Helpers ── */
+let passed = 0, failed = 0;
+const results = [];
+function log(id, ok, msg) {
+  const mark = ok ? '✅' : '❌';
+  console.log(`${mark} ${id}: ${msg}`);
+  results.push({ id, ok, msg });
+  if (ok) passed++; else failed++;
+}
+async function shot(page, name) {
+  await page.screenshot({ path: path.join(EVD_DIR, `${name}.png`), fullPage: false });
+}
+function isoDate(deltaDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + deltaDays);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+// VN date string used by some date fields
+function vnDate(deltaDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + deltaDays);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+/* ── Date fixtures ── */
+const OVERDUE = isoDate(-3);   // 3 days overdue
+const SOON    = isoDate(5);    // 5 days from now  (urgent, <=7)
+const LATER   = isoDate(30);   // 30 days  (not urgent)
+
+/* ── Mock tasks ── */
+const MOCK_TASKS = [
+  // highlight=Y → should sort first
+  { id:'T-26-H01', name:'Highlight task picAcc', initiative:'INI-01', category:'Dev',
+    milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:OVERDUE,
+    state:'Đang thực hiện', progress:'40', highlight:'Y', rag:'Đỏ', result:'', tuanBC:'', canBLD:'', status:'Red' },
+  // picRes match
+  { id:'T-26-H02', name:'Task picRes match', initiative:'INI-01', category:'Test',
+    milestone:'', team:'CV1', picAcc:'OtherUser', picRes:'TuanTT4', endDate:SOON,
+    state:'Chưa bắt đầu', progress:'0', highlight:'N', rag:'', result:'', tuanBC:'', canBLD:'', status:'' },
+  // team match (team=Số)
+  { id:'T-26-H03', name:'Task team Số match', initiative:'BAU', category:'BAU',
+    milestone:'', team:'Số', picAcc:'OtherUser', picRes:'OtherUser', endDate:LATER,
+    state:'Đang thực hiện', progress:'60', highlight:'N', rag:'Xanh', result:'Ghi chú tuần', tuanBC:'', canBLD:'', status:'' },
+  // No match (different team, no picAcc/picRes match) → excluded
+  { id:'T-26-X01', name:'Excluded task no match', initiative:'INI-02', category:'Dev',
+    milestone:'', team:'BL', picAcc:'SomeoneElse', picRes:'', endDate:OVERDUE,
+    state:'Đang thực hiện', progress:'10', highlight:'N', rag:'', result:'', tuanBC:'', canBLD:'', status:'' },
+  // Done + overdue → in task list but NOT in urgent
+  { id:'T-26-D01', name:'Done overdue task', initiative:'INI-01', category:'Dev',
+    milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:OVERDUE,
+    state:'Hoàn thành', progress:'100', highlight:'N', rag:'Xanh', result:'Done', tuanBC:'', canBLD:'', status:'' },
+  // highlight=Y, result filled → champion "Đã cập nhật"
+  { id:'T-26-C01', name:'Champion task result filled', initiative:'INI-01', category:'Dev',
+    milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:LATER,
+    state:'Đang thực hiện', progress:'70', highlight:'Y', rag:'Xanh', result:'Đã hoàn thành phân tích yêu cầu', tuanBC:'', canBLD:'', status:'' },
+  // highlight=Y, done → excluded from champion section
+  { id:'T-26-C02', name:'Champion task done excluded', initiative:'INI-01', category:'Dev',
+    milestone:'', team:'CV1', picAcc:'TuanTT4', picRes:'', endDate:LATER,
+    state:'Hoàn thành', progress:'100', highlight:'Y', rag:'Xanh', result:'Completed', tuanBC:'', canBLD:'', status:'' },
+];
+
+/* ── Mock initiatives ── */
+const MOCK_INITIATIVES = [
+  { id:'INI-01', name:'Sản phẩm tín dụng online', type:'initiative', status:'Active',   accountable:'TuanTT4',   parentId:'', category:'Chuyển đổi số' },
+  { id:'INI-02', name:'Initiative khác team',      type:'initiative', status:'Pending',  accountable:'OtherUser', parentId:'', category:'Vận hành' },
+  { id:'INI-03', name:'Hệ thống báo cáo tự động', type:'initiative', status:'Active',   accountable:'TuanTT4',   parentId:'', category:'Chuyển đổi số' },
+  { id:'INI-04', name:'Chuẩn hóa quy trình BL',   type:'initiative', status:'Active',   accountable:'TuanTT4',   parentId:'', category:'Vận hành' },
+  { id:'INI-05', name:'Phân tích dữ liệu KH',      type:'initiative', status:'Paused',   accountable:'TuanTT4',   parentId:'', category:'Phân tích' },
+  { id:'INI-01-MS1', name:'Milestone 1', type:'milestone', status:'Active', accountable:'TuanTT4', parentId:'INI-01', category:'' },
+];
+
+/* ── Mock cases (PTKD view) ── */
+const MOCK_CASES = [
+  { id:'C-26-001', caseName:'Case PTKD MB active', team:'PTKD MB', stage:'Khởi tạo', deadline:OVERDUE, giaTriTy:'5', dvkd:'Chi nhánh A', pic:'TuanPT' },
+  { id:'C-26-002', caseName:'Case done excluded', team:'PTKD MB', stage:'Đã ký HĐ', deadline:LATER, giaTriTy:'10', dvkd:'Chi nhánh B', pic:'TuanPT' },
+  { id:'C-26-003', caseName:'Case other team', team:'PTKD MN', stage:'Thương thảo', deadline:SOON, giaTriTy:'3', dvkd:'Chi nhánh C', pic:'SomePIC' },
+];
+
+const CASE_STAGE_GROUP_MOCK = {
+  'Khởi tạo':'new', 'Thẩm định':'active', 'Thương thảo':'active',
+  'Đề xuất phê duyệt':'active', 'Chờ giải ngân':'pending', 'Đã ký HĐ':'done',
+};
+
+/* ── Auth users ──
+   USER_PO is a Teamlead so the classic ownership tests (picAcc/picRes/team ∪) hold —
+   Teamlead keeps the "view full team" behavior. Member/Admin get their own scope below. */
+const USER_PO     = { username:'TuanTT4', role:'Teamlead', team:'Số',     displayName:'Tuấn TT (PO)' };
+const USER_PTKD   = { username:'TuanPT',  role:'Staff',    team:'PTKD MB', displayName:'Tuấn PT (PTKD)' };
+const USER_QLDM   = { username:'LeVanA',  role:'Staff',    team:'QLDM',    displayName:'Lê Văn A (QLDM)' };
+// S76: role-aware scope
+const USER_MEMBER = { username:'TuanTT4', role:'User',     team:'Số',     displayName:'Tuấn TT (Member)' }; // personal-only
+const USER_ADMIN  = { username:'TuanTT4', role:'Admin',    team:'Số',     displayName:'Tuấn TT (Admin)' };  // all-center + droplist
+const USER_LEAD_SO = { username:'Lead',   role:'Teamlead', team:'Số',     displayName:'Lead Số' };
+
+/* ── Kanban dataset (deterministic FTE overload): MemA has 3 in-process → overloaded ── */
+const KB_TASKS = [
+  { id:'K-01', name:'MemA inproc soon',    team:'Số', picAcc:'Lead', picRes:'MemA', endDate:SOON,    state:'Đang thực hiện', progress:'20', highlight:'N', status:'Green', initiative:'', milestone:'', result:'' },
+  { id:'K-02', name:'MemA inproc later',   team:'Số', picAcc:'Lead', picRes:'MemA', endDate:LATER,   state:'Đang thực hiện', progress:'30', highlight:'N', status:'Amber', initiative:'', milestone:'', result:'' },
+  { id:'K-03', name:'MemA inproc overdue', team:'Số', picAcc:'Lead', picRes:'MemA', endDate:OVERDUE, state:'Đang thực hiện', progress:'10', highlight:'N', status:'Red',   initiative:'', milestone:'', result:'' },
+  { id:'K-04', name:'MemB inproc soon',    team:'Số', picAcc:'Lead', picRes:'MemB', endDate:SOON,    state:'Đang thực hiện', progress:'50', highlight:'N', status:'',      initiative:'', milestone:'', result:'' },
+  { id:'K-05', name:'Todo overdue',        team:'Số', picAcc:'Lead', picRes:'MemB', endDate:OVERDUE, state:'Chưa bắt đầu',   progress:'0',  highlight:'N', status:'',      initiative:'', milestone:'', result:'' },
+  { id:'K-06', name:'Todo soon',           team:'Số', picAcc:'Lead', picRes:'MemB', endDate:SOON,    state:'Blocked',        progress:'0',  highlight:'N', status:'',      initiative:'', milestone:'', result:'' },
+  { id:'K-07', name:'Closed recent',       team:'Số', picAcc:'Lead', picRes:'MemA', endDate:LATER,   state:'Hoàn thành',     progress:'100',highlight:'N', status:'Green', initiative:'', milestone:'', result:'' },
+  { id:'K-08', name:'Closed old',          team:'Số', picAcc:'Lead', picRes:'MemA', endDate:OVERDUE, state:'Hoàn thành',     progress:'100',highlight:'N', status:'Green', initiative:'', milestone:'', result:'' },
+];
+
+/* ════════════════════════════════════════════ */
+const browser  = await chromium.launch({ headless: true });
+const page     = await browser.newPage();
+const jsErrors = [];
+page.on('pageerror', e => jsErrors.push(e.message));
+
+console.log('\n══════════════════════════════════════════════');
+console.log('  S42 My Work — Playwright EVD');
+console.log(`  PORT=${PORT} | OVERDUE=${OVERDUE} | SOON=${SOON} | LATER=${LATER}`);
+console.log('══════════════════════════════════════════════\n');
+
+await page.goto(BASE_URL, { waitUntil: 'load', timeout: 15000 });
+await page.waitForTimeout(500);
+
+/* ── Inject PO mock data ── */
+async function injectPO() {
+  await page.evaluate(({ tasks, inits, cases, stageMap, user }) => {
+    db.tasks       = tasks;
+    db.initiatives = inits;
+    dbCases        = cases;
+    if (typeof CASE_STAGE_GROUP !== 'undefined') {
+      Object.assign(CASE_STAGE_GROUP, stageMap);
+    } else {
+      window.CASE_STAGE_GROUP = stageMap;
+    }
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({
+      token: 'mock-token-po',
+      exp: Date.now() + 86400000,
+      user
+    }));
+    const lo = document.getElementById('loginOverlay');
+    if (lo) lo.style.display = 'none';
+  }, { tasks: MOCK_TASKS, inits: MOCK_INITIATIVES, cases: MOCK_CASES, stageMap: CASE_STAGE_GROUP_MOCK, user: USER_PO });
+  await page.evaluate(() => { navigateTo('my-work'); });
+  await page.waitForTimeout(600);
+}
+
+async function injectPTKD() {
+  await page.evaluate(({ tasks, inits, cases, stageMap, user }) => {
+    db.tasks       = tasks;
+    db.initiatives = inits;
+    dbCases        = cases;
+    if (typeof CASE_STAGE_GROUP !== 'undefined') Object.assign(CASE_STAGE_GROUP, stageMap);
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({
+      token: 'mock-token-ptkd',
+      exp: Date.now() + 86400000,
+      user
+    }));
+    const lo = document.getElementById('loginOverlay');
+    if (lo) lo.style.display = 'none';
+  }, { tasks: MOCK_TASKS, inits: MOCK_INITIATIVES, cases: MOCK_CASES, stageMap: CASE_STAGE_GROUP_MOCK, user: USER_PTKD });
+  await page.evaluate(() => { navigateTo('my-work'); });
+  await page.waitForTimeout(600);
+}
+
+async function injectQLDM() {
+  await page.evaluate(({ tasks, inits, cases, stageMap, user }) => {
+    db.tasks       = tasks;
+    db.initiatives = inits;
+    dbCases        = cases;
+    if (typeof CASE_STAGE_GROUP !== 'undefined') Object.assign(CASE_STAGE_GROUP, stageMap);
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({
+      token: 'mock-token-qldm',
+      exp: Date.now() + 86400000,
+      user
+    }));
+    const lo = document.getElementById('loginOverlay');
+    if (lo) lo.style.display = 'none';
+  }, { tasks: MOCK_TASKS, inits: MOCK_INITIATIVES, cases: MOCK_CASES, stageMap: CASE_STAGE_GROUP_MOCK, user: USER_QLDM });
+  await page.evaluate(() => { navigateTo('my-work'); });
+  await page.waitForTimeout(600);
+}
+
+/* ══════════════════════════════════════════
+   MW1 — HTML STRUCTURE
+══════════════════════════════════════════ */
+const navItem  = await page.$('[data-view="my-work"]');
+const viewSec  = await page.$('#view-my-work');
+log('MW1-nav-item',     !!navItem,  'Nav item [data-view="my-work"] exists');
+log('MW1-view-section', !!viewSec,  '#view-my-work section exists');
+await shot(page, 'MW1-structure');
+
+/* ══════════════════════════════════════════
+   MW2 — DEFAULT LANDING (startApp navigates to my-work)
+══════════════════════════════════════════ */
+// Inject auth and reload to simulate real startup
+await page.evaluate(({ user }) => {
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({
+    token: 'mock-token-po', exp: Date.now() + 86400000, user
+  }));
+}, { user: USER_PO });
+await page.reload({ waitUntil: 'load', timeout: 15000 });
+await page.waitForTimeout(800);
+
+// After reload, startApp() should have called navigateTo('my-work')
+const myWorkDisplay = await page.evaluate(() => {
+  const s = document.getElementById('view-my-work');
+  return s ? s.style.display : 'missing';
+});
+const dashDisplay = await page.evaluate(() => {
+  const s = document.getElementById('view-dashboard');
+  return s ? s.style.display : 'missing';
+});
+log('MW2-my-work-visible', myWorkDisplay === 'contents', `view-my-work display=${myWorkDisplay}`);
+log('MW2-dashboard-hidden', dashDisplay === 'none',       `view-dashboard display=${dashDisplay}`);
+await shot(page, 'MW2-default-landing');
+
+/* ── Now inject full PO data for rest of PO tests ── */
+await injectPO();
+await shot(page, 'MW3-po-page');
+
+/* ══════════════════════════════════════════
+   MW3 — PAGE HEADER (PO user)
+══════════════════════════════════════════ */
+const pageHtml   = await page.$eval('#view-my-work', el => el.innerHTML);
+const hasGreeting = pageHtml.includes('Xin chào');
+const hasUserName = pageHtml.includes('Tuấn TT (PO)') || pageHtml.includes('TuanTT4');
+const hasTeam     = pageHtml.includes('Số');
+log('MW3-greeting', hasGreeting, 'Greeting "Xin chào" found in page');
+log('MW3-username', hasUserName, 'User name found in page header');
+log('MW3-team',     hasTeam,    '"Số" team shown in sub-header');
+
+/* ══════════════════════════════════════════
+   MW4 — PO VIEW: init section, no case section
+══════════════════════════════════════════ */
+const initSection  = await page.$('#mwSectionThird');
+const initHeader   = initSection ? await initSection.innerText() : '';
+const hasInitTitle  = initHeader.includes('Initiative phụ trách');
+const hasCaseTitle  = initHeader.includes('Case Pipeline');
+log('MW4-init-section', hasInitTitle, 'PO view shows "Initiative phụ trách" section');
+log('MW4-no-case',      !hasCaseTitle, 'PO view does NOT show "Case Pipeline"');
+await shot(page, 'MW4-po-init-section');
+
+/* ══════════════════════════════════════════
+   MW5 — PTKD VIEW: case section, no init section
+══════════════════════════════════════════ */
+await injectPTKD();
+await shot(page, 'MW5-ptkd-page');
+const ptkdSection     = await page.$('#mwSectionThird');
+const ptkdSectionText = ptkdSection ? await ptkdSection.innerText() : '';
+const hasCaseTitle2   = ptkdSectionText.includes('Case Pipeline');
+const hasInitTitle2   = ptkdSectionText.includes('Initiative phụ trách');
+log('MW5-case-section',  hasCaseTitle2, 'PTKD view shows "Case Pipeline" section');
+log('MW5-no-init',       !hasInitTitle2, 'PTKD view does NOT show "Initiative" title');
+
+/* ══════════════════════════════════════════
+   MW6 — QLDM VIEW: init section
+══════════════════════════════════════════ */
+await injectQLDM();
+await shot(page, 'MW6-qldm-page');
+const qldmSection     = await page.$('#mwSectionThird');
+const qldmSectionText = qldmSection ? await qldmSection.innerText() : '';
+const hasInitQldm     = qldmSectionText.includes('Initiative phụ trách');
+log('MW6-qldm-init', hasInitQldm, 'QLDM view shows "Initiative phụ trách" section');
+
+/* ── Back to PO for task tests ── */
+await injectPO();
+
+/* ══════════════════════════════════════════
+   MW7 — Task ownership: picAcc match
+══════════════════════════════════════════ */
+const taskCards = await page.$$('.mw-task-card');
+const cardTexts = await Promise.all(taskCards.map(c => c.innerText()));
+const hasH01 = cardTexts.some(t => t.includes('T-26-H01'));
+log('MW7-picacc-match', hasH01, 'Task with picAcc=TuanTT4 (T-26-H01) appears in card grid');
+
+/* ══════════════════════════════════════════
+   MW8 — Task ownership: picRes match
+══════════════════════════════════════════ */
+const hasH02 = cardTexts.some(t => t.includes('T-26-H02'));
+log('MW8-picres-match', hasH02, 'Task with picRes=TuanTT4 (T-26-H02) appears in card grid');
+
+/* ══════════════════════════════════════════
+   MW9 — Task ownership: team match
+══════════════════════════════════════════ */
+const hasH03 = cardTexts.some(t => t.includes('T-26-H03'));
+log('MW9-team-match', hasH03, 'Task with team=Số (T-26-H03) appears in card grid');
+
+/* ══════════════════════════════════════════
+   MW10 — Task ownership: no match → excluded
+══════════════════════════════════════════ */
+const hasX01 = cardTexts.some(t => t.includes('T-26-X01'));
+log('MW10-excluded', !hasX01, 'Task with no ownership match (T-26-X01) is excluded');
+
+/* ══════════════════════════════════════════
+   MW11 — Highlight=Y sorts first
+══════════════════════════════════════════ */
+const firstCardText = cardTexts[0] || '';
+log('MW11-highlight-first', firstCardText.includes('T-26-H01'), 'Highlight=Y task (T-26-H01) is first card');
+await shot(page, 'MW11-task-cards');
+
+/* ══════════════════════════════════════════
+   MW12 — Urgent section: overdue task
+══════════════════════════════════════════ */
+const urgentSection = await page.$('#mwSectionUrgent');
+const urgentText    = urgentSection ? await urgentSection.innerText() : '';
+const hasUrgentH01 = urgentText.includes('T-26-H01');
+log('MW12-urgent-overdue', hasUrgentH01, 'Overdue task T-26-H01 appears in urgent section');
+
+/* ══════════════════════════════════════════
+   MW13 — Urgent section: soon task
+══════════════════════════════════════════ */
+const hasUrgentH02 = urgentText.includes('T-26-H02');
+log('MW13-urgent-soon', hasUrgentH02, 'Soon task T-26-H02 (5 days) appears in urgent section');
+await shot(page, 'MW13-urgent-section');
+
+/* ══════════════════════════════════════════
+   MW14 — Urgent section: done task excluded
+══════════════════════════════════════════ */
+const hasUrgentD01 = urgentText.includes('T-26-D01');
+log('MW14-urgent-done-excluded', !hasUrgentD01, 'Done task T-26-D01 excluded from urgent even if overdue');
+
+/* ══════════════════════════════════════════
+   MW15 — Deadline badge: overdue
+══════════════════════════════════════════ */
+const overdueCardText = cardTexts.find(t => t.includes('T-26-H01')) || '';
+const hasOverdueBadge = overdueCardText.includes('Quá hạn');
+log('MW15-badge-overdue', hasOverdueBadge, 'Overdue badge "Quá hạn" shown on T-26-H01 card');
+
+/* ══════════════════════════════════════════
+   MW16 — Deadline badge: soon
+══════════════════════════════════════════ */
+const soonCardText  = cardTexts.find(t => t.includes('T-26-H02')) || '';
+const hasSoonBadge  = soonCardText.includes('Còn');
+log('MW16-badge-soon', hasSoonBadge, '"Còn Xngày" badge shown on T-26-H02 card');
+
+/* ══════════════════════════════════════════
+   MW17 — RAG dots rendered
+══════════════════════════════════════════ */
+const ragWrap = await page.$('.mw-rag-wrap');
+const ragDots = await page.$$('.mw-rag-dot');
+log('MW17-rag-wrap',  !!ragWrap,          'RAG wrap element present on task card');
+log('MW17-rag-dots',  ragDots.length >= 3, `${ragDots.length} RAG dots rendered (expect ≥3)`);
+// T-26-H01 has rag='Đỏ' → active-do should be on one dot
+const activeDo = await page.$('.mw-rag-dot.active-do');
+log('MW17-rag-active', !!activeDo, 'Active RAG dot (active-do) shown for T-26-H01');
+await shot(page, 'MW17-rag-dots');
+
+/* ══════════════════════════════════════════
+   MW18 — G+M keyboard shortcut → my-work
+   Note: dispatch events directly on document to avoid headless focus issues
+══════════════════════════════════════════ */
+await page.evaluate(() => navigateTo('dashboard')); // go away first
+await page.waitForTimeout(200);
+await page.evaluate(() => {
+  // un-focus any input that loginScreen may have focused (loginUsername stays focused
+  // even after overlay is hidden, which makes gKey handler see inInput=true)
+  if (document.activeElement && document.activeElement !== document.body) {
+    document.activeElement.blur();
+  }
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', bubbles: true }));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'm', bubbles: true }));
+});
+await page.waitForTimeout(400);
+const afterShortcutDisplay = await page.evaluate(() =>
+  document.getElementById('view-my-work')?.style.display
+);
+log('MW18-keyboard-gm', afterShortcutDisplay === 'contents', `G+M shortcut shows my-work (display=${afterShortcutDisplay})`);
+await shot(page, 'MW18-keyboard-shortcut');
+
+// Navigate back to my-work for remaining tests
+await injectPO();
+
+/* ══════════════════════════════════════════
+   MW19 — Quick save state
+══════════════════════════════════════════ */
+// Select a different state on T-26-H02's card
+const stateSelBefore = await page.evaluate(() => {
+  const t = db.tasks.find(x => x.id === 'T-26-H02');
+  return t ? t.state : null;
+});
+await page.evaluate(() => mwQuickSaveState('T-26-H02', 'Đang thực hiện'));
+await page.waitForTimeout(300);
+const stateAfter = await page.evaluate(() => {
+  const t = db.tasks.find(x => x.id === 'T-26-H02');
+  return t ? t.state : null;
+});
+log('MW19-quick-save-state',
+  stateAfter === 'Đang thực hiện' && stateSelBefore !== 'Đang thực hiện',
+  `State changed: ${stateSelBefore} → ${stateAfter}`);
+await shot(page, 'MW19-quick-save-state');
+
+/* ══════════════════════════════════════════
+   MW20 — Quick save RAG: dot gets active class
+══════════════════════════════════════════ */
+// RAG hợp nhất vào t.status (Green/Amber/Red). Gán Amber (dot 🟡 Vàng).
+await page.evaluate(() => mwQuickSaveRag('T-26-H03', 'Amber'));
+await page.waitForTimeout(200);
+const ragAfter = await page.evaluate(() => {
+  const t = db.tasks.find(x => x.id === 'T-26-H03');
+  return t ? t.status : null;
+});
+log('MW20-rag-saved', ragAfter === 'Amber', `RAG set to Amber for T-26-H03, db.tasks.status=${ragAfter}`);
+
+/* ══════════════════════════════════════════
+   MW21 — Quick save RAG toggle: clicking active clears
+══════════════════════════════════════════ */
+// T-26-H01 có status='Red'. Bấm lại dot 'Đỏ' đang active → clear về ''
+await page.evaluate(() => mwQuickSaveRag('T-26-H01', '')); // '' = clearing active
+await page.waitForTimeout(200);
+const ragCleared = await page.evaluate(() => {
+  const t = db.tasks.find(x => x.id === 'T-26-H01');
+  return t ? t.status : 'NOT_FOUND';
+});
+log('MW21-rag-toggle-clear', ragCleared === '', `RAG cleared for T-26-H01 (status=${ragCleared})`);
+
+/* ══════════════════════════════════════════
+   MW22 — Progress toggle shows input
+══════════════════════════════════════════ */
+// Re-render to get a clean state with fresh DOM
+await page.evaluate(() => renderMyWork());
+await page.waitForTimeout(300);
+
+await page.evaluate(() => mwToggleProgress('T-26-H03'));
+await page.waitForTimeout(150);
+const progInputVisible = await page.evaluate(() => {
+  const inp = document.getElementById('mwPi-T-26-H03');
+  return inp ? inp.classList.contains('mw-prog-visible') : false;
+});
+const progLabelHidden = await page.evaluate(() => {
+  const lbl = document.getElementById('mwPl-T-26-H03');
+  return lbl ? lbl.style.display === 'none' : false;
+});
+log('MW22-prog-input-visible', progInputVisible, 'Progress input gets mw-prog-visible class on toggle');
+log('MW22-prog-label-hidden',  progLabelHidden,  'Progress label hidden when input is shown');
+
+/* ══════════════════════════════════════════
+   MW23 — Quick save progress
+══════════════════════════════════════════ */
+await page.evaluate(() => mwQuickSaveProgress('T-26-H03', '75'));
+await page.waitForTimeout(200);
+const progAfter = await page.evaluate(() => {
+  const t = db.tasks.find(x => x.id === 'T-26-H03');
+  return t ? t.progress : null;
+});
+const fillWidth = await page.evaluate(() => {
+  const card = document.querySelector('[data-id="T-26-H03"]');
+  if (!card) return null;
+  const fill = card.querySelector('.mw-prog-bar-fill');
+  return fill ? fill.style.width : null;
+});
+log('MW23-prog-saved',  progAfter === 75 || progAfter === '75', `Progress saved: ${progAfter}`);
+log('MW23-prog-bar',    fillWidth === '75%',                    `Bar fill updated: ${fillWidth}`);
+await shot(page, 'MW23-progress-save');
+
+/* ══════════════════════════════════════════
+   MW24 — Quick save result (textarea blur)
+══════════════════════════════════════════ */
+const newResult = 'Hoàn thành phân tích yêu cầu tuần này';
+await page.evaluate((val) => mwQuickSaveResult('T-26-H03', val), newResult);
+await page.waitForTimeout(200);
+const resultAfter = await page.evaluate(() => {
+  const t = db.tasks.find(x => x.id === 'T-26-H03');
+  return t ? t.result : null;
+});
+log('MW24-result-saved', resultAfter === newResult, `Result saved: "${resultAfter ? resultAfter.substring(0,20) : ''}..."`);
+
+/* ══════════════════════════════════════════
+   MW26 — Initiative popup: HTML overlay exists
+══════════════════════════════════════════ */
+const mwInitPopupEl = await page.$('#mwInitPopup');
+log('MW26-popup-html', !!mwInitPopupEl, '#mwInitPopup overlay exists in DOM');
+const mwInitListEl  = await page.$('#mwInitPopupList');
+const mwInitCntEl   = await page.$('#mwInitPopupCount');
+log('MW26-popup-list',  !!mwInitListEl, '#mwInitPopupList container exists');
+log('MW26-popup-count', !!mwInitCntEl,  '#mwInitPopupCount span exists');
+
+/* ══════════════════════════════════════════
+   MW27 — Initiative popup: opens on "Xem tất cả →"
+══════════════════════════════════════════ */
+// Re-inject PO to ensure we have the init section
+await injectPO();
+const popupHiddenBefore = await page.evaluate(() => {
+  const el = document.getElementById('mwInitPopup');
+  return el ? el.style.display : 'missing';
+});
+// Click the "Xem tất cả →" link in the initiative section
+await page.evaluate(() => mwOpenInitPopup());
+await page.waitForTimeout(200);
+const popupDisplayAfter = await page.evaluate(() => {
+  const el = document.getElementById('mwInitPopup');
+  return el ? el.style.display : 'missing';
+});
+log('MW27-popup-hidden-initially', popupHiddenBefore === 'none' || popupHiddenBefore === '', `Popup hidden before open (display='${popupHiddenBefore}')`);
+log('MW27-popup-opens', popupDisplayAfter === 'flex', `Popup display becomes 'flex' after mwOpenInitPopup() (display='${popupDisplayAfter}')`);
+await shot(page, 'MW27-init-popup-open');
+
+/* ══════════════════════════════════════════
+   MW28 — Initiative popup: content shows all root initiatives
+══════════════════════════════════════════ */
+const popupListHtml  = await page.evaluate(() => document.getElementById('mwInitPopupList')?.innerHTML || '');
+const popupCountText = await page.evaluate(() => document.getElementById('mwInitPopupCount')?.textContent || '');
+const hasINI01  = popupListHtml.includes('INI-01');
+const hasINI02  = popupListHtml.includes('INI-02');
+const hasINI03  = popupListHtml.includes('INI-03');
+const popupCnt  = parseInt(popupCountText) || 0;
+log('MW28-popup-ini01',  hasINI01,   'Popup shows INI-01');
+log('MW28-popup-ini02',  hasINI02,   'Popup shows INI-02 (other user\'s initiative, still in full list)');
+log('MW28-popup-ini03',  hasINI03,   'Popup shows INI-03');
+log('MW28-popup-count',  popupCnt >= 5, `Count shows ≥5 initiatives (got ${popupCnt})`);
+
+/* ══════════════════════════════════════════
+   MW29 — Initiative popup: ESC closes it
+══════════════════════════════════════════ */
+// popup is still open from MW27; dispatch ESC
+await page.evaluate(() =>
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+);
+await page.waitForTimeout(200);
+const popupAfterEsc = await page.evaluate(() => {
+  const el = document.getElementById('mwInitPopup');
+  return el ? el.style.display : 'missing';
+});
+log('MW29-esc-closes', popupAfterEsc === 'none', `ESC closes popup (display='${popupAfterEsc}')`);
+await shot(page, 'MW29-popup-closed');
+
+/* ══════════════════════════════════════════
+   MW30 — Champion section visible for PO with highlight=Y tasks
+══════════════════════════════════════════ */
+// Re-inject PO data (has T-26-H01 highlight=Y, T-26-C01 highlight=Y with result)
+await injectPO();
+const champSection = await page.$('#mwChampionSection');
+log('MW30-champion-section-exists', !!champSection, '#mwChampionSection visible for PO with highlight=Y tasks');
+const champHtml = champSection ? await champSection.innerHTML() : '';
+await shot(page, 'MW30-champion-section');
+
+/* ══════════════════════════════════════════
+   MW31 — highlight=Y non-done tasks appear in champion section
+══════════════════════════════════════════ */
+// T-26-H01: highlight=Y, not done → should appear
+// T-26-C01: highlight=Y, not done, result filled → should appear
+const hasH01inChamp = champHtml.includes('T-26-H01');
+const hasC01inChamp = champHtml.includes('T-26-C01');
+log('MW31-h01-in-champion', hasH01inChamp, 'T-26-H01 (highlight=Y, no result) appears in champion section');
+log('MW31-c01-in-champion', hasC01inChamp, 'T-26-C01 (highlight=Y, has result) appears in champion section');
+
+/* ══════════════════════════════════════════
+   MW32 — highlight=N task excluded from champion section
+══════════════════════════════════════════ */
+const hasH02inChamp = champHtml.includes('T-26-H02');
+const hasH03inChamp = champHtml.includes('T-26-H03');
+log('MW32-h02-excluded', !hasH02inChamp, 'T-26-H02 (highlight=N) excluded from champion section');
+log('MW32-h03-excluded', !hasH03inChamp, 'T-26-H03 (highlight=N) excluded from champion section');
+
+/* ══════════════════════════════════════════
+   MW33 — done highlight=Y task excluded from champion section
+══════════════════════════════════════════ */
+// T-26-C02: highlight=Y but state=Hoàn thành → excluded
+const hasC02inChamp = champHtml.includes('T-26-C02');
+log('MW33-done-excluded', !hasC02inChamp, 'T-26-C02 (highlight=Y but done) excluded from champion section');
+
+/* ══════════════════════════════════════════
+   MW34 — unfilled shows ⚠️ Chưa cập nhật; filled shows ✅ Đã cập nhật
+══════════════════════════════════════════ */
+// T-26-H01: result='' → status-todo "Chưa cập nhật"
+// T-26-C01: result filled → status-ok "Đã cập nhật"
+const h01Status = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-H01"]');
+  return item ? item.querySelector('.mw-champion-status')?.textContent?.trim() : null;
+});
+const c01Status = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-C01"]');
+  return item ? item.querySelector('.mw-champion-status')?.textContent?.trim() : null;
+});
+log('MW34-unfilled-status', h01Status && h01Status.includes('Chưa'), `T-26-H01 status: "${h01Status}"`);
+log('MW34-filled-status',   c01Status && c01Status.includes('Đã'),   `T-26-C01 status: "${c01Status}"`);
+
+/* ══════════════════════════════════════════
+   MW35 — mwRefreshChampionStatus updates badge in DOM without re-render
+══════════════════════════════════════════ */
+// Fill result for T-26-H01 → badge should flip to "Đã cập nhật"
+await page.evaluate(() => mwRefreshChampionStatus('T-26-H01', 'Báo cáo tuần W28 hoàn thành'));
+await page.waitForTimeout(150);
+const h01StatusAfter = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-H01"]');
+  return item ? item.querySelector('.mw-champion-status')?.textContent?.trim() : null;
+});
+const h01FilledClass = await page.evaluate(() => {
+  const item = document.querySelector('#mwChampionSection .mw-champion-item[data-id="T-26-H01"]');
+  return item ? item.classList.contains('is-filled') : false;
+});
+log('MW35-status-updated',   h01StatusAfter && h01StatusAfter.includes('Đã'), `Badge flipped to: "${h01StatusAfter}"`);
+log('MW35-is-filled-class',  h01FilledClass, 'Item gets is-filled class after refresh');
+await shot(page, 'MW35-champion-refresh');
+
+/* ══════════════════════════════════════════
+   MW36 — i18n: switch to EN → greeting "Hello,"
+══════════════════════════════════════════ */
+await injectPO();
+await page.evaluate(() => setLang('en'));
+await page.waitForTimeout(400);
+
+const greetingEN = await page.evaluate(() => {
+  const el = document.querySelector('#view-my-work .mw-greeting');
+  return el ? el.textContent.trim() : '';
+});
+log('MW36-greeting-en', greetingEN.startsWith('Hello,'), `EN greeting: "${greetingEN}"`);
+await shot(page, 'MW36-lang-en');
+
+/* ══════════════════════════════════════════
+   MW37 — i18n: EN → section titles in English
+══════════════════════════════════════════ */
+const urgentTitleEN = await page.evaluate(() => {
+  const el = document.querySelector('#mwSectionUrgent .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+const tasksTitleEN = await page.evaluate(() => {
+  const el = document.querySelector('.mw-section:not(#mwSectionUrgent):not(#mwChampionSection):not(#mwSectionThird) .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+const champTitleEN = await page.evaluate(() => {
+  const el = document.querySelector('#mwChampionSection .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+log('MW37-urgent-title-en',  urgentTitleEN === 'Action Needed',   `Urgent title EN: "${urgentTitleEN}"`);
+log('MW37-tasks-title-en',   tasksTitleEN  === 'My Tasks',        `Tasks title EN: "${tasksTitleEN}"`);
+log('MW37-champion-title-en', champTitleEN === 'Weekly Champion', `Champion title EN: "${champTitleEN}"`);
+
+/* ══════════════════════════════════════════
+   MW38 — i18n: EN → overdue badge shows "Overdue"
+══════════════════════════════════════════ */
+const overdueBadgeEN = await page.evaluate(() => {
+  const badge = document.querySelector('.mw-dl-badge.dl-overdue');
+  return badge ? badge.textContent.trim() : '';
+});
+log('MW38-overdue-badge-en', overdueBadgeEN.startsWith('Overdue'), `EN overdue badge: "${overdueBadgeEN}"`);
+
+/* ══════════════════════════════════════════
+   MW39 — i18n: switch back to VI → labels restore
+══════════════════════════════════════════ */
+await page.evaluate(() => setLang('vi'));
+await page.waitForTimeout(400);
+
+const greetingVI = await page.evaluate(() => {
+  const el = document.querySelector('#view-my-work .mw-greeting');
+  return el ? el.textContent.trim() : '';
+});
+const urgentTitleVI = await page.evaluate(() => {
+  const el = document.querySelector('#mwSectionUrgent .mw-section-title');
+  return el ? el.textContent.trim() : '';
+});
+log('MW39-greeting-vi',      greetingVI.startsWith('Xin chào,'), `VI greeting: "${greetingVI}"`);
+log('MW39-urgent-title-vi',  urgentTitleVI === 'Cần làm ngay',   `Urgent title VI: "${urgentTitleVI}"`);
+await shot(page, 'MW39-lang-vi');
+
+/* ══════════════════════════════════════════
+   MW40 — Role scope: Member (role=User) sees ONLY personal tasks (picRes ∪ picAcc)
+══════════════════════════════════════════ */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'m', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: MOCK_TASKS, user: USER_MEMBER });
+await page.evaluate(() => { if (typeof mwSetView === 'function') mwSetView('list'); navigateTo('my-work'); });
+await page.waitForTimeout(400);
+const memberIds = await page.$$eval('.mw-task-card', els => els.map(e => e.getAttribute('data-id')));
+log('MW40-member-picacc', memberIds.includes('T-26-H01'), 'Member sees own picAcc task T-26-H01');
+log('MW40-member-picres', memberIds.includes('T-26-H02'), 'Member sees own picRes task T-26-H02');
+log('MW40-member-no-team', !memberIds.includes('T-26-H03'), 'Member does NOT see team-only task T-26-H03 (OtherUser)');
+log('MW40-member-no-x01',  !memberIds.includes('T-26-X01'), 'Member does NOT see unrelated task T-26-X01');
+await shot(page, 'MW40-member-scope');
+
+/* ══════════════════════════════════════════
+   MW41 — Role scope: Admin sees all-center; droplist defaults to own team, "Tất cả" widens
+══════════════════════════════════════════ */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'a', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: MOCK_TASKS, user: USER_ADMIN });
+await page.evaluate(() => { if (typeof mwSetTeamFilter === 'function') mwSetTeamFilter('Số'); navigateTo('my-work'); });
+await page.waitForTimeout(300);
+const adminDroplist = await page.$('.mw-team-filter');
+const adminTeamIds  = await page.$$eval('.mw-task-card', els => els.map(e => e.getAttribute('data-id')));
+log('MW41-admin-droplist', !!adminDroplist, 'Admin sees team droplist in header');
+log('MW41-admin-team-scope', adminTeamIds.includes('T-26-H03') && !adminTeamIds.includes('T-26-X01'),
+  `Admin filtered to team Số: has H03(Số), excludes X01(BL) [${adminTeamIds.join(',')}]`);
+// Widen to all-center
+await page.evaluate(() => mwSetTeamFilter('__all__'));
+await page.waitForTimeout(300);
+const adminAllIds = await page.$$eval('.mw-task-card', els => els.map(e => e.getAttribute('data-id')));
+log('MW41-admin-all-center', adminAllIds.includes('T-26-X01'),
+  `Admin "Tất cả trung tâm" shows cross-team X01 [${adminAllIds.join(',')}]`);
+await shot(page, 'MW41-admin-scope');
+
+/* ══════════════════════════════════════════
+   KB — Kanban view (toggle, 3 columns, ordering, FTE overload)
+══════════════════════════════════════════ */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'k', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(400);
+
+const kbBoard = await page.$('.mw-kanban');
+const kbCols  = await page.$$('.mw-kb-col');
+log('KB1-board',   !!kbBoard,           'Kanban board (.mw-kanban) rendered after toggle');
+log('KB1-3-cols',  kbCols.length === 3, `Kanban has 3 columns (got ${kbCols.length})`);
+
+const kbData = await page.$$eval('.mw-kb-col', els => els.map(c => ({
+  title: c.querySelector('.mw-kb-col-title')?.textContent?.trim(),
+  count: c.querySelector('.mw-kb-col-count')?.textContent?.trim(),
+  ids:   [...c.querySelectorAll('.mw-kb-card')].map(k => k.querySelector('.mw-kb-id')?.textContent?.trim()),
+  over:  [...c.querySelectorAll('.mw-kb-card.is-overload')].map(k => k.querySelector('.mw-kb-id')?.textContent?.trim()),
+})));
+const kbTodo = kbData.find(c => c.title === 'Cần thực hiện') || { ids:[] };
+const kbProc = kbData.find(c => c.title === 'Đang thực hiện') || { ids:[], over:[] };
+const kbDone = kbData.find(c => c.title === 'Vừa đóng')      || { ids:[] };
+
+log('KB2-todo-members', kbTodo.ids.includes('K-05') && kbTodo.ids.includes('K-06'), `To-do has K-05,K-06 [${kbTodo.ids.join(',')}]`);
+log('KB2-todo-overdue-first', kbTodo.ids[0] === 'K-05', `To-do overdue (K-05) first [${kbTodo.ids.join(',')}]`);
+log('KB3-proc-count', kbProc.ids.length === 4, `In-process has 4 tasks [${kbProc.ids.join(',')}]`);
+log('KB4-fte-overload', kbProc.over.includes('K-01') && kbProc.over.includes('K-02') && kbProc.over.includes('K-03'),
+  `MemA's 3 in-process cards flagged overload [${kbProc.over.join(',')}]`);
+log('KB4-fte-not-overload', !kbProc.over.includes('K-04'), 'MemB (1 task) NOT flagged overload');
+log('KB5-done-recent-first', kbDone.ids[0] === 'K-07', `Closed: recent (K-07, latest deadline) first [${kbDone.ids.join(',')}]`);
+
+const kbWarn = await page.$eval('.mw-kb-overwarn', el => el.textContent).catch(() => '');
+log('KB6-overwarn-banner', kbWarn.includes('MemA'), `Overload banner lists MemA [${kbWarn.trim()}]`);
+await shot(page, 'KB-kanban-board');
+
+/* ── KB7 — CR1: cột "Vừa đóng" hiển thị TẤT CẢ (không cap 15) trong khung cuộn ── */
+const KB7_TASKS = [];
+for (let i = 1; i <= 25; i++) {
+  KB7_TASKS.push({
+    id: `KD-${String(i).padStart(2, '0')}`, name: `Closed ${i}`, team: 'Số',
+    picAcc: 'Lead', picRes: 'MemA', endDate: isoDate(-i), state: 'Hoàn thành',
+    progress: '100', highlight: 'N', status: 'Green', initiative: '', milestone: '', result: '',
+  });
+}
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token: 'k7', exp: Date.now() + 86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB7_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(300);
+const kb7 = await page.$$eval('.mw-kb-col', els => {
+  const done = els.find(c => c.querySelector('.mw-kb-col-title')?.textContent?.trim() === 'Vừa đóng');
+  return done ? {
+    count: done.querySelector('.mw-kb-col-count')?.textContent?.trim(),
+    cards: done.querySelectorAll('.mw-kb-card').length,
+    scroll: !!done.querySelector('.mw-kb-col-body-scroll'),
+    firstId: done.querySelector('.mw-kb-card .mw-kb-id')?.textContent?.trim(),
+  } : null;
+});
+log('KB7-count-total', kb7 && kb7.count === '25', `Closed count = ${kb7?.count} (all 25, no cap)`);
+log('KB7-all-rendered', kb7 && kb7.cards === 25, `All 25 closed cards rendered (got ${kb7?.cards})`);
+log('KB7-scroll-body', kb7 && kb7.scroll, 'Closed column body is scrollable (.mw-kb-col-body-scroll)');
+log('KB7-recent-first', kb7 && kb7.firstId === 'KD-01', `Most-recent closed (KD-01, latest deadline) first [${kb7?.firstId}]`);
+await shot(page, 'KB7-closed-scroll');
+
+/* ── KB8 — CR: cột "Cần thực hiện" gộp ĐỦ 4 trạng thái (Chưa bắt đầu / HT chuẩn bị / Tạm dừng / Blocked) ── */
+const KB8_TASKS = [
+  { id:'TS-01', name:'Chưa bắt đầu',        team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(3), state:'Chưa bắt đầu',        progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-02', name:'Hoàn thành chuẩn bị', team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(4), state:'Hoàn thành chuẩn bị', progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-03', name:'Tạm dừng',            team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(5), state:'Tạm dừng',            progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-04', name:'Blocked',             team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(6), state:'Blocked',             progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-05', name:'Đang thực hiện',      team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(7), state:'Đang thực hiện',      progress:'0', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+  { id:'TS-06', name:'Hoàn thành',          team:'Số', picAcc:'Lead', picRes:'MemA', endDate:isoDate(8), state:'Hoàn thành',          progress:'100', highlight:'N', status:'', initiative:'', milestone:'', result:'' },
+];
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'k8', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB8_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(300);
+const kb8 = await page.$$eval('.mw-kb-col', els => els.map(c => ({
+  title: c.querySelector('.mw-kb-col-title')?.textContent?.trim(),
+  ids:   [...c.querySelectorAll('.mw-kb-card')].map(k => k.querySelector('.mw-kb-id')?.textContent?.trim()),
+  scroll: !!c.querySelector('.mw-kb-col-body-scroll'),
+})));
+const kb8Todo = kb8.find(c => c.title === 'Cần thực hiện') || { ids:[] };
+const kb8Proc = kb8.find(c => c.title === 'Đang thực hiện') || { ids:[] };
+const kb8Done = kb8.find(c => c.title === 'Vừa đóng')       || { ids:[] };
+log('KB8-todo-4states',
+  ['TS-01','TS-02','TS-03','TS-04'].every(id => kb8Todo.ids.includes(id)),
+  `To-do gộp đủ 4 trạng thái [${kb8Todo.ids.join(',')}]`);
+log('KB8-todo-no-leak',
+  !kb8Todo.ids.includes('TS-05') && !kb8Todo.ids.includes('TS-06'),
+  `To-do KHÔNG lẫn In-process/Done [${kb8Todo.ids.join(',')}]`);
+log('KB8-proc-done-split',
+  kb8Proc.ids.length === 1 && kb8Done.ids.length === 1,
+  `In-process=1, Done=1 [${kb8Proc.ids.join(',')}|${kb8Done.ids.join(',')}]`);
+
+/* ── KB9 — CR: cả 3 cột đều dùng khung cuộn (.mw-kb-col-body-scroll) ── */
+log('KB9-all-cols-scroll', kb8.length === 3 && kb8.every(c => c.scroll),
+  `Cả 3 cột có body cuộn [${kb8.map(c => c.scroll).join(',')}]`);
+await shot(page, 'KB8-todo-states-scroll');
+
+/* ── PF — CR: filter theo nhân sự (Teamlead review nhanh 1 người) ── */
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'pf', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(300);
+const pfDroplist = await page.$('.mw-person-filter');
+const pfOptions  = await page.$$eval('.mw-person-filter option', els => els.map(o => o.textContent.trim()));
+log('PF1-droplist', !!pfDroplist, 'Teamlead thấy droplist lọc nhân sự (.mw-person-filter)');
+log('PF2-options', pfOptions.includes('MemA') && pfOptions.includes('MemB') && pfOptions.includes('Lead'),
+  `Droplist gồm nhân sự trong team [${pfOptions.join(',')}]`);
+// Lọc theo MemB → chỉ task MemB là Res/Acc (K-04, K-05, K-06)
+await page.evaluate(() => mwSetPersonFilter('MemB'));
+await page.waitForTimeout(300);
+const pfIds = await page.$$eval('.mw-kb-card .mw-kb-id', els => els.map(e => e.textContent.trim()));
+log('PF3-filter-person',
+  ['K-04','K-05','K-06'].every(id => pfIds.includes(id)) && !pfIds.includes('K-01') && !pfIds.includes('K-07'),
+  `Lọc MemB → chỉ task của MemB [${pfIds.join(',')}]`);
+// Về "tất cả nhân sự" → khôi phục đủ
+await page.evaluate(() => mwSetPersonFilter('__all__'));
+await page.waitForTimeout(200);
+const pfAllIds = await page.$$eval('.mw-kb-card .mw-kb-id', els => els.map(e => e.textContent.trim()));
+log('PF4-reset-all', pfAllIds.includes('K-01') && pfAllIds.includes('K-04'),
+  `"Tất cả nhân sự" khôi phục đủ task [${pfAllIds.length} card]`);
+// Member thường KHÔNG có droplist nhân sự
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'pf5', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: KB_TASKS, user: USER_MEMBER });
+await page.evaluate(() => { navigateTo('my-work'); });
+await page.waitForTimeout(200);
+const pfMemberDroplist = await page.$('.mw-person-filter');
+log('PF5-member-no-droplist', !pfMemberDroplist, 'User thường KHÔNG có droplist nhân sự');
+await shot(page, 'PF-person-filter');
+
+// Reset to list view so state does not leak
+await page.evaluate(() => { if (typeof mwSetPersonFilter === 'function') mwSetPersonFilter('__all__'); mwSetView('list'); });
+await page.waitForTimeout(200);
+
+/* ══════════════════════════════════════════
+   MW25 — No JS errors
+══════════════════════════════════════════ */
+log('MW25-no-js-errors', jsErrors.length === 0,
+  jsErrors.length === 0 ? 'No JS errors' : `${jsErrors.length} errors: ${jsErrors.slice(0,2).join('; ')}`);
+
+await shot(page, 'MW25-final-state');
+
+/* ══════════════════════════════════════════
+   SUMMARY
+══════════════════════════════════════════ */
+await browser.close();
+server.close();
+
+console.log('\n══════════════════════════════════════════════');
+console.log(`  TOTAL: ${passed + failed} | ✅ PASS: ${passed} | ❌ FAIL: ${failed}`);
+console.log(`  EVD screenshots → ${EVD_DIR}`);
+console.log('══════════════════════════════════════════════\n');
+
+if (failed > 0) {
+  console.log('FAILED tests:');
+  results.filter(r => !r.ok).forEach(r => console.log(`  ❌ ${r.id}: ${r.msg}`));
+  process.exit(1);
+}
+process.exit(0);

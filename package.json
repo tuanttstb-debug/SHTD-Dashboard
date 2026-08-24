@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "node run_tests.mjs"
+    "test": "node test/run_tests.mjs"
   },
   "devDependencies": {
     "playwright": "^1.60.0"
