@@ -191,6 +191,8 @@ function taskToRow(t) {
     /* 22 Highlight         */ t.highlight      || 'N',
     /* 23 Ý kiến BLĐ        */ t.yKienBLD       || '',
     /* 24 RAG (Health)      */ t.status         || 'Green',
+    /* 25 Định kỳ          */ t.recurrence     || '',
+    /* 26 Kỳ đã xong       */ t.donePeriods    || '',
   ];
 }
 

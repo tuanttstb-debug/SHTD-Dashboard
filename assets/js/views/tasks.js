@@ -235,10 +235,13 @@ function renderTaskTable() {
       const ovCls = ov ? 'row-overdue' : '';
       let init = esc(t.initiative||'–');
       if (t.milestone) init += `<br><span style="font-size:10px;background:var(--primary-xlight);padding:2px 5px;border-radius:3px;color:var(--primary);font-weight:700;">${esc(t.milestone)}</span>`;
+      const _freq = normRecurrence(t.recurrence);
+      const _recurChip = _freq ? `<span class="rt-recur-chip" title="Task định kỳ">${_freq === 'Tuần' ? '↻ Tuần' : '↻ Tháng'}</span>` : '';
+      const _pb = taskPeriodBadgeHtml(t, 'tasksTogglePeriod');
       return `<tr class="${ovCls} ${sel}" onclick="rowClick(event,'${t.id}')">
         <td onclick="event.stopPropagation()"><input type="checkbox" data-id="${t.id}" ${selectedIds.has(t.id)?'checked':''} onchange="toggleSelect('${t.id}',this.checked)"></td>
         <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${esc(t.id||'–')}</span></td>
-        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;" title="${esc(t.name)}">${esc(t.name)}</td>
+        <td style="max-width:220px;" title="${esc(t.name)}"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.name)}${_recurChip}</div>${_pb ? `<div onclick="event.stopPropagation()" style="margin-top:4px;">${_pb}</div>` : ''}</td>
         <td>${init}</td>
         <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;">${esc(t.category||'–')}</span></td>
         <td>${esc(t.team||'–')}</td>
@@ -261,6 +264,14 @@ function renderTaskTable() {
 let _taskViewId = null;
 let _taskEditReturnId = null;
 let _taskHistoryLoaded = false;
+
+function tasksTogglePeriod(id) {
+  if (taskTogglePeriodDone(id)) renderTaskTable();   // mutate + lưu (helpers.js) → re-render bảng
+}
+
+function qvTogglePeriod(id) {
+  if (taskTogglePeriodDone(id)) openTaskViewPopup(id);   // mutate + lưu → refresh popup chi tiết
+}
 
 function rowClick(e, id) {
   if (e.target.type === 'checkbox') return;
@@ -298,6 +309,16 @@ function openTaskViewPopup(id) {
         ${t.highlight === 'Y' ? `<span style="font-size:11px;background:#d4edda;color:#155724;padding:2px 8px;border-radius:99px;font-weight:600;">★ Highlight</span>` : ''}
         ${ov ? `<span style="font-size:11px;background:var(--danger-bg,#fce8e8);color:var(--danger);padding:2px 8px;border-radius:99px;font-weight:600;">Quá hạn</span>` : ''}
       </div>
+      ${(function () {
+        const st = taskPeriodStatus(t);
+        if (!st.isRecurring) return '';
+        const missTxt = st.hasMissed ? `<div style="font-size:11px;color:#b91c1c;margin-top:4px;">Chưa hoàn thành: ${esc(st.missed.join(', '))}</div>` : '';
+        return `<div class="cp-view-row" style="margin-bottom:14px;align-items:flex-start;">
+          <span class="cp-view-label"><i class="fa-solid fa-repeat"></i>Định kỳ ${st.freq === 'Tuần' ? 'hàng tuần' : 'hàng tháng'}</span>
+          <span class="cp-view-val">${taskPeriodBadgeHtml(t, 'qvTogglePeriod')}${missTxt}
+            <div style="font-size:11px;color:var(--text-3,#888);margin-top:4px;">Đã xong ${st.doneCount}/${st.total} kỳ · kỳ hiện tại: ${esc(st.curLabel)}</div>
+          </span></div>`;
+      })()}
       <div class="cp-view-grid">
         ${row('diagram-project', 'Initiative', esc(t.initiative || 'BAU'))}
         ${row('list-ol', 'Milestone', esc(t.milestone || ''))}

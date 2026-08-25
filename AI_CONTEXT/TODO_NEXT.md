@@ -1,5 +1,29 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-23 (Session 79 — DEBUG email nhắc việc lệch ngày/định dạng: fix tận gốc 3 tầng)
+**Prepared**: 2026-08-25 (Session 80 — Task ĐỊNH KỲ tuần/tháng "log 1 lần" + tick mỗi kỳ)
+
+## ✅ COMPLETED S80 — Task định kỳ (FEATURE, v6.53)
+- [x] PA3: +2 cột append `Định kỳ`/`Kỳ đã xong` + helper period (trạng thái/miss/tick auto-reset) + nút "Xong kỳ này" (My Work/Tasks/popup) + select modal + chip ↻.
+- [x] Pha 2 nhắc `recur-miss` (NotificationService.gs — kỳ trước chưa tick → nhắc kỳ hiện tại kèm tên kỳ, thu hồi khi tick).
+- [x] Migration `RecurrenceMigration.gs` + design doc `RECURRING_TASK_DESIGN.md`.
+- [x] Tests: recurring 23/23 · my_work 91/91 · report_week 17/17 · atomic_write 41/41 · task_rag 5/5 · notif_retract 41/41 · notifications 21/21.
+
+## 🟡 PRIORITY 1 — [TT] thủ công + nghiệm thu S80
+| Việc | Chi tiết |
+|---|---|
+| [TT] chạy `commitAddRecurrence()` (GAS editor) | Tạo cột Z='Định kỳ' + AA='Kỳ đã xong' + backfill rỗng. Xem log không cảnh báo lệch cột. |
+| [TT] redeploy Web App (Pha 2 nhắc) | Dán `NotificationService.gs` → New version (link không đổi). Pha 1 KHÔNG cần. |
+| [TT] hard-reload → v6.53 | Tạo task định kỳ tuần: modal → "Định kỳ = Hàng tuần". Card hiện chip ↻ + nút "Xong tuần này?". |
+| Nghiệm thu | Tick "Xong tuần này" → ✓ xanh; sang tuần sau chưa tick → MISS đỏ + email/chuông "↻ Định kỳ chưa hoàn thành Tuần WW/YYYY". |
+
+## 🟢 PRIORITY 2 — Nợ nối tiếp S80 (tùy chọn)
+- [CC] Thêm **filter "Định kỳ"** ở bảng Tasks (lọc riêng task định kỳ).
+- [CC] Nút tick ở **quickview.js** (view gọn) nếu [TT] cần (hiện đã có ở My Work/Tasks/popup chi tiết).
+- [CC] (mở rộng) Lịch sử tuân thủ X/Y kỳ + % (dữ liệu `Kỳ đã xong` đã đủ) nếu [TT] cần cho KPI/báo cáo.
+
+---
+
+# (S79) TODO — giữ tham khảo
+**Prepared cũ**: 2026-08-23 (Session 79 — DEBUG email nhắc việc lệch ngày/định dạng: fix tận gốc 3 tầng)
 **Context**: S79 done (backend-only). v6.52 giữ nguyên. `verify_notif_retract` **41/41**, `verify_notifications` **21/21**. ✅ [TT] đã redeploy GAS (link không đổi).
 
 ## ✅ COMPLETED S79 — Email nhắc việc lệch ngày/tháng + định dạng (backend)

@@ -802,3 +802,23 @@
 @media (max-width: 480px) {
   .mw-state-sel { min-width: 110px; }
 }
+
+/* ── Task định kỳ (S80) — nút tick "xong kỳ này" + badge miss ── */
+.rt-period-wrap { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rt-period-btn {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid transparent; cursor: pointer; line-height: 1.4; white-space: nowrap;
+}
+.rt-period-todo { background: #eef2ff; color: #3538cd; border-color: #c7d2fe; }
+.rt-period-todo:hover { background: #e0e7ff; }
+.rt-period-done { background: #dcfce7; color: #15803d; border-color: #86efac; }
+.rt-period-done:hover { background: #bbf7d0; }
+.rt-period-miss {
+  font-size: 10px; font-weight: 700; color: #b91c1c; background: #fee2e2;
+  border: 1px solid #fecaca; border-radius: 999px; padding: 1px 7px; white-space: nowrap;
+}
+/* chip nhận diện task định kỳ trong bảng/modal */
+.rt-recur-chip {
+  font-size: 10px; font-weight: 700; color: #6d28d9; background: #f3e8ff;
+  border: 1px solid #e9d5ff; border-radius: 6px; padding: 1px 6px; margin-left: 4px; white-space: nowrap;
+}

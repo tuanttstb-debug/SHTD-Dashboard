@@ -160,8 +160,8 @@ console.log('\n[T1] _gasTaskUpsert → action=task-upsert, đúng taskId/taskNam
   else                                               FAIL(`body.taskId sai: "${u?.taskId}"`);
   if (u?.taskName === 'Task Alpha (sửa)')            PASS(`body.taskName = "${u?.taskName}"`);
   else                                               FAIL(`body.taskName sai: "${u?.taskName}"`);
-  if (Array.isArray(u?.row) && u?.row.length === 25) PASS('body.row = 25 cột (DB_COLS + RAG)');
-  else                                               FAIL(`body.row.length = ${u?.row?.length} (expected 25)`);
+  if (Array.isArray(u?.row) && u?.row.length === 27) PASS('body.row = 27 cột (DB_COLS + RAG + Định kỳ + Kỳ đã xong)');
+  else                                               FAIL(`body.row.length = ${u?.row?.length} (expected 27)`);
 }
 
 /* ════════════════════════════════════════════════════

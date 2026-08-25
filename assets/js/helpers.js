@@ -253,6 +253,121 @@ function taskReportWeeks(task) {
   return [...new Set([...auto, ...pinned])].sort(_weekLabelCmp);
 }
 
+// ══════════════════════════════════════════════════════════════════
+// TASK ĐỊNH KỲ (S80) — key kỳ tuần/tháng + trạng thái + tick 1 click
+// Xem AI_CONTEXT/RECURRING_TASK_DESIGN.md. Log 1 lần, tick 1 click, auto-reset mỗi kỳ.
+// ══════════════════════════════════════════════════════════════════
+
+// Chuẩn hoá cột 'Định kỳ' → '' | 'Tuần' | 'Tháng'
+function normRecurrence(v) {
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  if (s.indexOf('tuần') !== -1 || s === 'tuan' || s === 'weekly' || s === 'week' || s === 'w') return 'Tuần';
+  if (s.indexOf('tháng') !== -1 || s === 'thang' || s === 'monthly' || s === 'month' || s === 'm') return 'Tháng';
+  return '';
+}
+
+// Nhãn kỳ THÁNG: 'Tháng MM/YYYY'
+function monthLabel(d) { return `Tháng ${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; }
+function currentMonthLabel() { return monthLabel(new Date()); }
+
+// Nhãn kỳ hiện tại theo tần suất
+function periodLabelOf(freq, date) {
+  const d = date || new Date();
+  if (freq === 'Tuần')  return isoWeekLabel(d);
+  if (freq === 'Tháng') return monthLabel(d);
+  return '';
+}
+function currentPeriodLabel(freq) { return periodLabelOf(freq, new Date()); }
+
+// Mảng nhãn kỳ THÁNG từ start → end (inclusive), cap 120 chặn ngày rác.
+function monthsInRange(start, end) {
+  if (!start || !end) return [];
+  let a = new Date(start.getFullYear(), start.getMonth(), 1);
+  let b = new Date(end.getFullYear(), end.getMonth(), 1);
+  if (b < a) { const t = a; a = b; b = t; }
+  const out = []; const cur = new Date(a);
+  while (cur <= b && out.length < 120) { out.push(monthLabel(cur)); cur.setMonth(cur.getMonth() + 1); }
+  return out;
+}
+
+// Key so sánh kỳ (year*100 + week|month) — dùng chung tuần/tháng để sort + so "trước".
+function _periodKey(label) {
+  const m = /(\d{1,2})\s*\/\s*(\d{4})/.exec(String(label || ''));
+  return m ? (+m[2]) * 100 + (+m[1]) : Infinity;
+}
+function _periodEq(a, b) { return _periodKey(a) === _periodKey(b); }
+
+// Parse cột 'Kỳ đã xong' → mảng nhãn (giữ chuỗi, chỉ trim/lọc rỗng).
+function parseDonePeriods(raw) {
+  return String(raw == null ? '' : raw).split(/[;,]/).map(x => x.trim()).filter(Boolean);
+}
+
+// Danh sách kỳ task định kỳ "phải làm" từ Start → hôm nay (gồm kỳ hiện tại).
+function taskDuePeriods(task) {
+  const freq = normRecurrence(task && task.recurrence);
+  if (!freq) return [];
+  const s = typeof parseVNDate === 'function' ? parseVNDate(task.startDate) : null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const startD = s || today;
+  if (freq === 'Tuần')  return isoWeeksInRange(startD, today);
+  if (freq === 'Tháng') return monthsInRange(startD, today);
+  return [];
+}
+
+// Trạng thái định kỳ của task (cho UI + nhắc).
+// → { isRecurring, freq, curLabel, done(kỳ hiện tại), missed:[kỳ trước chưa xong], hasMissed, total, doneCount }
+function taskPeriodStatus(task) {
+  const freq = normRecurrence(task && task.recurrence);
+  if (!freq) return { isRecurring: false, freq: '' };
+  const curLabel  = currentPeriodLabel(freq);
+  const doneSet   = parseDonePeriods(task.donePeriods);
+  const isDone    = doneSet.some(x => _periodEq(x, curLabel));
+  const due       = taskDuePeriods(task);
+  const curKey    = _periodKey(curLabel);
+  const missed    = due.filter(p => _periodKey(p) < curKey && !doneSet.some(x => _periodEq(x, p)));
+  const doneCount = due.filter(p => doneSet.some(x => _periodEq(x, p))).length;
+  return { isRecurring: true, freq, curLabel, done: isDone, missed, hasMissed: missed.length > 0, total: due.length, doneCount };
+}
+
+// Toggle "xong kỳ hiện tại" → trả chuỗi donePeriods mới (caller lưu qua task-upsert). Không side-effect.
+function togglePeriodDone(task, on) {
+  const freq = normRecurrence(task && task.recurrence);
+  if (!freq) return task ? (task.donePeriods || '') : '';
+  const curLabel = currentPeriodLabel(freq);
+  const cur = parseDonePeriods(task.donePeriods);
+  const has = cur.some(x => _periodEq(x, curLabel));
+  const want = (on === undefined) ? !has : !!on;
+  let arr = cur.filter(x => !_periodEq(x, curLabel));
+  if (want) arr.push(curLabel);
+  arr.sort((a, b) => _periodKey(a) - _periodKey(b));
+  return arr.join('; ');
+}
+
+// Handler DÙNG CHUNG (My Work/Tasks/QuickView): tick "xong kỳ hiện tại" 1 task →
+// mutate donePeriods + lưu qua task-upsert (fire-and-forget). Trả status mới; caller tự re-render.
+function taskTogglePeriodDone(taskId) {
+  const t = (typeof db !== 'undefined' && db.tasks) ? db.tasks.find(x => x.id === taskId) : null;
+  if (!t || !normRecurrence(t.recurrence)) return null;
+  t.donePeriods = togglePeriodDone(t);
+  if (typeof _gasTaskUpsert === 'function') _gasTaskUpsert(t, t.id);   // fire-and-forget
+  return taskPeriodStatus(t);
+}
+
+// HTML badge + nút tick trạng thái kỳ. onclickFn = tên hàm wrapper của view (nhận taskId).
+function taskPeriodBadgeHtml(task, onclickFn) {
+  const st = taskPeriodStatus(task);
+  if (!st.isRecurring) return '';
+  const noun = st.freq === 'Tuần' ? 'tuần' : 'tháng';
+  const id = String(task.id).replace(/'/g, "\\'");
+  const btn = st.done
+    ? `<button type="button" class="rt-period-btn rt-period-done" onclick="${onclickFn}('${id}')" title="Đã xong ${st.curLabel} — bấm để bỏ đánh dấu">✓ Xong ${noun} này</button>`
+    : `<button type="button" class="rt-period-btn rt-period-todo" onclick="${onclickFn}('${id}')" title="Đánh dấu xong ${st.curLabel}">Xong ${noun} này?</button>`;
+  const miss = st.hasMissed
+    ? ` <span class="rt-period-miss" title="Chưa hoàn thành: ${st.missed.join(', ')}">⚠ Miss ${st.missed.length}</span>`
+    : '';
+  return `<span class="rt-period-wrap" data-freq="${st.freq}">${btn}${miss}</span>`;
+}
+
 // task có thuộc 1 tuần cụ thể không (dùng cho filter/report).
 function taskInReportWeek(task, weekLabel) {
   if (!weekLabel) return true;

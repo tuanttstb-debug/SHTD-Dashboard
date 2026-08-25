@@ -125,6 +125,7 @@ function openTaskModal(task = null) {
     document.getElementById('origId').value = task.id;
     document.getElementById('fId').value = task.id;
     document.getElementById('fType').value = task.type || 'Task';
+    document.getElementById('fRecurrence').value = normRecurrence(task.recurrence);
     document.getElementById('fName').value = task.name;
     const fi = document.getElementById('fInit');
     fi.value = task.initiative || 'BAU';
@@ -165,6 +166,7 @@ function openTaskModal(task = null) {
     const _defUser = (_cu && _cu.username) || '';
     _populateTeamSelect('fTeam', _defTeam);
     document.getElementById('fType').value = 'Task';
+    document.getElementById('fRecurrence').value = '';
     document.getElementById('fState').value = 'Chưa bắt đầu';
     document.getElementById('fRag').value = 'Green';
     _populateUserSelect('fPicAcc', _defTeam, _defUser);
@@ -244,6 +246,13 @@ async function handleSubmit(e) {
     initiative: document.getElementById('fInit').value,
     category: document.getElementById('fCat').value,
     type: document.getElementById('fType').value,
+    recurrence: document.getElementById('fRecurrence').value,
+    // donePeriods không sửa trong modal → giữ nguyên từ task gốc (tránh mất khi rebuild object)
+    donePeriods: (function () {
+      const _oid = (document.getElementById('origId').value || '').trim();
+      const _o = (typeof db !== 'undefined' && db.tasks) ? db.tasks.find(t => t.id === _oid) : null;
+      return _o ? (_o.donePeriods || '') : '';
+    })(),
     name: document.getElementById('fName').value,
     milestone: document.getElementById('fMs').value,
     team: document.getElementById('fTeam').value,

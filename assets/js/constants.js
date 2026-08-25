@@ -17,12 +17,13 @@ let activePreset = localStorage.getItem('shtd_preset') || 'active';
 // ── Google Apps Script config ──
 // GS_WEBAPP_URL is defined in assets/js/config.js — update that file on each GAS redeploy
 const GS_SHEET_ID   = '1cpg1p_8TGGbvZNNWZmjsKANqHW1tQijbiQBFLYn56Hk';
-const GS_RANGE      = 'Task_Master!A1:Y';
+const GS_RANGE      = 'Task_Master!A1:AA';
 
-// ── Sheet column schema (25 cols) ──
-// Cột 25 'RAG' (Y) lưu Health RAG (Green/Amber/Red) — nguồn DUY NHẤT cho RAG của Task
-// (dashboard/action-plan/modal + dots ở "Công việc của tôi" đều dùng cùng field t.status).
-// Trước đây RAG không có cột → t.status suy từ Trạng thái, RAG bấm nhanh (t.rag) không lưu được.
+// ── Sheet column schema (27 cols) ──
+// Cột 25 'RAG' (Y) lưu Health RAG (Green/Amber/Red) — nguồn DUY NHẤT cho RAG của Task.
+// Cột 26 'Định kỳ' (Z) + cột 27 'Kỳ đã xong' (AA) — task định kỳ tuần/tháng (S80, log 1 lần):
+//   Định kỳ ∈ {'', 'Tuần', 'Tháng'}; Kỳ đã xong = danh sách nhãn kỳ đã tick (phân cách '; ').
+//   Xem AI_CONTEXT/RECURRING_TASK_DESIGN.md.
 const DB_COLS = [
   'ID','Tuần BC','Initiative ID','Category',
   'Team chính','Team phối hợp',
@@ -37,7 +38,8 @@ const DB_COLS = [
   'Cần BLĐ (Y/N)','Nội dung cần BLĐ quyết',
   'Cross-team? (Y/N)','Highlight báo cáo lên dashboard? (Y/N)',
   'Ý kiến BLĐ',
-  'RAG'
+  'RAG',
+  'Định kỳ','Kỳ đã xong'
 ];
 
 const _MMM = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

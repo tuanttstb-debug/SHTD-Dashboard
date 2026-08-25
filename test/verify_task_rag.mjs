@@ -83,8 +83,8 @@ const ser = await page.evaluate(() => {
   const row = taskToRow(t);
   return { cols: DB_COLS.length, ragHdr: DB_COLS[24], len: row.length, rag: row[24] };
 });
-log('RG2', ser.cols === 25 && ser.ragHdr === 'RAG' && ser.len === 25 && ser.rag === 'Red',
-    `DB_COLS=${ser.cols}, col24=${ser.ragHdr}, taskToRow.len=${ser.len}, row[24]=${ser.rag} (kỳ vọng 25/RAG/25/Red)`);
+log('RG2', ser.cols === 27 && ser.ragHdr === 'RAG' && ser.len === 27 && ser.rag === 'Red',
+    `DB_COLS=${ser.cols}, col24=${ser.ragHdr}, taskToRow.len=${ser.len}, row[24]=${ser.rag} (kỳ vọng 27/RAG/27/Red)`);
 
 // RG3 — mwQuickSaveRag đổi RAG → status + task-upsert row[24]
 const before = upserts.length;

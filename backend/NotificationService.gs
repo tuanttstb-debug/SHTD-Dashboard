@@ -28,7 +28,7 @@ var NOTIF_HEADER = [
 
 // Cấu hình cột (0-based) theo từng entity — dùng chung cho scan + real-time.
 var _NOTIF_CFG = {
-  task:       { id:0, title:7,  deadline:12, status:14, progress:13, recips:[8,9] },
+  task:       { id:0, title:7,  deadline:12, status:14, progress:13, recips:[8,9], recurrence:25, donePeriods:26 },
   'case':     { id:0, title:5,  deadline:14, status:10,              recips:[3]    },
   issue:      { id:0, title:2,  deadline:11, status:7,               recips:[16,15]},
   initiative: { id:0, title:1,  deadline:5,  status:9,  type:14,     recips:[3]    },
@@ -42,7 +42,8 @@ var _NOTIF_LABEL = {
 
 // Các loại nhắc "còn sống theo hạn" — phải thu hồi khi entity đóng/biến mất.
 // (created/closed KHÔNG nằm đây: đó là thông báo sự kiện 1 lần, không phụ thuộc hạn.)
-var _NOTIF_DUE_TYPES = { 'due-3d':1, 'due-1d':1, 'due-today':1, 'overdue':1 };
+// + 'recur-miss' (task định kỳ chưa tick kỳ trước): cũng "còn sống có điều kiện" → thu hồi khi đã tick.
+var _NOTIF_DUE_TYPES = { 'due-3d':1, 'due-1d':1, 'due-today':1, 'overdue':1, 'recur-miss':1 };
 
 var _NOTIF_MMM = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
 
@@ -183,6 +184,7 @@ function _notifMessage_(etype, type, title, dueStr) {
     case 'overdue':   return lbl + '⚠️ Đã quá hạn: "' + t + '" (hạn ' + due + ')';
     case 'created':   return lbl + '🆕 Công việc mới được giao: "' + t + '"';
     case 'closed':    return lbl + '✅ Đã hoàn thành/đóng: "' + t + '"';
+    case 'recur-miss':return lbl + '↻ Định kỳ chưa hoàn thành ' + (dueStr || '') + ': "' + t + '"';
   }
   return lbl + t;
 }
@@ -513,6 +515,78 @@ function _notifDueCandidates_(entityType) {
   return out;
 }
 
+/* ══════════════ Task định kỳ (S80): nhắc kỳ TRƯỚC chưa tick, ở kỳ hiện tại ══════════════ */
+
+// Nhãn tuần ISO 'Tuần WW/YYYY' (khớp helpers.js isoWeekLabel phía client).
+function _notifWeekLabel(d) {
+  var dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
+  var ys = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  var week = Math.ceil((((dt - ys) / 86400000) + 1) / 7);
+  return 'Tuần ' + ('0' + week).slice(-2) + '/' + dt.getUTCFullYear();
+}
+function _notifMonthLabel(d) { return 'Tháng ' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
+
+function _notifRecurNorm(v) {
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  if (s.indexOf('tuần') !== -1 || s === 'tuan' || s === 'weekly' || s === 'week') return 'Tuần';
+  if (s.indexOf('tháng') !== -1 || s === 'thang' || s === 'monthly' || s === 'month') return 'Tháng';
+  return '';
+}
+function _notifPeriodEq(a, b) {
+  var ma = /(\d{1,2})\s*\/\s*(\d{4})/.exec(String(a || ''));
+  var mb = /(\d{1,2})\s*\/\s*(\d{4})/.exec(String(b || ''));
+  if (!ma || !mb) return String(a).trim() === String(b).trim();
+  return (+ma[1]) === (+mb[1]) && ma[2] === mb[2];
+}
+// Nhãn kỳ TRƯỚC (tuần/tháng liền trước hiện tại).
+function _notifPrevPeriodLabel(freq) {
+  var now = new Date();
+  if (freq === 'Tuần')  { var d = new Date(now); d.setDate(d.getDate() - 7); return _notifWeekLabel(d); }
+  if (freq === 'Tháng') { return _notifMonthLabel(new Date(now.getFullYear(), now.getMonth() - 1, 1)); }
+  return '';
+}
+
+// Candidate recur-miss: task định kỳ mà KỲ TRƯỚC chưa tick → nhắc ở kỳ hiện tại (kèm tên kỳ).
+function _notifRecurCandidates_() {
+  var out = [];
+  try {
+    var cfg = _NOTIF_CFG.task;
+    var values = _notifReadEntity_('task');
+    if (!values || values.length < 2) return out;
+    for (var i = 1; i < values.length; i++) {
+      var r = values[i];
+      var id = String(r[cfg.id] || '').trim();
+      if (!id) continue;
+      var freq = _notifRecurNorm(r[cfg.recurrence]);
+      if (!freq) continue;
+      var etype = _notifRowType('task', id, r, cfg);
+      if (_notifIsDone(etype, r[cfg.status], r, cfg)) continue;   // task đã đóng → thôi nhắc
+      var prevLabel = _notifPrevPeriodLabel(freq);
+      if (!prevLabel) continue;
+      var done = String(r[cfg.donePeriods] || '').split(/[;,]/);
+      var isDonePrev = false;
+      for (var k = 0; k < done.length; k++) { if (_notifPeriodEq(done[k], prevLabel)) { isDonePrev = true; break; } }
+      if (isDonePrev) continue;
+      var title = String(r[cfg.title] || '').trim() || id;
+      var recips = _notifRecipients_(r, cfg);
+      for (var j = 0; j < recips.length; j++) {
+        var u = String(recips[j] || '').toLowerCase();
+        out.push({
+          notifId: u + '|task|' + id + '|recur-miss|' + prevLabel,
+          username: u, type: 'recur-miss', entityType: 'task', entityId: String(id),
+          title: title, dueDate: prevLabel,
+          message: _notifMessage_('task', 'recur-miss', title, prevLabel)
+        });
+      }
+    }
+  } catch (e) {
+    Logger.log('_notifRecurCandidates_ error: ' + e.message);
+  }
+  return out;
+}
+
 function notifScan() {
   var sheet = _notifSheet_();
   var users = _notifUserMap_();
@@ -527,6 +601,7 @@ function notifScan() {
 
   var cands = [];
   cands = cands.concat(_notifDueCandidates_('task'));
+  cands = cands.concat(_notifRecurCandidates_());              // S80: nhắc task định kỳ chưa tick kỳ trước
   cands = cands.concat(_notifDueCandidates_('case'));
   cands = cands.concat(_notifDueCandidates_('issue'));
   cands = cands.concat(_notifDueCandidates_('initiative'));

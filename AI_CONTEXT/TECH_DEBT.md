@@ -8,6 +8,19 @@
 
 ---
 
+## 🆕 DELTA — Session 80 (2026-08-25) — Task định kỳ tuần/tháng "log 1 lần"
+
+### TD-RECUR-01: Nhắc recur-miss là transient 1 kỳ (UI giữ MISS bền) ⚪ LOW
+Noti `recur-miss` chỉ nhắc **kỳ liền trước** ở kỳ hiện tại; sang kỳ sau nữa, candidate cho kỳ cũ không sinh lại → reconcile thu hồi noti (dù kỳ đó chưa bao giờ tick). Đúng thiết kế ("nhắc ở kỳ kế tiếp"), và **chỉ báo MISS vẫn bền** trong UI (My Work/popup qua `taskPeriodStatus` tính mọi kỳ miss). Nếu [TT] muốn nhắc dồn nhiều kỳ miss → mở rộng `_notifRecurCandidates_` sinh cho mọi kỳ chưa tick (rủi ro spam). Ưu tiên thấp.
+
+### TD-RECUR-02: Tick chưa có ở quickview.js (view gọn) + chưa có filter "Định kỳ" ⚪ LOW
+Nút tick "Xong kỳ này" đã có ở **My Work + bảng Tasks + popup chi tiết** (đủ dùng). `quickview.js` (view Quick View gọn nhiều section) chưa gắn tick; bảng Tasks chưa có filter riêng "Định kỳ". Cả hai là tùy chọn (xem TODO S80 P2). Không ảnh hưởng tính đúng.
+
+### Lưu ý schema: Task_Master nay 27 cột (A→AA)
+DB_COLS/taskToRow = 27 (RAG col 25/Y · Định kỳ col 26/Z · Kỳ đã xong col 27/AA). `taskToRow` **positional** → cột mới phải ở đúng cuối; parser map theo **header-name** (an toàn thứ tự). `Config.gs DATA_RANGE='A1:X'` vẫn **stale/unused** (GAS đọc/ghi động theo getLastColumn/values[0].length — xác nhận S80). Migration `RecurrenceMigration.gs` chạy 1 lần set Z1/AA1.
+
+---
+
 ## 🆕 DELTA — Session 79 (2026-08-23) — Email nhắc việc lệch ngày/tháng + định dạng (fix tận gốc)
 
 ### ✅ TD-NOTIF-DATE (đóng): email/chuông digest hiện ngày cũ + lẫn định dạng locale

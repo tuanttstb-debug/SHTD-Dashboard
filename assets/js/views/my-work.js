@@ -333,12 +333,14 @@ function _mwBuildTaskCard(task) {
   const opts = STATES.map(s =>
     `<option value="${esc(s)}"${task.state === s ? ' selected' : ''}>${esc(tState(s))}</option>`
   ).join('');
+  const periodBadge = taskPeriodBadgeHtml(task, 'mwTogglePeriod');
 
   return `
 <div class="mw-task-card${isHl ? ' is-highlight' : ''}${isDone ? ' is-done' : ''}" data-id="${id}">
   <div class="mw-task-card-top">
     <span class="mw-task-id">${esc(task.id)}</span>
     <span class="mw-task-name" title="${esc(task.name)}">${esc(task.name)}</span>
+    ${normRecurrence(task.recurrence) ? `<span class="rt-recur-chip" title="Task định kỳ">${normRecurrence(task.recurrence) === 'Tuần' ? '↻ Tuần' : '↻ Tháng'}</span>` : ''}
     ${isHl ? '<i class="fa-solid fa-star mw-task-star" title="Highlight báo cáo"></i>' : ''}
     ${_mwDeadlineBadge(task.endDate)}
   </div>
@@ -346,6 +348,7 @@ function _mwBuildTaskCard(task) {
     <select class="mw-state-sel" onchange="mwQuickSaveState('${id}',this.value)">${opts}</select>
     ${_mwRagDots(task.id, task.status)}
   </div>
+  ${periodBadge ? `<div class="mw-controls mw-period-row">${periodBadge}</div>` : ''}
   <div class="mw-controls">
     <div class="mw-prog-wrap">
       <div class="mw-prog-bar-bg" onclick="mwToggleProgress('${id}')" title="Click để sửa">
@@ -780,6 +783,17 @@ function mwQuickSaveRag(taskId, val) {
   if (card) {
     const wrap = card.querySelector('.mw-rag-wrap');
     if (wrap) wrap.outerHTML = _mwRagDots(taskId, val);
+  }
+}
+
+function mwTogglePeriod(taskId) {
+  const st = taskTogglePeriodDone(taskId);   // mutate donePeriods + lưu (helpers.js)
+  if (!st) return;
+  const t = _mwFindTask(taskId);
+  const card = document.querySelector(`.mw-task-card[data-id="${CSS.escape(taskId)}"]`);
+  if (card && t) {
+    const row = card.querySelector('.mw-period-row');
+    if (row) row.innerHTML = taskPeriodBadgeHtml(t, 'mwTogglePeriod');
   }
 }
 

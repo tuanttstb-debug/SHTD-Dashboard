@@ -97,6 +97,8 @@ function extractWorkbook(wb) {
   const cYK    = colIdxExact(H, ['ýkiếnblđ','ykienbld']);
   const cCr    = colIdxExact(H, ['cross-team','crossteam']);
   const cHl    = colIdxExact(H, ['highlightbáocáo','highlight','báocáo']);
+  const cRecur2= colIdxExact(H, ['địnhkỳ','dinhky','recurrence']);
+  const cDone2 = colIdxExact(H, ['kỳđãxong','kydaxong','doneperiods']);
   if (cName === -1) return null;
 
   const parseDate = v => toISODate(v);   // unified: any format → ISO 'YYYY-MM-DD'
@@ -181,6 +183,8 @@ function extractWorkbook(wb) {
       yKienBLD:    cYK    !== -1 ? (r[cYK]||'')   : '',
       crossTeam:   parseYN(cCr   !== -1 ? r[cCr]   : ''),
       highlight:   parseYN(cHl   !== -1 ? r[cHl]   : ''),
+      recurrence:  normRecurrence(cRecur2 !== -1 ? r[cRecur2] : ''),
+      donePeriods: cDone2 !== -1 ? (r[cDone2]||'').toString().trim() : '',
     });
   }
   return { tasks, initiatives: initList };
@@ -218,6 +222,8 @@ function _parseArrayIntoDb(values) {
   const cYK    = ci(['ý kiến blđ','ykienbld']);
   const cCross = ci(['cross-team','crossteam']);
   const cHl    = ci(['highlight','báo cáo']);
+  const cRecur = ci(['định kỳ','dinhky','recurrence']);
+  const cDone  = ci(['kỳ đã xong','kydaxong','doneperiods']);
 
   const parseDate = v => toISODate(v);   // unified: any format → ISO 'YYYY-MM-DD'
   const parseRAG   = v => { const s=(v||'').toLowerCase(); if(s.includes('red')||s.includes('đỏ')) return 'Red'; if(s.includes('amber')||s.includes('cam')) return 'Amber'; return 'Green'; };
@@ -251,6 +257,7 @@ function _parseArrayIntoDb(values) {
       result: g(r,cResult), nextPlan: g(r,cNext), vuongMac: g(r,cIss),
       canBLD: parseYN(g(r,cBLD)), noiDungBLD: g(r,cBLDT), yKienBLD: g(r,cYK),
       crossTeam: parseYN(g(r,cCross)), highlight: parseYN(g(r,cHl)),
+      recurrence: normRecurrence(g(r,cRecur)), donePeriods: g(r,cDone),
     });
   }
   // Chỉ auto-discover initiatives từ task data khi chưa load từ Initiative_Master
