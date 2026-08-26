@@ -183,7 +183,7 @@ async function _gasInitiativeUpsert(ini, isNew) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'initiative-upsert', initId: ini.id, initName: ini.name, row: initiativeToRow(ini), isNew: !!isNew });
+    const json = await gasWrite({ action: 'initiative-upsert', initId: ini.id, initName: ini.name, row: initiativeToRow(ini), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'initiative-upsert lỗi');
     // Server có thể cấp mã mới nếu mã vừa bị người khác dùng (guard đồng thời).
     if (typeof _adoptReassignedId === 'function') {

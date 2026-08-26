@@ -1,6 +1,17 @@
 # PROJECT STATE
+
+**GHI TIN CẬY (Pha A) — CODE XONG + VERIFY 2026-08-26 (main, v6.55). ⚠️ CẦN [TT] REDEPLOY GAS.**
+Mục tiêu: đưa tỷ lệ ghi timeout/mất bản ghi về ~0% ở tải 10–30 người đồng thời. Thuộc kế hoạch tối ưu BE 3 pha (`docs/PROPOSAL_BE_Async_Cache_2026-08-26.md`).
+- **① Rút ngắn khóa ghi:** helper `atomicUpsert_` (`Concurrency.gs`) dùng chung cho 5 entity (task/case/issue/initiative/dev). Vùng khóa chỉ còn *check-then-write*; **đưa RA NGOÀI khóa**: `notifPrior_` (đọc cả 1 sheet) + `auditLog` (append) + `notifOnWrite` (sinh notif). Bản ghi MỚI khỏi đọc prior (chắc chắn chưa tồn tại).
+- **② Idempotency + retry:** client sinh `reqId` ổn định qua các lần retry; server dedup qua `CacheService` 5 phút (`_reqSeen`/`_reqRemember` ở `CacheLayer.gs`) → **timeout rồi thử lại KHÔNG tạo bản ghi trùng**. FE `gasWrite` (auth.js) = gasPost + retry/backoff (3 lần, 0.5s→1.5s→4s + jitter); chỉ retry lỗi mạng/HTTP tạm thời, KHÔNG retry lỗi logic/AUTH. Mọi `_gas*Upsert/_gas*Delete` + `initiative-upsert` đi qua `gasWrite`.
+- **Tương thích ngược:** `reqId` là field mới; server cũ bỏ qua → không vỡ. GAS bump version vẫn giữ (per-domain = Pha B, chưa làm).
+- **⚠️ [TT] cần redeploy GAS** (Code.gs + Concurrency.gs + CacheLayer.gs) để dedup có hiệu lực; FE hard-refresh (`?v=20260826b`).
+- **Verify:** `verify_write_retry` **10/10** (reqId có mặt · retry giữ reqId · nuốt lỗi khi fail kéo dài · không retry lỗi logic) + regression: atomic 41/41 · id_reassign 17/17 · notifications 21/21 · notif_retract 41/41 · my_work 97/97 · case 22/22 · issue 61/61 · dev 40/40 · recurring 23/23. (`verify_initiative*` timeout do flaky file:// nav — pre-existing, không liên quan.)
+
+---
+
 **As of**: 2026-08-26 (Session 81 — DEBUG/CR "Công việc của tôi": bỏ cap 4 initiative · Kanban hiện định kỳ + tiến độ · Cần làm ngay hiện tiến độ)
-**Version**: **v6.54** (`APP_VERSION = '6.54-mywork-init-nocap-kanban-recur-progress-20260826'`, `index.html ?v=20260826`)
+**Version**: **v6.55** (`APP_VERSION = '6.55-write-reliability-idempotency-retry-20260826'`, `index.html ?v=20260826b`)
 **Remote HEAD (main)**: S81 chờ push phiên này
 
 > **S81 (DEBUG "định kỳ không hiện ở My Work" + "phụ trách 5 initiative chỉ hiện 4" + CR tiến độ trên Kanban/Cần-làm-ngay — thuần FE, v6.54)**: 3 việc từ [TT]. **Truy vết bằng đọc LIVE** (fetch_gas AIOS, read-only): Task_Master **đã có** header `Định kỳ`/`Kỳ đã xong` (migration đã chạy) + **10 task recurrence='Tháng'** (AIUS-001-AP-*, Acc/Res=TuanTT4); và TuanTT4 phụ trách **5 root initiative phân biệt** (BLOL-001/SCF-MVP/Econtract-001/IDNES-001/AIUS-001, không trùng). **Gốc = 3 lỗi FE ở `my-work.js`, không phải data/backend**: (1) **`_mwBuildInitSection` cap cứng `MAX_INIT=4`** → badge đếm 5 nhưng grid chỉ vẽ 4 card → **bỏ cap, render đủ**; (2) **`_mwKanbanCard` không render định kỳ** + list `_mwBuildTaskSection` cap 20 đẩy 4/10 task định kỳ ra ngoài → **Kanban card thêm chip ↻ + nút tick "xong kỳ này" (`mwKbTogglePeriod`, stopPropagation không mở popup)**; (3) CR — **Kanban card + item "Cần làm ngay" thêm thanh tiến độ mini + %**. CSS `.mw-kb-prog*`/`.mw-kb-period`/`.mw-urgent-prog*`. **KHÔNG đụng backend/GAS/schema/parser** → chỉ hard-reload v6.54. `verify_my_work` **97/97** (+S81A init-no-cap · S81B kb-recur chip/tick/progress/toggle · S81C urgent-progress), `verify_recurring` **23/23** (0 hồi quy). **Lưu ý [TT]:** nếu sau hard-reload vẫn không thấy định kỳ → cache version-gate (TD-AIUS-CACHE-01): chạy `binh-dan-hoa-ai-H2/scripts/bump_cache_version.js` (hub) rồi Sync.

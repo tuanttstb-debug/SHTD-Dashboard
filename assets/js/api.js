@@ -452,10 +452,10 @@ async function _gasTaskUpsert(task, oldId) {
   if (dot) dot.className = 'status-dot syncing';
   try {
     if (oldId && oldId !== task.id) {
-      const delRes = await gasPost({ action: 'task-delete', taskId: oldId, taskName: task.name });
+      const delRes = await gasWrite({ action: 'task-delete', taskId: oldId, taskName: task.name });
       if (delRes.status !== 'ok') throw new Error('Xóa task cũ [' + oldId + '] thất bại: ' + (delRes.error || 'unknown'));
     }
-    const json = await gasPost({ action: 'task-upsert', taskId: task.id, taskName: task.name, row: taskToRow(task), isNew: !oldId });
+    const json = await gasWrite({ action: 'task-upsert', taskId: task.id, taskName: task.name, row: taskToRow(task), isNew: !oldId });
     if (json.status !== 'ok') throw new Error(json.error || 'task-upsert lỗi');
     _adoptReassignedId(task, json.id, persist, () => { if (typeof renderAll === 'function') renderAll(); });
     if (json.serverTs) { db._serverTs = json.serverTs; persist(); }
@@ -471,7 +471,7 @@ async function _gasTaskDelete(taskId, taskName) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'task-delete', taskId, taskName: taskName || '' });
+    const json = await gasWrite({ action: 'task-delete', taskId, taskName: taskName || '' });
     if (json.status !== 'ok') throw new Error(json.error || 'task-delete lỗi');
     if (json.serverTs) { db._serverTs = json.serverTs; persist(); }
     if (dot) dot.className = 'status-dot connected';
@@ -486,7 +486,7 @@ async function _gasCaseUpsert(c, isNew) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'case-upsert', caseId: c.id, caseName: c.caseName, row: caseToRow(c), isNew: !!isNew });
+    const json = await gasWrite({ action: 'case-upsert', caseId: c.id, caseName: c.caseName, row: caseToRow(c), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'case-upsert lỗi');
     _adoptReassignedId(c, json.id, persistCases, () => { if (typeof renderCasePipeline === 'function') renderCasePipeline(); });
     if (dot) dot.className = 'status-dot connected';
@@ -501,7 +501,7 @@ async function _gasCaseDelete(caseId, caseName) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'case-delete', caseId, caseName: caseName || '' });
+    const json = await gasWrite({ action: 'case-delete', caseId, caseName: caseName || '' });
     if (json.status !== 'ok') throw new Error(json.error || 'case-delete lỗi');
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
@@ -719,7 +719,7 @@ async function _gasIssueUpsert(iss, isNew) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'issue-upsert', issueId: iss.id, issueName: iss.tieuDe, row: issueToRow(iss), isNew: !!isNew });
+    const json = await gasWrite({ action: 'issue-upsert', issueId: iss.id, issueName: iss.tieuDe, row: issueToRow(iss), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'issue-upsert lỗi');
     _adoptReassignedId(iss, json.id, persistIssues, () => { if (typeof renderIssueTracker === 'function') renderIssueTracker(); });
     if (dot) dot.className = 'status-dot connected';
@@ -734,7 +734,7 @@ async function _gasIssueDelete(issueId, issueName) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'issue-delete', issueId, issueName: issueName || '' });
+    const json = await gasWrite({ action: 'issue-delete', issueId, issueName: issueName || '' });
     if (json.status !== 'ok') throw new Error(json.error || 'issue-delete lỗi');
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {
@@ -811,7 +811,7 @@ async function _gasDevUpsert(d, isNew) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'dev-upsert', devId: d.id, devName: d.name, row: devToRow(d), isNew: !!isNew });
+    const json = await gasWrite({ action: 'dev-upsert', devId: d.id, devName: d.name, row: devToRow(d), isNew: !!isNew });
     if (json.status !== 'ok') throw new Error(json.error || 'dev-upsert lỗi');
     _adoptReassignedId(d, json.id, persistDev, () => { if (typeof renderDevPlan === 'function') renderDevPlan(); });
     if (dot) dot.className = 'status-dot connected';
@@ -826,7 +826,7 @@ async function _gasDevDelete(devId, devName) {
   const dot = document.getElementById('syncDot');
   if (dot) dot.className = 'status-dot syncing';
   try {
-    const json = await gasPost({ action: 'dev-delete', devId, devName: devName || '' });
+    const json = await gasWrite({ action: 'dev-delete', devId, devName: devName || '' });
     if (json.status !== 'ok') throw new Error(json.error || 'dev-delete lỗi');
     if (dot) dot.className = 'status-dot connected';
   } catch(e) {

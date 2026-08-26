@@ -102,6 +102,37 @@ async function gasPost(body, timeoutMs) {
   return json;
 }
 
+// ── (Pha A) Ghi TIN CẬY: gasWrite = gasPost + retry/backoff + idempotency reqId ──
+// Mục tiêu: đưa tỷ lệ ghi timeout/mất bản ghi về ~0%.
+//  - reqId sinh 1 lần cho MỖI thao tác logic, GIỮ NGUYÊN qua các lần retry → server dedup
+//    (không tạo bản ghi trùng nếu request đã commit nhưng client bị timeout rồi thử lại).
+//  - Chỉ retry lỗi MẠNG/HTTP tạm thời (gasPost ném). Lỗi logic server (status:'error' như
+//    FORBIDDEN/VERSION_CONFLICT) được trả về NGAY, không retry. AUTH_REQUIRED không retry.
+function _genReqId() {
+  return 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+async function gasWrite(body, opts) {
+  opts = opts || {};
+  const maxRetry = opts.retries != null ? opts.retries : 3;
+  const reqId    = body.reqId || _genReqId();
+  const payload  = Object.assign({}, body, { reqId });
+  const delays   = [500, 1500, 4000];   // backoff lũy tiến (ms) + jitter
+  let lastErr;
+  for (let attempt = 0; attempt <= maxRetry; attempt++) {
+    try {
+      return await gasPost(payload, opts.timeoutMs);
+    } catch (e) {
+      if (e && e.code === 'AUTH_REQUIRED') throw e;   // phiên hết hạn → dừng, không thử lại
+      lastErr = e;
+      if (attempt === maxRetry) break;
+      const base = delays[Math.min(attempt, delays.length - 1)];
+      await new Promise(r => setTimeout(r, base + Math.floor(Math.random() * 300)));
+    }
+  }
+  throw lastErr;
+}
+
 // ── Login / logout ──
 
 async function doLogin(username, password) {

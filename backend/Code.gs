@@ -184,26 +184,17 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
-    // ── Atomic single-row writes (task / case / initiative) ──
+    // ── Atomic single-row writes (task / case / initiative / issue / dev) ──
+    // (Pha A) Dùng chung atomicUpsert_ (Concurrency.gs): khóa tối thiểu + idempotency reqId
+    // + defer audit/notif ngoài khóa → giảm timeout/mất bản ghi ở tải đồng thời.
     if (action === 'task-upsert') {
       if (!body.row || !Array.isArray(body.row) || !body.taskId) {
         throw new Error('task-upsert: thiếu row hoặc taskId.');
       }
-      var _lockTask = _acquireWriteLock();
-      try {
-        var _taskId = body.taskId;
-        if (body.isNew) {
-          _taskId = reassignIdIfExists(SHEET_NAME, body.taskId);
-          if (_taskId !== body.taskId) body.row[0] = _taskId;   // đồng bộ ô ID trong dòng
-        }
-        var _priorTask = notifPrior_('task', _taskId);
-        sheetUpsertTask(body.row, _taskId);
-        auditLog(tokenData, 'task-upsert', _taskId + (body.taskName ? ' | ' + body.taskName : ''));
-        notifOnWrite('task', _taskId, body.row, _priorTask);
-        return _jsonResponse({ status: 'ok', serverTs: _getTaskTs(), id: _taskId });
-      } finally {
-        _lockTask.releaseLock();
-      }
+      return _jsonResponse(atomicUpsert_(body, tokenData, {
+        sheetName: SHEET_NAME, entityType: 'task', upsertFn: sheetUpsertTask,
+        idKey: 'taskId', nameKey: 'taskName', action: 'task-upsert', withServerTs: true
+      }));
     }
 
     if (action === 'task-delete') {
@@ -217,21 +208,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.caseId) {
         throw new Error('case-upsert: thiếu row hoặc caseId.');
       }
-      var _lockCase = _acquireWriteLock();
-      try {
-        var _caseId = body.caseId;
-        if (body.isNew) {
-          _caseId = reassignIdIfExists(CASE_SHEET_NAME, body.caseId);
-          if (_caseId !== body.caseId) body.row[0] = _caseId;
-        }
-        var _priorCase = notifPrior_('case', _caseId);
-        caseUpsertRow(body.row, _caseId);
-        auditLog(tokenData, 'case-upsert', _caseId + (body.caseName ? ' | ' + body.caseName : ''));
-        notifOnWrite('case', _caseId, body.row, _priorCase);
-        return _jsonResponse({ status: 'ok', id: _caseId });
-      } finally {
-        _lockCase.releaseLock();
-      }
+      return _jsonResponse(atomicUpsert_(body, tokenData, {
+        sheetName: CASE_SHEET_NAME, entityType: 'case', upsertFn: caseUpsertRow,
+        idKey: 'caseId', nameKey: 'caseName', action: 'case-upsert'
+      }));
     }
 
     if (action === 'case-delete') {
@@ -245,21 +225,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.initId) {
         throw new Error('initiative-upsert: thiếu row hoặc initId.');
       }
-      var _lockInit = _acquireWriteLock();
-      try {
-        var _initId = body.initId;
-        if (body.isNew) {
-          _initId = reassignIdIfExists(INI_SHEET_NAME, body.initId);
-          if (_initId !== body.initId) body.row[0] = _initId;
-        }
-        var _priorInit = notifPrior_('initiative', _initId);
-        initiativeUpsertRow(body.row, _initId);
-        auditLog(tokenData, 'initiative-upsert', _initId + (body.initName ? ' | ' + body.initName : ''));
-        notifOnWrite('initiative', _initId, body.row, _priorInit);
-        return _jsonResponse({ status: 'ok', id: _initId });
-      } finally {
-        _lockInit.releaseLock();
-      }
+      return _jsonResponse(atomicUpsert_(body, tokenData, {
+        sheetName: INI_SHEET_NAME, entityType: 'initiative', upsertFn: initiativeUpsertRow,
+        idKey: 'initId', nameKey: 'initName', action: 'initiative-upsert'
+      }));
     }
 
     if (action === 'audit-read') {
@@ -275,21 +244,10 @@ function doPost(e) {
       if (!body.row || !Array.isArray(body.row) || !body.issueId) {
         throw new Error('issue-upsert: thiếu row hoặc issueId.');
       }
-      var _lockIssue = _acquireWriteLock();
-      try {
-        var _issueId = body.issueId;
-        if (body.isNew) {
-          _issueId = reassignIdIfExists(ISSUE_SHEET_NAME, body.issueId);
-          if (_issueId !== body.issueId) body.row[0] = _issueId;
-        }
-        var _priorIssue = notifPrior_('issue', _issueId);
-        issueUpsertRow(body.row, _issueId);
-        auditLog(tokenData, 'issue-upsert', _issueId + (body.issueName ? ' | ' + body.issueName : ''));
-        notifOnWrite('issue', _issueId, body.row, _priorIssue);
-        return _jsonResponse({ status: 'ok', id: _issueId });
-      } finally {
-        _lockIssue.releaseLock();
-      }
+      return _jsonResponse(atomicUpsert_(body, tokenData, {
+        sheetName: ISSUE_SHEET_NAME, entityType: 'issue', upsertFn: issueUpsertRow,
+        idKey: 'issueId', nameKey: 'issueName', action: 'issue-upsert'
+      }));
     }
 
     if (action === 'issue-delete') {
@@ -320,21 +278,10 @@ function doPost(e) {
           return _jsonResponse({ status: 'error', error: 'FORBIDDEN_PIC_MISMATCH' });
         }
       }
-      var _lockDev = _acquireWriteLock();
-      try {
-        var _devId = body.devId;
-        if (body.isNew) {
-          _devId = reassignIdIfExists(DEV_SHEET_NAME, body.devId);
-          if (_devId !== body.devId) body.row[0] = _devId;
-        }
-        var _priorDev = notifPrior_('dev', _devId);
-        devUpsertRow(body.row, _devId);
-        auditLog(tokenData, 'dev-upsert', _devId + (body.devName ? ' | ' + body.devName : ''));
-        notifOnWrite('dev', _devId, body.row, _priorDev);
-        return _jsonResponse({ status: 'ok', id: _devId });
-      } finally {
-        _lockDev.releaseLock();
-      }
+      return _jsonResponse(atomicUpsert_(body, tokenData, {
+        sheetName: DEV_SHEET_NAME, entityType: 'dev', upsertFn: devUpsertRow,
+        idKey: 'devId', nameKey: 'devName', action: 'dev-upsert'
+      }));
     }
 
     if (action === 'dev-delete') {

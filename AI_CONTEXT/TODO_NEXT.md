@@ -1,6 +1,16 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-08-26 (Session 81 — DEBUG My Work: bỏ cap 4 initiative · Kanban định kỳ + tiến độ · Cần-làm-ngay tiến độ)
 
+## 🆕 Pha A — GHI TIN CẬY (idempotency + retry + rút khóa) — CODE XONG + VERIFY (v6.55)
+- [x] `atomicUpsert_` (Concurrency.gs) — khóa tối thiểu; notif/audit ra ngoài khóa; áp 5 entity.
+- [x] Idempotency: server dedup `reqId` (CacheLayer `_reqSeen`/`_reqRemember`, TTL 5'); FE `gasWrite` retry/backoff giữ nguyên reqId.
+- [x] Verify `verify_write_retry` 10/10 + regression (atomic/id_reassign/notif/my_work/case/issue/dev/recurring) xanh.
+- [ ] **[P0] [TT] redeploy GAS** (Code.gs + Concurrency.gs + CacheLayer.gs) — dedup chỉ hiệu lực sau redeploy; FE hard-refresh (`?v=20260826b`).
+- [ ] **[P1] [TT] smoke test production:** ghi nhiều tab/liên tục không mất bản ghi; ngắt mạng chớp lúc lưu → tự retry rồi thành công; đăng ký mới lúc timeout không tạo trùng.
+- [ ] **[CC] Pha B** (khi [TT] duyệt): version theo domain (`DATA_VER_<domain>`) → batch-read chỉ tải lại domain đổi (trị load chậm). Rồi **Pha C**: dồn notif sang trigger + keep-warm + dọn dead code.
+- [ ] (Tùy chọn) áp cùng pattern idempotency+retry cho spoke AIUS (chung mô hình GAS).
+
+
 ## ✅ COMPLETED S81 — DEBUG/CR "Công việc của tôi" (thuần FE, v6.54)
 - [x] #2 bỏ cap `MAX_INIT=4` ở `_mwBuildInitSection` → hiện đủ initiative phụ trách (TuanTT4 = 5).
 - [x] #1 Kanban card (`_mwKanbanCard`) + item "Cần làm ngay" thêm chip ↻ định kỳ + nút tick `mwKbTogglePeriod` (stopPropagation).

@@ -5,4 +5,4 @@
 const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec';
 
 // Build version — tăng số này mỗi lần deploy để phát hiện browser cache stale
-const APP_VERSION = '6.54-mywork-init-nocap-kanban-recur-progress-20260826';
+const APP_VERSION = '6.55-write-reliability-idempotency-retry-20260826';

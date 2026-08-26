@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-08-26 (Pha A: GHI TIN CẬY — idempotency + retry + rút ngắn khóa)
+**Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard · **Version**: v6.54 → **v6.55**
+
+- **Task completed:** Triển khai **Pha A** kế hoạch tối ưu BE (`docs/PROPOSAL_BE_Async_Cache_2026-08-26.md`) — đưa tỷ lệ ghi timeout/mất bản ghi về ~0% (tải 10–30 người). **① Rút ngắn khóa ghi:** helper chung `atomicUpsert_` cho 5 entity; đưa `notifPrior_`/`auditLog`/`notifOnWrite` RA NGOÀI write-lock (chỉ giữ *check-then-write*). **② Idempotency + retry:** server dedup `reqId` qua CacheService 5' (`_reqSeen`/`_reqRemember`); FE `gasWrite` retry/backoff giữ nguyên reqId → timeout-rồi-thử-lại không tạo trùng.
+- **Files changed:** *(spoke, chưa deploy GAS)* `backend/CacheLayer.gs` (+`_reqSeen`/`_reqRemember`), `backend/Concurrency.gs` (+`atomicUpsert_`), `backend/Code.gs` (5 handler `*-upsert` gọi `atomicUpsert_`), `assets/js/auth.js` (+`gasWrite`/`_genReqId`), `assets/js/api.js` (9 call → `gasWrite`), `assets/js/initiatives.js` (initiative-upsert → `gasWrite`), `assets/js/config.js` (v6.55), `index.html` (cache-token 4 file → `?v=20260826b`), `test/verify_write_retry.mjs` (mới), `docs/PROPOSAL_BE_Async_Cache_2026-08-26.md` (mới).
+- **Decision made:** Khẩu vị "tối ưu tại chỗ" ([TT] chốt) — giữ ghi đồng bộ + read-your-write, không đổi sang async queue. Bump version vẫn GLOBAL ở Pha A (per-domain = Pha B). `atomicUpsert_` bump version TRONG khóa (đúng thứ tự sau commit), audit/notif chạy sau nhả khóa (auditLog vẫn tự bump — double-bump vô hại).
+- **Blocker:** **Không** (code + verify xong). **⚠️ [TT] cần redeploy GAS** (Code.gs + Concurrency.gs + CacheLayer.gs) để idempotency dedup có hiệu lực; FE tự cập nhật qua GitHub Pages + hard-refresh.
+- **Next step:** [TT] redeploy GAS + smoke test production (ghi liên tục/nhiều tab không mất bản ghi; ngắt mạng chớp → tự retry). [CC] khi [TT] duyệt: **Pha B** (version theo domain — batch-read chỉ tải lại phần đổi) rồi **Pha C** (dồn notif sang trigger + keep-warm). (Tùy chọn) áp cùng pattern cho AIUS.
+- **Regression risk:** **Thấp–TB → verify đầy đủ.** `verify_write_retry` 10/10 + atomic 41/41 · id_reassign 17/17 · notifications 21/21 · notif_retract 41/41 · my_work 97/97 · case 22/22 · issue 61/61 · dev 40/40 · recurring 23/23. Backend đổi cần **redeploy mới hiệu lực** (trước đó route cũ vẫn chạy đúng, chỉ thiếu dedup). `verify_initiative*` timeout = flaky file:// pre-existing (đã kiểm trên HEAD sạch). Data-boundary: dedup cache chỉ lưu `reqId→id`, không PII.
+
+---
+
 # SESSION HANDOVER (S80) — 2026-08-25
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard
 **Version**: v6.52 → **v6.53** (`6.53-recurring-task-log-once-20260825`, `?v=20260825`)

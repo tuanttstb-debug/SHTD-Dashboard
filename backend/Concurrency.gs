@@ -94,3 +94,61 @@ function _padNum(n, width) {
   while (s.length < width) s = '0' + s;
   return s;
 }
+
+/**
+ * (Pha A) Ghi 1-dòng ATOMIC với khóa TỐI THIỂU + idempotency + defer notif/audit.
+ *
+ * Mục tiêu: đưa tỷ lệ ghi timeout/mất bản ghi về ~0% ở tải 10–30 người đồng thời.
+ *  - Vùng KHÓA chỉ còn "check-then-write" cần atomic: (dedup reqId) → (cấp mã mới nếu isNew)
+ *    → (upsert 1 dòng) → (bump version). Bỏ ra khỏi khóa: đọc trạng thái trước (notifPrior_,
+ *    cả 1 sheet) + ghi Audit_Log (append) + sinh notification — vốn là phần chậm nhất trước đây.
+ *  - Idempotency: reqId (client sinh, giữ nguyên qua retry) → nếu đã xử lý thì trả lại mã cũ,
+ *    KHÔNG upsert lần 2 (chống trùng khi client timeout rồi thử lại).
+ *
+ * @param {Object} body       payload doPost (đã validate row + id ở handler).
+ * @param {Object} tokenData  phiên đã xác thực (cho auditLog).
+ * @param {Object} spec       { sheetName, entityType, upsertFn(row,id), idKey, nameKey, action, withServerTs }
+ * @returns {Object} { status:'ok', id, [serverTs] }
+ */
+function atomicUpsert_(body, tokenData, spec) {
+  var origId = body[spec.idKey];
+  var isNew  = !!body.isNew;
+
+  // ── NGOÀI KHÓA: đọc trạng thái trước-ghi cho notification (best-effort).
+  //    Bản ghi MỚI thì chắc chắn chưa tồn tại → khỏi đọc sheet.
+  var prior = isNew ? { existed: false, done: false }
+                    : notifPrior_(spec.entityType, origId);
+
+  var lock = _acquireWriteLock();
+  var finalId, dedup = false;
+  try {
+    var seen = _reqSeen(body.reqId);
+    if (seen && seen.id) {
+      finalId = seen.id;              // request này đã commit ở lần trước → trả lại mã cũ
+      dedup   = true;
+    } else {
+      finalId = isNew ? reassignIdIfExists(spec.sheetName, origId) : origId;
+      if (finalId !== origId) body.row[0] = finalId;   // đồng bộ ô ID trong dòng
+      spec.upsertFn(body.row, finalId);                // đọc cột ID + setValues + flush (1 lần)
+      if (typeof _bumpDataVer === 'function') _bumpDataVer();
+      _reqRemember(body.reqId, finalId);
+    }
+  } finally {
+    lock.releaseLock();
+  }
+
+  // ── NGOÀI KHÓA: audit + notification (không chặn đường ghi chính; đã bọc try/catch nội bộ).
+  //    Bỏ qua khi dedup vì lần commit đầu đã ghi audit/notif rồi.
+  if (!dedup) {
+    try {
+      auditLog(tokenData, spec.action, finalId + (body[spec.nameKey] ? ' | ' + body[spec.nameKey] : ''));
+    } catch (e) { Logger.log('atomicUpsert_ audit: ' + e.message); }
+    try {
+      notifOnWrite(spec.entityType, finalId, body.row, prior);
+    } catch (e) { Logger.log('atomicUpsert_ notif: ' + e.message); }
+  }
+
+  var resp = { status: 'ok', id: finalId };
+  if (spec.withServerTs) resp.serverTs = _getTaskTs();
+  return resp;
+}

@@ -1,5 +1,7 @@
 # TECHNICAL DEBT — SHTD Dashboard v6.2
 
+> **Delta 2026-08-26 (Pha A — ghi tin cậy):** Đã giảm mạnh timeout/mất ghi (idempotency `reqId` + retry + rút khóa, `atomicUpsert_`). **Nợ còn mở (theo kế hoạch `docs/PROPOSAL_BE_Async_Cache_2026-08-26.md`):** ⚪ **WRITE-PERF-B** — version còn GLOBAL: 1 write bump toàn cục → mọi client batch-read tải lại cả 7 sheet (load chậm); Pha B làm version-theo-domain. ⚪ **WRITE-PERF-C** — `notifOnWrite` vẫn chạy synchronous sau nhả khóa (best-effort); Pha C dồn hẳn sang trigger + keep-warm. ⚪ **AUDIT-DOUBLEBUMP** — `atomicUpsert_` bump version trong khóa + `auditLog` bump lại ngoài khóa (vô hại, version đổi 2 lần); dọn khi tách bump khỏi auditLog. **[TT] cần redeploy GAS** để dedup hiệu lực.
+
 ## Debt Rating Scale
 - 🔴 **CRITICAL** — blocks scaling, high risk of breakage
 - 🟡 **HIGH** — significant pain in daily development

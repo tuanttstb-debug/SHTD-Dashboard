@@ -41,3 +41,24 @@ function _cachePutJson(key, obj) {
     CacheService.getScriptCache().put(key, b64, _CACHE_TTL);
   } catch (e) {}
 }
+
+// ── (Pha A) Idempotency dedup cho write ──
+// Client sinh reqId ổn định qua các lần retry → nếu 1 request đã commit nhưng client bị
+// timeout và thử lại, server nhận ra reqId đã xử lý và TRẢ LẠI mã cũ (không tạo bản ghi trùng).
+// Kiểm/ghi trong write-lock để 2 request cùng reqId serialize (request sau thấy cache của trước).
+var _REQ_TTL = 300;   // 5 phút — đủ dài cho mọi vòng retry của 1 thao tác
+
+function _reqSeen(reqId) {
+  if (!reqId) return null;
+  try {
+    var v = CacheService.getScriptCache().get('req:' + reqId);
+    return v ? JSON.parse(v) : null;   // { id: '<mã đã commit>' }
+  } catch (e) { return null; }
+}
+
+function _reqRemember(reqId, id) {
+  if (!reqId) return;
+  try {
+    CacheService.getScriptCache().put('req:' + reqId, JSON.stringify({ id: String(id) }), _REQ_TTL);
+  } catch (e) {}
+}
