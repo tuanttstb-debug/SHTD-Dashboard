@@ -79,19 +79,32 @@ function doPost(e) {
     // Thay ~7 request khởi động (mỗi cái tự openById) bằng 1. Client fallback về read lẻ
     // nếu action này chưa có (GAS chưa redeploy) → deploy không phá app ở cả 2 chiều.
     if (action === 'batch-read') {
-      var _cur = _dataVer();
-      // VERSION GATE: client gửi ver đã biết; khớp → dữ liệu KHÔNG đổi → không gửi lại payload lớn.
-      if (body.ver && String(body.ver) === _cur) {
-        return _jsonResponse({ status: 'ok', ver: _cur, notModified: true });
-      }
-      var _bss  = SpreadsheetApp.openById(SPREADSHEET_ID);
       var _want = (body.domains && body.domains.length)
         ? body.domains
         : ['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs'];
-      var _pick = {}; for (var _bi = 0; _bi < _want.length; _bi++) _pick[_want[_bi]] = true;
+
+      // (Pha B) VERSION GATE THEO DOMAIN: client gửi map `vers` (ver đã biết mỗi domain).
+      // Chỉ đọc + trả domain nào version ĐỔI → sửa 1 task không kéo tải lại 6 domain kia.
+      var _curVers = {};
+      for (var _vi = 0; _vi < _want.length; _vi++) _curVers[_want[_vi]] = _domainVer(_want[_vi]);
+      var _cliVers = body.vers || {};
+      // Tương thích ngược: client CŨ gửi `ver` (global đơn) → coi như biết mọi domain ở mức đó.
+      if (body.ver && !body.vers) {
+        for (var _dk in _curVers) if (!(_dk in _cliVers)) _cliVers[_dk] = body.ver;
+      }
+      var _changed = [];
+      for (var _d in _curVers) {
+        if (String(_cliVers[_d] == null ? '' : _cliVers[_d]) !== String(_curVers[_d])) _changed.push(_d);
+      }
+      // ver global cho tương thích ngược (client cũ đọc json.ver)
+      var _cur = _dataVer();
+      if (_changed.length === 0) {
+        return _jsonResponse({ status: 'ok', ver: _cur, vers: _curVers, notModified: true });
+      }
+      var _bss  = SpreadsheetApp.openById(SPREADSHEET_ID);
+      var _pick = {}; for (var _bi = 0; _bi < _changed.length; _bi++) _pick[_changed[_bi]] = true;
       var _bd = {};
-      // Đọc LIVE (mở spreadsheet 1 lần). Không cache sheet ở server: version gate đã lo phần
-      // "không đổi = không tải"; khi ĐỔI thì phải trả dữ liệu mới → đọc live để luôn tươi (không stale).
+      // Đọc LIVE (mở spreadsheet 1 lần) CHỈ domain đổi. Không cache sheet ở server.
       if (_pick.tasks)       _bd.tasks       = { values: sheetRead(_bss).values };
       if (_pick.cases)        _bd.cases       = { values: caseRead(_bss) };
       if (_pick.issues)       _bd.issues      = { values: issueRead(_bss) };
@@ -100,7 +113,7 @@ function doPost(e) {
       if (_pick.users)        _bd.users       = userList(_bss);
       if (_pick.notifs)       _bd.notifs      = notifRead(tokenData.u, _bss);
       if (_pick.h2)           _bd.h2          = h2ReadAll(_bss);
-      return _jsonResponse({ status: 'ok', ver: _cur, serverTs: _getTaskTs(), data: _bd });
+      return _jsonResponse({ status: 'ok', ver: _cur, vers: _curVers, serverTs: _getTaskTs(), data: _bd });
     }
 
     if (action === 'write') {
@@ -108,6 +121,7 @@ function doPost(e) {
         throw new Error('Payload write thiếu hoặc rỗng.');
       }
       sheetWrite(body.values, body.clientTs);
+      _bumpDomainVer('tasks');
       auditLog(tokenData, 'task-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
@@ -134,6 +148,7 @@ function doPost(e) {
         throw new Error('initiative-write: thiếu values.');
       }
       initiativeWrite(body.values);
+      _bumpDomainVer('initiatives');
       auditLog(tokenData, 'initiative-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
@@ -145,6 +160,7 @@ function doPost(e) {
     if (action === 'user-create') {
       if (!body.user || typeof body.user !== 'object') throw new Error('user-create: thiếu user data.');
       userCreate(body.user);
+      _bumpDomainVer('users');
       auditLog(tokenData, 'user-create', body.user.username);
       return _jsonResponse({ status: 'ok' });
     }
@@ -152,6 +168,7 @@ function doPost(e) {
     if (action === 'user-update') {
       if (!body.user || typeof body.user !== 'object') throw new Error('user-update: thiếu user data.');
       userUpdate(body.user);
+      _bumpDomainVer('users');
       auditLog(tokenData, 'user-update', body.user.username);
       return _jsonResponse({ status: 'ok' });
     }
@@ -159,6 +176,7 @@ function doPost(e) {
     if (action === 'user-reset-password') {
       if (!body.username || !body.newPassword) throw new Error('user-reset-password: thiếu username hoặc newPassword.');
       userResetPassword(body.username, body.newPassword);
+      _bumpDomainVer('users');
       auditLog(tokenData, 'user-reset-password', body.username);
       return _jsonResponse({ status: 'ok' });
     }
@@ -180,6 +198,7 @@ function doPost(e) {
         throw new Error('case-pipeline-write: thiếu values.');
       }
       caseWrite(body.values);
+      _bumpDomainVer('cases');
       auditLog(tokenData, 'case-pipeline-write', (body.values.length - 1) + ' rows');
       return _jsonResponse({ status: 'ok' });
     }
@@ -200,6 +219,7 @@ function doPost(e) {
     if (action === 'task-delete') {
       if (!body.taskId) throw new Error('task-delete: thiếu taskId.');
       sheetDeleteTask(body.taskId);
+      _bumpDomainVer('tasks');
       auditLog(tokenData, 'task-delete', body.taskId + (body.taskName ? ' | ' + body.taskName : ''));
       return _jsonResponse({ status: 'ok', serverTs: _getTaskTs() });
     }
@@ -217,6 +237,7 @@ function doPost(e) {
     if (action === 'case-delete') {
       if (!body.caseId) throw new Error('case-delete: thiếu caseId.');
       caseDeleteRow(body.caseId);
+      _bumpDomainVer('cases');
       auditLog(tokenData, 'case-delete', body.caseId + (body.caseName ? ' | ' + body.caseName : ''));
       return _jsonResponse({ status: 'ok' });
     }
@@ -253,6 +274,7 @@ function doPost(e) {
     if (action === 'issue-delete') {
       if (!body.issueId) throw new Error('issue-delete: thiếu issueId.');
       issueDeleteRow(body.issueId);
+      _bumpDomainVer('issues');
       auditLog(tokenData, 'issue-delete', body.issueId + (body.issueName ? ' | ' + body.issueName : ''));
       return _jsonResponse({ status: 'ok' });
     }
@@ -294,6 +316,7 @@ function doPost(e) {
         }
       }
       devDeleteRow(body.devId);
+      _bumpDomainVer('dev');
       auditLog(tokenData, 'dev-delete', body.devId + (body.devName ? ' | ' + body.devName : ''));
       return _jsonResponse({ status: 'ok' });
     }
@@ -361,4 +384,15 @@ function doPost(e) {
  */
 function doGet(e) {
   return _jsonResponse({ status: 'ok', message: 'SHTD Dashboard GAS backend is running.' });
+}
+
+/**
+ * (Pha C) Keep-warm — OPT-IN. Gắn vào Time-driven trigger (vd mỗi 5–10') trong GAS Editor:
+ *   Triggers → Add Trigger → function: keepWarm → Time-driven → Minutes timer → Every 5 minutes.
+ * Giảm cold-start (lần gọi đầu sau nghỉ) → login/ghi/đọc bớt spike chậm. Chỉ chạm Properties,
+ * KHÔNG mở spreadsheet → nhẹ, an toàn, không tốn quota đọc Sheets. Không bắt buộc để app chạy.
+ */
+function keepWarm() {
+  try { PropertiesService.getScriptProperties().getProperty('SHTD_DATA_VER'); } catch (e) {}
+  return 'warm';
 }

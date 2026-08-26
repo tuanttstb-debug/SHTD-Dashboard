@@ -1,5 +1,16 @@
 # PROJECT STATE
 
+**PER-DOMAIN VERSION + KEEP-WARM (Pha B+C) — CODE XONG + VERIFY 2026-08-26 (main, v6.56). ⚠️ CẦN [TT] REDEPLOY GAS.**
+Tiếp nối Pha A (đã chạy tốt production — [TT] xác nhận tốc độ ghi cải thiện). Trị "load chậm".
+- **③ Pha B — version theo TỪNG DOMAIN:** thay `SHTD_DATA_VER` global bằng `SHTD_VER_<domain>` (tasks/cases/issues/dev/initiatives/users) — `CacheLayer.gs` `_domainVer`/`_bumpDomainVer` (vẫn bump global cho AI-cache + client cũ). Mọi mutation bump ĐÚNG domain: `atomicUpsert_` (5 entity) + delete handlers + full-write (write/case-pipeline-write/initiative-write) + user-*. `batch-read` nhận map `body.vers`, **chỉ đọc+trả domain đổi** (`notModified` nếu không domain nào đổi). notifs bám global (payload nhỏ + client poll notif-read 15'). **Hệ quả: sửa 1 task KHÔNG còn ép tải lại 6 domain kia** → giảm mạnh payload/độ trễ load sau mỗi write.
+- **FE:** `api.js readAll` gửi `body.vers` (+`ver` tương thích) + lưu `db._vers`; `storage.js` khôi phục `_vers` từ cache. Parse từng domain đã guard theo presence → domain vắng trong response = giữ cache (không đụng).
+- **Tương thích ngược 2 chiều:** server mới + FE cũ (gửi `ver`) → coi mọi domain ở mức đó, vẫn chạy (chỉ kém tối ưu). FE mới + server cũ (trả `ver`, không `vers`) → FE đọc `json.ver`, vẫn merge data. Deploy GAS trước / FE sau đều an toàn.
+- **④ Pha C — keep-warm (opt-in):** hàm `keepWarm()` (Code.gs) chỉ chạm Properties (không mở Sheet) — [TT] gắn Time-driven trigger 5' trong GAS Editor để giảm cold-start. **Không** gỡ notifOnWrite khỏi request path (Pha A đã đưa ngoài lock; nó rẻ cho update thường, chỉ append khi create/close — gỡ hẳn sẽ trễ notif tạo/đóng, đánh đổi không đáng).
+- **⚠️ [TT] cần redeploy GAS** (Code.gs + CacheLayer.gs + Concurrency.gs) + FE hard-refresh (`?v=20260826c`). (Tùy chọn) thêm trigger `keepWarm` mỗi 5'.
+- **Verify:** `verify_domain_version` **8/8** (gửi/lưu vers · notModified giữ cache · chỉ tải domain đổi) + `verify_startup_nonblocking` **10/10** (version-gate) + regression write_retry 10/10 · atomic 41/41 · my_work 97/97 · id_reassign 17/17 · notifications 21/21. (`verify_sync_fix` fail `openTaskModal` = pre-existing trên HEAD sạch, không liên quan.)
+
+---
+
 **GHI TIN CẬY (Pha A) — CODE XONG + VERIFY 2026-08-26 (main, v6.55). ⚠️ CẦN [TT] REDEPLOY GAS.**
 Mục tiêu: đưa tỷ lệ ghi timeout/mất bản ghi về ~0% ở tải 10–30 người đồng thời. Thuộc kế hoạch tối ưu BE 3 pha (`docs/PROPOSAL_BE_Async_Cache_2026-08-26.md`).
 - **① Rút ngắn khóa ghi:** helper `atomicUpsert_` (`Concurrency.gs`) dùng chung cho 5 entity (task/case/issue/initiative/dev). Vùng khóa chỉ còn *check-then-write*; **đưa RA NGOÀI khóa**: `notifPrior_` (đọc cả 1 sheet) + `auditLog` (append) + `notifOnWrite` (sinh notif). Bản ghi MỚI khỏi đọc prior (chắc chắn chưa tồn tại).

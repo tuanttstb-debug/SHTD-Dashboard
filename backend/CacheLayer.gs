@@ -24,6 +24,37 @@ function _bumpDataVer() {
   PropertiesService.getScriptProperties().setProperty('SHTD_DATA_VER', String(Date.now()));
 }
 
+// ── (Pha B) Version theo TỪNG DOMAIN ──
+// Mỗi write chỉ bump version domain bị ảnh hưởng → batch-read chỉ tải lại domain ĐỔI
+// (vd sửa 1 task KHÔNG ép tải lại cases/issues/dev/initiatives). Vẫn bump GLOBAL để
+// AI-context cache (AiService) + client CŨ (gửi `ver` đơn) tự làm mới → tương thích ngược.
+var _DOMAIN_VER_KEYS = {
+  tasks:       'SHTD_VER_tasks',
+  cases:       'SHTD_VER_cases',
+  issues:      'SHTD_VER_issues',
+  dev:         'SHTD_VER_dev',
+  initiatives: 'SHTD_VER_initiatives',
+  users:       'SHTD_VER_users'
+};
+
+// Version hiện tại của 1 domain. notifs: bám GLOBAL (đổi mỗi write, payload nhỏ + client còn
+// poll notif-read mỗi 15' → luôn tươi). Domain chưa từng bump (lần đầu deploy) → fallback global.
+function _domainVer(domain) {
+  var key = _DOMAIN_VER_KEYS[domain];
+  if (!key) return _dataVer();
+  var v = PropertiesService.getScriptProperties().getProperty(key);
+  return v || _dataVer();
+}
+
+// Bump version 1 domain + GLOBAL trong 1 lần ghi Properties (setProperties gộp).
+function _bumpDomainVer(domain) {
+  var now = String(Date.now());
+  var obj = { 'SHTD_DATA_VER': now };
+  var key = _DOMAIN_VER_KEYS[domain];
+  if (key) obj[key] = now;
+  PropertiesService.getScriptProperties().setProperties(obj);
+}
+
 function _cacheGetJson(key) {
   try {
     var raw = CacheService.getScriptCache().get(key);

@@ -1,6 +1,15 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-08-26 (Session 81 — DEBUG My Work: bỏ cap 4 initiative · Kanban định kỳ + tiến độ · Cần-làm-ngay tiến độ)
 
+## 🆕 Pha B+C — VERSION THEO DOMAIN + KEEP-WARM — CODE XONG + VERIFY (v6.56)
+- [x] Pha B: `_domainVer`/`_bumpDomainVer` (CacheLayer) + batch-read so `body.vers` (chỉ trả domain đổi); bump domain ở 5 upsert + 4 delete + 3 full-write + user-*; FE readAll gửi/lưu `db._vers`.
+- [x] Pha C: `keepWarm()` opt-in (giảm cold-start). Không gỡ notifOnWrite (đã ngoài lock, rẻ).
+- [x] Verify `verify_domain_version` 8/8 + `verify_startup_nonblocking` 10/10 + regression xanh.
+- [ ] **[P0] [TT] redeploy GAS** (Code.gs + CacheLayer.gs + Concurrency.gs) + hard-refresh (`?v=20260826c`).
+- [ ] **[P1] [TT] nghiệm thu:** sửa 1 task → DevTools Network: batch-read kế chỉ có `data.tasks`, payload nhỏ hẳn; đổi cross-domain vẫn đồng bộ.
+- [ ] **[P2] [TT] (tùy chọn)** gắn Time-driven trigger `keepWarm` mỗi 5' (GAS Editor → Triggers).
+- [ ] **[CC] (tùy chọn)** áp cùng bộ Pha A+B cho spoke AIUS (chung mô hình GAS).
+
 ## 🆕 Pha A — GHI TIN CẬY (idempotency + retry + rút khóa) — CODE XONG + VERIFY (v6.55)
 - [x] `atomicUpsert_` (Concurrency.gs) — khóa tối thiểu; notif/audit ra ngoài khóa; áp 5 entity.
 - [x] Idempotency: server dedup `reqId` (CacheLayer `_reqSeen`/`_reqRemember`, TTL 5'); FE `gasWrite` retry/backoff giữ nguyên reqId.

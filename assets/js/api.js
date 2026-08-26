@@ -221,16 +221,22 @@ async function readFromHandle() {
 async function readAll(domains) {
   if (!GS_WEBAPP_URL || !getAuthSession()) return false;
   const body = { action: 'batch-read', domains: domains || null };
-  // (Phase 3) Gửi version đã biết CHỈ khi client đang có dữ liệu → server bỏ qua nếu không đổi.
-  if (db._dataVer && db.tasks && db.tasks.length) body.ver = db._dataVer;
+  // (Phase 3/Pha B) Gửi version đã biết CHỈ khi client đang có dữ liệu → server bỏ domain không đổi.
+  //   - vers: map version THEO DOMAIN (server mới) → chỉ tải lại domain đổi.
+  //   - ver:  global đơn (tương thích server cũ chưa hỗ trợ per-domain).
+  if (db.tasks && db.tasks.length) {
+    if (db._vers)    body.vers = db._vers;
+    if (db._dataVer) body.ver  = db._dataVer;
+  }
   // Lỗi mạng ở gasPost sẽ THROW ra ngoài (caller xử lý) — không nuốt để tránh fallback double-timeout.
   const json = await gasPost(body, GAS_READ_TIMEOUT_MS);
   if (!json || json.status !== 'ok') {
     console.warn('batch-read chưa hỗ trợ (GAS chưa redeploy?):', json && json.error);
     return false;   // GAS SỐNG nhưng chưa có action → fallback read lẻ an toàn
   }
-  if (json.ver) db._dataVer = json.ver;
-  // notModified: dữ liệu KHÔNG đổi kể từ lần đọc trước → giữ nguyên cache, chỉ lưu version.
+  if (json.vers) db._vers    = json.vers;   // (Pha B) per-domain (server mới)
+  if (json.ver)  db._dataVer = json.ver;    // global (tương thích)
+  // notModified: KHÔNG domain nào đổi kể từ lần đọc trước → giữ nguyên cache, chỉ lưu version.
   if (json.notModified) { persist(); return true; }
   if (!json.data) return false;
   const d = json.data;

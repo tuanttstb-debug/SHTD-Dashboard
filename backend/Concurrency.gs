@@ -110,6 +110,9 @@ function _padNum(n, width) {
  * @param {Object} spec       { sheetName, entityType, upsertFn(row,id), idKey, nameKey, action, withServerTs }
  * @returns {Object} { status:'ok', id, [serverTs] }
  */
+// entityType (notif) → domain key (batch-read/version). dev giữ nguyên 'dev'.
+var _ENTITY_DOMAIN = { task:'tasks', 'case':'cases', issue:'issues', dev:'dev', initiative:'initiatives' };
+
 function atomicUpsert_(body, tokenData, spec) {
   var origId = body[spec.idKey];
   var isNew  = !!body.isNew;
@@ -130,7 +133,9 @@ function atomicUpsert_(body, tokenData, spec) {
       finalId = isNew ? reassignIdIfExists(spec.sheetName, origId) : origId;
       if (finalId !== origId) body.row[0] = finalId;   // đồng bộ ô ID trong dòng
       spec.upsertFn(body.row, finalId);                // đọc cột ID + setValues + flush (1 lần)
-      if (typeof _bumpDataVer === 'function') _bumpDataVer();
+      // (Pha B) bump version THEO DOMAIN → batch-read chỉ tải lại domain này.
+      if (typeof _bumpDomainVer === 'function') _bumpDomainVer(_ENTITY_DOMAIN[spec.entityType] || spec.entityType);
+      else if (typeof _bumpDataVer === 'function') _bumpDataVer();
       _reqRemember(body.reqId, finalId);
     }
   } finally {

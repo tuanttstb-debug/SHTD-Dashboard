@@ -1,3 +1,13 @@
+# SESSION HANDOVER — 2026-08-26 (#2) (Pha B+C: version theo domain + keep-warm)
+**Model**: Claude Opus 4.8 · **Version**: v6.55 → **v6.56**
+
+- **Task completed:** Sau khi [TT] xác nhận Pha A chạy tốt production (tốc độ ghi cải thiện) → triển khai **Pha B** (version theo domain — trị load chậm) + **Pha C** (keep-warm opt-in). **Pha B:** `CacheLayer.gs` thêm `_domainVer`/`_bumpDomainVer` (per-domain `SHTD_VER_<domain>` + vẫn bump global); mọi mutation bump đúng domain (`atomicUpsert_` + 4 delete + 3 full-write + user-*); `batch-read` so map `body.vers`, chỉ đọc+trả domain đổi. FE `readAll` gửi/lưu `db._vers`, `storage.js` khôi phục. **Pha C:** `keepWarm()` (opt-in trigger).
+- **Files changed:** *(spoke, chưa deploy GAS)* `backend/CacheLayer.gs` (+per-domain ver), `backend/Concurrency.gs` (`atomicUpsert_` bump domain + `_ENTITY_DOMAIN`), `backend/Code.gs` (batch-read per-domain + bump domain ở delete/full-write/user + `keepWarm()`), `assets/js/api.js` (readAll gửi/nhận `vers`), `assets/js/storage.js` (khôi phục `_vers`), `assets/js/config.js` (v6.56), `index.html` (token `?v=20260826c`), `test/verify_domain_version.mjs` (mới).
+- **Decision made:** notifs bám GLOBAL ver (payload nhỏ + poll notif-read 15' → luôn tươi, không cần key riêng). Giữ `ver` global song song `vers` cho tương thích ngược 2 chiều. **KHÔNG** gỡ notifOnWrite khỏi request path (Pha A đã đưa ngoài lock; rẻ cho update thường; gỡ hẳn = trễ notif create/close, không đáng). Keep-warm chỉ opt-in (trigger do [TT] gắn).
+- **Blocker:** **Không.** **⚠️ [TT] cần redeploy GAS** (Code.gs + CacheLayer.gs + Concurrency.gs) + hard-refresh FE. (Tùy chọn) gắn trigger `keepWarm` mỗi 5'.
+- **Next step:** [TT] redeploy + nghiệm thu: sửa 1 task → mở DevTools Network xem batch-read kế chỉ trả `data.tasks` (các domain khác vắng) + payload nhỏ hẳn; đổi cross-domain vẫn đồng bộ đúng. [CC] (tùy chọn) áp cùng bộ Pha A+B cho spoke AIUS. Kế hoạch: `docs/PROPOSAL_BE_Async_Cache_2026-08-26.md`.
+- **Regression risk:** **Thấp–TB → verify đầy đủ.** `verify_domain_version` 8/8 + `verify_startup_nonblocking` 10/10 (version-gate) + write_retry 10/10 · atomic 41/41 · my_work 97/97 · id_reassign 17/17 · notifications 21/21. **QUAN TRỌNG:** mọi mutation PHẢI bump domain — nếu bỏ sót 1 mutation, client sẽ không thấy thay đổi domain đó (đã rà: 5 upsert + 4 delete + 3 full-write + 3 user = đủ). `verify_sync_fix` fail = pre-existing (`openTaskModal` trên HEAD sạch). Data-boundary: chỉ version string trong Properties.
+
 # SESSION HANDOVER — 2026-08-26 (Pha A: GHI TIN CẬY — idempotency + retry + rút ngắn khóa)
 **Model**: Claude Opus 4.8 · **Repo**: https://github.com/tuanttstb-debug/SHTD-Dashboard · **Version**: v6.54 → **v6.55**
 
