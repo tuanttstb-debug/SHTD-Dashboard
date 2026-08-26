@@ -371,11 +371,18 @@ function _mwBuildTaskCard(task) {
 function _mwUrgentTaskItem(t) {
   const diff = _mwDiffDays(t.endDate);
   const cls  = diff < 0 ? 'is-overdue' : diff === 0 ? 'is-today' : 'is-soon';
+  const prog = Math.min(Math.max(parseInt(t.progress) || 0, 0), 100);
+  const recur = normRecurrence(t.recurrence);
   return `
 <div class="mw-urgent-item ${cls}" onclick="openTaskViewPopup('${esc(t.id)}')">
   <span class="mw-urgent-type type-task">Task</span>
   <span class="mw-urgent-id">${esc(t.id)}</span>
   <span class="mw-urgent-name">${esc(t.name)}</span>
+  ${recur ? `<span class="rt-recur-chip" title="Task định kỳ">${recur === 'Tuần' ? '↻ Tuần' : '↻ Tháng'}</span>` : ''}
+  <span class="mw-urgent-prog" title="Tiến độ ${prog}%">
+    <span class="mw-urgent-prog-bar"><span class="mw-urgent-prog-fill" style="width:${prog}%"></span></span>
+    <span class="mw-urgent-prog-label">${prog}%</span>
+  </span>
   ${_mwDeadlineBadge(t.endDate)}
   ${stateChip(t.state)}
 </div>`;
@@ -479,8 +486,9 @@ function _mwInitStatusClass(status) {
 }
 
 function _mwBuildInitSection(inits) {
-  const MAX_INIT = 4;
-  const shown    = inits.slice(0, MAX_INIT);
+  // Hiển thị TẤT CẢ initiative phụ trách — số card phải khớp badge đếm.
+  // (Trước cap cứng 4 → user phụ trách 5 chỉ thấy 4 card dù badge ghi 5.)
+  const shown    = inits;
 
   const body = inits.length === 0
     ? `<div class="mw-empty">${t('mw.init.empty')}</div>`
@@ -583,14 +591,24 @@ function _mwKanbanCard(task, overSet) {
   const id     = esc(task.id);
   const isOver = task.picRes && overSet.has(task.picRes.trim().toLowerCase());
   const ragCls = { Green: 'rag-green', Amber: 'rag-amber', Red: 'rag-red' }[task.status] || '';
+  const prog   = Math.min(Math.max(parseInt(task.progress) || 0, 0), 100);
+  const recur  = normRecurrence(task.recurrence);
+  // Nút tick định kỳ — dùng chung badge helper; wrapper stopPropagation để không mở popup khi tick.
+  const periodBadge = taskPeriodBadgeHtml(task, 'mwKbTogglePeriod');
   return `
-<div class="mw-kb-card${isOver ? ' is-overload' : ''}" onclick="openTaskViewPopup('${id}')">
+<div class="mw-kb-card${isOver ? ' is-overload' : ''}" data-id="${id}" onclick="openTaskViewPopup('${id}')">
   <div class="mw-kb-card-top">
     <span class="mw-kb-id">${id}</span>
     ${ragCls ? `<span class="mw-kb-rag ${ragCls}"></span>` : ''}
+    ${recur ? `<span class="rt-recur-chip" title="Task định kỳ">${recur === 'Tuần' ? '↻ Tuần' : '↻ Tháng'}</span>` : ''}
     ${_mwDeadlineBadge(task.endDate)}
   </div>
   <div class="mw-kb-name" title="${esc(task.name)}">${esc(task.name)}</div>
+  <div class="mw-kb-prog" title="Tiến độ ${prog}%">
+    <div class="mw-kb-prog-bar"><div class="mw-kb-prog-fill" style="width:${prog}%"></div></div>
+    <span class="mw-kb-prog-label">${prog}%</span>
+  </div>
+  ${periodBadge ? `<div class="mw-kb-period" onclick="event.stopPropagation()">${periodBadge}</div>` : ''}
   <div class="mw-kb-meta">
     ${task.picRes ? `<span class="mw-kb-pic${isOver ? ' pic-over' : ''}"><i class="fa-solid fa-user"></i> ${esc(task.picRes)}</span>` : ''}
     ${isOver ? `<span class="mw-kb-overbadge" title="FTE đang chạy ≥${MW_FTE_MAX} task đồng thời"><i class="fa-solid fa-triangle-exclamation"></i> ${t('mw.kb.overload')}</span>` : ''}
@@ -794,6 +812,18 @@ function mwTogglePeriod(taskId) {
   if (card && t) {
     const row = card.querySelector('.mw-period-row');
     if (row) row.innerHTML = taskPeriodBadgeHtml(t, 'mwTogglePeriod');
+  }
+}
+
+// Tick "xong kỳ này" từ card Kanban → mutate + lưu (helpers) + cập nhật đúng card (không re-render cả view).
+function mwKbTogglePeriod(taskId) {
+  const st = taskTogglePeriodDone(taskId);   // mutate donePeriods + lưu (helpers.js)
+  if (!st) return;
+  const t = _mwFindTask(taskId);
+  const card = document.querySelector(`.mw-kb-card[data-id="${CSS.escape(taskId)}"]`);
+  if (card && t) {
+    const row = card.querySelector('.mw-kb-period');
+    if (row) row.innerHTML = taskPeriodBadgeHtml(t, 'mwKbTogglePeriod');
   }
 }
 

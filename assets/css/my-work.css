@@ -774,6 +774,23 @@
   gap: 4px;
   margin-left: auto;
 }
+/* Thanh tiến độ trên card Kanban (CR: show %HT) */
+.mw-kb-prog { display: flex; align-items: center; gap: 6px; }
+.mw-kb-prog-bar {
+  flex: 1; height: 5px; background: var(--border);
+  border-radius: 99px; overflow: hidden;
+}
+.mw-kb-prog-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width .2s; }
+.mw-kb-prog-label { font-size: 10px; font-weight: 700; color: var(--text-3); min-width: 26px; text-align: right; }
+.mw-kb-period { display: flex; }
+/* Thanh tiến độ trong mục "Cần làm ngay" (CR: show %HT) */
+.mw-urgent-prog { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; width: 82px; }
+.mw-urgent-prog-bar {
+  flex: 1; height: 5px; background: var(--border);
+  border-radius: 99px; overflow: hidden;
+}
+.mw-urgent-prog-fill { height: 100%; background: var(--primary); border-radius: 99px; }
+.mw-urgent-prog-label { font-size: 10px; font-weight: 700; color: var(--text-3); min-width: 26px; text-align: right; }
 
 /* ── Dark mode ── */
 [data-theme="dark"] .mw-result-area {

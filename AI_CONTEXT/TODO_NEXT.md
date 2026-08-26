@@ -1,5 +1,23 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-25 (Session 80 — Task ĐỊNH KỲ tuần/tháng "log 1 lần" + tick mỗi kỳ)
+**Prepared**: 2026-08-26 (Session 81 — DEBUG My Work: bỏ cap 4 initiative · Kanban định kỳ + tiến độ · Cần-làm-ngay tiến độ)
+
+## ✅ COMPLETED S81 — DEBUG/CR "Công việc của tôi" (thuần FE, v6.54)
+- [x] #2 bỏ cap `MAX_INIT=4` ở `_mwBuildInitSection` → hiện đủ initiative phụ trách (TuanTT4 = 5).
+- [x] #1 Kanban card (`_mwKanbanCard`) + item "Cần làm ngay" thêm chip ↻ định kỳ + nút tick `mwKbTogglePeriod` (stopPropagation).
+- [x] #3 thanh tiến độ mini + % trên Kanban card + "Cần làm ngay" (CSS `.mw-kb-prog*` / `.mw-urgent-prog*`).
+- [x] Truy vết đọc LIVE: header định kỳ đã có + 10 task recurrence + 5 initiative TuanTT4 (không trùng) → gốc thuần FE.
+- [x] Tests: `verify_my_work` **97/97** (+S81A/B/C), `verify_recurring` 23/23. **KHÔNG cần redeploy GAS** — hard-reload v6.54.
+
+## 🟡 PRIORITY 1 — [TT] nghiệm thu S81
+| Việc | Chi tiết |
+|---|---|
+| [TT] hard-reload → v6.54 | Mở "Công việc của tôi" (TuanTT4): mục "Initiative phụ trách" hiện đủ **5** card; Kanban card task định kỳ có chip ↻ + nút "Xong tuần/tháng này" + thanh tiến độ; "Cần làm ngay" có thanh tiến độ. |
+| Nếu định kỳ vẫn không hiện | Cache version-gate (TD-AIUS-CACHE-01): chạy `binh-dan-hoa-ai-H2/scripts/bump_cache_version.js` (hub) rồi bấm Sync. Data đã xác nhận có trong sheet (10 task recurrence). |
+
+---
+
+# (S80) TODO — giữ tham khảo
+**Prepared cũ**: 2026-08-25 (Session 80 — Task ĐỊNH KỲ tuần/tháng "log 1 lần" + tick mỗi kỳ)
 
 ## ✅ COMPLETED S80 — Task định kỳ (FEATURE, v6.53)
 - [x] PA3: +2 cột append `Định kỳ`/`Kỳ đã xong` + helper period (trạng thái/miss/tick auto-reset) + nút "Xong kỳ này" (My Work/Tasks/popup) + select modal + chip ↻.

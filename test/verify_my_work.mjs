@@ -914,6 +914,92 @@ await page.evaluate(() => { if (typeof mwSetPersonFilter === 'function') mwSetPe
 await page.waitForTimeout(200);
 
 /* ══════════════════════════════════════════
+   S81 — DEBUG/CR: init KHÔNG cap 4 · Kanban định kỳ + tiến độ · Urgent tiến độ
+══════════════════════════════════════════ */
+// (A) #2 — "Initiative phụ trách" hiển thị ĐỦ (trước cap cứng 4 → user phụ trách 5 chỉ thấy 4 card)
+const FIVE_INITS = [1,2,3,4,5].map(i => ({
+  id:`IX-0${i}`, name:`Init ${i}`, type:'initiative', status:'Active',
+  accountable:'TuanTT4', parentId:'', category:'A',
+}));
+await page.evaluate(({ inits, user }) => {
+  db.tasks = []; db.initiatives = inits;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'s81a', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { inits: FIVE_INITS, user: USER_PO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('list'); });
+await page.waitForTimeout(400);
+const initCardCount = await page.$$eval('#mwSectionThird .mw-init-card', els => els.length);
+log('S81A-init-no-cap', initCardCount === 5, `5 initiative phụ trách → render đủ 5 card (got ${initCardCount}, trước cap 4)`);
+await shot(page, 'S81A-init-no-cap');
+
+// (B) #1 + #3 — Kanban card của task định kỳ: chip ↻ + nút tick + thanh tiến độ
+const REC_TASKS = [{
+  id:'RC-01', name:'Báo cáo tuần định kỳ', team:'Số', picAcc:'Lead', picRes:'Lead',
+  endDate: isoDate(5), state:'Chưa bắt đầu', progress:'40', highlight:'N', status:'Amber',
+  initiative:'', milestone:'', result:'', recurrence:'Tuần', donePeriods:'', startDate: vnDate(-14),
+}];
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'s81b', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: REC_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('kanban'); });
+await page.waitForTimeout(400);
+const kb = await page.evaluate(() => {
+  const card = document.querySelector('.mw-kb-card[data-id="RC-01"]');
+  if (!card) return { found:false };
+  return {
+    found:true,
+    recurChip: !!card.querySelector('.rt-recur-chip'),
+    progFill:  !!card.querySelector('.mw-kb-prog-fill'),
+    progWidth: card.querySelector('.mw-kb-prog-fill')?.style.width || '',
+    tickBtn:   !!card.querySelector('.rt-period-btn'),
+  };
+});
+log('S81B-kb-recur-chip', kb.found && kb.recurChip, `Kanban card định kỳ có chip ↻ [${JSON.stringify(kb)}]`);
+log('S81B-kb-progress',   kb.progFill && kb.progWidth === '40%', `Kanban card có thanh tiến độ 40% (width=${kb.progWidth})`);
+log('S81B-kb-tick',       kb.tickBtn, 'Kanban card định kỳ có nút tick "xong kỳ này"');
+// Tick từ Kanban → cập nhật card tại chỗ (KHÔNG mở popup nhờ stopPropagation)
+await page.evaluate(() => { const b = document.querySelector('.mw-kb-card[data-id="RC-01"] .rt-period-btn'); if (b) b.click(); });
+await page.waitForTimeout(200);
+const kbAfter = await page.evaluate(() => {
+  const card = document.querySelector('.mw-kb-card[data-id="RC-01"]');
+  const ov = document.getElementById('taskViewOverlay');
+  const popupOpen = !!(ov && getComputedStyle(ov).display !== 'none');
+  return { doneBtn: !!card?.querySelector('.rt-period-done'), popupOpen };
+});
+log('S81B-kb-tick-toggle', kbAfter.doneBtn && !kbAfter.popupOpen,
+  `Tick Kanban → chuyển "✓ Xong" & KHÔNG mở popup [done=${kbAfter.doneBtn}, popup=${kbAfter.popupOpen}]`);
+await shot(page, 'S81B-kb-recur-progress');
+
+// (C) #3 — Mục "Cần làm ngay": item task có thanh tiến độ
+const URG_TASKS = [{
+  id:'UG-01', name:'Quá hạn cần làm', team:'Số', picAcc:'Lead', picRes:'Lead',
+  endDate: isoDate(-2), state:'Đang thực hiện', progress:'65', highlight:'N', status:'Red',
+  initiative:'', milestone:'', result:'',
+}];
+await page.evaluate(({ tasks, user }) => {
+  db.tasks = tasks;
+  localStorage.setItem('shtd_auth_v1', JSON.stringify({ token:'s81c', exp:Date.now()+86400000, user }));
+  const lo = document.getElementById('loginOverlay'); if (lo) lo.style.display = 'none';
+}, { tasks: URG_TASKS, user: USER_LEAD_SO });
+await page.evaluate(() => { navigateTo('my-work'); mwSetView('list'); });
+await page.waitForTimeout(400);
+const urg = await page.evaluate(() => {
+  const item = [...document.querySelectorAll('#mwSectionUrgent .mw-urgent-item')].find(el => el.textContent.includes('UG-01'));
+  if (!item) return { found:false };
+  const fill = item.querySelector('.mw-urgent-prog-fill');
+  return { found:true, hasProg: !!fill, width: fill?.style.width || '', label: item.querySelector('.mw-urgent-prog-label')?.textContent?.trim() || '' };
+});
+log('S81C-urgent-progress', urg.found && urg.hasProg && urg.width === '65%' && urg.label === '65%',
+  `Urgent item có thanh tiến độ 65% [${JSON.stringify(urg)}]`);
+await shot(page, 'S81C-urgent-progress');
+
+// Reset về list sạch để không rò trạng thái sang MW25
+await page.evaluate(() => { mwSetView('list'); });
+await page.waitForTimeout(150);
+
+/* ══════════════════════════════════════════
    MW25 — No JS errors
 ══════════════════════════════════════════ */
 log('MW25-no-js-errors', jsErrors.length === 0,

@@ -8,6 +8,13 @@
 
 ---
 
+## 🆕 DELTA — Session 81 (2026-08-26) — DEBUG My Work (init cap · Kanban định kỳ/tiến độ)
+
+Không nợ mới. Phiên thuần FE sửa 3 lỗi/CR ở `views/my-work.js` + `css/my-work.css`:
+- **Đóng**: `_mwBuildInitSection` bỏ cap cứng 4 (badge đếm ≠ số card) · Kanban card nay render định kỳ + tiến độ · "Cần làm ngay" có tiến độ.
+- **Lưu ý còn treo (không phải nợ mới)**: list `_mwBuildTaskSection` vẫn cap **20 card** (có link "Xem tất cả" → trang Tasks) — task định kỳ ngoài top-20 chỉ thấy ở **Kanban** (không cap) hoặc trang Tasks; nếu [TT] muốn task định kỳ luôn nổi ở list → cân nhắc ưu tiên trong `_mwSortTasks` (tùy chọn P2, chưa làm để tránh đổi hành vi sort chung).
+- **TD-AIUS-CACHE-01 (vẫn áp)**: sửa/xóa TAY sheet không bump `DATA_VER` → UI kẹt cache; đã xác nhận data định kỳ CÓ trong sheet (đọc LIVE 10 task) nên nếu [TT] chưa thấy sau reload = cache, chạy `bump_cache_version.js`.
+
 ## 🆕 DELTA — Session 80 (2026-08-25) — Task định kỳ tuần/tháng "log 1 lần"
 
 ### TD-RECUR-01: Nhắc recur-miss là transient 1 kỳ (UI giữ MISS bền) ⚪ LOW
