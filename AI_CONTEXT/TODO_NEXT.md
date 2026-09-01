@@ -1,5 +1,18 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-08-26 (Session 81 — DEBUG My Work: bỏ cap 4 initiative · Kanban định kỳ + tiến độ · Cần-làm-ngay tiến độ)
+**Prepared**: 2026-09-01 (S82 — Calendar Sync "Công việc của tôi", Pha 1, TuanTT4)
+
+## 🆕 S82 — CALENDAR SYNC (Pha 1, giới hạn TuanTT4) — CODE XONG + VERIFY + [TT] REDEPLOY GAS (v6.57)
+- [x] `CalendarSyncService.gs`: desired-set (task định kỳ→lặp · task/init đến hạn→1 lần) + diff idempotent (`CAL_SYNC_MAP`) + create/update/delete CalendarApp + tự phát hiện direct(owner==gmail)/guest-invite + whitelist TuanTT4 + trigger `calSyncDaily`@7h30.
+- [x] `Code.gs` +3 route self-service `cal-status`/`cal-enable`/`cal-disable` (audit).
+- [x] FE thẻ 🔔 ở My Work (chỉ TuanTT4) + `api.js`(+3) + i18n VI/EN + css theme-aware + v6.57.
+- [x] Verify `verify_calendar_sync` **32/32** + regression my_work **97/97** (0 JS error).
+- [x] **[TT] redeploy GAS** (dán 2 .gs + Authorize Calendar + `installCalendarSyncTrigger()`, link không đổi).
+- [ ] **[P0] [TT] nghiệm thu LIVE:** hard-refresh → My Work → nhập Gmail → **Kết nối** → mở Google Calendar kiểm event định kỳ (lặp) + deadline (1 lần); **Ngắt kết nối** → biến mất; đổi deadline/tick xong → "Đồng bộ lại" thấy cập nhật.
+- [ ] **[CC] (tùy chọn) Pha 2:** reconcile tức thì sau write (không đợi @7h30); popup reminder cho event định kỳ; mở rộng multi-user (bật lại cột User_Master + toggle Quản trị người dùng — thiết kế §5–§7 `docs/PROPOSAL_Calendar_Sync_2026-09-01.md`).
+
+---
+
+**Prepared cũ**: 2026-08-26 (Session 81 — DEBUG My Work: bỏ cap 4 initiative · Kanban định kỳ + tiến độ · Cần-làm-ngay tiến độ)
 
 ## 🆕 Pha B+C — VERSION THEO DOMAIN + KEEP-WARM — CODE XONG + VERIFY (v6.56)
 - [x] Pha B: `_domainVer`/`_bumpDomainVer` (CacheLayer) + batch-read so `body.vers` (chỉ trả domain đổi); bump domain ở 5 upsert + 4 delete + 3 full-write + user-*; FE readAll gửi/lưu `db._vers`.

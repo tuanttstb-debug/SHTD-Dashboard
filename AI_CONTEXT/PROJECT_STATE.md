@@ -1,5 +1,17 @@
 # PROJECT STATE
 
+**S82 — CALENDAR SYNC "Công việc của tôi" (Pha 1, giới hạn TuanTT4) — CODE XONG + VERIFY + [TT] ĐÃ REDEPLOY GAS. (main, v6.57, 2026-09-01)**
+Tính năng mới: user (giới hạn **TuanTT4**) bật **1 công tắc tổng** ở "Công việc của tôi" để đồng bộ việc lên **Google Calendar** nhắc việc, gỡ bất kỳ lúc nào.
+- **Phạm vi sync** (việc user phụ trách Res/Acc, chưa xong): **task định kỳ** (Tuần/Tháng) → all-day event **lặp** (weekly/monthly RRULE); **task có deadline** (hạn ≥ hôm nay) → event **1 lần**; **initiative có deadline** → event 1 lần (bỏ milestone).
+- **Ghi lịch tự phát hiện:** email đích == tài khoản Google chạy script (owner) → **GHI THẲNG** `CalendarApp.getDefaultCalendar()` (nhắc chuẩn, +popup). [TT] xác nhận **Gmail trong DB = Gmail chính = owner** → chạy đường ghi-thẳng. Nếu khác → fallback tạo lịch phụ "SHTD – Nhắc việc" + **mời khách** (guest-invite).
+- **Idempotent:** sổ `CAL_SYNC_MAP` (sheet, auto-create) map (user·entity·occ)→eventId+hash; reconcile chỉ **create/update/delete phần chênh** (chống trùng + tôn trọng quota CalendarApp). Trạng thái bật/tắt+email+mốc sync lưu **Script Properties** (không đụng User_Master).
+- **Tiêu đề event** = **đầy đủ** (option A — task của chính [TT], Gmail của chính [TT] → data-boundary an toàn).
+- **Backend:** `CalendarSyncService.gs` (mới, tự chứa helper parse/recur) + `Code.gs` (+3 route self-service `cal-status`/`cal-enable`/`cal-disable`, whitelist trong service) + trigger `calSyncDaily`@7h30 (`installCalendarSyncTrigger()`).
+- **FE:** thẻ 🔔 ở `views/my-work.js` (chỉ hiện TuanTT4) + `api.js` (+3) + i18n VI/EN + `my-work.css` (theme-aware) + v6.57 (`?v=20260901`).
+- **✅ [TT] đã redeploy GAS** (dán 2 .gs + Authorize Calendar + `installCalendarSyncTrigger()`, link không đổi). **Verify:** `verify_calendar_sync` **32/32** (sandbox, logic thuần) + regression `my_work` **97/97** (0 JS error). Phần chạm CalendarApp thật → [TT] smoke live. Thiết kế: `docs/PROPOSAL_Calendar_Sync_2026-09-01.md`.
+
+---
+
 **PER-DOMAIN VERSION + KEEP-WARM (Pha B+C) — CODE XONG + VERIFY 2026-08-26 (main, v6.56). ⚠️ CẦN [TT] REDEPLOY GAS.**
 Tiếp nối Pha A (đã chạy tốt production — [TT] xác nhận tốc độ ghi cải thiện). Trị "load chậm".
 - **③ Pha B — version theo TỪNG DOMAIN:** thay `SHTD_DATA_VER` global bằng `SHTD_VER_<domain>` (tasks/cases/issues/dev/initiatives/users) — `CacheLayer.gs` `_domainVer`/`_bumpDomainVer` (vẫn bump global cho AI-cache + client cũ). Mọi mutation bump ĐÚNG domain: `atomicUpsert_` (5 entity) + delete handlers + full-write (write/case-pipeline-write/initiative-write) + user-*. `batch-read` nhận map `body.vers`, **chỉ đọc+trả domain đổi** (`notModified` nếu không domain nào đổi). notifs bám global (payload nhỏ + client poll notif-read 15'). **Hệ quả: sửa 1 task KHÔNG còn ép tải lại 6 domain kia** → giảm mạnh payload/độ trễ load sau mỗi write.

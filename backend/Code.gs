@@ -70,6 +70,23 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok' });
     }
 
+    // ── Calendar Sync (Pha 1, giới hạn TuanTT4 — whitelist trong service) ──
+    // Self-service: user thao tác trên CHÍNH mình (tokenData.u). Không cần Admin.
+    if (action === 'cal-status') {
+      return _jsonResponse({ status: 'ok', cal: calStatus(tokenData.u) });
+    }
+    if (action === 'cal-enable') {
+      if (!body.email) throw new Error('Thiếu email Google để đồng bộ.');
+      var _calEn = calEnable(tokenData.u, body.email);
+      auditLog(tokenData, 'cal-enable', String(body.email));
+      return _jsonResponse({ status: 'ok', cal: _calEn });
+    }
+    if (action === 'cal-disable') {
+      var _calDis = calDisable(tokenData.u);
+      auditLog(tokenData, 'cal-disable', '');
+      return _jsonResponse({ status: 'ok', cal: _calDis });
+    }
+
     if (action === 'read') {
       var result = sheetRead();
       return _jsonResponse({ status: 'ok', values: result.values, serverTs: result.serverTs });

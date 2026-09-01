@@ -912,3 +912,22 @@ function loadNotifsFromCache() {
     if (cached) dbNotifs = JSON.parse(cached);
   } catch(e) {}
 }
+
+// ── Calendar Sync (Pha 1, giới hạn TuanTT4 — backend whitelist) ──
+// Trả về { allowed, on, email, syncedAt, stat? }. Không cache (trạng thái nhẹ, đọc khi mở view).
+async function apiCalStatus() {
+  const json = await gasPost({ action: 'cal-status' });
+  if (json.status !== 'ok') throw new Error(json.error || 'cal-status lỗi');
+  return json.cal;
+}
+async function apiCalEnable(email) {
+  // reconcile có thể tạo/xóa nhiều event → dùng timeout đọc dài (giống bulk read).
+  const json = await gasPost({ action: 'cal-enable', email: email }, GAS_READ_TIMEOUT_MS);
+  if (json.status !== 'ok') throw new Error(json.error || 'cal-enable lỗi');
+  return json.cal;
+}
+async function apiCalDisable() {
+  const json = await gasPost({ action: 'cal-disable' }, GAS_READ_TIMEOUT_MS);
+  if (json.status !== 'ok') throw new Error(json.error || 'cal-disable lỗi');
+  return json.cal;
+}

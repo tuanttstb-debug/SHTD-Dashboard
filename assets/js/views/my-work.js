@@ -745,7 +745,11 @@ function renderMyWork() {
       ${_mwPersonFilterHtml(user, teamFilter, personFilter)}
       ${_mwViewToggleHtml()}
     </div>
-  </div>`;
+  </div>
+  ${_mwCalCardShell(user)}`;
+
+  // Calendar sync (chỉ user whitelist) — nạp trạng thái sau khi innerHTML đã set.
+  if (_mwCalWL(user)) setTimeout(mwCalRefresh, 0);
 
   if (_mwView === 'kanban') {
     root.innerHTML = `<div class="mw-page">${header}${_mwBuildKanban(myTasks)}</div>`;
@@ -938,4 +942,84 @@ function mwOpenInitPopup() {
 function mwCloseInitPopup() {
   const overlay = document.getElementById('mwInitPopup');
   if (overlay) overlay.style.display = 'none';
+}
+
+/* ══════════════ Calendar Sync (Pha 1 — giới hạn TuanTT4) ══════════════ */
+
+let _mwCalState = null;
+
+// Whitelist client (backend cũng chặn — đây chỉ để ẩn UI cho user khác).
+function _mwCalWL(user) {
+  return !!user && String(user.username || '').toLowerCase() === 'tuantt4';
+}
+
+function _mwCalCardShell(user) {
+  if (!_mwCalWL(user)) return '';
+  return `<div class="mw-cal-card" id="mwCalCard"><div class="mw-cal-loading">${t('mw.cal.loading')}</div></div>`;
+}
+
+function _mwCalCardHtml(st) {
+  if (!st || !st.allowed) return '';
+  const titleHtml = `<span class="mw-cal-title">🔔 ${t('mw.cal.title')}</span>`;
+  if (st.on) {
+    const when = st.syncedAt ? new Date(st.syncedAt).toLocaleString('vi-VN') : '';
+    return `
+      <div class="mw-cal-head">${titleHtml}<span class="mw-cal-badge on">● ${t('mw.cal.on')}</span></div>
+      <div class="mw-cal-body">
+        <div class="mw-cal-info">${t('mw.cal.synced-to')}: <b>${esc(st.email)}</b>${when ? ` · ${t('mw.cal.last')}: ${esc(when)}` : ''}</div>
+        <div class="mw-cal-actions">
+          <button class="btn btn-ghost btn-sm" onclick="mwCalSyncNow()"><i class="fa-solid fa-rotate"></i> ${t('mw.cal.resync')}</button>
+          <button class="btn btn-ghost btn-sm mw-cal-danger" onclick="mwCalDisable()"><i class="fa-solid fa-link-slash"></i> ${t('mw.cal.disconnect')}</button>
+        </div>
+      </div>`;
+  }
+  return `
+    <div class="mw-cal-head">${titleHtml}<span class="mw-cal-badge off">○ ${t('mw.cal.off')}</span></div>
+    <div class="mw-cal-body">
+      <div class="mw-cal-info">${t('mw.cal.hint')}</div>
+      <div class="mw-cal-connect">
+        <input type="email" id="mwCalEmail" class="mw-cal-input" placeholder="you@gmail.com" value="${esc(st.email || '')}">
+        <button class="btn btn-primary btn-sm" onclick="mwCalEnable()"><i class="fa-brands fa-google"></i> ${t('mw.cal.connect')}</button>
+      </div>
+    </div>`;
+}
+
+function _mwCalSetLoading(msg) {
+  const el = document.getElementById('mwCalCard');
+  if (el) el.innerHTML = `<div class="mw-cal-loading">${esc(msg)}</div>`;
+}
+function _mwCalRender(st) {
+  _mwCalState = st;
+  const el = document.getElementById('mwCalCard');
+  if (el) el.innerHTML = _mwCalCardHtml(st);
+}
+
+async function mwCalRefresh() {
+  const el = document.getElementById('mwCalCard');
+  if (!el) return;
+  try { _mwCalRender(await apiCalStatus()); }
+  catch (e) { el.innerHTML = `<div class="mw-cal-err">${t('mw.cal.err')}: ${esc(e.message)}</div>`; }
+}
+
+async function mwCalEnable() {
+  const inp = document.getElementById('mwCalEmail');
+  const email = inp ? inp.value.trim() : '';
+  if (!email) { toast(t('mw.cal.need-email'), 'warn'); return; }
+  _mwCalSetLoading(t('mw.cal.connecting'));
+  try { _mwCalRender(await apiCalEnable(email)); toast(t('mw.cal.connected'), 'success'); }
+  catch (e) { toast(t('mw.cal.err') + ': ' + e.message, 'error'); mwCalRefresh(); }
+}
+
+async function mwCalDisable() {
+  _mwCalSetLoading(t('mw.cal.disconnecting'));
+  try { _mwCalRender(await apiCalDisable()); toast(t('mw.cal.disconnected'), 'success'); }
+  catch (e) { toast(t('mw.cal.err') + ': ' + e.message, 'error'); mwCalRefresh(); }
+}
+
+async function mwCalSyncNow() {
+  const email = _mwCalState ? _mwCalState.email : '';
+  if (!email) { mwCalRefresh(); return; }
+  _mwCalSetLoading(t('mw.cal.syncing'));
+  try { _mwCalRender(await apiCalEnable(email)); toast(t('mw.cal.synced'), 'success'); }
+  catch (e) { toast(t('mw.cal.err') + ': ' + e.message, 'error'); mwCalRefresh(); }
 }

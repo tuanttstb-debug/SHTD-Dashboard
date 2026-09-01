@@ -839,3 +839,34 @@
   font-size: 10px; font-weight: 700; color: #6d28d9; background: #f3e8ff;
   border: 1px solid #e9d5ff; border-radius: 6px; padding: 1px 6px; margin-left: 4px; white-space: nowrap;
 }
+
+/* ══════════════ Calendar Sync card (S82 — Pha 1, TuanTT4) ══════════════ */
+.mw-cal-card {
+  margin: 10px 0 4px; padding: 12px 14px; border-radius: 10px;
+  background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%);
+  border: 1px solid #dbeafe;
+}
+.mw-cal-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mw-cal-title { font-weight: 700; font-size: 14px; color: #1e3a8a; }
+.mw-cal-badge {
+  font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap;
+}
+.mw-cal-badge.on  { color: #047857; background: #d1fae5; border: 1px solid #a7f3d0; }
+.mw-cal-badge.off { color: #6b7280; background: #f3f4f6; border: 1px solid #e5e7eb; }
+.mw-cal-body { margin-top: 8px; }
+.mw-cal-info { font-size: 12.5px; color: #475569; margin-bottom: 8px; line-height: 1.5; }
+.mw-cal-actions, .mw-cal-connect { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mw-cal-input {
+  flex: 1 1 220px; min-width: 180px; padding: 6px 10px; font-size: 13px;
+  border: 1px solid #cbd5e1; border-radius: 7px; background: #fff;
+}
+.mw-cal-danger { color: #b91c1c; }
+.mw-cal-loading, .mw-cal-err { font-size: 12.5px; color: #64748b; padding: 2px 0; }
+.mw-cal-err { color: #b91c1c; }
+
+@media (prefers-color-scheme: dark) {
+  .mw-cal-card { background: linear-gradient(135deg, #1e293b 0%, #262338 100%); border-color: #334155; }
+  .mw-cal-title { color: #93c5fd; }
+  .mw-cal-info { color: #94a3b8; }
+  .mw-cal-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+}
