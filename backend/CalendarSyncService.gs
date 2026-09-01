@@ -203,6 +203,25 @@ function _calValidEmail(email) {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email || '').trim());
 }
 
+// Email đăng ký của user trong User_Master (không bắt user nhập lại).
+function _calUserEmail(username) {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(USER_SHEET_NAME);   // USER_SHEET_NAME: AuthService.gs
+    if (!sheet) return '';
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) return '';
+    var H = data[0].map(function (h) { return String(h).trim(); });
+    var iUser = H.indexOf('Username'), iMail = H.indexOf('Email');
+    if (iUser < 0 || iMail < 0) return '';
+    var uLc = String(username || '').trim().toLowerCase();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][iUser]).trim().toLowerCase() === uLc) return String(data[i][iMail] || '').trim();
+    }
+  } catch (e) { Logger.log('_calUserEmail lỗi: ' + e.message); }
+  return '';
+}
+
 function _calEffectiveEmail() {
   try { return String(Session.getEffectiveUser().getEmail() || '').trim().toLowerCase(); }
   catch (e) { return ''; }
@@ -389,20 +408,26 @@ function calSyncNow(username) {
 function calStatus(username) {
   var allowed = _calAllowed(username);
   var props = _calProps();
+  // email hiển thị: khi đang bật = email đã lưu; khi tắt = gợi ý từ User_Master (không bắt nhập).
+  var em = allowed ? String(props.getProperty(CAL_PROP_EMAIL) || '') : '';
+  if (allowed && !em) em = _calUserEmail(username);
   return {
     allowed: allowed,
     on: allowed && props.getProperty(CAL_PROP_ON) === '1',
-    email: allowed ? String(props.getProperty(CAL_PROP_EMAIL) || '') : '',
+    email: em,
     syncedAt: allowed ? String(props.getProperty(CAL_PROP_SYNCED) || '') : ''
   };
 }
 
+// email tùy chọn: bỏ trống → lấy Email đăng ký trong User_Master (không bắt user nhập lại).
 function calEnable(username, email) {
   _calAssertAllowed(username);
-  if (!_calValidEmail(email)) throw new Error('Email Google không hợp lệ.');
+  var em = String(email || '').trim();
+  if (!em) em = _calUserEmail(username);
+  if (!_calValidEmail(em)) throw new Error('Chưa có email hợp lệ trong hồ sơ (User_Master). Liên hệ Admin cập nhật Email.');
   var props = _calProps();
   props.setProperty(CAL_PROP_ON, '1');
-  props.setProperty(CAL_PROP_EMAIL, String(email).trim());
+  props.setProperty(CAL_PROP_EMAIL, em);
   var stat = calSyncNow(username);
   var st = calStatus(username);
   st.stat = stat;
@@ -436,6 +461,16 @@ function installCalendarSyncTrigger() {
   }
   ScriptApp.newTrigger('calSyncDaily').timeBased().atHour(7).nearMinute(30).everyDays(1).create();
   Logger.log('✅ Đã gắn trigger calSyncDaily @7h30.');
+}
+
+// ⚠️ CHẠY 1 LẦN trong Apps Script editor để CẤP QUYỀN Calendar cho owner.
+// installCalendarSyncTrigger() chỉ dùng ScriptApp → KHÔNG kích hoạt consent Calendar;
+// hàm này gọi CalendarApp → Apps Script sẽ hỏi Authorize (tick quyền Google Calendar).
+// Sau khi cấp: redeploy Web App (New version) để deployment chạy với scope mới.
+function authorizeCalendarScope() {
+  var name = CalendarApp.getDefaultCalendar().getName();
+  Logger.log('✅ Đã cấp quyền Calendar. Lịch mặc định của owner: ' + name);
+  return name;
 }
 
 // Tiện ích self-test bật thử (chạy trong editor). KHÔNG dùng ở production.

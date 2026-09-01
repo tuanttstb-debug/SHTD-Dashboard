@@ -7,7 +7,9 @@
 - [x] FE thẻ 🔔 ở My Work (chỉ TuanTT4) + `api.js`(+3) + i18n VI/EN + css theme-aware + v6.57.
 - [x] Verify `verify_calendar_sync` **32/32** + regression my_work **97/97** (0 JS error).
 - [x] **[TT] redeploy GAS** (dán 2 .gs + Authorize Calendar + `installCalendarSyncTrigger()`, link không đổi).
-- [ ] **[P0] [TT] nghiệm thu LIVE:** hard-refresh → My Work → nhập Gmail → **Kết nối** → mở Google Calendar kiểm event định kỳ (lặp) + deadline (1 lần); **Ngắt kết nối** → biến mất; đổi deadline/tick xong → "Đồng bộ lại" thấy cập nhật.
+- [x] **FIX v6.57.1** (3 phản hồi [TT]): theme dùng token (đồng bộ sáng/tối) · bỏ input email (lấy Email User_Master) · thêm `authorizeCalendarScope()` (lỗi permission gốc do `installCalendarSyncTrigger` chỉ dùng ScriptApp, chưa cấp scope Calendar).
+- [ ] **[P0] [TT] CẤP QUYỀN CALENDAR:** mở Apps Script editor → chọn hàm **`authorizeCalendarScope`** → **Run** → hộp thoại **Authorize** → tick quyền **Google Calendar** → Allow. Rồi **redeploy Web App (New version)**. (Đây là gốc lỗi "script does not have permission … calendar".)
+- [ ] **[P0] [TT] nghiệm thu LIVE:** hard-refresh (`?v=20260901b`) → My Work → thẻ 🔔 hiện email đăng ký → **Kết nối** (không cần nhập) → mở Google Calendar kiểm event định kỳ (lặp) + deadline (1 lần); **Ngắt kết nối** → biến mất; đổi deadline/tick xong → "Đồng bộ lại" thấy cập nhật.
 - [ ] **[CC] (tùy chọn) Pha 2:** reconcile tức thì sau write (không đợi @7h30); popup reminder cho event định kỳ; mở rộng multi-user (bật lại cột User_Master + toggle Quản trị người dùng — thiết kế §5–§7 `docs/PROPOSAL_Calendar_Sync_2026-09-01.md`).
 
 ---

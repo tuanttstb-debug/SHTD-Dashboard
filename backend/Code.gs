@@ -76,9 +76,9 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', cal: calStatus(tokenData.u) });
     }
     if (action === 'cal-enable') {
-      if (!body.email) throw new Error('Thiếu email Google để đồng bộ.');
-      var _calEn = calEnable(tokenData.u, body.email);
-      auditLog(tokenData, 'cal-enable', String(body.email));
+      // email tùy chọn: bỏ trống → dùng Email đăng ký trong User_Master.
+      var _calEn = calEnable(tokenData.u, body.email || '');
+      auditLog(tokenData, 'cal-enable', String(_calEn.email || ''));
       return _jsonResponse({ status: 'ok', cal: _calEn });
     }
     if (action === 'cal-disable') {

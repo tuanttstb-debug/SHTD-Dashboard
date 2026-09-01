@@ -921,8 +921,11 @@ async function apiCalStatus() {
   return json.cal;
 }
 async function apiCalEnable(email) {
+  // email tùy chọn: bỏ trống → server dùng Email đăng ký trong User_Master.
   // reconcile có thể tạo/xóa nhiều event → dùng timeout đọc dài (giống bulk read).
-  const json = await gasPost({ action: 'cal-enable', email: email }, GAS_READ_TIMEOUT_MS);
+  const body = { action: 'cal-enable' };
+  if (email) body.email = email;
+  const json = await gasPost(body, GAS_READ_TIMEOUT_MS);
   if (json.status !== 'ok') throw new Error(json.error || 'cal-enable lỗi');
   return json.cal;
 }

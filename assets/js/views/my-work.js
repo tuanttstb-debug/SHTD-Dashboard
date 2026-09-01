@@ -973,14 +973,17 @@ function _mwCalCardHtml(st) {
         </div>
       </div>`;
   }
+  const hasEmail = !!(st.email && st.email.trim());
   return `
     <div class="mw-cal-head">${titleHtml}<span class="mw-cal-badge off">○ ${t('mw.cal.off')}</span></div>
     <div class="mw-cal-body">
       <div class="mw-cal-info">${t('mw.cal.hint')}</div>
+      ${hasEmail ? `
       <div class="mw-cal-connect">
-        <input type="email" id="mwCalEmail" class="mw-cal-input" placeholder="you@gmail.com" value="${esc(st.email || '')}">
+        <span class="mw-cal-emailline">${t('mw.cal.will-use')}: <b>${esc(st.email)}</b></span>
         <button class="btn btn-primary btn-sm" onclick="mwCalEnable()"><i class="fa-brands fa-google"></i> ${t('mw.cal.connect')}</button>
-      </div>
+      </div>` : `
+      <div class="mw-cal-info mw-cal-err">${t('mw.cal.no-email')}</div>`}
     </div>`;
 }
 
@@ -1002,11 +1005,9 @@ async function mwCalRefresh() {
 }
 
 async function mwCalEnable() {
-  const inp = document.getElementById('mwCalEmail');
-  const email = inp ? inp.value.trim() : '';
-  if (!email) { toast(t('mw.cal.need-email'), 'warn'); return; }
+  // Không bắt nhập email — server dùng Email đăng ký trong User_Master.
   _mwCalSetLoading(t('mw.cal.connecting'));
-  try { _mwCalRender(await apiCalEnable(email)); toast(t('mw.cal.connected'), 'success'); }
+  try { _mwCalRender(await apiCalEnable()); toast(t('mw.cal.connected'), 'success'); }
   catch (e) { toast(t('mw.cal.err') + ': ' + e.message, 'error'); mwCalRefresh(); }
 }
 
