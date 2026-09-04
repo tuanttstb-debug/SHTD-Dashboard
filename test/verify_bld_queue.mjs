@@ -76,6 +76,7 @@ async function loadWithData(tasks) {
     () => { const el = document.getElementById('loadingOverlay'); return !el || !el.classList.contains('visible'); },
     { timeout: 8000 }
   );
+  await page.evaluate(() => { const it=document.querySelector('[data-view="bld-queue"]'); const g=it&&it.closest('.nav-group'); if(g)g.classList.add('open'); });
   await page.click('[data-view="bld-queue"]');
   await page.waitForTimeout(300);
 }

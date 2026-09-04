@@ -110,6 +110,7 @@ await shot(page, '01_dashboard');
 /* H2D2 — navigate */
 await page.evaluate(() => navigateTo('dashboard'));
 await page.waitForTimeout(150);
+await page.evaluate(() => { const it=document.querySelector('[data-view="h2-dashboard"]'); const g=it&&it.closest('.nav-group'); if(g)g.classList.add('open'); });
 await page.click('[data-view="h2-dashboard"]');
 await page.waitForTimeout(300);
 log('H2D2-visible', await page.$eval('#view-h2-dashboard', el => el.style.display !== 'none'), 'Nav click → view visible');

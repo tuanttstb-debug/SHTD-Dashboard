@@ -298,6 +298,7 @@ async function run() {
 
   /* ─── TEST19: BLD Queue shows [CASE] badge for canBLD=Y case ─── */
   try {
+    await page.evaluate(() => { const it=document.querySelector('[data-view="bld-queue"]'); const g=it&&it.closest('.nav-group'); if(g)g.classList.add('open'); });
     await page.locator('[data-view="bld-queue"]').click();
     await page.waitForTimeout(500);
     const caseBadge = await page.locator('#bldPendingList').locator('text=[CASE]').count();

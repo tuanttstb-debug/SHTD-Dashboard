@@ -77,6 +77,7 @@ async function setupPage(browser, role) {
 }
 
 async function nav(page, view) {
+  await page.evaluate(v => { const it=document.querySelector(`.nav-item[data-view="${v}"]`); const g=it&&it.closest('.nav-group'); if(g)g.classList.add('open'); }, view);
   await page.locator(`.nav-item[data-view="${view}"]`).click();
   await page.waitForTimeout(400);
 }

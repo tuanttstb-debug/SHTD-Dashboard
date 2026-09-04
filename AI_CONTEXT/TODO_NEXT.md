@@ -1,5 +1,17 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-01 (S82 — Calendar Sync "Công việc của tôi", Pha 1, TuanTT4)
+**Prepared**: 2026-09-04 (S83 — CR Left-menu 2 lớp: gom nhóm menu mẹ)
+
+## 🆕 S83 — LEFT-MENU 2 LỚP (gom nhóm menu mẹ) — CODE XONG + TEST PASS LOCAL (v6.58, thuần FE)
+- [x] Tái cấu trúc `<nav>`: 3 mục phẳng (My Work·Dev-plan·Dashboard) + 5 nhóm mẹ (Ban lãnh đạo·Quản trị H2·Quản lý công việc·KPI Digital & Phân tích·Quản trị) + AI Assistant phẳng.
+- [x] `navigation.js`: toggle/persist(localStorage)/auto-expand nhóm active/badge dồn (chấm đỏ khi gấp có danger) + flyout hover 68px (CSS).
+- [x] i18n 5 key `nav.group.*` VI/EN + rút gọn nhãn con H2. Cache-bust `?v=20260904` (6 file).
+- [x] `verify_nav_group.mjs` **14/14** + mobile 375px PASS + regression rộng xanh. Vá 9 test click nav trong nhóm gấp.
+- [ ] **[TT] hard-refresh `?v=20260904` → nghiệm thu:** gấp/mở nhớ trạng thái · Ctrl+B thu gọn → hover nhóm ra flyout · chấm đỏ nhóm gấp khi có việc chờ (Phê duyệt/Issue/quá hạn) · mobile bung nhóm inline · phím tắt g+chữ vẫn chạy.
+- [ ] **[CC] (tùy chọn)** hiệu ứng slide mở/gấp; cho [TT] tự sắp thứ tự/ghim nhóm; đưa "Dashboard" vào 1 nhóm "Tổng quan" nếu [TT] muốn gọn hơn nữa.
+
+---
+
+**Prepared cũ**: 2026-09-01 (S82 — Calendar Sync "Công việc của tôi", Pha 1, TuanTT4)
 
 ## 🆕 S82 — CALENDAR SYNC (Pha 1, giới hạn TuanTT4) — CODE XONG + VERIFY + [TT] REDEPLOY GAS (v6.57)
 - [x] `CalendarSyncService.gs`: desired-set (task định kỳ→lặp · task/init đến hạn→1 lần) + diff idempotent (`CAL_SYNC_MAP`) + create/update/delete CalendarApp + tự phát hiện direct(owner==gmail)/guest-invite + whitelist TuanTT4 + trigger `calSyncDaily`@7h30.

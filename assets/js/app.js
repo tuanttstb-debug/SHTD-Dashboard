@@ -192,6 +192,7 @@ function updateNavBadges() {
   const caseCount = (dbCases || []).length;
   const cb = document.getElementById('navBadgeCase');
   if (cb) { cb.textContent = caseCount; cb.style.display = caseCount > 0 ? '' : 'none'; }
+  if (typeof updateNavGroupBadges === 'function') updateNavGroupBadges();
 }
 
 function updateFilterDropdowns() {

@@ -94,6 +94,7 @@ await shot(page, '01_review');
 /* H2R2 — navigate */
 await page.evaluate(() => navigateTo('dashboard'));
 await page.waitForTimeout(150);
+await page.evaluate(() => { const it=document.querySelector('[data-view="h2-review"]'); const g=it&&it.closest('.nav-group'); if(g)g.classList.add('open'); });
 await page.click('[data-view="h2-review"]');
 await page.waitForTimeout(250);
 log('H2R2-visible', await page.$eval('#view-h2-review', el => el.style.display !== 'none'), 'Nav click → view visible');

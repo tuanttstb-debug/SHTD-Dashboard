@@ -105,6 +105,7 @@ await shot(page, '01_tracker');
 /* H2T2 — navigate */
 await page.evaluate(() => navigateTo('dashboard'));
 await page.waitForTimeout(150);
+await page.evaluate(() => { const it=document.querySelector('[data-view="h2-tracker"]'); const g=it&&it.closest('.nav-group'); if(g)g.classList.add('open'); });
 await page.click('[data-view="h2-tracker"]');
 await page.waitForTimeout(250);
 log('H2T2-visible', await page.$eval('#view-h2-tracker', el => el.style.display !== 'none'), 'Nav click → view visible');

@@ -1,7 +1,65 @@
+/* ═══════════════════════════════════════════
+   NAV GROUPS — menu 2 lớp (gấp/mở + persist + badge dồn)
+═══════════════════════════════════════════ */
+const NAV_GROUP_KEY = 'shtd_nav_groups';
+// Mặc định lần đầu: mở "Quản lý công việc"; các nhóm khác gấp.
+const NAV_GROUP_DEFAULT = { bld: false, h2: false, work: true, kpi: false, admin: false };
+
+function _loadNavGroupState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(NAV_GROUP_KEY)) || {};
+    return { ...NAV_GROUP_DEFAULT, ...saved };
+  } catch { return { ...NAV_GROUP_DEFAULT }; }
+}
+function _saveNavGroupState(st) {
+  try { localStorage.setItem(NAV_GROUP_KEY, JSON.stringify(st)); } catch {}
+}
+
+/** Áp trạng thái gấp/mở đã lưu lên DOM + mở nhóm chứa view đang active. */
+function applyNavGroupState() {
+  const st = _loadNavGroupState();
+  document.querySelectorAll('.nav-group').forEach(g => {
+    g.classList.toggle('open', !!st[g.dataset.group]);
+  });
+  _expandGroupOfActive();
+  updateNavGroupBadges();
+}
+
+/** Gấp/mở 1 nhóm (gọi từ onclick header) + lưu localStorage. */
+function toggleNavGroup(key) {
+  const g = document.querySelector(`.nav-group[data-group="${key}"]`);
+  if (!g) return;
+  const st = _loadNavGroupState();
+  const willOpen = !g.classList.contains('open');
+  st[key] = willOpen;
+  g.classList.toggle('open', willOpen);
+  _saveNavGroupState(st);
+  updateNavGroupBadges();
+}
+
+/** Bảo đảm nhóm chứa mục đang active được mở (không đóng nhóm khác). */
+function _expandGroupOfActive() {
+  const active = document.querySelector('.nav-item.active');
+  const g = active && active.closest('.nav-group');
+  if (g) g.classList.add('open');
+}
+
+/** Badge dồn ở nhóm mẹ: chấm đỏ khi nhóm ĐANG GẤP mà có badge cảnh báo (danger) trong con. */
+function updateNavGroupBadges() {
+  document.querySelectorAll('.nav-group').forEach(g => {
+    const hasAlert = [...g.querySelectorAll('.nav-group-body .nav-badge.danger')]
+      .some(b => b.style.display !== 'none' && (parseInt(b.textContent, 10) || 0) > 0);
+    g.classList.toggle('has-alert', hasAlert);   // chấm góc khi sidebar thu gọn
+    const dot = g.querySelector('[data-group-dot]');
+    if (dot) dot.style.display = (hasAlert && !g.classList.contains('open')) ? '' : 'none';
+  });
+}
+
 function setupListeners() {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => navigateTo(item.dataset.view));
   });
+  applyNavGroupState();
 
   document.getElementById('sidebarToggle').addEventListener('click', () => {
     const sb = document.getElementById('sidebar');
@@ -98,6 +156,8 @@ function navigateTo(view) {
   if (view === 'ai-chat')              renderAiChat();
   if (view === 'user-management')      renderUserManagement();
   if (view === 'my-work')              renderMyWork();
+  _expandGroupOfActive();
+  updateNavGroupBadges();
   closeSidebar();
 }
 

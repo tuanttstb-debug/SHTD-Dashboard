@@ -56,6 +56,7 @@ function _itRenderKpi() {
   // Nav badge — shows SLA breach count
   const badge = document.getElementById('navBadgeIssue');
   if (badge) { badge.textContent = breach; badge.style.display = breach > 0 ? '' : 'none'; }
+  if (typeof updateNavGroupBadges === 'function') updateNavGroupBadges();
 }
 
 /* ══════════════════════
