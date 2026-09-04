@@ -1,5 +1,17 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-04 (S83 — CR Left-menu 2 lớp: gom nhóm menu mẹ)
+**Prepared**: 2026-09-04 (S84 — AI Assistant resilience: retry+fallback+degradation)
+
+## 🆕 S84 — AI ASSISTANT RESILIENCE (trị lỗi "high demand" 503) — CODE XONG + TEST PASS LOCAL (v6.59). ⚠️ CẦN [TT] REDEPLOY GAS
+- [x] `AiService.gs` `callGemini` viết lại: retry backoff 1s→2s→4s+jitter (503/429/500, ≤3 lần model chính) + fallback model (1 phát/model) + bắt 404 model-chết riêng + 400/403 permanent; ngân sách ≤4-5 lời gọi/câu. maxOutputTokens 4096. Log sheet `AI_Log`. Chain động qua `refreshAiModelChain()`.
+- [x] `Code.gs` route ai-chat try/catch → `_aiErrorResponse_` (errorCode+retriable+degraded deterministic).
+- [x] FE `ai-chat.js`+i18n(+6)+css: thông điệp thân thiện + nút Thử lại; bỏ auto-retry lỗi Gemini.
+- [x] `verify_ai_resilience.mjs` **42/42** + regression my_work 97/97 · startup 10/10 · nav_group 14/14.
+- [ ] **[TT] (P0) REDEPLOY GAS** (AiService.gs + Code.gs) — fix THẬT ở server; smoke: hỏi lúc Gemini bận → tự retry/fallback không lỗi cứng; nếu vẫn bận → thông điệp thân thiện + nút Thử lại + số liệu tính sẵn.
+- [ ] **[TT] (P1 tùy chọn)** chạy `refreshAiModelChain()` 1 lần trong editor (bơm chain dự phòng — xem Logger/`AI_Log`) + **bật billing** giảm tần suất 503.
+- [ ] **[TT] (P2)** hard-refresh `?v=20260904b`.
+- [ ] **[CC] Nhóm 2 (khi [TT] muốn):** giảm payload/RAG (~150-200K token/câu → đòn bẩy lớn nhất latency/cost) + sắp prefix tĩnh lên đầu để ăn implicit cache · async job bỏ trần GAS 6' · observability + rate-limit per-user · idempotency reqId cho ai-chat (chống retry mù đốt quota).
+
+---
 
 ## 🆕 S83 — LEFT-MENU 2 LỚP (gom nhóm menu mẹ) — CODE XONG + TEST PASS LOCAL (v6.58, thuần FE)
 - [x] Tái cấu trúc `<nav>`: 3 mục phẳng (My Work·Dev-plan·Dashboard) + 5 nhóm mẹ (Ban lãnh đạo·Quản trị H2·Quản lý công việc·KPI Digital & Phân tích·Quản trị) + AI Assistant phẳng.

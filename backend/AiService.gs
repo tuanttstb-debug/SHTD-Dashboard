@@ -207,13 +207,128 @@ function _aiTaskSummary_(rows) {
   return out.join('\n');
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// AI RESILIENCE (Nhóm 1 — 2026-09-04): retry+backoff+fallback+phân loại lỗi+log.
+// Lỗi "high demand" = Gemini HTTP 503 (quá tải, TẠM THỜI). Trước đây callGemini gọi
+// 1 phát, gặp json.error là throw thẳng → user thấy lỗi ngay dù chỉ cần thử lại sau
+// 1-2s. Nay: retry backoff cho 503/429/500, fallback sang model dự phòng, bắt 404
+// model-chết riêng, ngân sách ≤ ~4-5 lời gọi Gemini/câu hỏi để không đốt quota (retry
+// CŨNG tính vào RPD/RPM). Chuỗi model khám phá động qua refreshAiModelChain() (không
+// hard-code model có thể đã bị Google shutdown / chặn với key này).
+// ══════════════════════════════════════════════════════════════════════════
+
+// Alias primary — luôn trỏ bản Flash mới nhất còn hỗ trợ. KHÔNG pin 'gemini-2.5-flash'
+// (S12): model này bị Google chặn với API key/project mới ("no longer available to new users").
+var AI_MODEL_PRIMARY = 'gemini-flash-latest';
+
+// Chuỗi model: đọc từ Script Property 'AI_MODEL_CHAIN' (JSON array hoặc phẩy).
+// Rỗng → chỉ primary alias (hành vi cũ, không regression). refreshAiModelChain() bơm
+// danh sách model CÒN SỐNG mà key này TRUY CẬP ĐƯỢC (verify qua models.list).
+function _aiModelChain() {
+  var chain = [AI_MODEL_PRIMARY];
+  try {
+    var raw = PropertiesService.getScriptProperties().getProperty('AI_MODEL_CHAIN');
+    if (raw) {
+      var arr = String(raw).trim().charAt(0) === '[' ? JSON.parse(raw) : String(raw).split(',');
+      arr = arr.map(function (s) { return String(s).trim(); }).filter(function (s) { return s; });
+      if (arr.length) chain = arr;
+    }
+  } catch (e) { /* giữ default primary */ }
+  var seen = {}, out = [];
+  for (var i = 0; i < chain.length; i++) { if (!seen[chain[i]]) { seen[chain[i]] = 1; out.push(chain[i]); } }
+  return out;
+}
+
+// Backoff: 1s, 2s, 4s + jitter 0–500ms. KHÔNG dựa Retry-After (GAS UrlFetch không expose tiện,
+// tài liệu Gemini không đảm bảo header này).
+function _aiBackoffMs_(attempt) {
+  return 1000 * Math.pow(2, attempt) + Math.floor(Math.random() * 500);
+}
+
+// Phân loại HTTP code → nhóm xử lý.
+function _aiErrClass_(code, status) {
+  if (code === 404 || status === 'NOT_FOUND')       return 'MODEL_DEAD';  // model chết → nhảy model kế + cảnh báo
+  if (code === 400 || status === 'INVALID_ARGUMENT') return 'BADREQUEST'; // payload sai → permanent (mọi model như nhau)
+  if (code === 401 || code === 403)                  return 'AUTH';       // key/quyền → permanent
+  return 'TRANSIENT';                                                     // 503/429/500/khác → backoff & retry
+}
+
+// Ghi log kết quả AI (best-effort — try/catch nuốt, KHÔNG bao giờ phá luồng chính) → sheet
+// AI_Log để đo tần suất 503 thật + latency + model. Sheet tự tạo lần đầu.
+function _aiLog_(outcome, model, httpCode, ms, note) {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sh = ss.getSheetByName('AI_Log');
+    if (!sh) {
+      sh = ss.insertSheet('AI_Log');
+      sh.appendRow(['Timestamp', 'Outcome', 'Model', 'HTTP', 'LatencyMs', 'Note']);
+    }
+    sh.appendRow([new Date(), outcome, model || '', httpCode || '', ms || '', String(note == null ? '' : note).slice(0, 300)]);
+  } catch (e) { /* logging không được phá response */ }
+}
+
+// Trích khối "SỐ LIỆU TÍNH SẴN" (deterministic) từ context đã build — dùng cho degradation
+// khi mọi model LLM chết: user vẫn nhận số liệu đếm/thống kê CHÍNH XÁC mà không cần LLM,
+// KHÔNG rời biên dữ liệu (không gọi bên thứ 3). Tái dùng dữ liệu đã có, không đọc lại sheet.
+function _aiSummaryFromContext_(ctx) {
+  if (!ctx) return '';
+  var marker = '=== CHỈ MỤC TOÀN BỘ TASK';
+  var idx = ctx.indexOf(marker);
+  var head = idx > 0 ? ctx.slice(0, idx) : ctx.slice(0, 4000);
+  return String(head).trim();
+}
+
+// Chuyển lỗi callGemini → response CÓ CẤU TRÚC (errorCode + retriable) cho FE localize + quyết
+// định retry đúng lớp. Kèm degradation deterministic khi quá tải.
+function _aiErrorResponse_(err, contextText) {
+  var raw = String(err && err.message != null ? err.message : err);
+  var code = 'GEMINI_ERROR', retriable = false;
+  if      (raw.indexOf('GEMINI_OVERLOADED|') === 0) { code = 'GEMINI_OVERLOADED'; retriable = true; }
+  else if (raw.indexOf('GEMINI_MODELDEAD|')  === 0) { code = 'GEMINI_OVERLOADED'; retriable = true; } // với user: "bận, thử lại"
+  else if (raw.indexOf('GEMINI_EMPTY|')      === 0) { code = 'GEMINI_EMPTY';      retriable = true; }
+  else if (raw.indexOf('GEMINI_BADREQUEST|') === 0) { code = 'GEMINI_BADREQUEST'; retriable = false; }
+  else if (raw.indexOf('GEMINI_AUTH|')       === 0) { code = 'GEMINI_AUTH';       retriable = false; }
+  var resp = { status: 'error', errorCode: code, retriable: retriable, error: raw.replace(/^GEMINI_[A-Z]+\|/, '') };
+  if (code === 'GEMINI_OVERLOADED') {
+    var deg = _aiSummaryFromContext_(contextText);
+    if (deg) resp.degraded = deg;
+  }
+  return resp;
+}
+
+// Admin/trigger (KHÔNG gọi trong request path — thêm round-trip + có thể tự 503). Gọi models.list
+// lấy model CÒN SỐNG key này dùng được, ưu tiên dòng 'flash' (rẻ/nhanh), lưu Script Property
+// AI_MODEL_CHAIN. Chạy tay trong editor hoặc gắn Time-driven trigger hàng tuần.
+function refreshAiModelChain() {
+  var apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!apiKey) throw new Error('GEMINI_API_KEY chưa cấu hình.');
+  var resp = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + apiKey + '&pageSize=200',
+    { muteHttpExceptions: true });
+  var json = JSON.parse(resp.getContentText());
+  if (!json.models) throw new Error('models.list lỗi: ' + (json.error ? json.error.message : resp.getContentText().slice(0, 200)));
+  var flash = [];
+  for (var i = 0; i < json.models.length; i++) {
+    var m = json.models[i];
+    if ((m.supportedGenerationMethods || []).indexOf('generateContent') === -1) continue;
+    var name = String(m.name || '').replace(/^models\//, '');
+    if (/preview|exp|thinking|image|tts|embedding|vision|audio/i.test(name)) continue; // bỏ model đặc thù
+    if (/flash/i.test(name)) flash.push(name);
+  }
+  flash.sort();
+  var lite = flash.filter(function (n) { return /lite/i.test(n) && n !== AI_MODEL_PRIMARY; });
+  var full = flash.filter(function (n) { return !/lite/i.test(n) && n !== AI_MODEL_PRIMARY; });
+  var chain = [AI_MODEL_PRIMARY];
+  var rest = lite.concat(full);
+  for (var k = 0; k < rest.length && chain.length < 3; k++) if (chain.indexOf(rest[k]) === -1) chain.push(rest[k]);
+  PropertiesService.getScriptProperties().setProperty('AI_MODEL_CHAIN', JSON.stringify(chain));
+  _aiLog_('chain', chain.join(' > '), 200, 0, 'refreshed');
+  Logger.log('AI_MODEL_CHAIN = ' + JSON.stringify(chain));
+  return chain;
+}
+
 function callGemini(contextText, history, userMessage) {
   var apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY chưa được cấu hình trong Script Properties.');
-
-  // Model alias 'gemini-flash-latest' luôn trỏ tới bản Flash mới nhất còn hỗ trợ.
-  // Đổi từ 'gemini-2.5-flash' (S12) — model này bị Google chặn với API key/project mới (lỗi "no longer available to new users").
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' + apiKey;
 
   var systemPrompt =
     'Bạn là trợ lý AI nội bộ của nhóm Số Hóa Tín Dụng (SHTD), Khối KHDN ngân hàng.\n' +
@@ -239,21 +354,70 @@ function callGemini(contextText, history, userMessage) {
   var payload = {
     system_instruction: { parts: [{ text: systemPrompt }] },
     contents: contents,
-    generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
+    // 2048 quá nhỏ so với chỉ thị "liệt kê ĐẦY ĐỦ" → nâng 4096 để hết cắt cụt câu trả lời dài.
+    generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
   };
+  var body = JSON.stringify(payload);
 
-  var response = UrlFetchApp.fetch(url, {
-    method: 'POST',
-    contentType: 'application/json',
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+  var chain = _aiModelChain();
+  var lastErr = null;
 
-  var json = JSON.parse(response.getContentText());
-  if (json.error) throw new Error('Gemini API lỗi: ' + json.error.message);
-  if (!json.candidates || !json.candidates[0] || !json.candidates[0].content) {
-    throw new Error('Gemini không trả về kết quả hợp lệ.');
+  for (var mi = 0; mi < chain.length; mi++) {
+    var model = chain[mi];
+    var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + apiKey;
+    // Model chính retry tối đa 3 lần; model dự phòng chỉ 1 phát → tổng ≤ ~4-5 lời gọi (không đốt quota).
+    var maxAttempts = (mi === 0) ? 3 : 1;
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      var t0 = Date.now(), code, text, json = null;
+      try {
+        var response = UrlFetchApp.fetch(url, {
+          method: 'POST', contentType: 'application/json',
+          payload: body, muteHttpExceptions: true
+        });
+        code = response.getResponseCode();
+        text = response.getContentText();
+        try { json = JSON.parse(text); } catch (pe) { json = null; }
+      } catch (netErr) {
+        // Lỗi tầng UrlFetch (hiếm — vd DNS/timeout) → coi như transient, backoff & retry.
+        _aiLog_('neterr', model, 0, Date.now() - t0, netErr.message);
+        lastErr = new Error('GEMINI_OVERLOADED|' + netErr.message);
+        if (attempt < maxAttempts - 1) { Utilities.sleep(_aiBackoffMs_(attempt)); continue; }
+        break;
+      }
+      var ms = Date.now() - t0;
+
+      // Thành công + có nội dung hợp lệ.
+      if (code === 200 && json && json.candidates && json.candidates[0] && json.candidates[0].content &&
+          json.candidates[0].content.parts && json.candidates[0].content.parts[0] &&
+          json.candidates[0].content.parts[0].text != null) {
+        _aiLog_('ok', model, code, ms, mi === 0 ? '' : ('fallback#' + mi));
+        return json.candidates[0].content.parts[0].text;
+      }
+
+      // 200 nhưng thiếu nội dung (safety block / cắt MAX_TOKENS rỗng / finishReason lạ).
+      if (code === 200) {
+        var fr = (json && json.candidates && json.candidates[0] && json.candidates[0].finishReason) || 'NO_CONTENT';
+        _aiLog_('empty', model, code, ms, fr);
+        lastErr = new Error('GEMINI_EMPTY|' + fr);
+        break; // đổi model có thể khác kết quả → thử model kế 1 lần
+      }
+
+      // Lỗi HTTP → phân loại.
+      var emsg = (json && json.error && json.error.message) ? json.error.message : ('HTTP ' + code);
+      var estatus = (json && json.error && json.error.status) ? json.error.status : '';
+      var klass = _aiErrClass_(code, estatus);
+      _aiLog_('err', model, code, ms, klass + ' ' + emsg);
+
+      if (klass === 'BADREQUEST') throw new Error('GEMINI_BADREQUEST|' + emsg); // payload sai — mọi model như nhau
+      if (klass === 'AUTH')       throw new Error('GEMINI_AUTH|' + emsg);       // key/quyền — permanent
+      if (klass === 'MODEL_DEAD') { lastErr = new Error('GEMINI_MODELDEAD|' + model + ': ' + emsg); break; } // → model kế
+      // TRANSIENT (503/429/500/…) → backoff & retry cùng model.
+      lastErr = new Error('GEMINI_OVERLOADED|' + emsg);
+      if (attempt < maxAttempts - 1) Utilities.sleep(_aiBackoffMs_(attempt));
+    }
+    // hết attempt model này → sang model kế trong chain
   }
 
-  return json.candidates[0].content.parts[0].text;
+  throw lastErr || new Error('GEMINI_OVERLOADED|Không có model khả dụng.');
 }

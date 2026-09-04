@@ -121,6 +121,8 @@ function _renderAiMessages() {
         '<div class="ai-msg-avatar">' + avatarContent + '</div>' +
         '<div>' +
           '<div class="ai-msg-bubble">' + (isUser ? esc(turn.text) : _aiRenderMarkdown(turn.text)) + '</div>' +
+          (turn.retryQ ? '<button class="ai-retry-btn" onclick="_aiRetry(' + i + ')">' +
+            '<i class="fa-solid fa-rotate-right"></i> ' + esc(t('ai.retry-btn')) + '</button>' : '') +
           (turn.time ? '<div class="ai-msg-time">' + turn.time + '</div>' : '') +
         '</div>' +
       '</div>';
@@ -195,10 +197,25 @@ async function sendAiMessage() {
 
   try {
     var res = await _aiPostWithRetry({ action: 'ai-chat', message: text, history: historyPayload });
-    if (res.status !== 'ok') throw new Error(res.error || 'Lỗi không xác định');
-    _aiHistory.push({ role: 'model', text: res.reply, time: _fmtAiTime() });
+    if (res.status === 'ok') {
+      _aiHistory.push({ role: 'model', text: res.reply, time: _fmtAiTime() });
+    } else {
+      // Lỗi CÓ CẤU TRÚC từ server (vd Gemini quá tải): thông điệp thân thiện + nút Thử lại.
+      // KHÔNG tự retry ở FE cho lỗi Gemini (server đã retry+fallback) — tránh nhân đôi quota.
+      var friendly;
+      if (res.errorCode === 'GEMINI_OVERLOADED')   friendly = t('ai.err.overloaded');
+      else if (res.errorCode === 'GEMINI_EMPTY')   friendly = t('ai.err.empty');
+      else if (res.error === 'AUTH_REQUIRED')       friendly = t('ai.err.prefix') + 'AUTH_REQUIRED';
+      else                                          friendly = t('ai.err.prefix') + (res.error || t('ai.err.generic'));
+      var botText = friendly;
+      if (res.degraded) botText += '\n\n' + t('ai.degraded.header') + '\n' + res.degraded;
+      // retriable → giữ câu hỏi để nút Thử lại gửi lại (mặc định lỗi cũng cho thử lại thủ công).
+      var canRetry = (res.retriable !== false);
+      _aiHistory.push({ role: 'model', text: botText, time: _fmtAiTime(), retryQ: canRetry ? text : null });
+    }
   } catch (err) {
-    _aiHistory.push({ role: 'model', text: t('ai.err.prefix') + err.message, time: _fmtAiTime() });
+    // Lỗi VẬN CHUYỂN thật (network/timeout) — _aiPostWithRetry đã thử lại 3 lần transport.
+    _aiHistory.push({ role: 'model', text: t('ai.err.network'), time: _fmtAiTime(), retryQ: text });
   } finally {
     _aiTyping = false;
     var btn = document.getElementById('aiSendBtn');
@@ -213,6 +230,16 @@ function sendAiSuggestion(text) {
   var input = document.getElementById('aiInput');
   if (!input) return;
   input.value = text;
+  sendAiMessage();
+}
+
+// Nút "Thử lại" trên bong bóng lỗi — gửi lại đúng câu hỏi đã lưu (retryQ). Thủ công (user quyết),
+// không tự động → không đốt quota Gemini ngoài ý muốn.
+function _aiRetry(i) {
+  var turn = _aiHistory[i];
+  if (!turn || !turn.retryQ || _aiTyping) return;
+  var input = document.getElementById('aiInput');
+  if (input) input.value = turn.retryQ;
   sendAiMessage();
 }
 

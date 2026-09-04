@@ -335,3 +335,22 @@
 [data-theme="dark"] .ai-msg-row.bot .ai-msg-bubble {
   background: var(--bg-3);
 }
+
+/* Nút "Thử lại" trên bong bóng lỗi AI (Nhóm 1 — resilience) */
+.ai-retry-btn {
+  margin-top: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--surface-2, var(--bg-2));
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s, opacity .15s;
+}
+.ai-retry-btn:hover { background: var(--primary); color: #fff; }
+.ai-retry-btn:active { opacity: .8; }
