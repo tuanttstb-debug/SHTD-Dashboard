@@ -1,5 +1,16 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-04 (S84 — AI Assistant resilience: retry+fallback+degradation)
+**Prepared**: 2026-09-07 (S85 — CR My Work: droplist lọc nhân sự thuần theo Res)
+
+## 🆕 S85 — MY WORK: DROPLIST LỌC NHÂN SỰ THUẦN RES — CODE XONG + TEST 97/97 + ĐÃ PUSH (v6.60, thuần FE)
+- [x] `_mwPersonMatch` thuần Res (bỏ `|| picAcc`); `_mwTeamPeople` droplist chỉ gom `picRes`.
+- [x] Giữ nguyên logic nền `_mwTaskInScope` + mặc định `_mwPersonFilter=null` (tất cả nhân sự).
+- [x] `verify_my_work` **97/97** (PF2 cập nhật: droplist chỉ Res; PF3 lọc MemB; MW40 nền giữ nguyên). config v6.60 + cache-bust `?v=20260907`.
+- [ ] **[TT] hard-refresh `?v=20260907` → nghiệm thu:** droplist lọc nhân sự → chọn 1 người ra đúng task Res của người đó; không còn người chỉ-Acc; "tất cả nhân sự" đủ.
+- [ ] **[CC]** về hub `/handover` + cross-ref CROSS_REPO_LOG.
+
+---
+
+**Prepared cũ**: 2026-09-04 (S84 — AI Assistant resilience: retry+fallback+degradation)
 
 ## 🆕 S84 — AI ASSISTANT RESILIENCE (trị lỗi "high demand" 503) — CODE XONG + TEST PASS LOCAL (v6.59). ⚠️ CẦN [TT] REDEPLOY GAS
 - [x] `AiService.gs` `callGemini` viết lại: retry backoff 1s→2s→4s+jitter (503/429/500, ≤3 lần model chính) + fallback model (1 phát/model) + bắt 404 model-chết riêng + 400/403 permanent; ngân sách ≤4-5 lời gọi/câu. maxOutputTokens 4096. Log sheet `AI_Log`. Chain động qua `refreshAiModelChain()`.

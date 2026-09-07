@@ -1,5 +1,13 @@
 # PROJECT STATE
 
+**S85 — CR My Work: droplist lọc nhân sự THUẦN theo Res — CODE XONG + TEST 97/97 + ĐÃ PUSH. Thuần FE, KHÔNG redeploy GAS. (main, v6.60, 2026-09-07)**
+CR [TT]: My Work đã lọc theo team + nhân sự; nay droplist lọc nhân sự chuyển **thuần theo Responsible (Res)** để teamlead xem nhanh đúng task mình/người đó trực tiếp phụ trách, không bị ngập task chỉ đứng Accountable (teamlead thường là Acc trên hầu hết task team). **Trước:** person filter khớp `picRes HOẶC picAcc`. **Nay:** chỉ `picRes`.
+- **`assets/js/views/my-work.js`:** `_mwPersonMatch` bỏ nhánh `|| picAcc` → thuần Res; `_mwTeamPeople` (nguồn droplist) chỉ gom `picRes` → người chỉ đứng Acc KHÔNG vào droplist (nhất quán, tránh chọn ra 0 task).
+- **Giữ nguyên (theo [TT] chốt):** logic nền `_mwTaskInScope` KHÔNG đụng — User thường vẫn thấy cả task mình là Res/Acc; tập "team" của Teamlead không đổi. **Mặc định teamlead vẫn "tất cả nhân sự"** (`_mwPersonFilter=null`), chỉ khi chủ động chọn 1 người mới lọc thuần Res.
+- **Verify:** `verify_my_work` **97/97** (PF2 cập nhật: droplist chỉ người Res, 'Lead' chỉ-Acc biến mất; PF3 lọc MemB→K-04/05/06; MW40 logic nền giữ nguyên). Blocker: không. **[TT]:** hard-refresh `?v=20260907` → nghiệm thu droplist lọc nhân sự.
+
+---
+
 **S84 — AI ASSISTANT RESILIENCE (retry+backoff+fallback+degradation, trị lỗi "high demand") — CODE XONG + TEST PASS LOCAL. ⚠️ CẦN [TT] REDEPLOY GAS. (main, v6.59, 2026-09-04)**
 Rà soát tổng thể + test live production tính năng AI Assistant. Lỗi thường gặp "Gemini API lỗi: This model is currently experiencing high demand" = **HTTP 503 quá tải TẠM THỜI**. **Gốc:** `callGemini` gọi 1 phát, gặp `json.error` throw thẳng; Web App bọc lỗi vào **HTTP 200** `{status:'error'}` → FE `_aiPostWithRetry` (chỉ retry exception HTTP 4xx/5xx) KHÔNG bắt được → user thấy lỗi ngay dù chỉ cần thử lại 1-2s. Chẩn đoán qua 2 agent (nghiên cứu diễn đàn + đào kiến trúc) + phản biện chéo.
 - **Backend `AiService.gs`:** `callGemini` viết lại thành vòng lặp retry+fallback — 503/429/500 backoff 1s→2s→4s+jitter (≤3 lần model chính), fallback model dự phòng (1 phát/model), bắt **404 model-chết riêng** (nhảy model ngay, không retry), 400/403 permanent throw; **ngân sách ≤4-5 lời gọi Gemini/câu** (retry cũng ăn quota RPD/RPM). `maxOutputTokens` 2048→4096 (hết cắt cụt). Log best-effort sheet `AI_Log` (đo tần suất 503 thật). Chuỗi model đọc Script Property `AI_MODEL_CHAIN`, khám phá động qua `refreshAiModelChain()` (models.list, chạy tay/trigger, KHÔNG inline; tránh hard-code model bị Google shutdown/chặn — **KHÔNG pin `gemini-2.5-flash`** vì đã bị chặn new-users). Primary giữ alias `gemini-flash-latest`.

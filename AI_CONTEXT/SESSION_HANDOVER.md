@@ -1,3 +1,13 @@
+# SESSION HANDOVER — 2026-09-07 (S85 — CR My Work: droplist lọc nhân sự thuần theo Res)
+**Model**: Claude Opus 4.8 · **Version**: v6.59 → **v6.60**
+
+- **Task completed:** CR [TT] — My Work đã lọc theo team + nhân sự; chuyển **droplist lọc nhân sự sang THUẦN Responsible (Res)** để teamlead xem nhanh đúng việc mình/người đó trực tiếp phụ trách (teamlead thường đứng Acc trên hầu hết task team → trước đây lọc theo mình bị ngập cả task team). Hỏi [TT] 2 điểm → chốt: (1) chỉ đổi **droplist lọc nhân sự**, KHÔNG đổi logic nền; (2) droplist **chỉ liệt kê người là Res**. [TT] bổ sung: **mặc định teamlead vẫn "tất cả nhân sự"**.
+- **Files changed:** *(spoke, ĐÃ COMMIT + PUSH origin/main phiên này)* `assets/js/views/my-work.js` (`_mwPersonMatch` bỏ `|| picAcc` → thuần Res; `_mwTeamPeople` chỉ gom `picRes`), `test/verify_my_work.mjs` (cập nhật PF2 theo hành vi mới), `assets/js/config.js` (v6.60), `index.html` (cache-bust `my-work.js?v=20260907`), 4 file `AI_CONTEXT/`.
+- **Decision made:** Thuần Res chỉ ở tầng **person filter** (`_mwPersonMatch` + droplist `_mwTeamPeople`); logic nền `_mwTaskInScope` GIỮ NGUYÊN (User thường vẫn thấy task mình là Res∪Acc; tập team của Teamlead không đổi). Người chỉ đứng Acc không vào droplist (nhất quán, tránh chọn ra 0 task). Mặc định `_mwPersonFilter=null` = tất cả nhân sự (không đổi).
+- **Blocker:** **Không.** Thuần FE — KHÔNG cần redeploy GAS. [TT] chỉ hard-refresh.
+- **Next step:** [TT] hard-refresh `?v=20260907` → nghiệm thu: mở droplist lọc nhân sự (Teamlead/Admin) → chọn 1 người → chỉ ra task người đó là **Res**; droplist không còn người chỉ-Acc; "tất cả nhân sự" khôi phục đủ. [CC] về hub `/handover` + cross-ref.
+- **Regression risk:** **Rất thấp → verify đầy đủ.** `verify_my_work` 97/97 (bao trùm PF1-5 + MW40 logic nền + Kanban). Thay đổi cô lập 2 hàm helper của person filter; additive/thu hẹp, không đổi schema/route/luồng nền. Data-boundary: 0 chạm KH/secret.
+
 # SESSION HANDOVER — 2026-09-04 (S84 — AI Assistant resilience: retry+fallback+degradation, trị lỗi "high demand")
 **Model**: Claude Opus 4.8 · **Version**: v6.58 → **v6.59**
 

@@ -882,9 +882,10 @@ await page.waitForTimeout(300);
 const pfDroplist = await page.$('.mw-person-filter');
 const pfOptions  = await page.$$eval('.mw-person-filter option', els => els.map(o => o.textContent.trim()));
 log('PF1-droplist', !!pfDroplist, 'Teamlead thấy droplist lọc nhân sự (.mw-person-filter)');
-log('PF2-options', pfOptions.includes('MemA') && pfOptions.includes('MemB') && pfOptions.includes('Lead'),
-  `Droplist gồm nhân sự trong team [${pfOptions.join(',')}]`);
-// Lọc theo MemB → chỉ task MemB là Res/Acc (K-04, K-05, K-06)
+// Droplist THUẦN Res: chỉ người là Responsible (MemA, MemB); 'Lead' chỉ đứng Accountable → KHÔNG vào droplist.
+log('PF2-options', pfOptions.includes('MemA') && pfOptions.includes('MemB') && !pfOptions.includes('Lead'),
+  `Droplist chỉ gồm nhân sự Res, không có người chỉ-Acc (Lead) [${pfOptions.join(',')}]`);
+// Lọc theo MemB → chỉ task MemB là Res (K-04, K-05, K-06)
 await page.evaluate(() => mwSetPersonFilter('MemB'));
 await page.waitForTimeout(300);
 const pfIds = await page.$$eval('.mw-kb-card .mw-kb-id', els => els.map(e => e.textContent.trim()));

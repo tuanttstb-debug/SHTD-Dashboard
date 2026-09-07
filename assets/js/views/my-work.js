@@ -93,10 +93,11 @@ function _mwCanFilterPeople(user) {
   return !!user && (user.role === 'Admin' || user.role === 'Teamlead');
 }
 
-// personFilter khớp khi nhân sự là Responsible HOẶC Accountable (so khớp không phân biệt hoa/thường).
+// personFilter khớp THUẦN theo Responsible (Res) — teamlead lọc nhanh đúng việc mình/người đó
+// trực tiếp phụ trách, không bị ngập task chỉ đứng Accountable (so khớp không phân biệt hoa/thường).
 function _mwPersonMatch(task, personFilter) {
   if (!personFilter || personFilter === MW_PERSON_ALL) return true;
-  return _mwCmpUser(task.picRes, personFilter) || _mwCmpUser(task.picAcc, personFilter);
+  return _mwCmpUser(task.picRes, personFilter);
 }
 
 // teamFilter chỉ áp cho Admin (droplist team); personFilter áp cho Teamlead/Admin (droplist nhân sự).
@@ -106,19 +107,19 @@ function _mwScopedTasks(user, teamFilter, personFilter) {
     _mwTaskInScope(t, user, teamFilter) && _mwPersonMatch(t, personFilter)));
 }
 
-// Danh sách nhân sự (Res/Acc) DISTINCT trong phạm vi role (đã áp teamFilter, CHƯA áp person)
-// → nguồn cho droplist lọc nhanh; giữ nguyên cách viết hoa gặp đầu tiên, sắp theo alphabet.
+// Danh sách nhân sự Responsible (Res) DISTINCT trong phạm vi role (đã áp teamFilter, CHƯA áp person)
+// → nguồn cho droplist lọc nhanh; nhất quán với _mwPersonMatch (thuần Res) nên chỉ gom picRes
+// (người chỉ đứng Accountable không vào droplist để tránh chọn ra 0 task). Giữ cách viết hoa gặp
+// đầu tiên, sắp theo alphabet.
 function _mwTeamPeople(user, teamFilter) {
   if (!user) return [];
   const seen = new Map();   // key thường-hoá → nhãn hiển thị gốc
   (db.tasks || []).forEach(t => {
     if (!_mwTaskInScope(t, user, teamFilter)) return;
-    [t.picRes, t.picAcc].forEach(p => {
-      const v = (p || '').trim();
-      if (!v) return;
-      const k = v.toLowerCase();
-      if (!seen.has(k)) seen.set(k, v);
-    });
+    const v = (t.picRes || '').trim();
+    if (!v) return;
+    const k = v.toLowerCase();
+    if (!seen.has(k)) seen.set(k, v);
   });
   return [...seen.values()].sort((a, b) => a.localeCompare(b, 'vi'));
 }
