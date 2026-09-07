@@ -180,19 +180,29 @@ function renderAll() {
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
 }
 
+// ── NGUYÊN TẮC UI badge left-menu ─────────────────────────────────────────
+// Badge trên menu trái CHỈ hiện SỐ MỤC CẦN CHÚ Ý (quá hạn / cần hành động),
+// KHÔNG hiện tổng tất cả. Ẩn hẳn khi = 0. Class "danger" (đỏ) để nhóm mẹ dồn
+// chấm đỏ (updateNavGroupBadges). Áp cho MỌI mục có badge & mọi badge tương lai.
+function _navSetBadge(id, n) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = n; el.style.display = n > 0 ? '' : 'none'; }
+}
 function updateNavBadges() {
-  // CR: badge "Quản lý Task" chỉ hiện SỐ TASK QUÁ HẠN (không show tổng tất cả nữa).
-  const ov = db.tasks.filter(t => isOverdue(t.endDate, t.progress, t.state)).length;
-  const tb = document.getElementById('navBadgeTotal');
-  if (tb) { tb.textContent = ov; tb.style.display = ov > 0 ? '' : 'none'; }
-  const ob = document.getElementById('navBadgeOverdue');
-  if (ob) { ob.textContent = ov; ob.style.display = ov > 0 ? '' : 'none'; }
-  const bldCount = db.tasks.filter(t => t.canBLD === 'Y').length;
-  const bb = document.getElementById('navBadgeBld');
-  if (bb) { bb.textContent = bldCount; bb.style.display = bldCount > 0 ? '' : 'none'; }
-  const caseCount = (dbCases || []).length;
-  const cb = document.getElementById('navBadgeCase');
-  if (cb) { cb.textContent = caseCount; cb.style.display = caseCount > 0 ? '' : 'none'; }
+  // Task quá hạn — dùng chung cho badge "Quản lý Task" + "Performance".
+  const ovTasks = db.tasks.filter(t => isOverdue(t.endDate, t.progress, t.state)).length;
+  _navSetBadge('navBadgeTotal',   ovTasks);
+  _navSetBadge('navBadgeOverdue', ovTasks);
+  // BLD — số task đủ điều kiện đưa vào hàng đợi BLD (tập con cần xử lý, không phải tổng).
+  _navSetBadge('navBadgeBld', db.tasks.filter(t => t.canBLD === 'Y').length);
+  // Case — số case QUÁ HẠN/rủi ro (RAG Đỏ), thay cho tổng tất cả case.
+  const ovCases = (typeof _cpCalcRagLabel === 'function')
+    ? (dbCases || []).filter(c => _cpCalcRagLabel(c) === 'Đỏ').length : 0;
+  _navSetBadge('navBadgeCase', ovCases);
+  // Initiative — số initiative QUÁ HẠN (chưa Done + quá deadline + pct<100).
+  const ovInits = (typeof _initCountOverdue === 'function' && typeof _initRealRoots === 'function')
+    ? _initCountOverdue(_initRealRoots()).length : 0;
+  _navSetBadge('navBadgeInit', ovInits);
   if (typeof updateNavGroupBadges === 'function') updateNavGroupBadges();
 }
 

@@ -40,9 +40,11 @@
  *  MW37 – i18n EN: section titles switch to English (Action Needed, My Tasks, Weekly Champion)
  *  MW38 – i18n EN: overdue deadline badge shows "Overdue"
  *  MW39 – i18n VI: setLang('vi') restores Vietnamese labels
- *  MW41 – BUG: done task card shows NO "Quá hạn" badge (T-26-D01)
- *  MW42 – BUG: isOverdue respects state "Hoàn thành" even if progress<100
- *  MW43 – CR: left-menu badge "Quản lý Task" shows OVERDUE count, not total
+ *  MW46 – BUG: done task card shows NO "Quá hạn" badge (T-26-D01)
+ *  MW47 – BUG: isOverdue respects state "Hoàn thành" even if progress<100
+ *  MW48 – CR: left-menu badge "Quản lý Task" shows OVERDUE count, not total
+ *  MW49 – CR: nav badge case = "cần chú ý" (danger + ẩn khi 0)
+ *  MW50 – CR: nav badge initiative = "cần chú ý" (danger + ẩn khi 0)
  *
  * Run: node verify_my_work.mjs
  * EVD: test-results/my_work/
@@ -412,7 +414,7 @@ log('MW16-badge-soon', hasSoonBadge, '"Còn Xngày" badge shown on T-26-H02 card
    (T-26-D01 = state "Hoàn thành" + endDate quá khứ → card hiện nhưng KHÔNG có "Quá hạn")
 ══════════════════════════════════════════ */
 const doneCardText = cardTexts.find(t => t.includes('T-26-D01')) || '';
-log('MW41-done-no-overdue-badge',
+log('MW46-done-no-overdue-badge',
     doneCardText.length > 0 && !doneCardText.includes('Quá hạn'),
     `Done overdue task T-26-D01 card present (${doneCardText.length > 0}) with NO "Quá hạn" badge`);
 
@@ -423,7 +425,7 @@ const isOverdueRespectsDone = await page.evaluate(() =>
   isOverdue('01/01/2020', 50, 'Hoàn thành') === false &&   // done by state, %<100 → not overdue
   isOverdue('01/01/2020', 50) === true                     // same date, not done → overdue
 );
-log('MW42-isOverdue-respects-done', isOverdueRespectsDone,
+log('MW47-isOverdue-respects-done', isOverdueRespectsDone,
     'isOverdue: state="Hoàn thành" → false (kể cả %<100); chưa xong → true');
 
 /* ══════════════════════════════════════════
@@ -435,9 +437,35 @@ const navBadge = await page.evaluate(() => {
   const overdueCount = db.tasks.filter(t => isOverdue(t.endDate, t.progress, t.state)).length;
   return { text: (el.textContent || '').trim(), total: db.tasks.length, overdueCount };
 });
-log('MW43-navbadge-overdue-not-total',
+log('MW48-navbadge-overdue-not-total',
     navBadge.text === String(navBadge.overdueCount) && navBadge.text !== String(navBadge.total) && navBadge.overdueCount > 0,
     `navBadgeTotal shows overdue=${navBadge.text} (not total=${navBadge.total})`);
+
+/* ══════════════════════════════════════════
+   MW44/45 — CR: case & initiative nav badges tuân nguyên tắc "cần chú ý"
+   (class danger + ẩn khi 0 + hiện khi >0), updateNavBadges chạy không lỗi
+══════════════════════════════════════════ */
+const navAttn = await page.evaluate(() => {
+  updateNavBadges();
+  const check = id => {
+    const el = document.getElementById(id);
+    if (!el) return { exists: false };
+    const n = parseInt(el.textContent) || 0;
+    return {
+      exists: true,
+      danger: el.classList.contains('danger'),
+      hiddenWhenZero: n === 0 ? el.style.display === 'none' : true,
+      shownWhenPos:   n > 0 ? el.style.display !== 'none' : true,
+    };
+  };
+  return { caseB: check('navBadgeCase'), initB: check('navBadgeInit') };
+});
+log('MW49-case-badge-attention',
+    navAttn.caseB.exists && navAttn.caseB.danger && navAttn.caseB.hiddenWhenZero && navAttn.caseB.shownWhenPos,
+    `navBadgeCase danger+ẩn-khi-0 (${JSON.stringify(navAttn.caseB)})`);
+log('MW50-init-badge-attention',
+    navAttn.initB.exists && navAttn.initB.danger && navAttn.initB.hiddenWhenZero && navAttn.initB.shownWhenPos,
+    `navBadgeInit danger+ẩn-khi-0 (${JSON.stringify(navAttn.initB)})`);
 
 /* ══════════════════════════════════════════
    MW17 — RAG dots rendered

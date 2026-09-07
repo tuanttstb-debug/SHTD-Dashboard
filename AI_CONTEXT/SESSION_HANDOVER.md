@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-09-07 (S88 — Áp nguyên tắc UI badge left-menu cho Case + Initiative + ghi nhớ nguyên tắc)
+**Model**: Claude Opus 4.8 · **Version**: v6.62 → **v6.63**
+
+- **Task completed:** [TT] yêu cầu áp nguyên tắc badge left-menu (S87) cho cả Initiative/Issue/các mục còn lại + ghi nhớ nguyên tắc UI cho tương lai. Rà toàn bộ badge nav: Issue (SLA breach) & BLD (canBLD='Y') đã đúng (giữ); đổi **Case** từ tổng→số case quá hạn (RAG Đỏ); **thêm badge Initiative** = số init quá hạn. Refactor `updateNavBadges` gom qua `_navSetBadge`. Lưu **memory `nav-badge-attention-only`** (nguyên tắc UI bền).
+- **Files changed:** *(spoke, ĐÃ COMMIT + PUSH origin/main)* `assets/js/app.js` (+`_navSetBadge`, `updateNavBadges` bao case/init), `index.html` (navBadgeCase +danger+title, +navBadgeInit trên initiative-tracker, cache-bust initiative-tracker.js `?v=20260907c`), `assets/js/views/initiative-tracker.js` (isOverdue +state dòng 342/405), `assets/js/config.js` (v6.63), `test/verify_my_work.mjs` (+MW49/50), 4 `AI_CONTEXT/`. *(Ngoài repo)* memory `nav-badge-attention-only.md`.
+- **Decision made:** NGUYÊN TẮC UI: badge menu trái chỉ hiện SỐ MỤC CẦN CHÚ Ý (quá hạn/cần hành động), KHÔNG tổng; ẩn khi 0; class `danger` để nhóm mẹ dồn chấm đỏ. Case "cần chú ý" = RAG Đỏ (`_cpCalcRagLabel`), Initiative "cần chú ý" = `_initCountOverdue`. Không tạo helper overdue mới — tái dùng canonical mỗi domain. BLD giữ nguyên (canBLD='Y' = tập con cần xử lý, hợp nguyên tắc).
+- **Blocker:** **Không.** Thuần FE — KHÔNG cần redeploy GAS.
+- **Next step:** [TT] hard-refresh `?v=20260907c` → nghiệm thu badge Case (chỉ khi có case Đỏ) + Initiative (chỉ khi có init quá hạn); các badge khác giữ hành vi. [CC] về hub `/handover` + cross-ref (gộp S87+S88). Nguyên tắc UI đã ở memory — áp cho mọi badge nav tương lai.
+- **Regression risk:** **Thấp → verify đầy đủ.** verify_my_work 102/102 (+MW49/50) · nav_group 14/14 · startup 10/10 · case_pipeline 22/22 · initiative_tracker toàn ✅ · h2_tracker 32/32 · h2_dashboard 24/24. Refactor cô lập (`_navSetBadge` gom logic sẵn có; case/init dùng helper canonical với guard `typeof`). Pre-existing flake (xác nhận trên cây sạch): verify_task_init_popup AUTH FAILED, verify_initiative TimeoutError. Data-boundary: 0 chạm KH/secret.
+
+---
+
 # SESSION HANDOVER — 2026-09-07 (S87 — BUG task hoàn thành vẫn "quá hạn" + CR left-menu badge chỉ show số quá hạn)
 **Model**: Claude Opus 4.8 · **Version**: v6.61 → **v6.62**
 

@@ -1,5 +1,16 @@
 # PROJECT STATE
 
+**S88 — Áp NGUYÊN TẮC UI badge left-menu cho Case + Initiative (chỉ show số "cần chú ý", không show tổng). CODE XONG + TEST PASS. Thuần FE, KHÔNG redeploy GAS. (main, v6.63, 2026-09-07)**
+[TT] yêu cầu áp nguyên tắc badge left-menu (từ S87) cho **cả Initiative, Issue và các mục còn lại**, và ghi nhớ nguyên tắc UI này cho tương lai.
+- **NGUYÊN TẮC UI (chốt):** badge trên menu trái **CHỈ hiện SỐ MỤC CẦN CHÚ Ý** (quá hạn / cần hành động), **KHÔNG hiện tổng tất cả**; **ẩn hẳn khi = 0**; dùng class `danger` (đỏ) để nhóm mẹ tự dồn chấm đỏ (`updateNavGroupBadges`). Áp cho mọi badge hiện có + mọi badge tương lai. (Đã lưu memory `nav-badge-attention-only`.)
+- **Rà toàn bộ badge:** `navBadgeIssue` = SLA breach (đã đúng, giữ) · `navBadgeBld` = task `canBLD='Y'` (tập con cần xử lý, không phải tổng — giữ) · `navBadgeTotal` (Task) = task quá hạn (S87) · `navBadgeOverdue` (Performance) = task quá hạn.
+- **Đổi trong phiên này:** `navBadgeCase` từ **tổng tất cả case** → **số case quá hạn/RAG Đỏ** (`_cpCalcRagLabel(c)==='Đỏ'`), thêm class `danger` · **THÊM `navBadgeInit`** cho "Theo dõi Initiative" = số initiative quá hạn (`_initCountOverdue(_initRealRoots())`), `danger`, ẩn khi 0.
+- **Refactor:** `updateNavBadges` (app.js) gom qua helper `_navSetBadge(id,n)` (set text + ẩn/hiện theo n>0) — đồng nhất mọi badge. Cũng truyền `state` cho `isOverdue` ở 2 bảng task trong initiative-tracker (dòng 342/405) cho nhất quán S87.
+- **Files:** `assets/js/app.js` (`_navSetBadge` + `updateNavBadges` bao case/init) · `index.html` (navBadgeCase +danger+title, +navBadgeInit, cache-bust initiative-tracker.js `?v=20260907c`) · `assets/js/views/initiative-tracker.js` (isOverdue +state) · `assets/js/config.js` (v6.63) · `test/verify_my_work.mjs` (+MW49/50 case+init badge). *(case-pipeline.js không đổi — chỉ dùng helper sẵn có.)*
+- **Verify:** `verify_my_work` **102/102** (+MW49 case badge · MW50 init badge: danger+ẩn-khi-0). Regression: nav_group 14/14 · startup 10/10 · case_pipeline 22/22 · initiative_tracker toàn ✅ (IT1-IT10+overdue=1) · h2_tracker 32/32 · h2_dashboard 24/24. Pre-existing flake (KHÔNG do phiên, xác nhận trên cây sạch): verify_task_init_popup "AUTH FAILED", verify_initiative TimeoutError (file://). Blocker: không. **[TT]:** hard-refresh `?v=20260907c` → badge case/initiative chỉ hiện khi có mục quá hạn.
+
+---
+
 **S87 — BUG task hoàn thành vẫn hiện "quá hạn" + CR left-menu badge chỉ show số quá hạn. CODE XONG + TEST PASS. Thuần FE, KHÔNG redeploy GAS. (main, v6.62, 2026-09-07)**
 [TT] báo: (1) task đã **hoàn thành** vẫn hiển thị ngày **quá hạn** (rõ nhất ở My Work); (2) CR left-menu "Quản lý Task" đang show **tổng tất cả task** → chỉ muốn show **số task quá hạn**.
 - **BUG (gốc 2 tầng):** (a) My Work `_mwDeadlineBadge(endDate)` tính overdue thuần `diff<0`, **không xét trạng thái done** → task Hoàn thành có deadline quá khứ vẫn ra badge "Quá hạn" (thấy ở card list, Kanban cột "Vừa đóng", urgent). (b) Helper chung `isOverdue(endDate, progress)` chỉ guard `progress>=100`, **không xét `state==='Hoàn thành'`** → task đánh dấu Hoàn thành thủ công mà %<100 vẫn kẹt overdue ở các view dùng helper.

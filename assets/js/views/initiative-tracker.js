@@ -339,7 +339,7 @@ function _initBuildMsTaskList(ms, parentInitId) {
       <td>${stateChip(tk.state)}</td>
       <td style="color:var(--text-3);">${_esc(tk.picRes||'–')}</td>
       <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${tk.progress}%;"></div></div><span class="prog-pct">${tk.progress}%</span></div></td>
-      <td ${isOverdue(tk.endDate,tk.progress)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(tk.endDate)||'–'}</td>
+      <td ${isOverdue(tk.endDate,tk.progress,tk.state)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(tk.endDate)||'–'}</td>
       <td onclick="event.stopPropagation()">${alignBadge}</td>
     </tr>`;
   }).join('');
@@ -402,7 +402,7 @@ function _initBuildTaskList(initiativeId, tasks) {
       <td>${stateChip(t.state)}</td>
       <td style="color:var(--text-3);">${_esc(t.picRes||'–')}</td>
       <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
-      <td ${isOverdue(t.endDate,t.progress)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(t.endDate)||'–'}</td>
+      <td ${isOverdue(t.endDate,t.progress,t.state)?'style="color:var(--danger);font-weight:700;"':''}>${fmtDate(t.endDate)||'–'}</td>
     </tr>`).join('');
 
   return `<table class="init-task-table">

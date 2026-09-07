@@ -1,5 +1,16 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-07 (S87 — BUG task hoàn thành vẫn "quá hạn" + CR left-menu badge số quá hạn)
+**Prepared**: 2026-09-07 (S88 — Áp nguyên tắc UI badge left-menu cho Case + Initiative + ghi nhớ)
+
+## 🆕 S88 — Badge left-menu "cần chú ý" cho Case + Initiative + memory nguyên tắc UI — CODE XONG + TEST PASS + ĐÃ PUSH (v6.63, thuần FE)
+- [x] NGUYÊN TẮC UI: badge menu trái chỉ show SỐ MỤC CẦN CHÚ Ý (quá hạn/cần hành động), không tổng; ẩn khi 0; danger để nhóm mẹ dồn chấm đỏ. **Lưu memory `nav-badge-attention-only`.**
+- [x] Case: tổng → số case RAG Đỏ (`_cpCalcRagLabel`). Initiative: **thêm** `navBadgeInit` = `_initCountOverdue`. Issue/BLD giữ (đã đúng). Refactor `_navSetBadge`.
+- [x] `verify_my_work` **102/102** (+MW49/50) + regression nav_group/startup/case_pipeline/initiative_tracker/h2 xanh. config v6.63 + cache-bust initiative-tracker `?v=20260907c`.
+- [ ] **[TT] hard-refresh `?v=20260907c` → nghiệm thu:** badge Case chỉ hiện khi có case Đỏ; badge Initiative chỉ hiện khi có init quá hạn.
+- [ ] **[CC]** về hub `/handover` + cross-ref (gộp S87+S88). Áp nguyên tắc UI (memory) cho mọi badge nav mới sau này.
+
+---
+
+**Prepared cũ**: 2026-09-07 (S87 — BUG task hoàn thành vẫn "quá hạn" + CR left-menu badge số quá hạn)
 
 ## 🆕 S87 — BUG done-không-overdue + CR nav badge số quá hạn — CODE XONG + TEST PASS + ĐÃ PUSH (v6.62, thuần FE)
 - [x] `isOverdue(endDate,progress,state)` +arg state → `Hoàn thành`=false; My Work `_mwDeadlineBadge(endDate,done)`→'' khi done + `_mwEntityDone`; truyền done/state khắp task views.
