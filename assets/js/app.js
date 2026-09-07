@@ -181,11 +181,12 @@ function renderAll() {
 }
 
 function updateNavBadges() {
-  document.getElementById('navBadgeTotal').textContent = db.tasks.length;
-  const ov = db.tasks.filter(t => isOverdue(t.endDate, t.progress)).length;
+  // CR: badge "Quản lý Task" chỉ hiện SỐ TASK QUÁ HẠN (không show tổng tất cả nữa).
+  const ov = db.tasks.filter(t => isOverdue(t.endDate, t.progress, t.state)).length;
+  const tb = document.getElementById('navBadgeTotal');
+  if (tb) { tb.textContent = ov; tb.style.display = ov > 0 ? '' : 'none'; }
   const ob = document.getElementById('navBadgeOverdue');
-  ob.textContent = ov;
-  ob.style.display = ov > 0 ? '' : 'none';
+  if (ob) { ob.textContent = ov; ob.style.display = ov > 0 ? '' : 'none'; }
   const bldCount = db.tasks.filter(t => t.canBLD === 'Y').length;
   const bb = document.getElementById('navBadgeBld');
   if (bb) { bb.textContent = bldCount; bb.style.display = bldCount > 0 ? '' : 'none'; }
@@ -404,7 +405,7 @@ function showDetailModal(filter, title) {
     if (innerFilter === 'all') return true;
     if (innerFilter === 'done') return parseInt(t.progress) >= 100 || t.state === 'Hoàn thành';
     if (innerFilter === 'inprogress') return parseInt(t.progress) < 100 && t.state !== 'Hoàn thành';
-    if (innerFilter === 'overdue') return isOverdue(t.endDate, t.progress);
+    if (innerFilter === 'overdue') return isOverdue(t.endDate, t.progress, t.state);
     if (innerFilter.startsWith('status-')) return (t.status||'').toLowerCase() === innerFilter.split('-')[1].toLowerCase();
     if (innerFilter.startsWith('initiative-')) return t.initiative === innerFilter.substring(11);
     return true;

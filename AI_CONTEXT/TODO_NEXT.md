@@ -1,5 +1,16 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-07 (S86 — BUGFIX Case Pipeline "lúc load được lúc không")
+**Prepared**: 2026-09-07 (S87 — BUG task hoàn thành vẫn "quá hạn" + CR left-menu badge số quá hạn)
+
+## 🆕 S87 — BUG done-không-overdue + CR nav badge số quá hạn — CODE XONG + TEST PASS + ĐÃ PUSH (v6.62, thuần FE)
+- [x] `isOverdue(endDate,progress,state)` +arg state → `Hoàn thành`=false; My Work `_mwDeadlineBadge(endDate,done)`→'' khi done + `_mwEntityDone`; truyền done/state khắp task views.
+- [x] CR: `updateNavBadges` badge "Quản lý Task" (`navBadgeTotal`) → số task quá hạn (danger, ẩn khi 0); index.html navBadgeTotal danger+hidden.
+- [x] `verify_my_work` **100/100** (+MW41/42/43) + regression nav_group/startup/h2_tracker/h2_dashboard/task_rag/date_unify xanh. config v6.62 + cache-bust `?v=20260907c` (7 file).
+- [ ] **[TT] hard-refresh `?v=20260907c` → nghiệm thu:** task Hoàn thành hết "quá hạn" (My Work/Kanban Vừa đóng/Tasks); badge "Quản lý Task" chỉ hiện số quá hạn.
+- [ ] **[CC]** về hub `/handover` + cross-ref CROSS_REPO_LOG.
+
+---
+
+**Prepared cũ**: 2026-09-07 (S86 — BUGFIX Case Pipeline "lúc load được lúc không")
 
 ## 🆕 S86 — BUGFIX batch-read tự lành domain kẹt-rỗng — CODE XONG + TEST PASS + ĐÃ PUSH (v6.61, thuần FE)
 - [x] `readAll` (api.js): prune `body.vers` — chỉ khai version domain client thực sự có data → domain rỗng buộc server gửi lại (tự lành kẹt-rỗng Case/Issue "lúc được lúc không").

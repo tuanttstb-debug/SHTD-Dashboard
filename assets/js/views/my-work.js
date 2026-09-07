@@ -47,7 +47,16 @@ function _mwDiffDays(endDate) {
   return Math.ceil((d - today) / 86400000);
 }
 
-function _mwDeadlineBadge(endDate) {
+// Task/entity đã hoàn thành → coi như done (state chuẩn "Hoàn thành" hoặc %HT≥100 khi auto-complete chưa kịp đồng bộ state).
+function _mwEntityDone(e) {
+  if (!e) return false;
+  if (e.state === 'Hoàn thành') return true;
+  return (parseInt(e.progress) || 0) >= 100;
+}
+
+// done=true → KHÔNG hiển thị badge deadline (task hoàn thành không còn "quá hạn"/"sắp đến hạn").
+function _mwDeadlineBadge(endDate, done) {
+  if (done) return '';
   const diff = _mwDiffDays(endDate);
   if (diff === null) return '';
   if (diff < 0)  return `<span class="mw-dl-badge dl-overdue">${t('mw.dl.overdue')} ${Math.abs(diff)}${t('mw.dl.days')}</span>`;
@@ -265,7 +274,7 @@ function _mwBuildDevReviewSection(devItems) {
     <span class="mw-devrv-name" title="${esc(d.name)}">${esc(d.name)}</span>
     ${stateChip(d.state)}
     ${stale ? `<span class="mw-devrv-badge"><i class="fa-solid fa-bell"></i> ${t('dev.review.badge')}</span>` : ''}
-    ${_mwDeadlineBadge(d.endDate)}
+    ${_mwDeadlineBadge(d.endDate, _mwEntityDone(d))}
   </div>
   <div class="mw-devrv-controls">
     <label class="mw-devrv-lbl">${t('dev.col.progress')}</label>
@@ -343,7 +352,7 @@ function _mwBuildTaskCard(task) {
     <span class="mw-task-name" title="${esc(task.name)}">${esc(task.name)}</span>
     ${normRecurrence(task.recurrence) ? `<span class="rt-recur-chip" title="Task định kỳ">${normRecurrence(task.recurrence) === 'Tuần' ? '↻ Tuần' : '↻ Tháng'}</span>` : ''}
     ${isHl ? '<i class="fa-solid fa-star mw-task-star" title="Highlight báo cáo"></i>' : ''}
-    ${_mwDeadlineBadge(task.endDate)}
+    ${_mwDeadlineBadge(task.endDate, _mwEntityDone(task))}
   </div>
   <div class="mw-controls">
     <select class="mw-state-sel" onchange="mwQuickSaveState('${id}',this.value)">${opts}</select>
@@ -384,7 +393,7 @@ function _mwUrgentTaskItem(t) {
     <span class="mw-urgent-prog-bar"><span class="mw-urgent-prog-fill" style="width:${prog}%"></span></span>
     <span class="mw-urgent-prog-label">${prog}%</span>
   </span>
-  ${_mwDeadlineBadge(t.endDate)}
+  ${_mwDeadlineBadge(t.endDate, _mwEntityDone(t))}
   ${stateChip(t.state)}
 </div>`;
 }
@@ -602,7 +611,7 @@ function _mwKanbanCard(task, overSet) {
     <span class="mw-kb-id">${id}</span>
     ${ragCls ? `<span class="mw-kb-rag ${ragCls}"></span>` : ''}
     ${recur ? `<span class="rt-recur-chip" title="Task định kỳ">${recur === 'Tuần' ? '↻ Tuần' : '↻ Tháng'}</span>` : ''}
-    ${_mwDeadlineBadge(task.endDate)}
+    ${_mwDeadlineBadge(task.endDate, _mwEntityDone(task))}
   </div>
   <div class="mw-kb-name" title="${esc(task.name)}">${esc(task.name)}</div>
   <div class="mw-kb-prog" title="Tiến độ ${prog}%">

@@ -53,7 +53,8 @@ function parseVNDate(s) {
   return new Date(+y, +m - 1, +d);
 }
 
-function isOverdue(endDateString, progress) {
+function isOverdue(endDateString, progress, state) {
+  if (state === 'Hoàn thành') return false;   // task đã hoàn thành → không tính quá hạn (kể cả %<100 do đánh dấu tay)
   if (progress >= 100 || !endDateString) return false;
   const endDateObj = parseVNDate(endDateString);
   if (!endDateObj || isNaN(endDateObj)) return false;

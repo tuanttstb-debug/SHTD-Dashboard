@@ -28,7 +28,7 @@ function _getThisWeekLabel() { return currentIsoWeekLabel(); }   // ISO week (he
 function _applyPreset(tasks) {
   if (activePreset === 'active')  return tasks.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng');
   if (activePreset === 'week')    return tasks.filter(t => taskInReportWeek(t, _getThisWeekLabel()));
-  if (activePreset === 'overdue') return tasks.filter(t => isOverdue(t.endDate, t.progress));
+  if (activePreset === 'overdue') return tasks.filter(t => isOverdue(t.endDate, t.progress, t.state));
   return tasks;
 }
 
@@ -52,7 +52,7 @@ function updatePresetCounts() {
   const counts = {
     active:  base.filter(t => t.state !== 'Hoàn thành' && t.state !== 'Tạm dừng').length,
     week:    base.filter(t => taskInReportWeek(t, wkLabel)).length,
-    overdue: base.filter(t => isOverdue(t.endDate, t.progress)).length,
+    overdue: base.filter(t => isOverdue(t.endDate, t.progress, t.state)).length,
     all:     base.length,
   };
   Object.entries(counts).forEach(([key, n]) => {
@@ -230,7 +230,7 @@ function renderTaskTable() {
     </td></tr>`;
   } else {
     tbody.innerHTML = paged.map(t => {
-      const ov = isOverdue(t.endDate, t.progress);
+      const ov = isOverdue(t.endDate, t.progress, t.state);
       const sel = selectedIds.has(t.id) ? 'row-selected' : '';
       const ovCls = ov ? 'row-overdue' : '';
       let init = esc(t.initiative||'–');
@@ -286,7 +286,7 @@ function openTaskViewPopup(id) {
   document.getElementById('taskViewTitle').textContent = t.name || t.id;
   document.getElementById('taskViewSubtitle').textContent = `ID: ${t.id}  ·  ${t.initiative || 'BAU'}  ·  ${t.team || ''}`;
 
-  const ov = isOverdue(t.endDate, t.progress);
+  const ov = isOverdue(t.endDate, t.progress, t.state);
   const ragMap = { Green:'badge-green', Amber:'badge-amber', Red:'badge-red' };
   const ragCls = ragMap[t.status] || 'badge-gray';
 

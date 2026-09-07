@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-09-07 (S87 — BUG task hoàn thành vẫn "quá hạn" + CR left-menu badge chỉ show số quá hạn)
+**Model**: Claude Opus 4.8 · **Version**: v6.61 → **v6.62**
+
+- **Task completed:** [TT] báo 2 việc — (1) **BUG:** task đã **hoàn thành** vẫn hiển thị **quá hạn** (rõ nhất My Work); (2) **CR:** left-menu "Quản lý Task" đang show tổng tất cả → chỉ muốn show **số task quá hạn**. Truy vết theo checklist: BUG gốc 2 tầng — My Work `_mwDeadlineBadge` tự tính `diff<0` bỏ qua done + helper chung `isOverdue(endDate,progress)` không xét `state==='Hoàn thành'`.
+- **Files changed:** *(spoke, ĐÃ COMMIT + PUSH origin/main)* `assets/js/helpers.js` (`isOverdue` +tham số `state`), `assets/js/views/my-work.js` (+`_mwEntityDone`, `_mwDeadlineBadge(endDate,done)` → '' khi done; truyền done ở card/Kanban/urgent/dev), `assets/js/views/tasks.js`+`quickview.js`+`h2-tracker.js`+`app.js` (truyền `state` cho `isOverdue`), `assets/js/app.js` (`updateNavBadges`: `navBadgeTotal`→số quá hạn, danger, ẩn khi 0), `index.html` (navBadgeTotal danger+hidden + cache-bust 7 file `?v=20260907c`), `assets/js/config.js` (v6.62), `test/verify_my_work.mjs` (+MW41/42/43), 4 file `AI_CONTEXT/`.
+- **Decision made:** Fix "done" theo 2 tiêu chí robust (`state==='Hoàn thành'` ∨ `%≥100`) — done task **ẩn hẳn badge deadline** (không chỉ đổi màu) vì task xong không còn khái niệm urgency; state chip "Hoàn thành" + class `is-done` đã đủ chỉ báo. `isOverdue` thêm arg `state` cuối (tương thích ngược, caller cũ 2-arg vẫn chạy). CR badge: repurpose `navBadgeTotal` (giữ id, đổi nghĩa) → số quá hạn; danh nghĩa "show all" bỏ vì noise. Dashboard KPI overdue KHÔNG đụng (đã check `isDone` sẵn).
+- **Blocker:** **Không.** Thuần FE — KHÔNG cần redeploy GAS. [TT] hard-refresh.
+- **Next step:** [TT] hard-refresh `?v=20260907c` → nghiệm thu: (a) task Hoàn thành ở My Work/Kanban "Vừa đóng"/Tasks không còn "Quá hạn"; (b) left-menu "Quản lý Task" chỉ hiện số task quá hạn (ẩn khi 0), nhóm mẹ "Quản lý công việc" sáng chấm đỏ khi có quá hạn. [CC] về hub `/handover` + cross-ref.
+- **Regression risk:** **Thấp → verify đầy đủ.** verify_my_work 100/100 (+3) · nav_group 14/14 · startup 10/10 · h2_tracker 32/32 · h2_dashboard 24/24 · task_rag 5/5 · date_unify 28/28. Thay đổi cô lập (helper +1 arg tùy chọn; my_work 2 helper; badge count). Data-boundary: 0 chạm KH/secret.
+
+---
+
 # SESSION HANDOVER — 2026-09-07 (S86 — BUGFIX Case Pipeline "lúc load được lúc không": batch-read tự lành domain kẹt-rỗng)
 **Model**: Claude Opus 4.8 · **Version**: v6.60 → **v6.61**
 

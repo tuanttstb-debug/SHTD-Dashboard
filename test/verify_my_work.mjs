@@ -40,6 +40,9 @@
  *  MW37 – i18n EN: section titles switch to English (Action Needed, My Tasks, Weekly Champion)
  *  MW38 – i18n EN: overdue deadline badge shows "Overdue"
  *  MW39 – i18n VI: setLang('vi') restores Vietnamese labels
+ *  MW41 – BUG: done task card shows NO "Quá hạn" badge (T-26-D01)
+ *  MW42 – BUG: isOverdue respects state "Hoàn thành" even if progress<100
+ *  MW43 – CR: left-menu badge "Quản lý Task" shows OVERDUE count, not total
  *
  * Run: node verify_my_work.mjs
  * EVD: test-results/my_work/
@@ -403,6 +406,38 @@ log('MW15-badge-overdue', hasOverdueBadge, 'Overdue badge "Quá hạn" shown on 
 const soonCardText  = cardTexts.find(t => t.includes('T-26-H02')) || '';
 const hasSoonBadge  = soonCardText.includes('Còn');
 log('MW16-badge-soon', hasSoonBadge, '"Còn Xngày" badge shown on T-26-H02 card');
+
+/* ══════════════════════════════════════════
+   MW41 — BUG FIX: done task card does NOT show overdue badge
+   (T-26-D01 = state "Hoàn thành" + endDate quá khứ → card hiện nhưng KHÔNG có "Quá hạn")
+══════════════════════════════════════════ */
+const doneCardText = cardTexts.find(t => t.includes('T-26-D01')) || '';
+log('MW41-done-no-overdue-badge',
+    doneCardText.length > 0 && !doneCardText.includes('Quá hạn'),
+    `Done overdue task T-26-D01 card present (${doneCardText.length > 0}) with NO "Quá hạn" badge`);
+
+/* ══════════════════════════════════════════
+   MW42 — BUG FIX: isOverdue respects state "Hoàn thành" even if progress < 100
+══════════════════════════════════════════ */
+const isOverdueRespectsDone = await page.evaluate(() =>
+  isOverdue('01/01/2020', 50, 'Hoàn thành') === false &&   // done by state, %<100 → not overdue
+  isOverdue('01/01/2020', 50) === true                     // same date, not done → overdue
+);
+log('MW42-isOverdue-respects-done', isOverdueRespectsDone,
+    'isOverdue: state="Hoàn thành" → false (kể cả %<100); chưa xong → true');
+
+/* ══════════════════════════════════════════
+   MW43 — CR: left-menu badge "Quản lý Task" shows OVERDUE count, not total
+══════════════════════════════════════════ */
+const navBadge = await page.evaluate(() => {
+  updateNavBadges();
+  const el = document.getElementById('navBadgeTotal');
+  const overdueCount = db.tasks.filter(t => isOverdue(t.endDate, t.progress, t.state)).length;
+  return { text: (el.textContent || '').trim(), total: db.tasks.length, overdueCount };
+});
+log('MW43-navbadge-overdue-not-total',
+    navBadge.text === String(navBadge.overdueCount) && navBadge.text !== String(navBadge.total) && navBadge.overdueCount > 0,
+    `navBadgeTotal shows overdue=${navBadge.text} (not total=${navBadge.total})`);
 
 /* ══════════════════════════════════════════
    MW17 — RAG dots rendered

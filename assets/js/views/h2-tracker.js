@@ -318,7 +318,7 @@ function _h2BuildMsTaskTable(m, canEdit) {
     }
     const dl      = tk.endDate || tk.deadline || '';
     const prog    = Math.min(Math.max(parseInt(tk.progress) || 0, 0), 100);
-    const overdue = (typeof isOverdue === 'function') && isOverdue(dl, tk.progress);
+    const overdue = (typeof isOverdue === 'function') && isOverdue(dl, tk.progress, tk.state);
     const rag     = tk.status ? _h2RagBadge(String(tk.status).toUpperCase()) : '';
     const state   = (typeof stateChip === 'function') ? stateChip(tk.state) : esc(tk.state || '');
     const acc     = (tk.picAcc && tk.picAcc !== tk.picRes)

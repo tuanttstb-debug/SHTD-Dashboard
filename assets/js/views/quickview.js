@@ -316,7 +316,7 @@ function _qvRenderInitiative(tasks, filterInit) {
       .sort((a,b) => (a.endDate||'').localeCompare(b.endDate||''))
       .map(tk => {
         const isOverdueTask = typeof isOverdue === 'function'
-          ? isOverdue(tk.endDate, tk.progress) : false;
+          ? isOverdue(tk.endDate, tk.progress, tk.state) : false;
         return `
         <div class="qvp-card ${_qvRagCls(tk.status)}" onclick="_qvOpenTask('${tk.id}')" style="margin-left:${singleMode?0:12}px;">
           <div class="qvp-card-top">
