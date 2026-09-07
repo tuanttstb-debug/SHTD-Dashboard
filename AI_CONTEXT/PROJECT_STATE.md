@@ -362,7 +362,7 @@ debug_login.mjs           ← S18 login diagnostics
 |---|---|---|---|
 | **Testing (local)** | `http://localhost:3030` | `main` | ✅ Dùng tạm |
 | **Testing (Netlify)** | https://test-shtd.netlify.app | — | ❌ **Hết credit** |
-| **Production** | GitHub Pages URL | `main` | ✅ Live (`41f4018` — S23 tất cả features merged via PR #27) |
+| **Production** | https://tuanttstb-debug.github.io/SHTD-Dashboard/ | `main` | ✅ Live (`41f4018` — S23 tất cả features merged via PR #27) |
 
 ---
 
