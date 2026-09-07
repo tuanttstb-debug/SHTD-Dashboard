@@ -224,10 +224,26 @@ async function readAll(domains) {
   // (Phase 3/Pha B) Gửi version đã biết CHỈ khi client đang có dữ liệu → server bỏ domain không đổi.
   //   - vers: map version THEO DOMAIN (server mới) → chỉ tải lại domain đổi.
   //   - ver:  global đơn (tương thích server cũ chưa hỗ trợ per-domain).
-  if (db.tasks && db.tasks.length) {
-    if (db._vers)    body.vers = db._vers;
-    if (db._dataVer) body.ver  = db._dataVer;
+  // Chỉ KHAI version cho domain client ĐANG CÓ dữ liệu. Domain rỗng (cache mất, hoặc lần batch-read
+  // trước phía GAS đọc hụt/timeout → dbXxx=[] NHƯNG db._vers vẫn bị ghi version hiện tại ở dòng dưới)
+  // sẽ KHÔNG khai version → server thấy version lệch → gửi lại domain đó → TỰ LÀNH trạng thái
+  // "kẹt rỗng" (case/issue "lúc load được lúc không, giờ không load được") mà không cần chờ write mới.
+  if (db._vers) {
+    const _has = {
+      tasks:       !!(db.tasks && db.tasks.length),
+      cases:       !!(typeof dbCases !== 'undefined' && dbCases && dbCases.length),
+      issues:      !!(typeof dbIssues !== 'undefined' && dbIssues && dbIssues.length),
+      dev:         !!(typeof dbDev !== 'undefined' && dbDev && dbDev.length),
+      initiatives: !!(db.initiatives && db.initiatives.length),
+      users:       !!(typeof _appUsers !== 'undefined' && _appUsers && _appUsers.length),
+    };
+    const _pruned = {};
+    // Domain không có trong bản đồ (vd notifs) → giữ nguyên hành vi cũ; domain có map chỉ khai khi có data.
+    for (const _k in db._vers) if (_has[_k] !== false) _pruned[_k] = db._vers[_k];
+    if (Object.keys(_pruned).length) body.vers = _pruned;
   }
+  // ver global (tương thích server cũ) chỉ gửi khi có dữ liệu nền (tasks) — như hành vi cũ.
+  if (db._dataVer && db.tasks && db.tasks.length) body.ver = db._dataVer;
   // Lỗi mạng ở gasPost sẽ THROW ra ngoài (caller xử lý) — không nuốt để tránh fallback double-timeout.
   const json = await gasPost(body, GAS_READ_TIMEOUT_MS);
   if (!json || json.status !== 'ok') {

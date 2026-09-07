@@ -1,5 +1,12 @@
 # PROJECT STATE
 
+**S86 — BUGFIX: Case Pipeline (và mọi domain) "lúc load được lúc không" — batch-read tự lành domain kẹt-rỗng. CODE XONG + TEST PASS. Thuần FE, KHÔNG redeploy GAS. (main, v6.61, 2026-09-07)**
+[TT] (Admin) báo case pipeline lúc load được lúc không, hiện đang không load được. **Gốc (client `api.js` `readAll`):** version-gate theo domain (Pha B) — client gửi TOÀN BỘ `db._vers` chỉ cần `db.tasks` có data. Nếu một lần `caseRead` phía GAS trả rỗng/hụt (GAS chập chờn/timeout), client `_parseCaseArray` set `dbCases=[]` NHƯNG dòng `db._vers=json.vers` vẫn ghi version cases hiện tại → client "khai" đã có cases version X trong khi mảng rỗng → mọi batch-read sau đều `notModified` cho cases → **cases kẹt rỗng tới khi có write case mới bump version** (đúng hiện tượng chập chờn). Không riêng Admin — bất kỳ role/domain nào cũng dính.
+- **Fix `assets/js/api.js` (`readAll`):** thay gate thô `if(db.tasks.length){ body.vers=db._vers }` bằng **prune theo domain** — chỉ khai version cho domain client THỰC SỰ đang có dữ liệu (map `_has` cho tasks/cases/issues/dev/initiatives/users; domain ngoài map như notifs giữ nguyên). Domain rỗng KHÔNG khai version → server thấy lệch → gửi lại → **tự lành** ngay lần load kế (kể cả trạng thái đang kẹt hiện tại), không chờ write. `ver` global chỉ gửi kèm khi có tasks (như cũ); vì vẫn gửi `vers` non-rỗng nên server bỏ qua `ver` (không lấp oan domain rỗng).
+- **Verify:** `verify_domain_version` **10/10** (thêm test E: dbCases=[] + có db._vers.cases → body.vers BỎ cases, giữ tasks) + regression startup_nonblocking 10/10 · case_pipeline 22/22 · my_work 97/97 · atomic 41/41 · notifications 21/21. Blocker: không. **[TT]:** hard-refresh `?v=20260907b` → cases hiện lại; theo dõi không còn kẹt.
+
+---
+
 **S85 — CR My Work: droplist lọc nhân sự THUẦN theo Res — CODE XONG + TEST 97/97 + ĐÃ PUSH. Thuần FE, KHÔNG redeploy GAS. (main, v6.60, 2026-09-07)**
 CR [TT]: My Work đã lọc theo team + nhân sự; nay droplist lọc nhân sự chuyển **thuần theo Responsible (Res)** để teamlead xem nhanh đúng task mình/người đó trực tiếp phụ trách, không bị ngập task chỉ đứng Accountable (teamlead thường là Acc trên hầu hết task team). **Trước:** person filter khớp `picRes HOẶC picAcc`. **Nay:** chỉ `picRes`.
 - **`assets/js/views/my-work.js`:** `_mwPersonMatch` bỏ nhánh `|| picAcc` → thuần Res; `_mwTeamPeople` (nguồn droplist) chỉ gom `picRes` → người chỉ đứng Acc KHÔNG vào droplist (nhất quán, tránh chọn ra 0 task).

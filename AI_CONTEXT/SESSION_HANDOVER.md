@@ -1,3 +1,13 @@
+# SESSION HANDOVER — 2026-09-07 (S86 — BUGFIX Case Pipeline "lúc load được lúc không": batch-read tự lành domain kẹt-rỗng)
+**Model**: Claude Opus 4.8 · **Version**: v6.60 → **v6.61**
+
+- **Task completed:** [TT] (Admin) báo Case Pipeline lúc load được lúc không, hiện đang không load. Rà soát theo checklist truy vết: tầng sai sớm nhất = **client `readAll` (api.js)**, không phải RBAC/case-pipeline view. **Gốc:** version-gate Pha B — client gửi cả `db._vers` khi `db.tasks` có data; nếu 1 lần `caseRead` GAS trả rỗng/hụt → `dbCases=[]` nhưng `db._vers.cases` vẫn = version hiện tại → client khai "đã có cases" trong khi rỗng → batch-read sau `notModified` → **cases kẹt rỗng** tới khi write case bump version (chập chờn). Fix: prune `body.vers` chỉ khai domain client thực sự có data → domain rỗng buộc server gửi lại → tự lành.
+- **Files changed:** *(spoke, ĐÃ COMMIT + PUSH origin/main)* `assets/js/api.js` (`readAll`: gate thô → prune per-domain theo `_has`), `test/verify_domain_version.mjs` (+test E self-heal), `assets/js/config.js` (v6.61), `index.html` (cache-bust `api.js?v=20260907b`), `AI_CONTEXT/` (4 file).
+- **Decision made:** Fix đặt ở **client** (tầng sai sớm nhất — client tự đưa mình vào trạng thái không nhất quán version↔data). Không sửa GAS: server đã đúng giao thức; hơn nữa fix client **tự lành trạng thái đang kẹt** ngay lần load kế sau deploy, không cần chờ write/bump. Không thêm guard "chống ghi đè rỗng" ở `_parseCaseArray` (giữ scope hẹp) — prune đã đảm bảo phục hồi trong ≤1 chu kỳ sync.
+- **Blocker:** **Không.** Thuần FE — KHÔNG cần redeploy GAS. [TT] hard-refresh.
+- **Next step:** [TT] hard-refresh `?v=20260907b` → mở Case Pipeline, xác nhận cases hiện lại + không còn kẹt qua các lần load. [CC] về hub `/handover` + cross-ref. (Tùy chọn theo dõi: nếu vẫn thấy chớp rỗng 1 nhịp rồi có lại = đúng self-heal 1 chu kỳ; nếu muốn chặn cả chớp → thêm guard không ghi đè khi server trả rỗng mà client đang có data — cân nhắc sau.)
+- **Regression risk:** **Thấp → verify đầy đủ.** Thay đổi cô lập trong `readAll` phần build request; steady-state không đổi (domain có data vẫn khai version → notModified như cũ). `verify_domain_version` 10/10 (+E), startup_nonblocking 10/10, case_pipeline 22/22, my_work 97/97, atomic 41/41, notifications 21/21. Data-boundary: 0 chạm KH/secret.
+
 # SESSION HANDOVER — 2026-09-07 (S85 — CR My Work: droplist lọc nhân sự thuần theo Res)
 **Model**: Claude Opus 4.8 · **Version**: v6.59 → **v6.60**
 

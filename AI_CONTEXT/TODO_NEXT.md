@@ -1,5 +1,16 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-07 (S85 — CR My Work: droplist lọc nhân sự thuần theo Res)
+**Prepared**: 2026-09-07 (S86 — BUGFIX Case Pipeline "lúc load được lúc không")
+
+## 🆕 S86 — BUGFIX batch-read tự lành domain kẹt-rỗng — CODE XONG + TEST PASS + ĐÃ PUSH (v6.61, thuần FE)
+- [x] `readAll` (api.js): prune `body.vers` — chỉ khai version domain client thực sự có data → domain rỗng buộc server gửi lại (tự lành kẹt-rỗng Case/Issue "lúc được lúc không").
+- [x] `verify_domain_version` **10/10** (+test E self-heal) + regression startup 10/10 · case_pipeline 22/22 · my_work 97/97 · atomic 41/41 · notif 21/21. config v6.61 + cache-bust `api.js?v=20260907b`.
+- [ ] **[TT] hard-refresh `?v=20260907b` → xác nhận** Case Pipeline hiện lại + không còn kẹt qua các lần load.
+- [ ] **[CC] (tùy chọn)** guard `_parseCaseArray`/readAll: KHÔNG ghi đè mảng đang có data khi server trả rỗng (chặn cả "chớp rỗng 1 nhịp" trước khi self-heal) — cân nhắc nếu [TT] thấy khó chịu.
+- [ ] **[CC]** về hub `/handover` + cross-ref CROSS_REPO_LOG (gộp cả S85 + S86).
+
+---
+
+**Prepared cũ**: 2026-09-07 (S85 — CR My Work: droplist lọc nhân sự thuần theo Res)
 
 ## 🆕 S85 — MY WORK: DROPLIST LỌC NHÂN SỰ THUẦN RES — CODE XONG + TEST 97/97 + ĐÃ PUSH (v6.60, thuần FE)
 - [x] `_mwPersonMatch` thuần Res (bỏ `|| picAcc`); `_mwTeamPeople` droplist chỉ gom `picRes`.

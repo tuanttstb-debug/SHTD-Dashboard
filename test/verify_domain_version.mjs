@@ -5,6 +5,7 @@
  *   B. Nhận json.vers → lưu db._vers; nhận json.ver → lưu db._dataVer (tương thích).
  *   C. notModified (vers) → giữ nguyên cache (db.tasks không đổi), trả true.
  *   D. Response chỉ chứa 1 domain (data.cases) → domain KHÁC (db.tasks) KHÔNG bị đụng.
+ *   E. Self-heal: domain RỖNG (dbCases=[]) không khai version → body.vers BỎ cases (buộc server gửi lại).
  */
 import { chromium } from 'playwright';
 import http from 'http';
@@ -134,6 +135,25 @@ console.log('\n[D] data chỉ có cases → db.tasks KHÔNG đổi (chỉ tải 
   const tasks = await page.evaluate(() => db.tasks.map(t => t.id));
   if (tasks.length === 1 && tasks[0] === 'T-KEEP') PASS('db.tasks KHÔNG bị đụng khi response không có domain tasks');
   else FAIL(`db.tasks bị đổi: ${JSON.stringify(tasks)}`);
+}
+
+/* ── E: self-heal — domain rỗng KHÔNG khai version (buộc server gửi lại) ── */
+console.log('\n[E] dbCases rỗng nhưng có db._vers.cases → body.vers BỎ cases (tự lành kẹt-rỗng)');
+{
+  mode = 'full'; batchBodies.length = 0;
+  await page.evaluate(() => {
+    db.tasks = [{ id:'T-KEEP', name:'có data' }];   // domain CÓ data → vẫn khai version
+    dbCases = [];                                    // domain RỖNG → phải BỎ khai version
+    db._vers = { tasks:'t0', cases:'c0', issues:'i0', dev:'d0', initiatives:'n0', users:'u0', notifs:'nf0' };
+    db._dataVer = 'g0';
+  });
+  await page.evaluate(async () => { await readAll(); });
+  await page.waitForTimeout(120);
+  const sent = batchBodies[batchBodies.length - 1];
+  if (sent && sent.vers && sent.vers.tasks === 't0') PASS('vẫn khai version domain CÓ data (tasks=t0)');
+  else FAIL(`tasks version thiếu: ${JSON.stringify(sent && sent.vers)}`);
+  if (sent && sent.vers && !('cases' in sent.vers)) PASS('BỎ khai version domain rỗng (cases) → server buộc gửi lại');
+  else FAIL(`cases vẫn bị khai (sẽ kẹt rỗng): ${JSON.stringify(sent && sent.vers)}`);
 }
 
 await ctx.close(); await browser.close(); server.close();
