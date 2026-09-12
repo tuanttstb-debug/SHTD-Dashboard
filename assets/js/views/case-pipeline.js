@@ -335,6 +335,11 @@ function _cpPopulateFilters() {
    RAG helpers
 ────────────────────────────────────────── */
 function _cpCalcRagLabel(c) {
+  // Case ở nhóm trạng thái cuối (Chờ giải ngân/triển khai · Đã phê duyệt · Đang triển khai)
+  // hoặc Tạm dừng/Blocked → KHÔNG còn khái niệm "quá hạn", kể cả khi cột RAG cũ còn lưu 'Đỏ'
+  // (giá trị lưu từ hồi case còn active). Nhóm trạng thái ưu tiên hơn cột RAG lưu sẵn.
+  const g = CASE_STAGE_GROUP[c.stage] || 'active';
+  if (g === 'done' || g === 'blocked') return '';
   if (c.rag) return c.rag;
   return calcCaseRag(c);
 }

@@ -153,6 +153,7 @@ const MOCK_CASES = [
   { id:'C-26-001', caseName:'Case PTKD MB active', team:'PTKD MB', stage:'Khởi tạo', deadline:OVERDUE, giaTriTy:'5', dvkd:'Chi nhánh A', pic:'TuanPT' },
   { id:'C-26-002', caseName:'Case done excluded', team:'PTKD MB', stage:'Đã ký HĐ', deadline:LATER, giaTriTy:'10', dvkd:'Chi nhánh B', pic:'TuanPT' },
   { id:'C-26-003', caseName:'Case other team', team:'PTKD MN', stage:'Thương thảo', deadline:SOON, giaTriTy:'3', dvkd:'Chi nhánh C', pic:'SomePIC' },
+  { id:'C-26-004', caseName:'Case PTKD MB khac PIC', team:'PTKD MB', stage:'Thương thảo', deadline:SOON, giaTriTy:'7', dvkd:'Chi nhánh D', pic:'OtherPIC' }, // CR1: cùng team, khác PIC
 ];
 
 const CASE_STAGE_GROUP_MOCK = {
@@ -165,6 +166,7 @@ const CASE_STAGE_GROUP_MOCK = {
    Teamlead keeps the "view full team" behavior. Member/Admin get their own scope below. */
 const USER_PO     = { username:'TuanTT4', role:'Teamlead', team:'Số',     displayName:'Tuấn TT (PO)' };
 const USER_PTKD   = { username:'TuanPT',  role:'Staff',    team:'PTKD MB', displayName:'Tuấn PT (PTKD)' };
+const USER_PTKD_LEAD = { username:'LeadPT', role:'Teamlead', team:'PTKD MB', displayName:'Lead PTKD MB' }; // CR1: teamlead thấy all case team
 const USER_QLDM   = { username:'LeVanA',  role:'Staff',    team:'QLDM',    displayName:'Lê Văn A (QLDM)' };
 // S76: role-aware scope
 const USER_MEMBER = { username:'TuanTT4', role:'User',     team:'Số',     displayName:'Tuấn TT (Member)' }; // personal-only
@@ -234,6 +236,24 @@ async function injectPTKD() {
     const lo = document.getElementById('loginOverlay');
     if (lo) lo.style.display = 'none';
   }, { tasks: MOCK_TASKS, inits: MOCK_INITIATIVES, cases: MOCK_CASES, stageMap: CASE_STAGE_GROUP_MOCK, user: USER_PTKD });
+  await page.evaluate(() => { navigateTo('my-work'); });
+  await page.waitForTimeout(600);
+}
+
+async function injectPTKDLead() {
+  await page.evaluate(({ tasks, inits, cases, stageMap, user }) => {
+    db.tasks       = tasks;
+    db.initiatives = inits;
+    dbCases        = cases;
+    if (typeof CASE_STAGE_GROUP !== 'undefined') Object.assign(CASE_STAGE_GROUP, stageMap);
+    localStorage.setItem('shtd_auth_v1', JSON.stringify({
+      token: 'mock-token-ptkd-lead',
+      exp: Date.now() + 86400000,
+      user
+    }));
+    const lo = document.getElementById('loginOverlay');
+    if (lo) lo.style.display = 'none';
+  }, { tasks: MOCK_TASKS, inits: MOCK_INITIATIVES, cases: MOCK_CASES, stageMap: CASE_STAGE_GROUP_MOCK, user: USER_PTKD_LEAD });
   await page.evaluate(() => { navigateTo('my-work'); });
   await page.waitForTimeout(600);
 }
@@ -327,6 +347,21 @@ const hasCaseTitle2   = ptkdSectionText.includes('Case Pipeline');
 const hasInitTitle2   = ptkdSectionText.includes('Initiative phụ trách');
 log('MW5-case-section',  hasCaseTitle2, 'PTKD view shows "Case Pipeline" section');
 log('MW5-no-init',       !hasInitTitle2, 'PTKD view does NOT show "Initiative" title');
+
+/* ══════════════════════════════════════════
+   MW5b — CR1: PTKD MEMBER (Staff) chỉ thấy case MÌNH là PIC
+══════════════════════════════════════════ */
+log('MW5b-member-own-case',   ptkdSectionText.includes('C-26-001'),  'PTKD member (Staff) thấy case của mình (pic=TuanPT) C-26-001');
+log('MW5b-member-hide-other', !ptkdSectionText.includes('C-26-004'), 'PTKD member KHÔNG thấy case cùng team khác PIC (pic=OtherPIC) C-26-004');
+
+/* ══════════════════════════════════════════
+   MW5c — CR1: PTKD TEAMLEAD thấy TẤT CẢ case của team (kể cả khác PIC)
+══════════════════════════════════════════ */
+await injectPTKDLead();
+const ptkdLeadSection = await page.$('#mwSectionThird');
+const ptkdLeadText    = ptkdLeadSection ? await ptkdLeadSection.innerText() : '';
+log('MW5c-lead-own',   ptkdLeadText.includes('C-26-001'), 'PTKD teamlead thấy C-26-001');
+log('MW5c-lead-other', ptkdLeadText.includes('C-26-004'), 'PTKD teamlead thấy case khác PIC C-26-004 (all team)');
 
 /* ══════════════════════════════════════════
    MW6 — QLDM VIEW: init section

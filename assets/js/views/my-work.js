@@ -188,12 +188,17 @@ function _mwGetMyInits(user) {
   });
 }
 
+// Case Pipeline trong My Work (view PTKD): Member (User) CHỈ thấy case mình là PIC;
+// Teamlead/Admin thấy toàn bộ case của team — nhất quán với _mwTaskInScope (task) và
+// helper isCurrentUser của Case Pipeline. Bỏ case đã ở nhóm trạng thái cuối (done).
 function _mwGetMyCases(user) {
   if (!user) return [];
+  const seesAll = user.role === 'Teamlead' || user.role === 'Admin';
   return (dbCases || []).filter(c => {
     const grp = CASE_STAGE_GROUP[c.stage] || 'active';
     if (grp === 'done') return false;
-    return c.team === user.team;
+    if (c.team !== user.team) return false;
+    return seesAll || isCurrentUser(c.pic);
   });
 }
 

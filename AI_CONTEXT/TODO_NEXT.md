@@ -1,5 +1,16 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-07 (S88 — Áp nguyên tắc UI badge left-menu cho Case + Initiative + ghi nhớ)
+**Prepared**: 2026-09-12 (S89 — CR My Work Case theo PIC (PTKD) + Case trạng thái cuối không quá hạn)
+
+## 🆕 S89 — CR1 My Work Case-theo-PIC (PTKD) + CR2 Case trạng thái cuối không overdue — CODE XONG + TEST PASS (v6.64, thuần FE)
+- [x] CR1: `_mwGetMyCases` role-aware — member (User/Staff) chỉ thấy case `isCurrentUser(c.pic)`; teamlead/Admin thấy all team (giữ). Task list KHÔNG đụng (đã đúng role-based sẵn).
+- [x] CR2: `_cpCalcRagLabel` xét `CASE_STAGE_GROUP` done/blocked TRƯỚC cột RAG lưu → case cuối (Đã phê duyệt/Chờ giải ngân/triển khai/Đang triển khai) + Tạm dừng không hiện "Đỏ"/quá hạn.
+- [x] `verify_my_work` **106/106** (+MW5b/MW5c) · `verify_case_pipeline` **26/26** (+TEST21a-d) · regression s36 28/28 · nav_group 14/14 · startup 10/10. config v6.64 + cache-bust `?v=20260912`.
+- [ ] **[TT] hard-refresh `?v=20260912` → nghiệm thu:** (1) member PTKD → My Work Case chỉ ra case mình; teamlead PTKD thấy cả team; (2) case đã phê duyệt/chờ giải ngân/đang triển khai hết "quá hạn" (bảng + badge menu Case + thẻ tổng hợp).
+- [ ] **[CC]** về hub `/handover` + cross-ref CROSS_REPO_LOG.
+
+---
+
+**Prepared cũ**: 2026-09-07 (S88 — Áp nguyên tắc UI badge left-menu cho Case + Initiative + ghi nhớ)
 
 ## 🆕 S88 — Badge left-menu "cần chú ý" cho Case + Initiative + memory nguyên tắc UI — CODE XONG + TEST PASS + ĐÃ PUSH (v6.63, thuần FE)
 - [x] NGUYÊN TẮC UI: badge menu trái chỉ show SỐ MỤC CẦN CHÚ Ý (quá hạn/cần hành động), không tổng; ẩn khi 0; danger để nhóm mẹ dồn chấm đỏ. **Lưu memory `nav-badge-attention-only`.**

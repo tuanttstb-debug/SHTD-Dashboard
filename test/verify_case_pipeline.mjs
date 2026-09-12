@@ -313,6 +313,20 @@ async function run() {
     log('TEST20', 'BLD count chip > 0 (includes CP-001)', hasCount, `chip="${chip}"`);
   } catch(e) { log('TEST20', 'BLD count chip', false, e.message); }
 
+  /* ─── TEST21 (CR2): case ở nhóm trạng thái cuối KHÔNG hiện overdue kể cả khi cột RAG lưu sẵn 'Đỏ' ─── */
+  try {
+    const cr2 = await page.evaluate(() => ({
+      done:   _cpCalcRagLabel({ stage: 'Đã phê duyệt',              deadline: '2020-01-01', rag: 'Đỏ' }),
+      disb:   _cpCalcRagLabel({ stage: 'Chờ giải ngân/triển khai',  deadline: '2020-01-01', rag: 'Đỏ' }),
+      impl:   _cpCalcRagLabel({ stage: 'Đang triển khai',           deadline: '2020-01-01', rag: 'Đỏ' }),
+      active: _cpCalcRagLabel({ stage: 'Đang phân tích',            deadline: '2020-01-01', rag: 'Đỏ' }),
+    }));
+    log('TEST21a', 'Case "Đã phê duyệt" + RAG lưu Đỏ → KHÔNG overdue',            cr2.done === '',   `got "${cr2.done}"`);
+    log('TEST21b', 'Case "Chờ giải ngân/triển khai" → KHÔNG overdue',             cr2.disb === '',   `got "${cr2.disb}"`);
+    log('TEST21c', 'Case "Đang triển khai" → KHÔNG overdue',                      cr2.impl === '',   `got "${cr2.impl}"`);
+    log('TEST21d', 'Case active (Đang phân tích) + RAG Đỏ → VẪN overdue (giữ)',   cr2.active === 'Đỏ', `got "${cr2.active}"`);
+  } catch(e) { log('TEST21', 'CR2 final-stage not overdue', false, e.message); }
+
   /* ─── Final page error check ─── */
   if (pageErrors.length) {
     console.log('\n[PAGE ERRORS]', pageErrors.join('\n'));

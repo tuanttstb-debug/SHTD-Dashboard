@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-09-12 (S89 — CR My Work Case theo PIC (PTKD) + Case trạng thái cuối không quá hạn)
+**Model**: Claude Opus 4.8 · **Version**: v6.63 → **v6.64**
+
+- **Task completed:** 2 CR [TT]. **CR1:** "My Work role PTKD/QLDM hiển thị task theo PIC giống PO, teamlead thấy all" — rà code: lọc **task** đã role-based sẵn (member=Res∪Acc, teamlead=team, áp chung mọi team) → task ĐÃ ĐÚNG; hỏi [TT] chốt → điểm sai thật = mục **Case Pipeline trong My Work view PTKD** hiện TOÀN BỘ case team cho mọi người. Fix `_mwGetMyCases` role-aware (member chỉ case mình là PIC qua `isCurrentUser(c.pic)`; teamlead/Admin giữ all team). **CR2:** case chuyển trạng thái cuối (Đã phê duyệt/Chờ giải ngân/triển khai/Đang triển khai) vẫn hiện quá hạn — gốc `_cpCalcRagLabel` ưu tiên cột RAG lưu sẵn (`c.rag`='Đỏ' cũ) trước khi xét nhóm trạng thái; fix cho **nhóm trạng thái (done/blocked) ưu tiên hơn RAG lưu** → trả '' (không overdue). 1 điểm fix bao badge nav/summary/preset/row-overdue.
+- **Files changed:** *(spoke, commit phiên này)* `assets/js/views/my-work.js` (`_mwGetMyCases` +role seesAll + `isCurrentUser(c.pic)`), `assets/js/views/case-pipeline.js` (`_cpCalcRagLabel` xét `CASE_STAGE_GROUP` done/blocked trước `c.rag`), `assets/js/config.js` (v6.64), `index.html` (cache-bust case-pipeline.js + my-work.js `?v=20260912`), `test/verify_my_work.mjs` (+MW5b member ẩn case khác PIC · MW5c teamlead thấy all + mock C-26-004 khác PIC + USER_PTKD_LEAD + injectPTKDLead), `test/verify_case_pipeline.mjs` (+TEST21a-d), 4 file `AI_CONTEXT/`.
+- **Decision made:** CR1 chỉ đụng mục Case của My Work (task list giữ nguyên vì đã đúng); member match case bằng helper canonical `isCurrentUser(c.pic)` (c.pic lưu username) — nhất quán Case Pipeline `rawMine`. CR2 đặt guard nhóm trạng thái TRƯỚC `c.rag` trong `_cpCalcRagLabel` (fix 1 điểm, không đụng `calcCaseRag` vốn đã đúng); không clear cột RAG trong sheet (chỉ đổi cách đọc — an toàn, không ghi dữ liệu).
+- **Blocker:** **Không.** Thuần FE — KHÔNG cần redeploy GAS. [TT] hard-refresh.
+- **Next step:** [TT] hard-refresh `?v=20260912` → (1) đăng nhập member PTKD → My Work mục Case chỉ ra case mình phụ trách; teamlead PTKD thấy cả team; (2) case đã phê duyệt/chờ giải ngân/đang triển khai không còn "quá hạn" (bảng, badge menu Case, thẻ tổng hợp). [CC] về hub `/handover` + cross-ref.
+- **Regression risk:** **Thấp → verify đầy đủ.** verify_my_work 106/106 (+MW5b/MW5c) · verify_case_pipeline 26/26 (+TEST21a-d) · case_pipeline_s36 28/28 · nav_group 14/14 · startup_nonblocking 10/10 · node --check 2 file OK. CR1 cô lập 1 hàm getter (teamlead/Admin đường cũ không đổi); CR2 cô lập 1 hàm label (active case không đổi — TEST21d chứng minh). Data-boundary: 0 chạm KH/secret; c.pic là username nội bộ.
+
+---
+
 # SESSION HANDOVER — 2026-09-07 (S88 — Áp nguyên tắc UI badge left-menu cho Case + Initiative + ghi nhớ nguyên tắc)
 **Model**: Claude Opus 4.8 · **Version**: v6.62 → **v6.63**
 
