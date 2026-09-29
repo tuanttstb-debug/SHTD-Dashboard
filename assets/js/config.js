@@ -5,4 +5,4 @@
 const GS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbydyikBtboeDufx9fsloV3pOT-EVgQfpkggImGH3GrQ8Skct5XC1B1KtE7U008G97f2/exec';
 
 // Build version — tăng số này mỗi lần deploy để phát hiện browser cache stale
-const APP_VERSION = '6.64-mywork-case-pic+case-final-not-overdue-20260912';
+const APP_VERSION = '6.65-team-cv-gop-bo-qldm-20260929';

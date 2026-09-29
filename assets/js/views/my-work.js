@@ -1,11 +1,11 @@
 'use strict';
 
 /* ── Role-view detection (auto-detected from user.team, no new DB field) ──
-   PO   : BL, CV1, CV2, Số → task list + deadline + Initiative phụ trách
+   PO   : BL, CV (cũ CV1/CV2), Số → task list + deadline + Initiative phụ trách
    PTKD : PTKD MB, PTKD MN → task list + Case Pipeline của team
    QLDM : QLDM              → same as PO view
 */
-const _MW_PO_TEAMS   = new Set(['BL', 'CV1', 'CV2', 'Số']);
+const _MW_PO_TEAMS   = new Set(['BL', 'CV', 'CV1', 'CV2', 'Số']); // CV1/CV2 giữ để tương thích dữ liệu cũ
 const _MW_PTKD_TEAMS = new Set(['PTKD MB', 'PTKD MN']);
 const _MW_QLDM_TEAMS = new Set(['QLDM']);
 

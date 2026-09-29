@@ -88,7 +88,7 @@ const mkInit = (o) => Object.assign({
 const MOCK_TASKS = [
   mkTask({ id: 'BL-001', name: 'BL Highlight Task',   team: 'BL',  highlight: 'Y', endDate: inMonth,  status: 'Green' }),
   mkTask({ id: 'BL-RED', name: 'BL Red Task',          team: 'BL',  highlight: 'Y', endDate: inMonth,  status: 'Red' }),
-  mkTask({ id: 'CV1-001', name: 'CV1 Highlight Task',  team: 'CV1', highlight: 'Y', endDate: inMonth,  status: 'Green' }),
+  mkTask({ id: 'CV1-001', name: 'CV1 Highlight Task',  team: 'CV', highlight: 'Y', endDate: inMonth,  status: 'Green' }),
   mkTask({ id: 'BL-OUT', name: 'BL Outside Period',    team: 'BL',  highlight: 'Y', endDate: outMonth, status: 'Green', state: 'Hoàn thành' }),
   mkTask({ id: 'BL-BLK', name: 'BL Blocked Auto',      team: 'BL',  highlight: 'N', endDate: inMonth,  status: 'Red', state: 'Blocked' }),
 ];
@@ -105,7 +105,7 @@ const MOCK_INITS = [
 const MOCK_USERS = [
   { Username: 'TuanTT4', Display_Name: 'Tuấn TT',  Role: 'Admin', Team: 'Số',  Email: '', Active: 'TRUE' },
   { Username: 'DungBL',  Display_Name: 'Dung BL',   Role: 'User',  Team: 'BL',  Email: '', Active: 'TRUE' },
-  { Username: 'DungCV1', Display_Name: 'Dung CV1',  Role: 'User',  Team: 'CV1', Email: '', Active: 'TRUE' },
+  { Username: 'DungCV1', Display_Name: 'Dung CV1',  Role: 'User',  Team: 'CV', Email: '', Active: 'TRUE' },
 ];
 
 /* ── Browser + GAS mock ── */
@@ -222,15 +222,15 @@ await loadApp();
 /* AP4: Admin grouped view — accordion headers per team */
 {
   const accordions = await page.$$('.ap-accordion');
-  // Should see BL and CV1 accordions (both have data this month)
+  // Should see BL and CV accordions (both have data this month)
   const html = await page.$eval('#actionPlanRoot', el => el.innerHTML);
   const hasBL  = html.includes('>BL<');
-  const hasCV1 = html.includes('>CV1<');
+  const hasCV1 = html.includes('>CV<');   // team CV (gộp CV1+CV2, 2026-09-29)
   await SS(page, 'ap4_grouped_view');
   if (accordions.length >= 2) PASS('AP4a', `Accordion count ≥ 2 (${accordions.length} found)`);
   else FAIL('AP4a', `Expected ≥ 2 accordions, got ${accordions.length}`);
-  if (hasBL && hasCV1) PASS('AP4b', 'BL and CV1 accordion headers present');
-  else FAIL('AP4b', `BL: ${hasBL}, CV1: ${hasCV1}`);
+  if (hasBL && hasCV1) PASS('AP4b', 'BL and CV accordion headers present');
+  else FAIL('AP4b', `BL: ${hasBL}, CV: ${hasCV1}`);
   // Count badges should be present
   const counts = await page.$$('.ap-acc-count');
   if (counts.length >= 2) PASS('AP4c', 'Team count badges rendered');
