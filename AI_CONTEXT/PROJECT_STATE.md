@@ -1,5 +1,7 @@
 # PROJECT STATE
 
+**S90 — Cơ cấu team mới (gộp CV1+CV2 = CV, bỏ QLDM → NhungPTH7 PTKD MB / DungNTP8 PTKD MN). FE `TEAM_LIST` + bộ lọc (v6.65, `bd238d6`, 2026-09-29); DB đổi bằng script hub `DoiTeam_20260929.gs` (đã chạy thật). Chi tiết: SESSION_HANDOVER S90 · hub `08_Work/P-aius001-binh-dan-hoa-ai/DECISIONS.md` D44.**
+
 **S89 — 2 CR: (1) My Work view PTKD — mục Case Pipeline lọc theo PIC (member chỉ thấy case mình, teamlead/Admin thấy all team) · (2) Case ở nhóm trạng thái cuối KHÔNG hiện quá hạn kể cả khi RAG cũ lưu 'Đỏ'. CODE XONG + TEST PASS. Thuần FE, KHÔNG redeploy GAS. (main, v6.64, 2026-09-12)**
 [TT] CR: (1) My Work role PTKD/QLDM hiển thị task theo PIC giống PO, teamlead thấy all — rà code: việc lọc **task** đã theo `user.role` sẵn (member=Res∪Acc, teamlead=cả team) áp chung PO/PTKD/QLDM → phần task ĐÃ ĐÚNG; điểm khác biệt thật là mục **Case Pipeline trong My Work view PTKD** (`_mwGetMyCases`) đang trả TOÀN BỘ case của team cho mọi người. (2) Case đã chuyển trạng thái cuối (Đã phê duyệt / Chờ giải ngân/triển khai / Đang triển khai) vẫn hiện quá hạn.
 - **CR1 fix (`views/my-work.js` `_mwGetMyCases`):** thêm nhánh role — `seesAll = role∈{Teamlead,Admin}`; member (User/Staff) chỉ thấy case `isCurrentUser(c.pic)` (tái dùng helper canonical của Case Pipeline), giữ guard `c.team===user.team` + loại nhóm 'done' như cũ. Teamlead/Admin KHÔNG đổi (vẫn all team). Task list không đụng (đã đúng).

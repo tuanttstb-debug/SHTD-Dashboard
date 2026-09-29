@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-09-29 (S90 — Cơ cấu team mới: gộp CV1+CV2 = CV, bỏ team QLDM)
+**Model**: Claude Opus 5.5 · **Version**: v6.64 → **v6.65** · commit `bd238d6`
+
+- **Task completed:** Theo chỉ đạo GĐTT 29/09 (chương trình AIUS-001): `TEAM_LIST` = BL · CV · PTKD MB · PTKD MN · Số; bộ lọc team (danh sách + Gantt) bỏ CV1/CV2/QLDM; My Work nhận `CV` là team PO (giữ CV1/CV2 tương thích). Dữ liệu DB đổi bằng script hub `AIOS/08_Work/P-aius001-binh-dan-hoa-ai/scripts/gas/DoiTeam_20260929.gs` — [TT] đã chạy thật 2026-09-29 17:45 (User_Master + Task_Master…, log sheet `_DOI_TEAM_LOG`, hoàn tác `dt3_khoiPhuc`).
+- **Files changed:** `assets/js/constants.js` · `assets/js/views/my-work.js` · `assets/js/config.js` (v6.65) · `index.html` (option team + cache-bust `?v=20260929`) · `test/verify_action_plan.mjs` (fixture CV1→CV).
+- **Decision made:** User/role CHỈ quản lý ở `User_Master` (SHTD) — nguồn duy nhất cho SHTD + AIUS (hub DECISIONS D44).
+- **Blocker:** không. Còn 1 user team QLDM: TienPN (teamlead cũ) — [TT] đặt Active=FALSE nếu đã nghỉ.
+- **Next step:** [TT] hard-refresh `?v=20260929` → Action Plan có accordion CV; người đổi team đăng nhập lại.
+- **Regression risk:** Thấp. verify_action_plan 24/24; full suite 35/37 — 2 suite lỗi (`verify_milestone_task`, `verify_task_init_popup`) do AUTH live, lỗi y hệt trên bản gốc (không liên quan).
+
+---
+
 # SESSION HANDOVER — 2026-09-12 (S89 — CR My Work Case theo PIC (PTKD) + Case trạng thái cuối không quá hạn)
 **Model**: Claude Opus 4.8 · **Version**: v6.63 → **v6.64**
 
