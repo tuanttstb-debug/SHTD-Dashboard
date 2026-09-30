@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-09-30 (DB — chuyển Acc task member sang teamlead mới; không đổi code)
+**Model**: Claude Opus 5.5 · **Version**: v6.65 (không đổi) · thực hiện từ hub AIOS
+
+- **Task completed:** Ghi live 58 dòng Task_Master bằng script hub `shtd_dieu_chinh_20260930.js --p1` (Acc teamlead cũ → mới theo `User_Master`; tên CV1/CV2 → CV).
+- **Files changed:** không đổi code spoke; chỉ AI_CONTEXT. Backup dòng cũ ở `D:\Công việc\_backup_shtd\` (ngoài repo).
+- **Decision made:** hub AIUS-001 D47 — teamlead PTKD MN = QuynhVN6; task QuynhNNY tự làm PIC giữ nguyên chờ chỉ thị.
+- **Blocker:** không.
+- **Next step:** [TT] hạ QuynhNNY khỏi Teamlead Active · QuynhVN6 đăng nhập lại · team tự kiểm tra (Ctrl+F5).
+- **Regression risk:** Thấp — chỉ dữ liệu; dry-run sau commit = 0 thay đổi.
+
+---
+
 # SESSION HANDOVER — 2026-09-29 (S90 — Cơ cấu team mới: gộp CV1+CV2 = CV, bỏ team QLDM)
 **Model**: Claude Opus 5.5 · **Version**: v6.64 → **v6.65** · commit `bd238d6`
 

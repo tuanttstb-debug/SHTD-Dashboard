@@ -1,5 +1,8 @@
 # PROJECT STATE
 
+**DB 2026-09-30 (dữ liệu, không đổi code — v6.65 giữ nguyên):** teamlead PTKD MN = **QuynhVN6** (thay QuynhNNY, hub D47). Script hub `AIOS/08_Work/P-aius001-binh-dan-hoa-ai/scripts/shtd_dieu_chinh_20260930.js --p1` đã ghi 58 task: Acc task member chưa xong từ teamlead cũ → mới (QuynhNNY→QuynhVN6 19 · TienPN→LinhNV12 11 · TienPN→QuynhVN6 2) + tên task AIUS-001 CV1/CV2→CV (CV2-CO, M6-003 → Tạm dừng). Task QuynhNNY tự làm PIC giữ nguyên. Phần 2 (dừng AI Worklog, milestone M2–M4) chờ GĐTT duyệt 02/10. ⚠ `User_Master` PTKD MN còn 2 Teamlead Active (QuynhNNY + QuynhVN6).
+
+
 **S90 — Cơ cấu team mới (gộp CV1+CV2 = CV, bỏ QLDM → NhungPTH7 PTKD MB / DungNTP8 PTKD MN). FE `TEAM_LIST` + bộ lọc (v6.65, `bd238d6`, 2026-09-29); DB đổi bằng script hub `DoiTeam_20260929.gs` (đã chạy thật). Chi tiết: SESSION_HANDOVER S90 · hub `08_Work/P-aius001-binh-dan-hoa-ai/DECISIONS.md` D44.**
 
 **S89 — 2 CR: (1) My Work view PTKD — mục Case Pipeline lọc theo PIC (member chỉ thấy case mình, teamlead/Admin thấy all team) · (2) Case ở nhóm trạng thái cuối KHÔNG hiện quá hạn kể cả khi RAG cũ lưu 'Đỏ'. CODE XONG + TEST PASS. Thuần FE, KHÔNG redeploy GAS. (main, v6.64, 2026-09-12)**
