@@ -73,6 +73,11 @@ function _calTaskDone(status, progress) {
   var p = parseFloat(String(progress == null ? '' : progress).replace('%', ''));
   return (!isNaN(p) && p >= 100);
 }
+// Task "Tạm dừng" → không lên lịch (sự kiện cũ tự xóa ở _calDiff vì không còn trong desired).
+// Đồng bộ với NotificationService._notifIsPaused (TD-NOTIF-PAUSE, 2026-10-05).
+function _calTaskPaused(status) {
+  return String(status || '').toLowerCase().indexOf('tạm dừng') !== -1;
+}
 function _calInitDone(status) {
   var s = String(status || '').toLowerCase();
   return (s === 'done' || s.indexOf('hoàn thành') !== -1);
@@ -113,6 +118,7 @@ function _calDesiredEvents(username, taskValues, initValues, now) {
       if (!id) continue;
       if (!_calRecipMatch(r, tc.recips, userLc)) continue;
       if (_calTaskDone(r[tc.status], r[tc.progress])) continue;
+      if (_calTaskPaused(r[tc.status])) continue;
       var title = String(r[tc.title] == null ? '' : r[tc.title]).trim() || id;
       var freq  = _calRecurNorm(r[tc.recurrence]);
       if (freq) {

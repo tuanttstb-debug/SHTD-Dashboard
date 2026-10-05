@@ -1,5 +1,7 @@
 # PROJECT STATE
 
+**S91 — TD-NOTIF-PAUSE: task "Tạm dừng" thôi nhắc (anh duyệt 2026-10-05). CODE XONG + TEST PASS (v6.66). Backend: `_notifIsPaused` → `_notifSkipDue` bỏ due/overdue + `_notifRecurCandidates_` bỏ recur-miss; nhắc cũ đang treo tự thu hồi qua `_notifReconcileDue_` · `CalendarSyncService._calTaskPaused` → không lên lịch (sự kiện cũ tự xóa qua `_calDiff`). FE: `taskPeriodStatus` trả isRecurring=false+paused → ẩn nút "Xong tuần này?" + cờ Miss. Tạm dừng KHÔNG tính là đóng (không bắn 'closed'). Test: notif_retract 45/45 (+NR15) · notifications 21/21 · recurring 26/26 (+R9) · calendar_sync 33/33 (+CS5p) · my_work 106/106 · nav_group 14/14 · startup 10/10. ⚠ [TT] REDEPLOY GAS (NotificationService.gs + CalendarSyncService.gs) + hard-refresh `?v=20261005`.**
+
 **DB 2026-09-30 (dữ liệu, không đổi code — v6.65 giữ nguyên):** teamlead PTKD MN = **QuynhVN6** (thay QuynhNNY, hub D47). Script hub `AIOS/08_Work/P-aius001-binh-dan-hoa-ai/scripts/shtd_dieu_chinh_20260930.js --p1` đã ghi 58 task: Acc task member chưa xong từ teamlead cũ → mới (QuynhNNY→QuynhVN6 19 · TienPN→LinhNV12 11 · TienPN→QuynhVN6 2) + tên task AIUS-001 CV1/CV2→CV (CV2-CO, M6-003 → Tạm dừng). Task QuynhNNY tự làm PIC giữ nguyên. Phần 2 (dừng AI Worklog, milestone M2–M4) chờ GĐTT duyệt 02/10. ⚠ `User_Master` PTKD MN còn 2 Teamlead Active (QuynhNNY + QuynhVN6).
 
 

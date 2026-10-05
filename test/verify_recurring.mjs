@@ -114,6 +114,16 @@ ok('R7b doneCount ≥ 1', r7.doneCount >= 1);
 const r8 = await page.evaluate(() => taskPeriodStatus({ recurrence: '', donePeriods: '' }).isRecurring);
 ok('R8 task thường không phải định kỳ', r8 === false);
 
+// R9 — TD-NOTIF-PAUSE (2026-10-05): task định kỳ Tạm dừng → thôi nhắc kỳ (không badge, không Miss)
+const r9 = await page.evaluate(() => {
+  const t = { id: 'X', state: 'Tạm dừng', recurrence: 'Tuần', donePeriods: '', startDate: '2026-08-01', deadline: '2026-12-31' };
+  return { st: taskPeriodStatus(t), html: taskPeriodBadgeHtml(t, 'f'),
+           run: taskPeriodStatus(Object.assign({}, t, { state: 'Đang thực hiện' })).isRecurring };
+});
+ok('R9a Tạm dừng → isRecurring=false, paused=true', r9.st.isRecurring === false && r9.st.paused === true);
+ok('R9b Tạm dừng → không badge/Miss', r9.html === '');
+ok('R9c cùng task Đang thực hiện → vẫn định kỳ', r9.run === true);
+
 ok('JS errors = 0', jsErrors.length === 0);
 if (jsErrors.length) console.log('   ', jsErrors);
 

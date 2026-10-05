@@ -320,6 +320,8 @@ function taskDuePeriods(task) {
 function taskPeriodStatus(task) {
   const freq = normRecurrence(task && task.recurrence);
   if (!freq) return { isRecurring: false, freq: '' };
+  // Task "Tạm dừng" → thôi nhắc kỳ (ẩn nút tick + cờ Miss), đồng bộ backend _notifIsPaused (TD-NOTIF-PAUSE 2026-10-05).
+  if (/tạm dừng/i.test(String(task.state || ''))) return { isRecurring: false, freq, paused: true };
   const curLabel  = currentPeriodLabel(freq);
   const doneSet   = parseDonePeriods(task.donePeriods);
   const isDone    = doneSet.some(x => _periodEq(x, curLabel));

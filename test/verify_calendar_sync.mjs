@@ -94,6 +94,15 @@ eq('CS5c recur date = start', recurSpec.dateISO, '2026-08-31');
 const dueSpec = desired.find(s => s.entityId === 'T-DUE');
 eq('CS5d due date', dueSpec.dateISO, '2026-09-10');
 
+/* CS5p — TD-NOTIF-PAUSE (2026-10-05): task Tạm dừng không lên lịch (cả lặp lẫn theo hạn) */
+const pausedVals = [
+  mkTaskHeader(),
+  mkTaskRow({ id: 'T-P-RECUR', title: 'Worklog tạm dừng', res: 'TuanTT4', start: '2026-08-31', recur: 'Tuần', status: 'Tạm dừng' }),
+  mkTaskRow({ id: 'T-P-DUE',   title: 'Hạn tạm dừng',     res: 'TuanTT4', deadline: '2026-09-10', status: 'Tạm dừng' }),
+  mkTaskRow({ id: 'T-RUN',     title: 'Đang làm',          res: 'TuanTT4', deadline: '2026-09-10', status: 'Đang thực hiện' }),
+];
+eq('CS5p desired bỏ task Tạm dừng', api._calDesiredEvents('TuanTT4', pausedVals, [mkInitHeader()], NOW).map(s => s.key), ['task|T-RUN|DUE']);
+
 /* CS6 — content sig đổi */
 const base = api._calMakeSpec('task', 'X', 'due', 'A', '2026-09-10', '');
 ok('CS6a đổi title → hash khác', base.hash !== api._calMakeSpec('task', 'X', 'due', 'B', '2026-09-10', '').hash);

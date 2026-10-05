@@ -111,7 +111,8 @@ function buildEnv({ notifRows, tasks, cases, issues, inits, dev, users }) {
       '_notifLiveState_:_notifLiveState_, _notifIsDone:_notifIsDone, _notifSheet_:_notifSheet_,' +
       '_notifSendDigests_:_notifSendDigests_, _notifDigestSuppressSet_:_notifDigestSuppressSet_,' +
       '_notifFmtDue:_notifFmtDue, _notifMessage_:_notifMessage_,' +
-      '_notifReconcileDue_:_notifReconcileDue_, _notifDueCandidates_:_notifDueCandidates_' +
+      '_notifReconcileDue_:_notifReconcileDue_, _notifDueCandidates_:_notifDueCandidates_,' +
+      '_notifRecurCandidates_:_notifRecurCandidates_' +
     '};'
   );
   const api = factory(
@@ -338,6 +339,36 @@ console.log('══════════════════════�
   const row = notifSheet._rows.slice(1).find(r => r[0] === 'tuan|task|T-FWD|overdue');
   log('NR14-retracted', rec.retracted === 1 && rec.refreshed === 0, `retracted=${rec.retracted} refreshed=${rec.refreshed} (1/0)`);
   log('NR14-read',      !!row[9], 'nhắc overdue của task nay hạn tương lai bị thu hồi (mark-read) → email hết nhắc sai');
+}
+
+/* ══ NR15 — TD-NOTIF-PAUSE (2026-10-05): task "Tạm dừng" thôi nhắc ══
+   (a) quá hạn mà Tạm dừng → không sinh overdue · (b) định kỳ Tuần mà Tạm dừng → không sinh recur-miss
+   (c) nhắc overdue + recur-miss cũ đang treo → reconcile thu hồi · (d) task cùng điều kiện nhưng Đang thực hiện → vẫn nhắc */
+{
+  const PASTD = '2020-01-01';
+  const recur = r => { r[25] = 'Tuần'; r[26] = ''; return r; };
+  const tasks15 = [TASK_HDR.concat(['Định kỳ', 'Kỳ đã xong']),
+    recur(taskRow('T-PAUSE', 'Task tạm dừng', PASTD, 0, 'Tạm dừng', 'tuan', 'tuan')),
+    recur(taskRow('T-RUN',   'Task đang làm', PASTD, 0, 'Đang thực hiện', 'tuan', 'tuan'))];
+  const notifRows = [
+    ['NotifID', 'Username', 'Type', 'EntityType', 'EntityID', 'Title', 'DueDate', 'Message', 'CreatedTs', 'ReadTs', 'EmailedDate'],
+    ['tuan|task|T-PAUSE|overdue', 'tuan', 'overdue', 'task', 'T-PAUSE', 'Task tạm dừng', '01/01/2020',
+     '[Task] ⚠️ Đã quá hạn: "Task tạm dừng"', NOW, '', ''],
+    ['tuan|task|T-PAUSE|recur-miss|cu', 'tuan', 'recur-miss', 'task', 'T-PAUSE', 'Task tạm dừng', 'Tuần 39/2026',
+     '[Task] ↻ Định kỳ chưa hoàn thành', NOW, '', '']
+  ];
+  const { api, notifSheet } = buildEnv({ notifRows, tasks: tasks15, cases: CASES, issues: ISSUES, inits: INITS, dev: DEV, users: USER_ROWS });
+  const due = api._notifDueCandidates_('task');
+  const rec = api._notifRecurCandidates_();
+  log('NR15a-due',   !due.some(c => c.entityId === 'T-PAUSE') && due.some(c => c.entityId === 'T-RUN'),
+      'quá hạn: Tạm dừng KHÔNG nhắc · Đang thực hiện vẫn nhắc');
+  log('NR15b-recur', !rec.some(c => c.entityId === 'T-PAUSE') && rec.some(c => c.entityId === 'T-RUN'),
+      'định kỳ: Tạm dừng KHÔNG recur-miss · Đang thực hiện vẫn có');
+  const r = api._notifReconcileDue_(notifSheet, due.concat(rec));
+  const left = notifSheet._rows.slice(1).filter(x => x[4] === 'T-PAUSE' && !x[9]).length;
+  log('NR15c-retract', r.retracted === 2 && left === 0, `nhắc cũ của task Tạm dừng thu hồi: retracted=${r.retracted} (2), còn treo=${left}`);
+  log('NR15d-notclosed', api._notifIsDone('task', 'Tạm dừng', taskRow('x', '', '', 0, 'Tạm dừng'), { progress: 13 }) === false,
+      'Tạm dừng KHÔNG tính là đóng (không bắn "closed")');
 }
 
 console.log('\n──────────────────────────────────────────────');

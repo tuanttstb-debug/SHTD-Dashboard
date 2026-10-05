@@ -1,9 +1,9 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-09-12 (S89 — CR My Work Case theo PIC (PTKD) + Case trạng thái cuối không quá hạn)
+**Prepared**: 2026-10-05 (S91 — task Tạm dừng thôi nhắc)
 
-## 🆕 2026-10-05 (từ hub) — TD-NOTIF-PAUSE: task "Tạm dừng" vẫn nhắc định kỳ + lên Calendar
-- [ ] [TT] Duyệt hành vi: Tạm dừng = thôi nhắc định kỳ + bỏ khỏi Calendar?
-- [ ] [CC] Sửa `_notifRecurCandidates_` (NotificationService.gs) + `_calTaskDone`/vòng task (CalendarSyncService.gs) bỏ qua trạng thái Tạm dừng · test · [TT] redeploy GAS.
+## 🆕 S91 — TD-NOTIF-PAUSE: task "Tạm dừng" thôi nhắc — CODE XONG + TEST PASS (v6.66)
+- [x] Backend `NotificationService.gs` (`_notifIsPaused` → due/overdue + recur-miss bỏ, nhắc cũ tự thu hồi) + `CalendarSyncService.gs` (`_calTaskPaused`) · FE `helpers.js` `taskPeriodStatus` (ẩn badge/Miss) · test +NR15/+R9/+CS5p, hồi quy PASS.
+- [ ] **[TT] redeploy GAS** (NotificationService.gs + CalendarSyncService.gs) → hard-refresh `?v=20261005` → nghiệm thu: task Tạm dừng có Định kỳ không còn "Xong tuần này?"/Miss, chuông không còn nhắc, lịch Google mất sự kiện lặp sau lần sync tới.
 
 ---
 

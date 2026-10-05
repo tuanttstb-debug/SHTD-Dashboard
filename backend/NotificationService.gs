@@ -147,9 +147,17 @@ function _notifIsDone(etype, status, row, cfg) {
   return (s === 'done' || s.indexOf('hoàn thành') !== -1);
 }
 
-// Bỏ qua khi quét due-soon: đã đóng, hoặc case đang blocked.
+// Task "Tạm dừng" — KHÔNG phải đóng (không bắn 'closed'), nhưng thôi nhắc hạn/quá hạn/định kỳ
+// (anh Tuân duyệt 2026-10-05, TD-NOTIF-PAUSE). Nhắc cũ đang treo tự thu hồi ở _notifReconcileDue_
+// vì task không còn sinh candidate.
+function _notifIsPaused(etype, status) {
+  return etype === 'task' && String(status || '').toLowerCase().indexOf('tạm dừng') !== -1;
+}
+
+// Bỏ qua khi quét due-soon: đã đóng, case đang blocked, hoặc task Tạm dừng.
 function _notifSkipDue(etype, status, row, cfg) {
   if (etype === 'case') { var g = _notifCaseGroup(status); return g === 'done' || g === 'blocked'; }
+  if (_notifIsPaused(etype, status)) return true;
   return _notifIsDone(etype, status, row, cfg);
 }
 
@@ -562,7 +570,7 @@ function _notifRecurCandidates_() {
       var freq = _notifRecurNorm(r[cfg.recurrence]);
       if (!freq) continue;
       var etype = _notifRowType('task', id, r, cfg);
-      if (_notifIsDone(etype, r[cfg.status], r, cfg)) continue;   // task đã đóng → thôi nhắc
+      if (_notifSkipDue(etype, r[cfg.status], r, cfg)) continue;  // task đã đóng / Tạm dừng → thôi nhắc
       var prevLabel = _notifPrevPeriodLabel(freq);
       if (!prevLabel) continue;
       var done = String(r[cfg.donePeriods] || '').split(/[;,]/);
