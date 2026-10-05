@@ -1,6 +1,12 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-09-12 (S89 — CR My Work Case theo PIC (PTKD) + Case trạng thái cuối không quá hạn)
 
+## 🆕 2026-10-05 (từ hub) — TD-NOTIF-PAUSE: task "Tạm dừng" vẫn nhắc định kỳ + lên Calendar
+- [ ] [TT] Duyệt hành vi: Tạm dừng = thôi nhắc định kỳ + bỏ khỏi Calendar?
+- [ ] [CC] Sửa `_notifRecurCandidates_` (NotificationService.gs) + `_calTaskDone`/vòng task (CalendarSyncService.gs) bỏ qua trạng thái Tạm dừng · test · [TT] redeploy GAS.
+
+---
+
 ## 🆕 S89 — CR1 My Work Case-theo-PIC (PTKD) + CR2 Case trạng thái cuối không overdue — CODE XONG + TEST PASS (v6.64, thuần FE)
 - [x] CR1: `_mwGetMyCases` role-aware — member (User/Staff) chỉ thấy case `isCurrentUser(c.pic)`; teamlead/Admin thấy all team (giữ). Task list KHÔNG đụng (đã đúng role-based sẵn).
 - [x] CR2: `_cpCalcRagLabel` xét `CASE_STAGE_GROUP` done/blocked TRƯỚC cột RAG lưu → case cuối (Đã phê duyệt/Chờ giải ngân/triển khai/Đang triển khai) + Tạm dừng không hiện "Đỏ"/quá hạn.
