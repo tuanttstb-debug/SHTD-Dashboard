@@ -36,8 +36,8 @@ function _bldGetPending() {
       const ra = ragOrder[a.status] ?? 3;
       const rb = ragOrder[b.status] ?? 3;
       if (ra !== rb) return ra - rb;
-      const aOver = isOverdue(a.endDate, a.progress) ? 0 : 1;
-      const bOver = isOverdue(b.endDate, b.progress) ? 0 : 1;
+      const aOver = isOverdue(a.endDate, a.progress, a.state) ? 0 : 1;
+      const bOver = isOverdue(b.endDate, b.progress, b.state) ? 0 : 1;
       return aOver - bOver;
     });
 }
@@ -177,7 +177,7 @@ function _bldBuildCaseHTML(c) {
 }
 
 function _bldBuildItemHTML(t) {
-  const overdue = isOverdue(t.endDate, t.progress);
+  const overdue = isOverdue(t.endDate, t.progress, t.state);
   const dueCls = overdue ? ' overdue' : '';
   const dueIcon = overdue ? 'fa-circle-exclamation' : 'fa-calendar';
   const dueText = t.endDate ? fmtDate(t.endDate) : '—';

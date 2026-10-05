@@ -464,6 +464,23 @@ log('MW47-isOverdue-respects-done', isOverdueRespectsDone,
     'isOverdue: state="Hoàn thành" → false (kể cả %<100); chưa xong → true');
 
 /* ══════════════════════════════════════════
+   MW51 — TD-NOTIF-PAUSE (2026-10-05): task "Tạm dừng" không tính quá hạn / không vào "Cần làm ngay" / không badge hạn
+══════════════════════════════════════════ */
+const pausedChk = await page.evaluate(() => {
+  const P = { id: 'T-P', state: 'Tạm dừng', progress: 0, endDate: '01/01/2020' };
+  const R = { id: 'T-R', state: 'Đang thực hiện', progress: 0, endDate: '01/01/2020' };
+  const urg = _mwGetUrgent([P, R], []).tasks.map(t => t.id);
+  return {
+    ov: isOverdue(P.endDate, 0, P.state) === false && isOverdue(R.endDate, 0, R.state) === true,
+    urg: !urg.includes('T-P') && urg.includes('T-R'),
+    badge: _mwDeadlineBadge(P.endDate, _mwNoDeadlineAlert(P)) === '' && _mwDeadlineBadge(R.endDate, _mwNoDeadlineAlert(R)) !== ''
+  };
+});
+log('MW51a-isOverdue-paused', pausedChk.ov,    'isOverdue: Tạm dừng → false · Đang thực hiện quá hạn → true');
+log('MW51b-urgent-paused',    pausedChk.urg,   '"Cần làm ngay": bỏ task Tạm dừng, giữ task đang làm');
+log('MW51c-badge-paused',     pausedChk.badge, 'badge hạn: Tạm dừng ẩn · đang làm vẫn hiện');
+
+/* ══════════════════════════════════════════
    MW43 — CR: left-menu badge "Quản lý Task" shows OVERDUE count, not total
 ══════════════════════════════════════════ */
 const navBadge = await page.evaluate(() => {

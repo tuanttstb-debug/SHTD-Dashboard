@@ -1,5 +1,11 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-10-05 (S91 — task Tạm dừng thôi nhắc)
+**Prepared**: 2026-10-05 (S91+S92 — task Tạm dừng thôi nhắc + không quá hạn)
+
+## 🆕 S92 — Task "Tạm dừng" không tính quá hạn — CODE XONG + TEST PASS (v6.67, thuần FE)
+- [x] `isOverdue` + My Work (`_mwNoDeadlineAlert`, `_mwGetUrgent`) + truyền `state` ở app/bld-queue/gantt/performance · +MW51 · hồi quy xanh.
+- [ ] **[TT] (gộp với S91) redeploy GAS 2 file → hard-refresh `?v=20261005b` → nghiệm thu:** task Tạm dừng hết "Quá hạn", không vào "Cần làm ngay", badge "Quản lý Task" giảm tương ứng.
+
+---
 
 ## 🆕 S91 — TD-NOTIF-PAUSE: task "Tạm dừng" thôi nhắc — CODE XONG + TEST PASS (v6.66)
 - [x] Backend `NotificationService.gs` (`_notifIsPaused` → due/overdue + recur-miss bỏ, nhắc cũ tự thu hồi) + `CalendarSyncService.gs` (`_calTaskPaused`) · FE `helpers.js` `taskPeriodStatus` (ẩn badge/Miss) · test +NR15/+R9/+CS5p, hồi quy PASS.

@@ -38,7 +38,7 @@ function renderGantt() {
       <div class="gantt-months">${months.map(m=>`<div class="gantt-month" style="flex:${m.days};">${m.label}</div>`).join('')}</div>
     </div>
     ${tasks.map(t => {
-      const cl = t.status === 'Red' ? 'red' : t.status === 'Amber' ? 'amber' : isOverdue(t.endDate,t.progress) ? 'red' : 'green';
+      const cl = t.status === 'Red' ? 'red' : t.status === 'Amber' ? 'amber' : isOverdue(t.endDate,t.progress,t.state) ? 'red' : 'green';
       const startPct = posOf(t.startDate);
       const widPct   = widOf(t.startDate, t.endDate);
       const rawLabel = t.name.length > 30 ? t.name.slice(0,28)+'…' : t.name;

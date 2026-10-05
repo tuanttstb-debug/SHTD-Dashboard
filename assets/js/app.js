@@ -430,7 +430,7 @@ function showDetailModal(filter, title) {
         <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 6px;border-radius:4px;font-weight:600;">${esc(t.category||'–')}</span></td>
         <td>${t.milestone ? `<span style="font-size:11px;background:var(--primary-xlight);padding:2px 6px;border-radius:3px;color:var(--primary);font-weight:700;">${esc(t.milestone)}</span>` : '–'}</td>
         <td>${esc(t.team||'–')}</td><td>${esc(t.picRes||'–')}</td>
-        <td ${isOverdue(t.endDate,t.progress)?'class="text-danger-bold"':''}>${fmtDate(t.endDate)}</td>
+        <td ${isOverdue(t.endDate,t.progress,t.state)?'class="text-danger-bold"':''}>${fmtDate(t.endDate)}</td>
         <td><span style="font-size:11px;color:var(--text-2);font-family:var(--mono);" title="${esc(taskReportWeeks(t).join('; '))}">${esc(taskWeeksBadge(t))}</span></td>
         <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${t.progress}%;"></div></div><span class="prog-pct">${t.progress}%</span></div></td>
         <td>${stateChip(t.state)}</td><td>${ragBadge(t.status)}</td>

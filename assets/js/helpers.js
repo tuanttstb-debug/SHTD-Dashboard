@@ -55,6 +55,7 @@ function parseVNDate(s) {
 
 function isOverdue(endDateString, progress, state) {
   if (state === 'Hoàn thành') return false;   // task đã hoàn thành → không tính quá hạn (kể cả %<100 do đánh dấu tay)
+  if (/tạm dừng/i.test(String(state || ''))) return false;   // Tạm dừng → thôi nhắc, không tính quá hạn (TD-NOTIF-PAUSE 2026-10-05)
   if (progress >= 100 || !endDateString) return false;
   const endDateObj = parseVNDate(endDateString);
   if (!endDateObj || isNaN(endDateObj)) return false;

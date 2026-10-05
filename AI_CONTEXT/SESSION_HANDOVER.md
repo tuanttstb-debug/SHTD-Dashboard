@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-05 (S91+S92 — task "Tạm dừng" thôi nhắc + không tính quá hạn)
+**Model**: Claude Opus 5.5 · **Version**: v6.65 → **v6.67** · commit `01a68aa` (S91) + S92 · khởi phát từ hub AIOS (AIUS-001 D60: dọn 53 task worklog/khóa học → Tạm dừng)
+
+- **Task completed:** S91 backend — `_notifIsPaused` (bỏ due/overdue + recur-miss, nhắc cũ tự thu hồi) + `_calTaskPaused` (không lên Calendar) + FE `taskPeriodStatus` ẩn "Xong tuần này?"/Miss. S92 FE — `isOverdue` + My Work bỏ task Tạm dừng khỏi quá hạn/"Cần làm ngay"/badge hạn; truyền `state` ở 6 lời gọi thiếu.
+- **Files changed:** `backend/NotificationService.gs` · `backend/CalendarSyncService.gs` · `assets/js/{helpers,app,config}.js` · `assets/js/views/{my-work,bld-queue,gantt,performance}.js` · `index.html` (cache-bust `?v=20261005b`) · `test/verify_{notif_retract,calendar_sync,recurring,my_work}.mjs`.
+- **Decision made:** Tạm dừng = thôi nhắc + không quá hạn, nhưng KHÔNG tính là đóng (không bắn 'closed'; chuyển lại Đang thực hiện thì nhắc lại) — anh Tuân duyệt 05/10, đóng TD-NOTIF-PAUSE.
+- **Blocker:** không.
+- **Next step:** [TT] redeploy GAS (NotificationService + CalendarSyncService) → hard-refresh `?v=20261005b` → nghiệm thu trên task Worklog AIUS-001 vừa Tạm dừng.
+- **Regression risk:** Thấp–TB — đổi phạm vi "quá hạn" ở badge/Performance (task Tạm dừng + task Hoàn thành ở 4 màn trước đây thiếu state nay không còn đếm). Test: notif_retract 45/45 · notifications 21/21 · calendar 33/33 · recurring 26/26 · my_work 109/109 · bld_queue/nav/startup/date_unify/h2/initiative/task_rag/case_pipeline xanh.
+
+---
+
 # SESSION HANDOVER — 2026-09-30 (DB — chuyển Acc task member sang teamlead mới; không đổi code)
 **Model**: Claude Opus 5.5 · **Version**: v6.65 (không đổi) · thực hiện từ hub AIOS
 
