@@ -200,17 +200,9 @@ function doPost(e) {
 
     if (action === 'ai-chat') {
       if (!body.message) throw new Error('ai-chat: thiếu message.');
-      var aiContext = buildContext(tokenData);
       var aiHistory = Array.isArray(body.history) ? body.history : [];
-      // callGemini tự retry+fallback (Nhóm 1). Nếu vẫn fail → trả lỗi CÓ CẤU TRÚC
-      // (errorCode+retriable+degraded) để FE localize + hiện nút Thử lại, KHÔNG rơi vào
-      // catch tổng (mất cấu trúc). Degradation = số liệu tính sẵn (khi Gemini quá tải).
-      try {
-        var aiReply = callGemini(aiContext, aiHistory, body.message);
-        return _jsonResponse({ status: 'ok', reply: aiReply });
-      } catch (aiErr) {
-        return _jsonResponse(_aiErrorResponse_(aiErr, aiContext));
-      }
+      // S93: định tuyến (tất định / LLM với context đã lọc) + lỗi CÓ CẤU TRÚC đều ở aiChatHandle_.
+      return _jsonResponse(aiChatHandle_(body.message, aiHistory));
     }
 
     if (action === 'case-pipeline-read') {

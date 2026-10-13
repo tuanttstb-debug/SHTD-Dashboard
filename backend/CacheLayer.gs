@@ -5,7 +5,7 @@
 //  (1) VERSION GATE cho batch-read (Code.gs): client gửi ver đã biết; khớp ver hiện tại →
 //      server trả {notModified:true} (gần như 0 payload) → hết tải lại toàn bộ sheet khi dữ
 //      liệu KHÔNG đổi (thắng lớn nhất về transfer mạng nội bộ). Khi ĐỔI → đọc LIVE (luôn tươi).
-//  (2) AI CONTEXT CACHE (AiService.gs): buildContext cache theo DATA_VER (gzip) — câu hỏi liên
+//  (2) AI CONTEXT CACHE (AiService.gs): S93 dùng _aiCachePutBig_ (chia khúc, TTL 10') theo DATA_VER — câu hỏi liên
 //      tiếp khi dữ liệu không đổi dùng lại context, bỏ 3 lần đọc sheet + build 1500-task index.
 //
 // CHỦ Ý KHÔNG cache từng sheet đọc ở server: version gate đã lo "không đổi = không tải"; khi

@@ -38,8 +38,9 @@ const PropertiesService = { getScriptProperties: () => ({
 
 let fetchQueue = [];   // [{code, body}] tiêu thụ theo thứ tự
 let fetchLog = [];     // url mỗi lần gọi
-const UrlFetchApp = { fetch(url) {
-  fetchLog.push(url);
+let fetchOpts = [];    // options mỗi lần gọi (kiểm payload)
+const UrlFetchApp = { fetch(url, opts) {
+  fetchLog.push(url); fetchOpts.push(opts);
   const r = fetchQueue.shift() || { code: 200, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: 'DEFAULT' }] } }] }) };
   return { getResponseCode: () => r.code, getContentText: () => (typeof r.body === 'string' ? r.body : JSON.stringify(r.body)) };
 } };
@@ -72,7 +73,7 @@ const r400   = () => ({ code: 400, body: JSON.stringify({ error: { message: 'bad
 const rEmpty = (fr = 'SAFETY') => ({ code: 200, body: JSON.stringify({ candidates: [{ finishReason: fr }] }) });
 
 function resetCall(chain) {
-  fetchQueue = []; fetchLog = []; sleepLog = [];
+  fetchQueue = []; fetchLog = []; fetchOpts = []; sleepLog = [];
   props['GEMINI_API_KEY'] = 'test-key';
   if (chain === undefined) delete props['AI_MODEL_CHAIN'];
   else props['AI_MODEL_CHAIN'] = JSON.stringify(chain);
@@ -82,7 +83,7 @@ console.log('\n=== verify_ai_resilience ===');
 
 /* ════ MC — model chain ════ */
 delete props['AI_MODEL_CHAIN'];
-eq('MC1 rỗng→[primary]', api._aiModelChain(), ['gemini-flash-latest']);
+eq('MC1 rỗng→chain mặc định (Lite→Flash, S93)', api._aiModelChain(), ['gemini-flash-lite-latest', 'gemini-flash-latest']);
 props['AI_MODEL_CHAIN'] = 'gemini-flash-latest, model-b , model-c';
 eq('MC2 phẩy', api._aiModelChain(), ['gemini-flash-latest', 'model-b', 'model-c']);
 props['AI_MODEL_CHAIN'] = JSON.stringify(['gemini-flash-latest', 'model-b']);
@@ -97,7 +98,7 @@ ok('BO2 attempt1 ∈ [2000,2500)', b1 >= 2000 && b1 < 2500, `= ${b1}`);
 
 /* ════ EC — phân loại lỗi ════ */
 eq('EC1 503→TRANSIENT', api._aiErrClass_(503, 'UNAVAILABLE'), 'TRANSIENT');
-eq('EC2 429→TRANSIENT', api._aiErrClass_(429, ''), 'TRANSIENT');
+eq('EC2 429→QUOTA (S93: không retry cùng model)', api._aiErrClass_(429, ''), 'QUOTA');
 eq('EC3 404→MODEL_DEAD', api._aiErrClass_(404, ''), 'MODEL_DEAD');
 eq('EC4 400→BADREQUEST', api._aiErrClass_(400, 'INVALID_ARGUMENT'), 'BADREQUEST');
 eq('EC5 403→AUTH', api._aiErrClass_(403, ''), 'AUTH');
@@ -111,20 +112,20 @@ eq('CG1 kết quả', api.callGemini('ctx', [], 'q'), 'ANSWER');
 eq('CG1 số fetch', fetchLog.length, 2);
 eq('CG1 số sleep (backoff 1 lần)', sleepLog.length, 1);
 
-// CG2: chính 3×503 → fallback model → ok. 4 fetch, url cuối = fallback
+// CG2: chính 2×503 → fallback model → ok. 3 fetch, url cuối = fallback (S93: chính tối đa 2 lần)
 resetCall(['gemini-flash-latest', 'fallback-model']);
-fetchQueue = [r503(), r503(), r503(), rOk('FB')];
+fetchQueue = [r503(), r503(), rOk('FB')];
 eq('CG2 kết quả fallback', api.callGemini('ctx', [], 'q'), 'FB');
-eq('CG2 số fetch (3 chính + 1 fallback)', fetchLog.length, 4);
-ok('CG2 fetch cuối = fallback-model', /fallback-model:/.test(fetchLog[3]), fetchLog[3]);
+eq('CG2 số fetch (2 chính + 1 fallback)', fetchLog.length, 3);
+ok('CG2 fetch cuối = fallback-model', /fallback-model:/.test(fetchLog[2]), fetchLog[2]);
 
-// CG3: tất cả 503 → throw GEMINI_OVERLOADED, đúng 4 fetch (3+1)
+// CG3: tất cả 503 → throw GEMINI_OVERLOADED, đúng 3 fetch (2+1)
 resetCall(['gemini-flash-latest', 'fallback-model']);
-fetchQueue = [r503(), r503(), r503(), r503()];
+fetchQueue = [r503(), r503(), r503()];
 let cg3 = '';
 try { api.callGemini('ctx', [], 'q'); } catch (e) { cg3 = e.message; }
 ok('CG3 throw OVERLOADED', cg3.indexOf('GEMINI_OVERLOADED|') === 0, cg3);
-eq('CG3 số fetch (không quá ngân sách)', fetchLog.length, 4);
+eq('CG3 số fetch (không quá ngân sách)', fetchLog.length, 3);
 
 // CG4: 404 model chính → NHẢY model kế NGAY (không retry 3 lần), fallback ok
 resetCall(['gemini-flash-latest', 'fallback-model']);
@@ -161,13 +162,67 @@ try { api.callGemini('ctx', [], 'q'); } catch (e) { cg8 = e.message; }
 ok('CG8 thiếu key → throw', /GEMINI_API_KEY/.test(cg8), cg8);
 props['GEMINI_API_KEY'] = 'test-key';
 
+/* ════ S93 — QUOTA nhảy model · thinking config · bỏ thinking khi model không hỗ trợ ════ */
+const r429 = () => ({ code: 429, body: JSON.stringify({ error: { message: 'You exceeded your current quota', status: 'RESOURCE_EXHAUSTED' } }) });
+const r400think = () => ({ code: 400, body: JSON.stringify({ error: { message: 'Thinking level is not supported for this model.', status: 'INVALID_ARGUMENT' } }) });
+
+// Q1: 429 model chính → nhảy model kế NGAY, không sleep
+resetCall(['m-lite', 'm-flash']);
+fetchQueue = [r429(), rOk('FB')];
+eq('Q1 429→fallback', api.callGemini('ctx', [], 'q'), 'FB');
+eq('Q1 2 fetch', fetchLog.length, 2);
+eq('Q1 0 sleep (quota không backoff)', sleepLog.length, 0);
+
+// Q2: 429 mọi model → throw QUOTA → errorResponse = OVERLOADED retriable
+resetCall(['m-lite', 'm-flash']);
+fetchQueue = [r429(), r429()];
+let q2 = '';
+try { api.callGemini('ctx', [], 'q'); } catch (e) { q2 = e.message; }
+ok('Q2 throw QUOTA', q2.indexOf('GEMINI_QUOTA|') === 0, q2);
+eq('Q2 errorResponse → OVERLOADED', api._aiErrorResponse_(new Error(q2), 'x').errorCode, 'GEMINI_OVERLOADED');
+
+// TH1: mặc định gửi thinkingConfig.thinkingLevel=low + maxOutputTokens 2048
+resetCall();
+fetchQueue = [rOk()];
+api.callGemini('ctx', [], 'q');
+const p1 = JSON.parse(fetchOpts[0].payload);
+eq('TH1 thinkingLevel mặc định', p1.generationConfig.thinkingConfig, { thinkingLevel: 'low' });
+eq('TH1 maxOutputTokens', p1.generationConfig.maxOutputTokens, 2048);
+ok('TH1 fetch đầu = Flash-Lite', /gemini-flash-lite-latest:/.test(fetchLog[0]), fetchLog[0]);
+
+// TH2: AI_THINKING=off → không gửi thinkingConfig
+resetCall(); props['AI_THINKING'] = 'off';
+fetchQueue = [rOk()];
+api.callGemini('ctx', [], 'q');
+ok('TH2 off → không thinkingConfig', !('thinkingConfig' in JSON.parse(fetchOpts[0].payload).generationConfig));
+delete props['AI_THINKING'];
+
+// TH3: 400 "thinking not supported" → bỏ tham số, gọi lại CÙNG model → ok
+resetCall(['m-a', 'm-b']);
+fetchQueue = [r400think(), rOk('NOTHINK')];
+eq('TH3 kết quả sau khi bỏ thinking', api.callGemini('ctx', [], 'q'), 'NOTHINK');
+eq('TH3 2 fetch cùng model', [fetchLog.length, /m-a:/.test(fetchLog[1])], [2, true]);
+ok('TH3 lần 2 không còn thinkingConfig', !('thinkingConfig' in JSON.parse(fetchOpts[1].payload).generationConfig));
+
+// TH4: bỏ phần "thought" khi ghép câu trả lời
+resetCall();
+fetchQueue = [{ code: 200, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: 'nghĩ…', thought: true }, { text: 'ĐÁP' }] } }] }) }];
+eq('TH4 bỏ part thought', api.callGemini('ctx', [], 'q'), 'ĐÁP');
+
+// HI: lịch sử chỉ 4 lượt gần nhất
+resetCall();
+fetchQueue = [rOk()];
+const hist = Array.from({ length: 10 }, (_, i) => ({ role: i % 2 ? 'model' : 'user', text: 'h' + i }));
+api.callGemini('ctx', hist, 'q');
+eq('HI contents = 4 lịch sử + 1 câu', JSON.parse(fetchOpts[0].payload).contents.length, 5);
+
 /* ════ ER — errorResponse + summary slice ════ */
-const CTX = '=== SỐ LIỆU TÍNH SẴN ===\nTổng số task: 5\n\n=== CHỈ MỤC TOÀN BỘ TASK ===\nID | ...';
+const CTX = '=== SỐ LIỆU TÍNH SẴN ===\nTổng số task: 5\n\n=== DANH SÁCH TASK LIÊN QUAN — 1/1 ===\nID | ...';
 const er1 = api._aiErrorResponse_(new Error('GEMINI_OVERLOADED|high demand'), CTX);
 eq('ER1 errorCode', er1.errorCode, 'GEMINI_OVERLOADED');
 ok('ER1 retriable', er1.retriable === true);
 ok('ER1 có degraded (số liệu tính sẵn)', typeof er1.degraded === 'string' && /SỐ LIỆU TÍNH SẴN/.test(er1.degraded));
-ok('ER1 degraded KHÔNG chứa chỉ mục task', er1.degraded.indexOf('CHỈ MỤC TOÀN BỘ') === -1);
+ok('ER1 degraded KHÔNG chứa danh sách task', er1.degraded.indexOf('DANH SÁCH TASK') === -1);
 ok('ER1 error đã bỏ prefix mã', er1.error === 'high demand', er1.error);
 
 const er2 = api._aiErrorResponse_(new Error('GEMINI_BADREQUEST|bad'), CTX);

@@ -3,6 +3,8 @@
 // Session-local conversation history (cleared on page reload)
 var _aiHistory = [];
 var _aiTyping = false;
+var _aiStartedAt = 0;      // S93: mốc gửi câu hỏi → đồng hồ "đang xử lý Ns"
+var _aiTimer = null;
 
 function _getAiSuggestions() {
   return [
@@ -137,6 +139,8 @@ function _renderAiMessages() {
           '<div class="ai-typing-dot"></div>' +
           '<div class="ai-typing-dot"></div>' +
           '<div class="ai-typing-dot"></div>' +
+          '<span class="ai-elapsed" id="aiElapsed" style="margin-left:8px;font-size:12px;color:var(--text-muted,#888);">' +
+            (_aiStartedAt ? Math.floor((Date.now() - _aiStartedAt) / 1000) + 's' : '') + '</span>' +
         '</div>' +
       '</div>';
   }
@@ -164,7 +168,7 @@ async function _aiPostWithRetry(payload) {
   var attempts = 3, lastErr;
   for (var a = 0; a < attempts; a++) {
     try {
-      // Ngân sách timeout riêng (dài) cho AI — buildContext(1500 task) + Gemini vượt 30s là bình thường.
+      // Ngân sách timeout riêng (dài) cho AI — câu qua LLM có thể > 30s (S93: câu đếm trả tất định, nhanh).
       return await gasPost(payload, GAS_AI_TIMEOUT_MS);
     } catch (err) {
       lastErr = err;
@@ -187,11 +191,16 @@ async function sendAiMessage() {
   // Push user turn to history
   _aiHistory.push({ role: 'user', text: text, time: _fmtAiTime() });
   _aiTyping = true;
+  _aiStartedAt = Date.now();
   _renderAiMessages();
   document.getElementById('aiSendBtn').disabled = true;
+  _aiTimer = setInterval(function () {
+    var el = document.getElementById('aiElapsed');
+    if (el) el.textContent = Math.floor((Date.now() - _aiStartedAt) / 1000) + 's';
+  }, 1000);
 
-  // Build history payload (role + text only, no time field)
-  var historyPayload = _aiHistory.slice(0, -1).map(function(turn) {
+  // Build history payload (role + text only) — S93: chỉ 4 lượt gần nhất (server cũng cắt) để giảm token.
+  var historyPayload = _aiHistory.slice(0, -1).slice(-4).map(function(turn) {
     return { role: turn.role, text: turn.text };
   });
 
@@ -217,6 +226,8 @@ async function sendAiMessage() {
     // Lỗi VẬN CHUYỂN thật (network/timeout) — _aiPostWithRetry đã thử lại 3 lần transport.
     _aiHistory.push({ role: 'model', text: t('ai.err.network'), time: _fmtAiTime(), retryQ: text });
   } finally {
+    if (_aiTimer) { clearInterval(_aiTimer); _aiTimer = null; }
+    _aiStartedAt = 0;
     _aiTyping = false;
     var btn = document.getElementById('aiSendBtn');
     if (btn) btn.disabled = false;

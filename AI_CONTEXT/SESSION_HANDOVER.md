@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-13 (S93 — AI Assistant tuning nhanh + tiết kiệm token, gói free)
+**Model**: Claude Opus 5.5 · **Version**: v6.67 → **v6.68** · khởi phát từ hub AIOS (`/enter shtd`)
+
+- **Task completed:** đo LIVE (168,8 s/câu đếm, `AI_Log` 12/10 0 thành công) → đề xuất → [TT] chọn hướng free/tốc độ/token → viết lại `AiService.gs`: bundle gọn + cache chia khúc · định tuyến câu đếm/liệt kê trả tất định (0 token) · context lọc theo câu (~23K thay ~650K ký tự) · Flash-Lite chính + thinking low + 429 nhảy model · FE đồng hồ giây.
+- **Files changed:** `backend/AiService.gs` · `backend/Code.gs` (route) · `backend/CacheLayer.gs` (comment) · `assets/js/views/ai-chat.js` · `assets/js/config.js` (v6.68) · `index.html` (`?v=20261013`) · `test/verify_ai_resilience.mjs` · MỚI `test/verify_ai_routing.mjs` · MỚI `docs/PROPOSAL_AI_Assistant_Tuning_2026-10-13.md`.
+- **Decision made:** [TT] 13/10 — AI Assistant giữ gói Gemini **miễn phí**; ưu tiên **phản hồi nhanh + ít token**, chất lượng xét sau → Flash-Lite chính, thinking low, trả lời tất định khi được.
+- **Blocker:** không (chờ [TT] redeploy GAS).
+- **Next step:** [TT] redeploy GAS (AiService.gs + Code.gs, deployment cũ giữ URL) → tùy chọn `refreshAiModelChain()` → [CC] đo lại trên LIVE bộ câu chuẩn (đếm, liệt kê theo team/PIC, tra ID, câu mở, initiative, KPI) + đọc `AI_Log` (modelVersion, token in, latency).
+- **Regression risk:** Trung bình — đổi toàn bộ đường AI: câu hỏi tổng hợp rộng nay chỉ thấy ≤120 task đã lọc (có thể thiếu so với trước); bộ nhận diện câu đếm có thể bắt nhầm (đã chặn: còn từ khóa lạ → đi LLM). Nếu thinkingLevel không hợp model → tự bỏ tham số. Dữ liệu vẫn đi qua Gemini free-tier (data-boundary đã nêu trong đề xuất, [TT] chấp nhận).
+
+---
+
 # SESSION HANDOVER — 2026-10-05 (S91+S92 — task "Tạm dừng" thôi nhắc + không tính quá hạn)
 **Model**: Claude Opus 5.5 · **Version**: v6.65 → **v6.67** · commit `01a68aa` (S91) + S92 · khởi phát từ hub AIOS (AIUS-001 D60: dọn 53 task worklog/khóa học → Tạm dừng)
 

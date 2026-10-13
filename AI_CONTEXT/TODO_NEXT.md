@@ -1,6 +1,14 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-10-05 (S91+S92 — task Tạm dừng thôi nhắc + không quá hạn)
+**Prepared**: 2026-10-13 (S93 — AI Assistant tuning)
 
+## 🆕 S93 — AI Assistant tuning (v6.68) — CODE XONG + TEST PASS LOCAL
+- [x] `AiService.gs` viết lại (bundle + định tuyến tất định + context lọc + Flash-Lite/thinking low/429 nhảy model) · `Code.gs` route · FE đồng hồ giây · test routing 35/35 + resilience 56/56.
+- [ ] **[TT] redeploy GAS** (AiService.gs + Code.gs) → (tùy chọn) chạy `refreshAiModelChain()` trong editor → hard-refresh `?v=20261013`.
+- [ ] **[CC] đo lại LIVE** bộ câu chuẩn + đọc `AI_Log` → ghi kết quả vào `docs/PROPOSAL_AI_Assistant_Tuning_2026-10-13.md` §6. Nếu câu qua LLM vẫn > 30 s → thử `AI_THINKING=minimal` / Đợt 2 function calling.
+
+---
+
+**Prepared cũ**: 2026-10-05 (S91+S92 — task Tạm dừng thôi nhắc + không quá hạn)
 ## 🆕 S92 — Task "Tạm dừng" không tính quá hạn — CODE XONG + TEST PASS (v6.67, thuần FE)
 - [x] `isOverdue` + My Work (`_mwNoDeadlineAlert`, `_mwGetUrgent`) + truyền `state` ở app/bld-queue/gantt/performance · +MW51 · hồi quy xanh.
 - [ ] **[TT] (gộp với S91) redeploy GAS 2 file → hard-refresh `?v=20261005b` → nghiệm thu:** task Tạm dừng hết "Quá hạn", không vào "Cần làm ngay", badge "Quản lý Task" giảm tương ứng.
