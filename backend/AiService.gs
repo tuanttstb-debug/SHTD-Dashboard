@@ -82,10 +82,11 @@ function _aiBuildBundle_(taskRows, initRows, kpiRows, now) {
         var v = String(r[C.cDetail[d].i] || '').trim();
         if (v) detail.push(C.cDetail[d].h + ': ' + v);
       }
+      var prog = _aiProg_(C.cProg !== -1 ? r[C.cProg] : '');
       tasks.push({
         id:  C.cId !== -1 ? String(r[C.cId] || '').trim() : '',
-        st:  C.cState !== -1 ? String(r[C.cState] || '').trim() : '',
-        p:   _aiProg_(C.cProg !== -1 ? r[C.cProg] : ''),
+        st:  _aiNormState_(C.cState !== -1 ? r[C.cState] : '', prog),
+        p:   prog,
         tm:  C.cTeam !== -1 ? String(r[C.cTeam] || '').trim() : '',
         pic: res || acc,
         acc: acc,
@@ -117,6 +118,20 @@ function _aiBuildBundle_(taskRows, initRows, kpiRows, now) {
   for (var j = 0; j < (kpiRows || []).length; j++) kpi.push(_aiTrunc_(kpiRows[j].join(' | '), 220));
 
   return { today: _aiIsoDate_(today), tasks: tasks, inits: inits, kpi: kpi };
+}
+
+// Khớp FE parsers.js parseState + helpers.js normTaskComplete (%≥100 → Hoàn thành) — để số đếm
+// theo trạng thái của AI trùng Dashboard (LIVE 13/10: sheet ghi "Blocked" nhưng 100% → FE "Hoàn thành").
+function _aiNormState_(v, prog) {
+  if (prog >= 100) return 'Hoàn thành';
+  var s = String(v == null ? '' : v).trim().toLowerCase();
+  if (!s) return 'Chưa bắt đầu';
+  if (s.indexOf('đang') !== -1) return 'Đang thực hiện';
+  if (s.indexOf('chuẩn bị') !== -1) return 'Hoàn thành chuẩn bị';
+  if (s.indexOf('hoàn thành') !== -1 || s.indexOf('done') !== -1) return 'Hoàn thành';
+  if (s.indexOf('tạm') !== -1) return 'Tạm dừng';
+  if (s.indexOf('block') !== -1) return 'Blocked';
+  return 'Chưa bắt đầu';
 }
 
 function _aiIsoDate_(d) {

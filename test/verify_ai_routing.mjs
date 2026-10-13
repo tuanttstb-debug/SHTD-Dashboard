@@ -105,6 +105,11 @@ eq('BD2 today', B.today, '2026-10-13');
 eq('BD3 T-1 dd=-3 · pic=Responsible', [B.tasks[0].dd, B.tasks[0].pic], [-3, 'QuangNV']);
 ok('BD4 chi tiết free-text vào dt', /Kết quả: đã redeploy/.test(B.tasks[6].dt), B.tasks[6].dt);
 eq('BD5 initiative gọn có header + 1 dòng', B.inits.length, 2);
+const BN = api._aiBuildBundle_([HEADER,
+  mkRow({ id: 'N-1', team: 'BL', name: 'x', st: 'Blocked', p: 100 }),
+  mkRow({ id: 'N-2', team: 'BL', name: 'y', st: 'đang thực hiện', p: 10 }),
+  mkRow({ id: 'N-3', team: 'BL', name: 'z', st: '', p: 0 })], [], [], NOW);
+eq('BD6 trạng thái khớp FE (100%→Hoàn thành · chữ thường · rỗng)', BN.tasks.map(t => t.st), ['Hoàn thành', 'Đang thực hiện', 'Chưa bắt đầu']);
 
 /* ════ PQ ════ */
 const P = (m, h) => api._aiParseQuery_(m, B, h || []);

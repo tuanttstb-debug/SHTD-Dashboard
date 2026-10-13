@@ -58,4 +58,21 @@ Loại trừ: streaming (GAS Web App không stream được) · OpenRouter/bên 
 | Câu về initiative | ~650K ký tự | **31K** ký tự |
 | Model | `gemini-flash-latest`, thinking mặc định | `gemini-flash-lite-latest` → dự phòng Flash, thinking low |
 | 429 quota | retry cùng model 1–4 s | nhảy model kế ngay |
-| Đo LIVE sau redeploy | 168,8 s | _chờ anh redeploy GAS_ |
+| Đo LIVE sau redeploy | 168,8 s | xem §7 |
+
+## 7. Đo LIVE sau redeploy (13/10, ~10h38, TuanTT4, 10 câu tuần tự)
+| Câu | Đường | Thời gian (trình duyệt) | Token vào (AI_Log) | Kết quả |
+|---|---|---|---|---|
+| Có bao nhiêu task quá hạn? | tất định | **5,3 s** (lần đầu, dựng bundle) · **2–3 s** (cache) | 0 | 89 — **khớp Dashboard 89** (bản cũ trả 111: đếm cả Tạm dừng) |
+| Liệt kê task quá hạn của team BL | tất định | **2,3 s** | 0 | 43 — khớp Dashboard 43 |
+| Bao nhiêu task đang Blocked? | tất định | 2,4 s | 0 | 4 ≠ Dashboard 2 → **đã sửa** (xem dưới) |
+| Có bao nhiêu task? | tất định | 2,7 s | 0 | 1.665 — khớp |
+| Task nào liên quan ký số đang vướng mắc gì? | Gemini | **3,2 s** | 11.895 | bảng đúng chủ đề |
+| Tóm tắt tình hình tiến độ chung tuần này | Gemini | 3,4 s | 10.185 | dùng số tính sẵn |
+| Tóm tắt tiến độ task CV2007 | Gemini | 2,9 s | 1.440 | đúng task |
+| Initiative nào đang chậm tiến độ? | Gemini | 5,3 s | 9.757 | trả lời được |
+| KPI hiện đạt bao nhiêu so với chỉ tiêu? | Gemini | ~4 s | 9.137 | trả lời được |
+
+- Model thật: `gemini-flash-lite-latest` = **gemini-3.5-flash-lite**, thinking 0 token, Gemini 0,7–2,4 s/câu.
+- 1 câu lỗi 503/429 ngay sau redeploy: log ghi nhãn `TRANSIENT` cho 429 + 3 lần thử = **code CŨ** (GAS còn phục vụ bản cũ vài giây sau redeploy). Chạy lại: tất định 2,3 s.
+- **Sửa sau đo:** trạng thái trong bundle nay chuẩn hóa như FE (`parseState` + %≥100 → Hoàn thành). Sheet có 2 task ghi "Blocked" nhưng 100% (PTKDMB-009/011) → FE coi Hoàn thành. Theo trạng thái FE: Hoàn thành 1.322 · Đang thực hiện 161 · Chưa bắt đầu 104 · Tạm dừng 75 · Blocked 2 · Hoàn thành chuẩn bị 1. Cần redeploy `AiService.gs` lần 2.
