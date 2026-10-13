@@ -3,8 +3,9 @@
 
 ## 🆕 S93 — AI Assistant tuning (v6.68) — CODE XONG + TEST PASS LOCAL
 - [x] `AiService.gs` viết lại (bundle + định tuyến tất định + context lọc + Flash-Lite/thinking low/429 nhảy model) · `Code.gs` route · FE đồng hồ giây · test routing 35/35 + resilience 56/56.
-- [ ] **[TT] redeploy GAS** (AiService.gs + Code.gs) → (tùy chọn) chạy `refreshAiModelChain()` trong editor → hard-refresh `?v=20261013`.
-- [ ] **[CC] đo lại LIVE** bộ câu chuẩn + đọc `AI_Log` → ghi kết quả vào `docs/PROPOSAL_AI_Assistant_Tuning_2026-10-13.md` §6. Nếu câu qua LLM vẫn > 30 s → thử `AI_THINKING=minimal` / Đợt 2 function calling.
+- [x] [TT] redeploy GAS + LIVE OK 2026-10-13.
+- [x] [CC] đo LIVE 10 câu → §7 file đề xuất (tất định 2–5 s, Gemini 3–5 s).
+- [ ] [CC] kiểm câu "Bao nhiêu task Blocked?" = 2 trên LIVE (xác nhận S93.1 `2a16e60` đã redeploy). Câu Gemini > 30 s → thử `AI_THINKING=minimal` / Đợt 2 function calling.
 
 ---
 
