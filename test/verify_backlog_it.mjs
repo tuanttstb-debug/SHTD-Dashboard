@@ -169,7 +169,7 @@ log('BI5-counts', imp.r.added === 4 && imp.r.updated === 1 && imp.n === 5, `adde
 log('BI5-jira-overwrite', imp.t4.summary.indexOf('Job giả lập D') !== -1 && imp.t4.status === 'To Do', 'Cột Jira ghi đè theo file');
 log('BI5-team-kept', imp.t4.uuTien === '1' && imp.t4.quyetDinh === 'Đưa vào kỳ' && imp.t4.ky === '202612' && imp.t4.note === 'giữ', 'Ưu tiên · quyết định · kỳ · ghi chú giữ nguyên');
 log('BI5-trans-kept', imp.t4.ui === 'Xong', 'Cột UI không bị xóa khi file không có giá trị');
-log('BI5-gas-payload', imp.wrote && imp.wrote.action === 'ticket-import' && imp.wrote.rows.length === 5 && imp.wrote.rows[0].length === 24, 'Gửi GAS ticket-import 5 dòng × 24 cột');
+log('BI5-gas-payload', imp.wrote && imp.wrote.action === 'ticket-import' && imp.wrote.rows.length === 5 && imp.wrote.rows[0].length === 31, 'Gửi GAS ticket-import 5 dòng × 31 cột');
 
 /* ── BI1/BI6 — render ── */
 await page.evaluate(() => navigateTo('backlog-it'));
@@ -258,9 +258,9 @@ const ex = await page.evaluate(() => {
   return { head: aoa[0], row: aoa[1] };
 });
 const H = ex.head;
-log('BI10-head', H.includes('Sẵn sàng chuyển IT') && H.includes('Người làm UI') && H.includes('Người làm BA') && !H.includes('OKR') && H.length === 25, `${H.length} cột bảng planning (có người làm UI/BA)`);
+log('BI10-head', H.includes('Sẵn sàng chuyển IT') && H.includes('Người làm UI') && H.includes('Người làm BA') && !H.includes('OKR') && H.includes('Hệ thống') && H.includes('Nguồn yêu cầu (Loại YC NV)') && H.length === 30, `${H.length} cột bảng planning (có người làm UI/BA)`);
 const cell = name => ex.row[H.indexOf(name)];
-log('BI10-row', ex.row[0] === 'BLOL' && cell('Sẵn sàng chuyển IT') === 'Đạt' && cell('Số ngày không nhích') === 44 && cell('PO (Reporter)') === 'Po Hai',
+log('BI10-row', cell('Line') === 'BLOL' && cell('Hệ thống') === 'Biz' && cell('Sẵn sàng chuyển IT') === 'Đạt' && cell('Số ngày không nhích') === 44 && cell('PO (Reporter)') === 'Po Hai',
   `BLOL · ${cell('Sẵn sàng chuyển IT')} · ${cell('Số ngày không nhích')} ngày · PO ${cell('PO (Reporter)')}`);
 
 /* ── BI12 — Sub-task UI/BA (rule team 29/10) ── */
@@ -294,11 +294,10 @@ log('BI12-ba-state', sub.d1.tlpt === 'Xong' && sub.d1.baBy.join() === 'Ba Mot', 
 log('BI12-not-ready', !sub.d1.ready && sub.d1.missing.join('|') === 'UI chưa xong', `Thiếu: ${sub.d1.missing.join(' · ')}`);
 log('BI12-ready-after', sub.d1b.ready === true, 'Sub-task UI Done → ticket cha Đạt');
 log('BI12-stale-sub', sub.d1.staleDays === 1, `Không nhích tính theo sub-task mới nhất: ${sub.d1.staleDays} ngày (cha cập nhật 01/08)`);
-log('BI12-rows', sub.nRows === 3 && sub.rowsTxt.some(t => t.includes('Sub-task của DCB-99999'))
-  && sub.rowsTxt.some(t => t.includes('DCB-90205') && t.includes('[UI/UX]')) && !sub.rowsTxt.some(t => t.startsWith('DCB-90202')),
-  `Bảng: sub-task UI/BA gộp vào cha · mồ côi + thiếu thẻ hiện riêng kèm cảnh báo (${sub.nRows} dòng)`);
-log('BI12-subline', sub.rowsTxt.some(t => t.includes('DCB-90202') && t.includes('Thiet Ke') && t.includes('DCB-90203')), 'Dòng cha hiện sub-task UI/BA + người phụ trách');
-log('BI12-untagged', sub.d5.warn.some(w => w.indexOf('[UI/UX]') !== -1), 'Sub-task thiếu thẻ [UI/UX]/[BA] → cảnh báo');
+log('BI12-rows', sub.nRows === 2 && sub.rowsTxt.some(t => t.includes('Sub-task của DCB-99999')) && !sub.rowsTxt.some(t => t.startsWith('DCB-90202')),
+  `Bảng: sub-task gộp vào cha · mồ côi hiện riêng (${sub.nRows} dòng)`);
+log('BI12-subline', sub.rowsTxt.some(t => t.includes('DCB-90202') && t.includes('Thiet Ke') && t.includes('DCB-90203') && t.includes('Sub-task khác 1')), 'Dòng cha hiện sub-task UI/BA + người phụ trách + "Sub-task khác"');
+log('BI12-untagged', sub.d5.subKind === 'Khác' && !sub.d5.warn.some(w => /thẻ/.test(w)), 'Sub-task việc dev (không UI/BA) → "Khác", không báo vi phạm');
 await shot(page, '03_subtask');
 
 /* ── BI11 — file HTML xuất Jira (Jira cơ quan chỉ cho xuất HTML) ── */
@@ -381,8 +380,18 @@ if (REAL_HTML && fs.existsSync(REAL_HTML)) {
         'PO=' + d.po, d.ready ? 'Đạt' : 'Chưa: ' + d.missing.join('/')]; }) };
   }, txt);
   console.log(`\n   [HTML thật] ${realH.n} ticket`);
-  realH.rows.forEach(r => console.log('   ' + r.join(' | ')));
-  log('REAL-HTML', realH.n > 0 && realH.rows.every(r => r[4] && r[5] && r[6]), `HTML thật: ${realH.n} ticket, đủ line + ngày`);
+  if (realH.n <= 30) realH.rows.forEach(r => console.log('   ' + r.join(' | ')));
+  else {
+    // File lớn: chỉ in thống kê (không in nội dung ticket)
+    const cnt = f => realH.rows.reduce((m, r) => { const k = f(r); m[k] = (m[k] || 0) + 1; return m; }, {});
+    console.log('   line:', JSON.stringify(cnt(r => r[4] || '(trống)')));
+    console.log('   PO:', JSON.stringify(cnt(r => r[12])));
+    console.log('   sub-task kind:', JSON.stringify(cnt(r => r[1].toLowerCase().startsWith('sub') ? (r[11].split(' ')[1] || '(không rõ)') : 'cha')));
+    console.log('   ngày trống:', realH.rows.filter(r => !r[5] || !r[6]).length, '· mở:', realH.rows.filter(r => r[10] === 'mở').length);
+  }
+  const withLine = realH.rows.filter(r => r[4]).length;
+  log('REAL-HTML', realH.n > 0 && realH.rows.every(r => r[5] && r[6]) && withLine >= realH.n * 0.98,
+    `HTML thật: ${realH.n} ticket, đủ ngày, có line ${withLine}/${realH.n} (còn lại = cảnh báo "Chưa xác định line")`);
 }
 const REAL = process.env.TK_REAL_FILE;
 if (REAL && fs.existsSync(REAL)) {
@@ -401,6 +410,43 @@ if (REAL && fs.existsSync(REAL)) {
 
 const dts = await page.evaluate(() => [tkParseDate('Thu Oct 29 2026 15:55:00 GMT+0700 (GMT+07:00)'), tkParseDate('28/10/2026 16:56'), tkParseDate('2026-10-29 08:55')]);
 log('BI3-date-sheet', dts[0] === '2026-10-29' && dts[1] === '2026-10-28' && dts[2] === '2026-10-29', `String(Date) / dd/MM/yyyy HH:mm / ISO giờ → ${dts.join(' · ')}`);
+
+/* ── BI13 — Project > Component > Label · hệ thống · đóng theo Resolution · golive quá hạn · sub-task theo từ đầu ── */
+const r13 = await page.evaluate(() => {
+  const mk = o => Object.assign(rowToTicket(new Array(31).fill('')), o);
+  const T = new Date(2026, 9, 29);
+  const list = [
+    mk({ key: 'BLOB-1', type: 'Story', summary: '[GNOL] Ticket BPM', project: 'Bảo Lãnh online (BLOL)', components: 'Giải ngân online', labels: 'GNOL', status: 'Open', resolution: 'Unresolved', reporter: 'Po Hai <X>' }),
+    mk({ key: 'DCB-1', type: 'Story', summary: 'Không tiền tố', project: 'Digital CB', components: 'SCF', labels: 'BLOL', status: 'To Do', resolution: 'Unresolved' }),
+    mk({ key: 'DCB-2', type: 'Story', summary: 'x', project: 'Digital CB', components: 'Notifications BIZ', status: 'To Do' }),
+    mk({ key: 'DCB-3', type: 'Story', summary: 'x', project: 'Digital CB', components: 'Bảo lãnh online, Chứng từ số, Giải ngân online', status: 'To Do' }),
+    mk({ key: 'DCB-4', type: 'Story', summary: 'x', project: 'Digital CB', labels: 'HSTD, Expect_Golive_202604', status: 'To Do' }),
+    mk({ key: 'GNOL-9', type: 'Story', summary: 'x', project: 'Giải Ngân Online (GNOL.EndToEnd)', status: 'Resolved', resolution: 'Fixed', resolvedAt: '2026-10-27' }),
+    mk({ key: 'DCB-5', type: 'Story', summary: 'Cha', project: 'Digital CB', components: 'Bảo lãnh online', status: 'To Do',
+         subKeys: 'DCB-6, DCB-7, DCB-8, DCB-99', goliveDate: '2026-12-15', receivedAt: '2026-06-17' }),
+    mk({ key: 'DCB-6', type: 'Sub-task', summary: 'DCB-5 [BLOL - APP] UI Từ chối giao dịch', status: 'To Do', assignee: 'Thiet Ke <UI>' }),
+    mk({ key: 'DCB-7', type: 'Sub-task', summary: 'DCB-5 BA - Admin bổ sung', status: 'In Progress', assignee: 'Ba Mot <BA>' }),
+    mk({ key: 'DCB-8', type: 'Sub-task', summary: 'DCB-5 Cập nhật TLPT', status: 'Done', resolution: 'Done' }),
+  ];
+  const idx = tkSubIndex(list);
+  const by = Object.fromEntries(list.map(t => [t.key, tkDerive(t, T, idx)]));
+  const pick = k => ({ line: by[k].line, src: by[k].lineSrc, sys: by[k].system, open: by[k].open, warn: by[k].warn, golive: by[k].golive,
+    ui: by[k].ui, tlpt: by[k].tlpt, kind: by[k].subKind, out: by[k].subOutside, recv: by[k].receivedDays, uiSubs: by[k].uiSubs.length, baSubs: by[k].baSubs.length });
+  return Object.fromEntries(list.map(t => [t.key, pick(t.key)]));
+});
+log('BI13-project-first', r13['BLOB-1'].line === 'BLOL' && r13['BLOB-1'].src === 'Project' && r13['BLOB-1'].sys === 'BPM'
+  && r13['BLOB-1'].warn.some(w => w.indexOf('Label line lệch') !== -1), `Project > Component > Label: BLOB-1 → ${r13['BLOB-1'].line} (${r13['BLOB-1'].src}, ${r13['BLOB-1'].sys}) + cảnh báo label lệch`);
+log('BI13-component', r13['DCB-1'].line === 'SCF' && r13['DCB-1'].src === 'Component' && r13['DCB-1'].sys === 'Biz', `Digital CB + component SCF → ${r13['DCB-1'].line} (${r13['DCB-1'].src}, ${r13['DCB-1'].sys})`);
+log('BI13-chung', r13['DCB-2'].line === 'Chung', `Notifications BIZ → ${r13['DCB-2'].line}`);
+log('BI13-multi-comp', r13['DCB-3'].line === 'BLOL', `Nhiều component → line đầu tiên khác "Chung": ${r13['DCB-3'].line}`);
+log('BI13-label-fallback', r13['DCB-4'].line === 'HSTD' && r13['DCB-4'].src === 'Label', `Không project/component → label: ${r13['DCB-4'].line}`);
+log('BI13-golive-overdue', r13['DCB-4'].warn.some(w => w.indexOf('Quá tháng golive') !== -1), 'Expect_Golive_202604 còn mở → "Quá tháng golive dự kiến"');
+log('BI13-resolution', r13['GNOL-9'].open === false && r13['GNOL-9'].line === 'GNOL' && r13['GNOL-9'].sys === 'BPM', 'Status Resolved + Resolution Fixed → đóng · project GNOL.EndToEnd → GNOL/BPM');
+log('BI13-golive-field', r13['DCB-5'].golive === '202612' && r13['DCB-5'].recv === 134, `Trường "Ngày dự kiến golive" → ${r13['DCB-5'].golive} · nhận YC ${r13['DCB-5'].recv} ngày`);
+log('BI13-sub-leading', r13['DCB-6'].kind === 'UI' && r13['DCB-7'].kind === 'BA' && r13['DCB-8'].kind === 'BA',
+  `"[BLOL - APP] UI …" → ${r13['DCB-6'].kind} · "BA - …" → ${r13['DCB-7'].kind} · "Cập nhật TLPT" → ${r13['DCB-8'].kind}`);
+log('BI13-sub-state', r13['DCB-5'].ui === 'Cần' && r13['DCB-5'].tlpt === 'Đang' && r13['DCB-5'].baSubs === 2, `Cha: UI ${r13['DCB-5'].ui} · BA ${r13['DCB-5'].tlpt} (1 Done + 1 In Progress)`);
+log('BI13-sub-outside', r13['DCB-5'].out === 1 && r13['DCB-5'].warn.some(w => w.indexOf('ngoài file') !== -1), 'Cột Sub-Tasks liệt kê DCB-99 không có trong file → "1 sub-task ngoài file"');
 
 log('BIX-no-js-errors', jsErrors.length === 0, jsErrors.length ? jsErrors.join(' | ') : 'Không lỗi JS');
 

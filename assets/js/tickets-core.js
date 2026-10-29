@@ -16,23 +16,46 @@ const TICKET_COLS = [
   'Assignee', 'Reporter', 'Created', 'Updated', 'Labels', 'Epic Link', 'Linked Issues',
   'UI', 'TLPT', 'Loại backlog',
   'Ưu tiên team', 'Quyết định planning', 'Kỳ planning', 'Initiative ID', 'Ghi chú',
-  'Import lúc', 'Import bởi'
+  'Import lúc', 'Import bởi',
+  // v6.72 — nối đuôi (cột Jira, import ghi đè)
+  'Project', 'Component/s', 'Loại yêu cầu NV', 'Sub-Tasks', 'Ngày nhận yêu cầu', 'Ngày dự kiến golive', 'Resolved'
 ];
 const TK_FIELDS = [
   'key', 'type', 'summary', 'desc', 'status', 'resolution', 'priority',
   'assignee', 'reporter', 'created', 'updated', 'labels', 'epic', 'links',
   'ui', 'tlpt', 'loai',
   'uuTien', 'quyetDinh', 'ky', 'initId', 'note',
-  'importedAt', 'importedBy'
+  'importedAt', 'importedBy',
+  'project', 'components', 'reqType', 'subKeys', 'receivedAt', 'goliveDate', 'resolvedAt'
 ];
+// Cột lấy từ Jira (import ghi đè) — khớp _TK_JIRA_COLS ở TicketService.gs
+const TK_JIRA_FIELDS = TK_FIELDS.slice(0, 14).concat(TK_FIELDS.slice(24));
+const TK_DATE_FIELDS = ['created', 'updated', 'receivedAt', 'goliveDate', 'resolvedAt'];
 // Chỉ số cột ghi được trên SHTD (khớp TicketService.gs)
 const TK_COL = Object.fromEntries(TK_FIELDS.map((f, i) => [f, i]));
 const TK_LEAD_FIELDS = ['uuTien', 'quyetDinh', 'ky'];
 
 const TK_JIRA_BROWSE = 'https://ebit.tpb.vn/jira/browse/';
 const TK_TEAM = 'Số';
-const TK_LINES = ['GNOL', 'BLOL', 'HSTD', 'ThauChi', 'SCF'];
-const TK_LINE_LABEL = { GNOL: 'GNOL', BLOL: 'BLOL', HSTD: 'Ký số', ThauChi: 'Thấu chi', SCF: 'SCF' };
+const TK_LINES = ['GNOL', 'BLOL', 'HSTD', 'ThauChi', 'SCF', 'Chung'];
+const TK_LINE_LABEL = { GNOL: 'GNOL', BLOL: 'BLOL', HSTD: 'Ký số', ThauChi: 'Thấu chi', SCF: 'SCF', Chung: 'Chung' };
+// Thứ tự xác định line (anh chốt 29/10): Project > Component > Label > tiền tố summary.
+// Project dự án lớn chưa đóng + ticket BPM theo dõi theo project; "Digital CB" (Biz chung) → xét Component.
+const TK_PROJECT_LINE = [
+  [/blol|bảo lãnh online/i, 'BLOL'],
+  [/gnol|giải ngân online/i, 'GNOL'],
+];
+const TK_COMPONENT_LINE = [
+  [/bảo lãnh online/i, 'BLOL'],
+  [/giải ngân online/i, 'GNOL'],
+  [/^scf$/i, 'SCF'],
+  [/đăng ký ckđt|notifications|chứng từ số|tra cứu tín dụng|bank admin|^be$|^fe$/i, 'Chung'],
+];
+// Hệ thống: project Digital CB / mã DCB- = Biz (TPBank Biz) · còn lại (BLOL, GNOL.EndToEnd, BPM DevOps…) = BPM
+function tkSystem(t) {
+  if (/digital\s*cb/i.test(t.project || '') || /^DCB-/i.test(t.key || '')) return 'Biz';
+  return t.project || /^[A-Z]+-\d+$/.test(t.key || '') ? 'BPM' : '';
+}
 const TK_SUBS = ['CKTC', 'IDNES', 'TT134', 'GNOL_TuDong'];
 const TK_UI_VALUES = ['Không cần', 'Cần', 'Đang', 'Xong'];
 const TK_TLPT_VALUES = ['Không cần', 'Cần', 'Đang', 'Xong'];
@@ -48,8 +71,7 @@ function rowToTicket(r) {
   const o = {};
   TK_FIELDS.forEach((f, i) => { o[f] = String(r[i] == null ? '' : r[i]).trim(); });
   o.key = o.key.toUpperCase();
-  o.created = tkParseDate(o.created);
-  o.updated = tkParseDate(o.updated);
+  TK_DATE_FIELDS.forEach(f => { o[f] = tkParseDate(o[f]); });
   return o;
 }
 
@@ -111,8 +133,16 @@ function _tkLineFromSummary(s) {
 
 /* ══════════════ suy ra (derive) ══════════════ */
 
+// Đóng/mở theo Resolution (BPM chỉ có Open/Resolved) — Unresolved/trống = mở; rồi tới status.
 function tkIsOpen(t) {
+  const res = String(t.resolution || '').trim().toLowerCase();
+  if (res && res !== 'unresolved') return false;
   return TK_DONE_STATUS.indexOf(String(t.status || '').trim().toLowerCase()) === -1;
+}
+
+function _tkMapLine(value, table) {
+  for (const [re, line] of table) if (re.test(value)) return line;
+  return '';
 }
 
 function tkJiraPrioLevel(p) {
@@ -134,7 +164,8 @@ function _tkDays(fromIso, today) {
 /* ── Sub-task UI / BA (rule team, anh chấn chỉnh 29/10) ──
    PO log ticket cha (Story/Improvement/Bug); việc cần UI hoặc TLPT → PO log Sub-task, assign người phụ trách.
    Summary sub-task = "<KEY cha> [UI/UX]<tên ticket cha>" · TLPT: "<KEY cha> [BA]<tên ticket cha>".
-   File HTML Jira không có cột Parent → ghép theo KEY ở đầu summary. */
+   Thực tế (file 29/10, 43 sub-task): "[BLOL - APP] UI …" · "BA - …" · "Cập nhật TLPT" → nhận cả thẻ lẫn TỪ ĐẦU sau thẻ.
+   Ghép cha: cột Sub-Tasks của ticket cha (nếu có) → KEY ở đầu summary sub-task. */
 const _TK_KEY_RE = /^\s*([A-Z][A-Z0-9]+-\d+)\b/;
 const _TK_TODO_STATUS = ['to do', 'open', 'backlog', 'new', 'mở'];
 
@@ -150,21 +181,34 @@ function tkParentKey(t) {
   return /^[A-Z][A-Z0-9]+-\d+$/.test(e) ? e : '';
 }
 
-// 'UI' | 'BA' | '' theo thẻ trong summary sub-task
+// 'UI' | 'BA' | 'Khác' (sub-task việc dev…) | '' (không phải sub-task)
 function tkSubKind(t) {
-  const s = String(t.summary || '');
+  if (!tkIsSubtask(t)) return '';
+  const s = String(t.summary || '').replace(_TK_KEY_RE, '');
   if (/\[\s*(UI\s*\/\s*UX|UI|UX)\s*\]/i.test(s)) return 'UI';
   if (/\[\s*(BA|TLPT|SRS)\s*\]/i.test(s)) return 'BA';
-  return '';
+  const head = s.replace(/^(\s*\[[^\]]*\])+/, '').trim();          // bỏ các thẻ đầu "[BLOL - APP]"
+  if (/^(thiết kế\s+)?(UI\s*\/\s*UX|UI|UX)(\b|\s|-)/i.test(head)) return 'UI';
+  if (/^(BA|TLPT|SRS)(\b|\s|-)/i.test(head) || /\bTLPT\b/i.test(head)) return 'BA';
+  return 'Khác';
 }
 
-// Map KEY cha → [sub-task] — truyền vào tkDerive để suy UI/TLPT
+function _tkKeyList(s) {
+  return (String(s || '').toUpperCase().match(/[A-Z][A-Z0-9]+-\d+/g) || []);
+}
+
+// Map KEY cha → [sub-task] — truyền vào tkDerive. Kèm _keys (mọi KEY trong dữ liệu) để đếm sub-task ngoài file.
 function tkSubIndex(list) {
   const idx = {};
+  const byCol = {};                                   // KEY con → KEY cha theo cột Sub-Tasks
+  (list || []).forEach(t => _tkKeyList(t.subKeys).forEach(k => { byCol[k] = t.key; }));
   (list || []).forEach(t => {
-    const p = tkParentKey(t);
+    if (!tkIsSubtask(t)) return;
+    const p = byCol[t.key] || tkParentKey(t);
     if (p) (idx[p] = idx[p] || []).push(t);
   });
+  Object.defineProperty(idx, '_keys', { value: new Set((list || []).map(t => t.key)), enumerable: false });
+  Object.defineProperty(idx, '_parentOf', { value: byCol, enumerable: false });
   return idx;
 }
 
@@ -190,13 +234,19 @@ function tkDerive(t, today, subIdx) {
   const labels = tkLabels(t);
   const lineLabels = TK_LINES.filter(l => _tkHas(labels, l));
   const isSub = tkIsSubtask(t);
-  const parentKey = tkParentKey(t);
-  const subKind = isSub ? tkSubKind(t) : '';
+  const parentKey = isSub ? ((subIdx && subIdx._parentOf && subIdx._parentOf[t.key]) || tkParentKey(t)) : '';
+  const subKind = tkSubKind(t);
   const fromSum = _tkLineFromSummary(String(t.summary || '').replace(_TK_KEY_RE, '').replace(/^\s*\[\s*(UI\s*\/\s*UX|UI|UX|BA|TLPT|SRS)\s*\]/i, ''));
-  let line = '';
-  if (lineLabels.length === 1) line = lineLabels[0];
-  else if (lineLabels.length > 1) line = lineLabels.indexOf(fromSum) !== -1 ? fromSum : lineLabels[0];
-  else line = fromSum;
+  // Line: Project > Component > Label > tiền tố summary (anh chốt 29/10)
+  const projLine = _tkMapLine(t.project || '', TK_PROJECT_LINE);
+  const compLines = [...new Set(String(t.components || '').split(',').map(c => _tkMapLine(c.trim(), TK_COMPONENT_LINE)).filter(Boolean))];
+  const compLine = compLines.filter(l => l !== 'Chung')[0] || compLines[0] || '';
+  let labelLine = '';
+  if (lineLabels.length === 1) labelLine = lineLabels[0];
+  else if (lineLabels.length > 1) labelLine = lineLabels.indexOf(fromSum) !== -1 ? fromSum : lineLabels[0];
+  const line = projLine || compLine || labelLine || fromSum;
+  const lineSrc = projLine ? 'Project' : compLine ? 'Component' : labelLine ? 'Label' : fromSum ? 'Summary' : '';
+  const system = tkSystem(t);
 
   const subs = TK_SUBS.filter(s => _tkHas(labels, s));
   if (!subs.length && /^\s*\[\s*gnol\s*(tự động|tu dong|tudong)/i.test(t.summary || '')) subs.push('GNOL_TuDong');
@@ -213,9 +263,15 @@ function tkDerive(t, today, subIdx) {
   const baBy = [...new Set(baSubs.map(s => tkPersonName(s.assignee)).filter(Boolean))];
   // Ticket "nhích" khi sub-task của nó nhích
   const lastUpd = [t.updated].concat(kids.map(s => s.updated)).filter(Boolean).sort().pop() || '';
+  const otherSubs = kids.filter(s => tkSubKind(s) === 'Khác');
+  // Sub-task ticket cha liệt kê (cột Sub-Tasks) nhưng không có trong file (thường do filter chỉ lấy ticket mở)
+  const subOutside = (!isSub && subIdx && subIdx._keys) ? _tkKeyList(t.subKeys).filter(k => !subIdx._keys.has(k)).length : 0;
   const dcbTask = _tkHas(labels, 'DCB_Task');
+  // Tháng golive: trường Jira "Ngày dự kiến golive" (ưu tiên) → label Expect_Golive_YYYYMM
   const golives = labels.map(l => (l.match(/^Expect_Golive_(\d{6})$/i) || [])[1]).filter(Boolean).sort();
-  const golive = golives.length ? golives[golives.length - 1] : '';
+  const golive = t.goliveDate ? t.goliveDate.slice(0, 7).replace('-', '') : (golives.length ? golives[golives.length - 1] : '');
+  const curYm = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const receivedDays = _tkDays(t.receivedAt, today);
   // GOLIVE_YYYYMMDD = ngày đã golive thật (label Jira đang dùng)
   const goned = labels.map(l => (l.match(/^GOLIVE_(\d{8})$/i) || [])[1]).filter(Boolean).sort();
   const golivedOn = goned.length ? `${goned[goned.length - 1].slice(0, 4)}-${goned[goned.length - 1].slice(4, 6)}-${goned[goned.length - 1].slice(6)}` : '';
@@ -233,19 +289,23 @@ function tkDerive(t, today, subIdx) {
   const prioJira = tkJiraPrioLevel(t.priority);
   const prioTeam = parseInt(t.uuTien, 10) || 0;
 
+  const open = tkIsOpen(t);
+  const goliveOverdue = !!(open && golive && golive < curYm);
   const warn = [];
-  if (!line) warn.push('Chưa có label line');
-  if (lineLabels.length > 1) warn.push('Gắn nhiều line: ' + lineLabels.join(', '));
+  if (!line) warn.push('Chưa xác định line');
+  if (lineLabels.length > 1 && !projLine && !compLine) warn.push('Gắn nhiều line: ' + lineLabels.join(', '));
+  if (labelLine && line && labelLine !== line && lineSrc !== 'Label') warn.push(`Label line lệch (${labelLine} ≠ ${lineSrc} ${line})`);
+  if (goliveOverdue) warn.push(`Quá tháng golive dự kiến (T${parseInt(golive.slice(4), 10)}/${golive.slice(0, 4)})`);
+  if (subOutside) warn.push(`${subOutside} sub-task ngoài file`);
   if (prioTeam && prioJira && prioTeam !== prioJira) warn.push(`Lệch ưu tiên (Jira ${t.priority} ↔ team ${prioTeam})`);
   // Vi phạm rule: cần UI / TLPT nhưng chưa log sub-task
   if (!isSub && !uiSubs.length && (uiMarked === 'Cần' || uiMarked === 'Đang')) warn.push('Thiếu Sub-task UI');
   if (!isSub && !baSubs.length && (tlMarked === 'Chưa' || tlMarked === 'Đang' || tlMarked === 'Cần')) warn.push('Thiếu Sub-task BA');
-  if (isSub && !subKind) warn.push('Sub-task chưa có thẻ [UI/UX] hoặc [BA]');
 
   return {
-    labels, line, subs, ui, tlpt, uiBy, baBy, uiSubs, baSubs, isSub, parentKey, subKind,
-    dcbTask, golive, golivedOn, deps, dxct,
-    open: tkIsOpen(t), ready: missing.length === 0, missing,
+    labels, line, lineSrc, system, subs, ui, tlpt, uiBy, baBy, uiSubs, baSubs, otherSubs, subOutside,
+    isSub, parentKey, subKind, dcbTask, golive, goliveOverdue, golivedOn, deps, dxct, receivedDays,
+    open, ready: missing.length === 0, missing,
     staleDays, staleLevel, lastUpd, prioJira, prioTeam,
     prioMismatch: !!(prioTeam && prioJira && prioTeam !== prioJira),
     // PO = Reporter trên Jira (đúng tên người log, không ép theo line — anh chốt 29/10)
@@ -277,6 +337,13 @@ const _TK_HDR = [
   ['labels', ['labels']],
   ['epic', ['epiclink', 'customfieldepiclink', 'parent', 'parentsummary']],
   ['links', ['linkedissues', 'inwardissuelink', 'outwardissuelink']],
+  ['project', ['project', 'dựán']],
+  ['components', ['components', 'component']],
+  ['reqType', ['loạiyêucầunv']],
+  ['subKeys', ['subtasks']],
+  ['receivedAt', ['ngàynhậnyêucầu']],
+  ['goliveDate', ['ngàydựkiếngolive']],
+  ['resolvedAt', ['resolved']],
   // bảng tay của PO (chuyển tiếp)
   ['_uiCan', ['cóyêucầuuiuxkhông', 'cóyêucầuui']],
   ['_uiXong', ['đãxonguiuxchưa', 'đãxongui']],
@@ -340,17 +407,17 @@ function tkParseWorkbook(wb) {
         if (!f) return;
         const v = row[c];
         if (v === '' || v == null) return;
-        if (f === 'labels' || f === 'links') rec[f] = rec[f] ? rec[f] + ', ' + String(v).trim() : String(v).trim();
+        if (f === 'labels' || f === 'links' || f === 'components' || f === 'subKeys') rec[f] = rec[f] ? rec[f] + ', ' + String(v).trim() : String(v).trim();
         else if (rec[f] == null) rec[f] = v;
       });
       const key = String(rec.key || '').trim().toUpperCase();
       if (!/^[A-Z][A-Z0-9]+-\d+$/.test(key)) { if (Object.keys(rec).length) skipped++; continue; }
       const cur = byKey.get(key) || { key };
-      ['type', 'summary', 'desc', 'status', 'resolution', 'priority', 'assignee', 'reporter', 'epic', 'links']
+      ['type', 'summary', 'desc', 'status', 'resolution', 'priority', 'assignee', 'reporter', 'epic', 'links',
+        'project', 'components', 'reqType', 'subKeys']
         .forEach(f => { if (rec[f] != null && cur[f] == null) cur[f] = String(rec[f]).trim(); });
       if (rec.labels != null) cur.labels = cur.labels ? cur.labels + ', ' + rec.labels : rec.labels;
-      if (rec.created != null && !cur.created) cur.created = tkParseDate(rec.created);
-      if (rec.updated != null && !cur.updated) cur.updated = tkParseDate(rec.updated);
+      TK_DATE_FIELDS.forEach(f => { if (rec[f] != null && !cur[f]) cur[f] = tkParseDate(rec[f]); });
       const ui = rec.ui != null ? String(rec.ui).trim() : _tkUiFromManual(rec._uiCan, rec._uiXong);
       if (ui && !cur.ui) cur.ui = ui;
       const tl = rec.tlpt != null ? _tkTlptFromManual(rec.tlpt) : '';
@@ -404,16 +471,17 @@ function tkLooksHtml(name, text) {
 /* ══════════════ bảng planning xuất Excel (gửi DCB) ══════════════ */
 
 function tkExportRows(list, today, subIdx) {
-  const head = ['Line', 'Nhãn phụ', 'Key', 'Loại issue', 'Summary', 'PO (Reporter)', 'Dev (Assignee)', 'Status',
-    'Priority Jira', 'Ưu tiên team', 'UI', 'Người làm UI', 'TLPT (BA)', 'Người làm BA', 'DCB_Task', 'Tháng golive',
-    'Kỳ planning', 'Quyết định', 'Sẵn sàng chuyển IT', 'Thiếu', 'Cảnh báo', 'Phụ thuộc', 'Updated',
-    'Số ngày không nhích', 'Ghi chú'];
+  const head = ['Hệ thống', 'Line', 'Project', 'Component', 'Nhãn phụ', 'Key', 'Loại issue', 'Summary', 'PO (Reporter)',
+    'Dev (Assignee)', 'Status', 'Priority Jira', 'Ưu tiên team', 'Nguồn yêu cầu (Loại YC NV)', 'Ngày nhận YC',
+    'UI', 'Người làm UI', 'TLPT (BA)', 'Người làm BA', 'DCB_Task', 'Tháng golive', 'Kỳ planning', 'Quyết định',
+    'Sẵn sàng chuyển IT', 'Thiếu', 'Cảnh báo', 'Phụ thuộc', 'Updated', 'Số ngày không nhích', 'Ghi chú'];
   const rows = list.map(t => {
     const d = tkDerive(t, today, subIdx);
-    return [TK_LINE_LABEL[d.line] || '', d.subs.join(', '), t.key, t.type, t.summary, d.po, tkPersonName(t.assignee), t.status,
-      t.priority, t.uuTien, d.ui, d.uiBy.join(', '), d.tlpt, d.baBy.join(', '), d.dcbTask ? 'Có' : 'Chưa', d.golive,
-      t.ky, t.quyetDinh, d.ready ? 'Đạt' : 'Chưa', d.missing.join('; '), d.warn.join('; '),
-      d.deps.join(', '), t.updated, d.staleDays == null ? '' : d.staleDays, t.note];
+    return [d.system, TK_LINE_LABEL[d.line] || '', t.project, t.components, d.subs.join(', '), t.key, t.type, t.summary, d.po,
+      tkPersonName(t.assignee), t.status, t.priority, t.uuTien, t.reqType, t.receivedAt,
+      d.ui, d.uiBy.join(', '), d.tlpt, d.baBy.join(', '), d.dcbTask ? 'Có' : 'Chưa', d.golive, t.ky, t.quyetDinh,
+      d.ready ? 'Đạt' : 'Chưa', d.missing.join('; '), d.warn.join('; '), d.deps.join(', '), t.updated,
+      d.staleDays == null ? '' : d.staleDays, t.note];
   });
   return [head].concat(rows);
 }

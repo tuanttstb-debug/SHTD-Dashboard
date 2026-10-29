@@ -1,4 +1,4 @@
-// ── SHTD Dashboard – Ticket_Master sheet operations (24 cols A→X) ──
+// ── SHTD Dashboard – Ticket_Master sheet operations (31 cols A→AE) ──
 // Backlog IT: ticket Jira DCB của team, nạp bằng file xuất Jira (hub AIOS D22, 2026-10-29).
 // Jira là nơi nhập duy nhất → import upsert theo Key; SHTD chỉ giữ cột quản trị của team.
 //
@@ -10,6 +10,9 @@
 //   R..V (17..21) cột team — import KHÔNG đụng, sửa trên SHTD:
 //     Ưu tiên team, Quyết định planning, Kỳ planning, Initiative ID, Ghi chú
 //   W..X (22..23) Import lúc, Import bởi
+//   Y..AE (24..30) cột Jira nối đuôi v6.72 — import GHI ĐÈ:
+//     Project, Component/s, Loại yêu cầu NV, Sub-Tasks, Ngày nhận yêu cầu, Ngày dự kiến golive, Resolved
+//   Sheet cũ (24 cột) tự được thêm cột + header ở lần gọi đầu (_tkSheet).
 //
 // KHÔNG gọi setNumberFormat: sheet có thể ở dạng Bảng (cột đã nhập kiểu) → Sheets ném
 // "không thể đặt định dạng số…" lúc flush, try/catch không bắt được (bài học S67.2, LIVE 29/10).
@@ -22,10 +25,12 @@ var TICKET_HEADER = [
   'Assignee', 'Reporter', 'Created', 'Updated', 'Labels', 'Epic Link', 'Linked Issues',
   'UI', 'TLPT', 'Loại backlog',
   'Ưu tiên team', 'Quyết định planning', 'Kỳ planning', 'Initiative ID', 'Ghi chú',
-  'Import lúc', 'Import bởi'
+  'Import lúc', 'Import bởi',
+  'Project', 'Component/s', 'Loại yêu cầu NV', 'Sub-Tasks', 'Ngày nhận yêu cầu', 'Ngày dự kiến golive', 'Resolved'
 ];
 
-var _TK_JIRA_N   = 14;              // A..N
+// Cột Jira (import ghi đè): A..N + Y..AE
+var _TK_JIRA_COLS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 24, 25, 26, 27, 28, 29, 30];
 var _TK_TRANS    = [14, 15, 16];    // O..Q
 var _TK_TEAM     = [17, 18, 19, 20, 21];
 var _TK_IMP_AT   = 22;
@@ -38,6 +43,15 @@ function _tkSheet(ss) {
     sheet = ss.insertSheet(TICKET_SHEET_NAME);
     sheet.getRange(1, 1, 1, TICKET_HEADER.length).setValues([TICKET_HEADER]);
     sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+  }
+  // Nâng schema sheet cũ: đủ số cột + header nối đuôi (chỉ ghi khi thiếu)
+  if (sheet.getMaxColumns() < TICKET_HEADER.length) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), TICKET_HEADER.length - sheet.getMaxColumns());
+  }
+  var hdr = sheet.getRange(1, 1, 1, TICKET_HEADER.length).getDisplayValues()[0];
+  if (String(hdr[TICKET_HEADER.length - 1]).trim() !== TICKET_HEADER[TICKET_HEADER.length - 1]) {
+    sheet.getRange(1, 1, 1, TICKET_HEADER.length).setValues([TICKET_HEADER]);
     SpreadsheetApp.flush();
   }
   return sheet;
@@ -92,7 +106,8 @@ function ticketImport(rows, username) {
       inc[_TK_IMP_BY] = username || '';
       if (idx.hasOwnProperty(key)) {
         var row = cur[idx[key]].map(function (v) { return v == null ? '' : String(v); });
-        for (var c = 0; c < _TK_JIRA_N; c++) row[c] = inc[c];
+        while (row.length < TICKET_HEADER.length) row.push('');
+        _TK_JIRA_COLS.forEach(function (c) { row[c] = inc[c]; });
         _TK_TRANS.forEach(function (c) { if (inc[c] !== '') row[c] = inc[c]; });
         row[_TK_IMP_AT] = now;
         row[_TK_IMP_BY] = inc[_TK_IMP_BY];

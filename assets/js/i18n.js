@@ -40,7 +40,7 @@ const TRANSLATIONS = {
     'page.dashboard':          'Executive Dashboard',
     'page.my-work':            'Công việc của tôi',
     'page.dev-plan':           'Plan phát triển bản thân',
-    'page.backlog-it':         'Backlog IT – Ticket Jira DCB',
+    'page.backlog-it':         'Backlog IT – Ticket Jira Biz + BPM',
     'page.h2-dashboard':       'Quản trị H2 · Dashboard điều hành',
     'page.h2-tracker':         'Quản trị H2 · Theo dõi KPI',
     'page.h2-review':          'Quản trị H2 · Tự đánh giá',

@@ -95,3 +95,6 @@
 .tk-subline { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.35; }
 .tk-subline b { color: var(--text); }
 .tk-subline .tk-key { font-size: 11px; }
+.tk-sys { font-size: 10px; font-weight: 700; padding: 0 6px; border-radius: 99px; vertical-align: 1px; }
+.tk-sys.is-biz { background: var(--info-bg); color: var(--info); }
+.tk-sys.is-bpm { background: var(--purple-bg); color: var(--purple); }

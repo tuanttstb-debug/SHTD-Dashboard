@@ -928,7 +928,7 @@ function _mergeTicketsLocal(list) {
   list.forEach(inc => {
     const cur = byKey.get(inc.key);
     if (cur) {
-      TK_FIELDS.slice(0, 14).forEach(f => { cur[f] = inc[f] || ''; });
+      TK_JIRA_FIELDS.forEach(f => { cur[f] = inc[f] || ''; });
       ['ui', 'tlpt', 'loai'].forEach(f => { if (inc[f]) cur[f] = inc[f]; });
       updated++;
     } else {

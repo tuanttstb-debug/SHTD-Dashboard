@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-29 (S94.5–S94.6 — bỏ OKR · trường Jira đầy đủ · line Project > Component > Label · Biz/BPM)
+**Model**: Claude Opus 5.5 · **Version**: v6.71 → **v6.72** · sau khi đọc file xuất Jira đầy đủ của anh (320 ticket DCB + BPM, 199 cột — chỉ thống kê, không chép nội dung)
+
+- **Task completed:** (S94.5) bỏ theo dõi OKR (thẻ/cảnh báo/chip/cột xuất). (S94.6) `Ticket_Master` nối đuôi 7 cột Jira (24..30): Project · Component/s · Loại yêu cầu NV · Sub-Tasks · Ngày nhận yêu cầu · Ngày dự kiến golive · Resolved — GAS tự thêm cột + header cho sheet cũ, import ghi đè `_TK_JIRA_COLS` · **line = Project > Component > Label > tiền tố summary** (anh chốt): project BLOL/GNOL.EndToEnd → BLOL/GNOL; Digital CB → Component (Bảo lãnh online → BLOL · Giải ngân online → GNOL · SCF → SCF · Notifications/Chứng từ số/Tra cứu tín dụng/Bank Admin/BE/FE/Đăng ký CKĐT → "Chung") + cảnh báo label line lệch · **Hệ thống Biz/BPM** (lọc + badge) · đóng/mở theo **Resolution** (BPM chỉ Open/Resolved) · tháng golive: trường "Ngày dự kiến golive" > label · cảnh báo **Quá tháng golive** · sub-task: ghép theo cột Sub-Tasks của cha > KEY đầu summary; loại UI/BA theo thẻ HOẶC từ đầu sau thẻ (`[BLOL - APP] UI …`, `BA - …`, `Cập nhật TLPT`), việc dev → "Sub-task khác" (không báo vi phạm) · "N sub-task ngoài file" · modal: project/component/nguồn YC/ngày nhận YC (tuổi)/golive/resolved · xuất planning 30 cột.
+- **Kết quả trên file thật:** line 316/320 (4 ticket label `Ngonngu` không component → cảnh báo) · sub-task UI 33 · BA 4 · khác 6 (trước: 7/43 nhận được) · PO = Reporter 320/320.
+- **Files changed:** `backend/TicketService.gs` · `assets/js/{tickets-core,api,config,i18n}.js` · `assets/js/views/backlog-it.js` · `assets/css/backlog-it.css` · `index.html` (`?v=20261029h`) · `test/{verify_backlog_it,run_tests}.mjs`.
+- **Blocker:** không — chờ [TT] redeploy GAS 1 lần (`TicketService.gs` gồm cả S94.1/S94.3).
+- **Next step:** [TT] redeploy → [CC] nạp file `Jira 2026-10-29T10_28_41+0700.html` trên LIVE → kiểm sheet tự nâng 31 cột, line/hệ thống/sub-task đúng, cột team giữ nguyên.
+- **Regression risk:** Thấp — chỉ phân hệ Backlog IT; schema nối đuôi (chỉ số cột cũ giữ nguyên). `verify_backlog_it` 80/80 + file thật 320 ticket · startup OK.
+
+---
+
 # SESSION HANDOVER — 2026-10-29 (S94.1–S94.4 — LIVE fix + HTML Jira + Sub-task UI/BA + PO = Reporter)
 **Model**: Claude Opus 5.5 · **Version**: v6.69 → **v6.71** · cùng phiên hub, sau test LIVE với anh
 

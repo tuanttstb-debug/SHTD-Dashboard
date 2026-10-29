@@ -11,7 +11,7 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const SUITES = [
-  'verify_backlog_it.mjs',          // 70 tests  S94 Backlog IT — ticket Jira DCB: parse xlsx+HTML/sub-task UI·BA/PO=Reporter/import/filter/modal/RBAC (v6.71)
+  'verify_backlog_it.mjs',          // 80 tests  S94 Backlog IT — Jira Biz+BPM: parse xlsx+HTML/line Project>Component>Label/sub-task UI·BA/import/filter/modal/RBAC (v6.72)
   'verify_startup_nonblocking.mjs', // 6 tests  GAS tuning P1 — cache-first, lazy H2, concurrency pool ≤2
   'verify_task_rag.mjs',            // 5 tests  RAG column persist (v6.48) — parse/serialize/My Work quick RAG
   'verify_h2_core.mjs',         // 14 tests  H2 (Track B) — client core: RAG/achievement/score/capacity/validate + load smoke
