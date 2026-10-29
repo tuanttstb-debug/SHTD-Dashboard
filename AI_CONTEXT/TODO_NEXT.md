@@ -1,5 +1,10 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-10-13 (S93 — AI Assistant tuning)
+**Prepared**: 2026-10-29 (S94.7 — Backlog IT lọc + xóa hàng loạt, v6.73)
+
+## 🆕 S94.7 — Backlog IT: lọc Dự án · Trạng thái · Nhân sự + xóa hàng loạt theo quyền (v6.73) — CODE XONG + TEST PASS
+- [ ] [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) → hard-refresh `?v=20261029i` → thử xóa hàng loạt (User: chỉ ticket mình là PO · Admin: tất cả).
+- [ ] [CC] nếu PO Jira không khớp họ tên User_Master (Display_Name khác tên Jira) → bổ sung cột ánh xạ tên Jira.
+
 
 ## 🆕 S94 — Backlog IT (ticket Jira DCB, v6.69) — CODE XONG + TEST PASS LOCAL
 - [x] Ticket_Master + import file Jira + derive label + lọc chuẩn + modal chốt + xuất planning + badge · `verify_backlog_it` 50/50.

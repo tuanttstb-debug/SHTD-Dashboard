@@ -224,6 +224,22 @@ function tkPersonName(s) {
   return String(s || '').replace(/<[^>]*>/g, '').trim();
 }
 
+// Khóa so tên Jira ↔ User_Master: bỏ dấu + <đơn vị> + [X], tách từ, sắp xếp
+// "Tuan Tran The <CG-SPTDDN.CB>" ≡ "Trần Thế Tuân" → "the tran tuan". Cùng thuật toán _tkNameKey (TicketService.gs).
+function tkNameKey(s) {
+  return String(s || '').replace(/<[^>]*>/g, ' ').replace(/\[[^\]]*\]/g, ' ')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd')
+    .toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).sort().join(' ');
+}
+
+// Reporter Jira → user SHTD ({username, name}) theo họ tên; không khớp → null.
+function tkUserOf(person, users) {
+  const k = tkNameKey(person);
+  if (!k) return null;
+  const u = (users || []).find(x => tkNameKey(x.Display_Name) === k);
+  return u ? { username: String(u.Username), name: String(u.Display_Name || '') } : null;
+}
+
 /**
  * Suy ra các trường quản trị. UI/TLPT: sub-task [UI/UX]/[BA] (ưu tiên) → label cũ → cột UI/TLPT trên SHTD/bảng tay.
  * subIdx: kết quả tkSubIndex(toàn bộ ticket) — không truyền thì bỏ qua sub-task.

@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-29 (S94.7 — Backlog IT: lọc Dự án · Trạng thái · Nhân sự theo họ tên SHTD + chọn/xóa hàng loạt theo quyền)
+**Model**: Claude Opus 5.5 · **Version**: v6.72 → **v6.73** · anh yêu cầu sau khi redeploy GAS v6.72
+
+- **Task completed:** bộ lọc **Dự án** (Project Jira) + **Trạng thái** (Status Jira; chọn 1 trạng thái → tự bỏ lọc "Đang mở") lấy giá trị từ dữ liệu · **Nhân sự phụ trách = PO (Reporter)** khớp User_Master theo họ tên (`tkNameKey`: bỏ dấu + <đơn vị> + [X], sắp từ — "Tuan Tran The" ≡ "Trần Thế Tuân") → nhãn chuẩn `TuanTT4-Trần Thế Tuân`; chưa khớp giữ tên Jira · **chọn hàng loạt** (ô đầu dòng + ô tổng, chỉ ticket được xóa + đang hiện; đổi lọc tự bỏ chọn dòng khuất) + **xóa hàng loạt** (kèm sub-task gộp dưới cha). Quyền: **Admin xóa tất cả · người khác chỉ ticket mình là PO** + sub-task của ticket đó — FE khóa ô + GAS `ticketDeleteBulk` kiểm lại (ghi khối 1 lần, không deleteRow từng dòng) · route `ticket-delete-bulk` + audit.
+- **Files changed:** `backend/{TicketService.gs, Code.gs}` · `assets/js/{tickets-core,api,config}.js` · `assets/js/views/backlog-it.js` · `assets/css/backlog-it.css` · `index.html` (`?v=20261029i`) · `test/{verify_backlog_it,run_tests}.mjs`.
+- **Decision made:** chủ ticket = PO (Reporter Jira, anh chốt 29/10) khớp họ tên User_Master; xóa trên SHTD không đụng Jira — nạp lại file có ticket đó thì quay lại.
+- **Blocker:** chờ [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) — chưa redeploy thì lọc chạy, xóa báo lỗi (không mất dữ liệu).
+- **Next step:** [TT] redeploy → thử xóa 1–2 ticket thử trên LIVE · [CC] nghiệm thu nạp file 320 ticket (S94.6) nếu chưa làm.
+- **Regression risk:** Thấp — chỉ phân hệ Backlog IT. `verify_backlog_it` 99/99 (+19 BI14: lọc, nhãn, quyền FE, payload, GAS chặn quyền trên sheet giả lập) · full suite 36/38 (2 AUTH FAILED có sẵn trước S94).
+
+---
+
 # SESSION HANDOVER — 2026-10-29 (S94.5–S94.6 — bỏ OKR · trường Jira đầy đủ · line Project > Component > Label · Biz/BPM)
 **Model**: Claude Opus 5.5 · **Version**: v6.71 → **v6.72** · sau khi đọc file xuất Jira đầy đủ của anh (320 ticket DCB + BPM, 199 cột — chỉ thống kê, không chép nội dung)
 

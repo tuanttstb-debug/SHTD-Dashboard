@@ -974,6 +974,30 @@ async function _gasTicketUpdate(key, patch) {
   }
 }
 
+// Xóa hàng loạt. Server chặn quyền: Admin xóa mọi ticket · người khác chỉ ticket mình là PO (Reporter)
+// + sub-task của ticket đó. → { deleted, denied: [key…], offline }
+async function _gasTicketDeleteBulk(keys) {
+  const want = new Set(keys);
+  if (!GS_WEBAPP_URL || !getAuthSession()) {
+    dbTickets = dbTickets.filter(t => !want.has(t.key));
+    persistTickets();
+    return { deleted: want.size, denied: [], offline: true };
+  }
+  try {
+    const json = await gasWrite({ action: 'ticket-delete-bulk', keys });
+    if (json.status !== 'ok') throw new Error(json.error || 'ticket-delete-bulk lỗi');
+    const r = json.result || {};
+    const denied = new Set(r.denied || []);
+    dbTickets = dbTickets.filter(t => !want.has(t.key) || denied.has(t.key));
+    persistTickets();
+    await readTickets();
+    return { deleted: r.deleted != null ? r.deleted : want.size - denied.size, denied: [...denied], offline: false };
+  } catch (e) {
+    toast('⚠️ Không xóa được: ' + e.message, 'error', 6000);
+    return { deleted: 0, denied: keys, offline: false, error: true };
+  }
+}
+
 /* ══════════════════════════════════════════
    NOTIFICATIONS API  (chuông nhắc việc)
    Nguồn: GAS notif-read (server sinh định kỳ + real-time).

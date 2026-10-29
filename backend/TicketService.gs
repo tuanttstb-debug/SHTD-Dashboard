@@ -160,6 +160,77 @@ function ticketUpdate(key, patch) {
   }
 }
 
+// Khóa so tên Jira ↔ User_Master (cùng thuật toán tkNameKey ở tickets-core.js):
+// "Tuan Tran The <CG-SPTDDN.CB>" ≡ "Trần Thế Tuân" → "the tran tuan"
+function _tkNameKey(s) {
+  return String(s || '').replace(/<[^>]*>/g, ' ').replace(/\[[^\]]*\]/g, ' ')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd')
+    .toLowerCase().split(/[^a-z0-9]+/).filter(function (x) { return x; }).sort().join(' ');
+}
+
+function _tkUserNameKey(username) {
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USER_SHEET_NAME);
+  if (!sheet) return '';
+  var data = sheet.getDataRange().getDisplayValues();
+  var H = data[0].map(function (h) { return String(h).trim(); });
+  var iUser = H.indexOf('Username'), iDisp = H.indexOf('Display_Name');
+  var want = String(username || '').toLowerCase();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][iUser]).toLowerCase() === want) return _tkNameKey(data[i][iDisp]);
+  }
+  return '';
+}
+
+/**
+ * Xóa hàng loạt theo quyền: Admin xóa mọi ticket · người khác chỉ ticket mình là PO
+ * (Reporter khớp họ tên User_Master) + sub-task của ticket đó (cột Sub-Tasks hoặc KEY đầu summary).
+ * Ghi lại khối dữ liệu 1 lần (không deleteRow từng dòng — chậm với vài trăm dòng).
+ * @returns {{deleted:number, denied:string[]}}
+ */
+function ticketDeleteBulk(keys, username, role) {
+  var want = {};
+  (keys || []).forEach(function (k) { k = String(k).trim().toUpperCase(); if (k) want[k] = true; });
+  var me = role === 'Admin' ? '' : _tkUserNameKey(username);
+  var lock = _acquireWriteLock();
+  try {
+    var sheet = _tkSheet();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { deleted: 0, denied: [] };
+    var cur = sheet.getRange(2, 1, lastRow - 1, TICKET_HEADER.length).getDisplayValues();
+    var owned = {};
+    if (role !== 'Admin') {
+      cur.forEach(function (r) {
+        if (me && _tkNameKey(r[8]) === me) owned[String(r[0]).trim().toUpperCase()] = true;
+      });
+    }
+    var parentOf = function (r) {
+      var key = String(r[0]).trim().toUpperCase();
+      for (var i = 0; i < cur.length; i++) {
+        var subs = String(cur[i][27] || '').toUpperCase().match(/[A-Z][A-Z0-9]+-\d+/g) || [];
+        if (subs.indexOf(key) !== -1) return String(cur[i][0]).trim().toUpperCase();
+      }
+      if (!/sub-?\s*task/i.test(String(r[1]))) return '';
+      var m = String(r[2] || '').match(/^\s*([A-Z][A-Z0-9]+-\d+)\b/);
+      return m ? m[1].toUpperCase() : '';
+    };
+    var keep = [], deleted = 0, denied = [];
+    cur.forEach(function (r) {
+      var key = String(r[0]).trim().toUpperCase();
+      if (!want[key]) { keep.push(r); return; }
+      var ok = role === 'Admin' || owned[key] || (function () { var p = parentOf(r); return !!(p && owned[p]); })();
+      if (ok) deleted++; else { denied.push(key); keep.push(r); }
+    });
+    if (deleted) {
+      sheet.getRange(2, 1, cur.length, TICKET_HEADER.length).clearContent();
+      if (keep.length) sheet.getRange(2, 1, keep.length, TICKET_HEADER.length).setValues(keep.map(_tkPad));
+      SpreadsheetApp.flush();
+    }
+    return { deleted: deleted, denied: denied };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /** Xóa 1 ticket (Admin) — vd ticket nhập nhầm line khác. */
 function ticketDelete(key) {
   var sheet = _tkSheet();

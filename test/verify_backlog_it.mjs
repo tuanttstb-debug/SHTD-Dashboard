@@ -11,6 +11,7 @@
  *  BI8  – Role User: cột lead bị khóa, không gửi uuTien/quyetDinh/ky
  *  BI9  – Badge menu = ticket mở không nhích ≥ 60 ngày
  *  BI10 – Bảng planning xuất Excel: header + giá trị suy ra
+ *  BI14 – Lọc Dự án · Trạng thái · Nhân sự theo họ tên SHTD + chọn/xóa hàng loạt (Admin tất cả, PO ticket mình) + GAS chặn quyền (v6.73)
  *  BIX  – Không lỗi JS
  *
  * Dữ liệu test là GIẢ LẬP (repo public). Kiểm thêm file thật (không commit):
@@ -447,6 +448,99 @@ log('BI13-sub-leading', r13['DCB-6'].kind === 'UI' && r13['DCB-7'].kind === 'BA'
   `"[BLOL - APP] UI …" → ${r13['DCB-6'].kind} · "BA - …" → ${r13['DCB-7'].kind} · "Cập nhật TLPT" → ${r13['DCB-8'].kind}`);
 log('BI13-sub-state', r13['DCB-5'].ui === 'Cần' && r13['DCB-5'].tlpt === 'Đang' && r13['DCB-5'].baSubs === 2, `Cha: UI ${r13['DCB-5'].ui} · BA ${r13['DCB-5'].tlpt} (1 Done + 1 In Progress)`);
 log('BI13-sub-outside', r13['DCB-5'].out === 1 && r13['DCB-5'].warn.some(w => w.indexOf('ngoài file') !== -1), 'Cột Sub-Tasks liệt kê DCB-99 không có trong file → "1 sub-task ngoài file"');
+
+/* ── BI14 — lọc Dự án · Trạng thái · Nhân sự theo họ tên SHTD + chọn/xóa hàng loạt theo quyền (v6.73) ── */
+const r14 = await page.evaluate(() => {
+  const mk = (o) => Object.assign(rowToTicket(new Array(31).fill('')), o);
+  dbTickets = [
+    mk({ key: 'DCB-801', type: 'Story', summary: '[GNOL] Của Tuân', status: 'To Do', project: 'Digital CB', components: 'Giải ngân online', reporter: 'Tuan Tran The <CG-SPTDDN.CB>', updated: '2026-10-20' }),
+    mk({ key: 'DCB-802', type: 'Sub-task', summary: 'DCB-801 [UI/UX]Của Tuân', status: 'To Do', project: 'Digital CB', reporter: 'Dung Le Quang <CVCC-SPTDDN.CB>', updated: '2026-10-20' }),
+    mk({ key: 'DCB-803', type: 'Story', summary: '[BLOL] Của Dũng', status: 'Open', project: 'Digital CB', components: 'Bảo lãnh online', reporter: 'Dung Le Quang <CVCC-SPTDDN.CB>', updated: '2026-10-20' }),
+    mk({ key: 'BLOB-804', type: 'Improvement', summary: 'BPM của Tuân', status: 'Done', resolution: 'Done', project: 'Bảo Lãnh online (BLOL)', reporter: 'Tuan Tran The <CG-SPTDDN.CB>', updated: '2026-10-20' }),
+  ];
+  return {
+    key: [tkNameKey('Tuan Tran The <CG-SPTDDN.CB>'), tkNameKey('Trần Thế Tuân'), tkNameKey('Dung Le Quang <CVCC-SPTDDN.CB> [X]'), tkNameKey('Lê Quang Dũng')],
+    u: tkUserOf('Tuan Tran The <CG-SPTDDN.CB>', _appUsers),
+    none: tkUserOf('Po Hai <CVC-SPTDDN.CB>', _appUsers),
+  };
+});
+log('BI14-namekey', r14.key[0] === r14.key[1] && r14.key[2] === r14.key[3] && r14.key[0] === 'the tran tuan', `Jira "Tuan Tran The" ≡ "Trần Thế Tuân" → "${r14.key[0]}" · Dũng (đ, [X]) khớp`);
+log('BI14-userof', r14.u && r14.u.username === 'TuanTT4' && r14.none === null, 'Reporter → user SHTD theo họ tên; không khớp → null');
+
+await login('Admin');
+await page.evaluate(() => { _tkPreset = 'open'; _tkProject = ''; _tkStatus = ''; _tkSel.clear(); renderBacklogIt(); });
+const projOpts = await page.$$eval('#tkProjectFilter option', os => os.map(o => o.value));
+const statOpts = await page.$$eval('#tkStatusFilter option', os => os.map(o => o.value));
+log('BI14-proj-opts', projOpts.join('|') === '|Bảo Lãnh online (BLOL)|Digital CB', `Dự án lấy từ dữ liệu: ${projOpts.slice(1).join(' · ')}`);
+log('BI14-status-opts', statOpts.join('|') === '|Done|Open|To Do', `Trạng thái lấy từ dữ liệu: ${statOpts.slice(1).join(' · ')}`);
+const pfOpts = await page.$$eval('#tkUserFilter option', os => os.map(o => o.value + '=' + o.textContent));
+log('BI14-pf-std', pfOpts.includes('tuantt4=TuanTT4-Trần Thế Tuân') && pfOpts.includes('dunglq1=DungLQ1-Lê Quang Dũng'), `Nhân sự nhãn chuẩn Username-Họ tên: ${pfOpts.slice(1).join(' | ')}`);
+await page.selectOption('#tkProjectFilter', 'Digital CB');
+rows = await page.$$eval('.tk-row', els => els.length);
+log('BI14-proj', rows === 2, `Dự án Digital CB → 2 dòng (sub-task gộp vào cha) (thực tế ${rows})`);
+await page.selectOption('#tkProjectFilter', '');
+await page.selectOption('#tkStatusFilter', 'Done');
+rows = await page.$$eval('.tk-row', els => els.length);
+log('BI14-status-done', rows === 1, `Trạng thái Done → 1 (tự bỏ lọc "Đang mở") (thực tế ${rows})`);
+await page.selectOption('#tkStatusFilter', '');
+await page.selectOption('#tkUserFilter', 'tuantt4');
+rows = await page.$$eval('.tk-row', els => els.length);
+log('BI14-person', rows === 2, `Nhân sự TuanTT4 → 2 (DCB-801 + BLOB-804) (thực tế ${rows})`);
+await page.selectOption('#tkUserFilter', '');
+const adminChk = await page.$$eval('.tk-sel', els => els.map(e => !e.disabled));
+log('BI14-admin-all', adminChk.length === 3 && adminChk.every(Boolean), `Admin: ${adminChk.filter(Boolean).length}/${adminChk.length} dòng chọn được`);
+
+// User thường (TuanTT4): chỉ ticket mình là PO
+await login('User');
+await page.evaluate(() => { window.uiConfirm = async () => true; window.__tkWrites = []; _tkSel.clear(); renderBacklogIt(); });
+const userChk = await page.$$eval('.tk-row', els => els.map(e => e.querySelector('.tk-key').textContent + ':' + !e.querySelector('.tk-sel').disabled));
+log('BI14-user-own', userChk.includes('DCB-801:true') && userChk.includes('BLOB-804:true') && userChk.includes('DCB-803:false'), `User: ${userChk.join(' · ')}`);
+log('BI14-bar-hidden', !(await page.$eval('#tkBulkBar', el => el.classList.contains('visible'))), 'Chưa chọn → ẩn thanh hàng loạt');
+await page.check('#tkChkAll');
+const sel14 = await page.evaluate(() => ({ n: _tkSel.size, keys: [..._tkSel].sort(), bar: document.getElementById('tkBulkBar').classList.contains('visible'), txt: document.getElementById('tkBulkCount').textContent }));
+log('BI14-select-all', sel14.n === 2 && sel14.keys.join() === 'BLOB-804,DCB-801' && sel14.bar && sel14.txt === '2 ticket đã chọn', `Chọn tất cả → chỉ ticket của mình: ${sel14.keys.join(', ')} · "${sel14.txt}"`);
+log('BI14-no-modal', !(await page.$eval('#tkModal', el => el.classList.contains('open')).catch(() => false)), 'Tích ô không mở modal');
+await shot(page, '04_bulk_select');
+await page.uncheck('.tk-sel[data-key="BLOB-804"]');
+log('BI14-uncheck', await page.evaluate(() => _tkSel.size === 1 && document.getElementById('tkChkAll').indeterminate), 'Bỏ 1 dòng → ô tổng ở trạng thái lửng');
+await page.click('#tkBulkBar .btn-bulk.danger');
+await page.waitForTimeout(250);
+const del14 = await page.evaluate(() => ({ w: window.__tkWrites.find(x => x.action === 'ticket-delete-bulk'), left: dbTickets.map(t => t.key).sort() }));
+log('BI14-payload', del14.w && del14.w.keys.slice().sort().join() === 'DCB-801,DCB-802', `Gửi GAS: ${del14.w && del14.w.keys.join(', ')} (kèm sub-task UI của cha)`);
+log('BI14-local', del14.left.join() === 'BLOB-804,DCB-803', `Còn lại: ${del14.left.join(', ')}`);
+
+// GAS: ticketDeleteBulk chặn quyền trên sheet giả lập
+const vm = await import('vm');
+const gasSrc = fs.readFileSync(path.join(__dirname, 'backend', 'TicketService.gs'), 'utf8');
+function gasRun(role, username, keys) {
+  const H = ['Key', 'Issue Type', 'Summary']; const pad = r => { const o = new Array(31).fill(''); r.forEach((v, i) => { o[i] = v; }); return o; };
+  const tk = (key, type, sum, rep, subs) => { const r = pad([key, type, sum]); r[8] = rep; r[27] = subs || ''; return r; };
+  let data = [pad(['Key']),
+    tk('DCB-801', 'Story', '[GNOL] A', 'Tuan Tran The <CG-SPTDDN.CB>', 'DCB-805'),
+    tk('DCB-802', 'Sub-task', 'DCB-801 [UI/UX]A', 'Dung Le Quang <CVCC-SPTDDN.CB>'),
+    tk('DCB-803', 'Story', '[BLOL] B', 'Dung Le Quang <CVCC-SPTDDN.CB>'),
+    tk('DCB-805', 'Sub-task', 'Việc dev', 'Dung Le Quang <CVCC-SPTDDN.CB>')];
+  data[0] = pad(H); data[0][30] = 'Resolved';
+  const users = [['Username', 'Display_Name'], ['TuanTT4', 'Trần Thế Tuân'], ['DungLQ1', 'Lê Quang Dũng']];
+  const rng = (r, c, nr, nc) => ({
+    getDisplayValues: () => data.slice(r - 1, r - 1 + nr).map(x => x.slice(c - 1, c - 1 + nc)),
+    setValues: v => { v.forEach((row, i) => { data[r - 1 + i] = row.slice(); }); },
+    clearContent: () => { data = data.slice(0, r - 1); },
+  });
+  const sheet = { getMaxColumns: () => 31, getLastRow: () => data.length, getRange: rng, insertColumnsAfter() {}, setFrozenRows() {} };
+  const ctx = { SPREADSHEET_ID: 'x', USER_SHEET_NAME: 'User_Master', _acquireWriteLock: () => ({ releaseLock() {} }),
+    SpreadsheetApp: { flush() {}, openById: () => ({ getSheetByName: n => n === 'User_Master' ? { getDataRange: () => ({ getDisplayValues: () => users }) } : sheet }) } };
+  vm.createContext(ctx); vm.runInContext(gasSrc, ctx);
+  const res = ctx.ticketDeleteBulk(keys, username, role);
+  return { res, left: data.slice(1).map(r => r[0]) };
+}
+const g1 = gasRun('User', 'TuanTT4', ['DCB-801', 'DCB-802', 'DCB-803', 'DCB-805']);
+log('BI14-gas-owner', g1.res.deleted === 3 && g1.res.denied.join() === 'DCB-803' && g1.left.join() === 'DCB-803',
+  `User xóa: ${g1.res.deleted} (cha + sub-task theo summary + theo cột Sub-Tasks) · chặn ${g1.res.denied.join(', ')} · còn ${g1.left.join(', ')}`);
+const g2 = gasRun('User', 'DungLQ1', ['DCB-801']);
+log('BI14-gas-denied', g2.res.deleted === 0 && g2.res.denied.join() === 'DCB-801' && g2.left.length === 4, 'Xóa ticket người khác → bị chặn, sheet giữ nguyên');
+const g3 = gasRun('Admin', 'TuanTT4', ['DCB-801', 'DCB-803']);
+log('BI14-gas-admin', g3.res.deleted === 2 && !g3.res.denied.length && g3.left.join() === 'DCB-802,DCB-805', 'Admin xóa mọi ticket');
 
 log('BIX-no-js-errors', jsErrors.length === 0, jsErrors.length ? jsErrors.join(' | ') : 'Không lỗi JS');
 

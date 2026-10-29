@@ -7,16 +7,32 @@ let _tkPreset = 'open';      // open | ready | notready | stale | all
 let _tkLine   = '';
 let _tkSys    = '';       // '' | 'Biz' | 'BPM'
 let _tkKy     = '';
+let _tkProject = '';      // Project Jira (Digital CB · BLOL · GNOL.EndToEnd…)
+let _tkStatus = '';       // Status Jira
 let _tkSearch = '';
 let _tkSort   = { key: 'stale', dir: 'desc' };
 let _tkEditKey = null;
 let _tkPf     = null;
+let _tkSel    = new Set();   // key ticket đang chọn (chỉ ticket được xóa + đang hiện)
 
 /* ══════════════ helpers ══════════════ */
 
 function _tkCanLead() {
   const u = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   return !!(u && (u.role === 'Admin' || u.role === 'Teamlead'));
+}
+
+// Quyền xóa: Admin xóa mọi ticket · người khác chỉ ticket mình là PO (Reporter Jira khớp họ tên User_Master).
+// Server kiểm lại cùng luật (ticket-delete-bulk).
+function _tkCanDelete(x) {
+  const u = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!u) return false;
+  if (u.role === 'Admin') return true;
+  return !!(x.u && String(x.u.username).toLowerCase() === String(u.username || '').toLowerCase());
+}
+
+function _tkUsers() {
+  return typeof _appUsers !== 'undefined' && Array.isArray(_appUsers) ? _appUsers : [];
 }
 
 // PO = Reporter trên Jira, hiển thị đúng tên Jira (không ép về username SHTD — anh chốt 29/10)
@@ -39,9 +55,20 @@ function _tkAll(today) {
   const list = dbTickets || [];
   const idx = tkSubIndex(list);
   const keys = new Set(list.map(t => t.key));
+  const users = _tkUsers(), byName = {};
+  const userOf = po => (po in byName ? byName[po] : (byName[po] = tkUserOf(po, users)));
   return list
     .filter(t => !(tkIsSubtask(t) && tkSubKind(t) && keys.has(tkParentKey(t))))
-    .map(t => ({ t, d: tkDerive(t, today, idx) }));
+    .map(t => { const d = tkDerive(t, today, idx); return { t, d, u: userOf(d.po) }; });
+}
+
+// Nhân sự phụ trách = PO: username SHTD nếu khớp họ tên, chưa khớp thì tên Jira
+function _tkPoKey(x) {
+  return x.u ? x.u.username : x.d.po;
+}
+
+function _tkDistinct(items, get) {
+  return [...new Set(items.map(get).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
 }
 
 function _tkSubIdx() {
@@ -56,7 +83,9 @@ function _tkKyOptions(items) {
 
 function _tkFiltered(items) {
   let list = items;
-  if (_tkPf) list = list.filter(x => _tkPf.match(x.d.team, x.d.po));
+  if (_tkPf) list = list.filter(x => _tkPf.match(x.d.team, _tkPoKey(x)));
+  if (_tkProject) list = list.filter(x => x.t.project === _tkProject);
+  if (_tkStatus) list = list.filter(x => x.t.status === _tkStatus);
   if (_tkSys) list = list.filter(x => x.d.system === _tkSys);
   if (_tkLine) list = list.filter(x => x.d.line === _tkLine);
   if (_tkKy) list = list.filter(x => x.d.kyEff === _tkKy);
@@ -113,6 +142,10 @@ function renderBacklogIt() {
   const all = _tkAll(today);
   const kyOpts = _tkKyOptions(all);
   if (_tkKy && kyOpts.indexOf(_tkKy) === -1) _tkKy = '';
+  const projOpts = _tkDistinct(all, x => x.t.project);
+  if (_tkProject && projOpts.indexOf(_tkProject) === -1) _tkProject = '';
+  const statusOpts = _tkDistinct(all, x => x.t.status);
+  if (_tkStatus && statusOpts.indexOf(_tkStatus) === -1) _tkStatus = '';
 
   root.innerHTML = `
 <div class="tk-page">
@@ -132,7 +165,15 @@ function renderBacklogIt() {
   <div class="tk-toolbar">
     <input id="tkSearch" type="text" class="form-control form-control-sm tk-search" placeholder="Tìm key, nội dung, label, dev…" value="${esc(_tkSearch)}" oninput="tkSearchInput(this.value)">
     <select id="tkTeamFilter" class="form-control form-control-sm pf-select pf-select--team"></select>
-    <select id="tkUserFilter" class="form-control form-control-sm pf-select"></select>
+    <select id="tkUserFilter" class="form-control form-control-sm pf-select" title="Nhân sự phụ trách = PO (Reporter Jira)"></select>
+    <select id="tkProjectFilter" class="form-control form-control-sm" onchange="tkSetProject(this.value)" title="Project trên Jira">
+      <option value="">Tất cả dự án</option>
+      ${projOpts.map(p => `<option value="${esc(p)}"${_tkProject === p ? ' selected' : ''}>${esc(p)}</option>`).join('')}
+    </select>
+    <select id="tkStatusFilter" class="form-control form-control-sm" onchange="tkSetStatus(this.value)" title="Status trên Jira">
+      <option value="">Tất cả trạng thái</option>
+      ${statusOpts.map(s => `<option value="${esc(s)}"${_tkStatus === s ? ' selected' : ''}>${esc(s)}</option>`).join('')}
+    </select>
     <select id="tkSysFilter" class="form-control form-control-sm" onchange="tkSetSys(this.value)" title="Biz = project Digital CB (DCB) · BPM = project BLOL / GNOL.EndToEnd…">
       <option value="">Biz + BPM</option>
       ${['Biz', 'BPM'].map(s => `<option value="${s}"${_tkSys === s ? ' selected' : ''}>${s}</option>`).join('')}
@@ -151,7 +192,7 @@ function renderBacklogIt() {
 
   _tkPf = PeopleFilter.bind({ team: 'tkTeamFilter', user: 'tkUserFilter', onChange: _tkRenderBody });
   const people = [];
-  all.forEach(x => { if (x.d.po) people.push({ username: x.d.po, name: '', team: x.d.team }); });
+  all.forEach(x => { if (x.d.po) people.push({ username: _tkPoKey(x), name: x.u ? x.u.name : '', team: x.d.team }); });
   _tkPf.setPeople(people);
   _tkRenderBody();
   tkUpdateBadge();
@@ -199,13 +240,26 @@ function _tkRenderTable(list) {
       <div><b>Chưa có ticket.</b> Trên Jira: Export → <b>HTML report</b> (hoặc Excel) với cột Key · Summary · Status · Priority · Assignee · Updated · Labels… rồi bấm <b>Nạp file Jira</b>.</div></div>`;
     return;
   }
+  // Chỉ giữ chọn những ticket đang hiện + được xóa (đổi bộ lọc không xóa nhầm dòng đã khuất)
+  const canDel = new Set(list.filter(_tkCanDelete).map(x => x.t.key));
+  _tkSel = new Set([..._tkSel].filter(k => canDel.has(k)));
+  _tkVisibleDel = [...canDel];
   if (!list.length) {
     wrap.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-filter"></i><div>Không có ticket khớp bộ lọc.</div></div>`;
     return;
   }
-  const rows = list.map(x => _tkRowHtml(x.t, x.d)).join('');
-  wrap.innerHTML = `<div class="tk-table-scroll"><table class="tk-table">
+  const rows = list.map(x => _tkRowHtml(x.t, x.d, canDel.has(x.t.key))).join('');
+  wrap.innerHTML = `
+    <div class="bulk-bar tk-bulk" id="tkBulkBar">
+      <i class="fa-solid fa-check-square"></i>
+      <span class="bulk-bar-count" id="tkBulkCount"></span>
+      <span class="bulk-spacer"></span>
+      <button class="btn-bulk danger" onclick="tkDeleteSelected()"><i class="fa-solid fa-trash"></i> Xóa</button>
+      <button class="btn-bulk" onclick="tkClearSel()" title="Bỏ chọn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="tk-table-scroll"><table class="tk-table">
     <thead><tr>
+      <th class="tk-chk" style="width:36px"><input type="checkbox" id="tkChkAll" aria-label="Chọn tất cả ticket được xóa"${canDel.size ? '' : ' disabled title="Không có ticket bạn được xóa trong danh sách"'} onchange="tkToggleAll(this.checked)"></th>
       ${_tkTh('key', 'Ticket', 108)}
       ${_tkTh('summary', 'Nội dung')}
       ${_tkTh('line', 'Line · PO', 150)}
@@ -216,10 +270,27 @@ function _tkRenderTable(list) {
       ${_tkTh('ky', 'Kỳ · Quyết định', 128)}
     </tr></thead>
     <tbody>${rows}</tbody></table></div>
-    <div class="tk-foot">${list.length} ticket · bấm dòng để chốt ưu tiên / quyết định / ghi chú</div>`;
+    <div class="tk-foot">${list.length} ticket · bấm dòng để chốt ưu tiên / quyết định / ghi chú · tích ô đầu dòng để xóa hàng loạt (ticket mình là PO; Admin xóa mọi ticket)</div>`;
+  _tkUpdateBulk();
 }
 
-function _tkRowHtml(t, d) {
+let _tkVisibleDel = [];
+
+function _tkUpdateBulk() {
+  const bar = document.getElementById('tkBulkBar');
+  if (bar) {
+    bar.classList.toggle('visible', _tkSel.size > 0);
+    const c = document.getElementById('tkBulkCount');
+    if (c) c.textContent = `${_tkSel.size} ticket đã chọn`;
+  }
+  const all = document.getElementById('tkChkAll');
+  if (all) {
+    all.checked = _tkVisibleDel.length > 0 && _tkSel.size === _tkVisibleDel.length;
+    all.indeterminate = _tkSel.size > 0 && _tkSel.size < _tkVisibleDel.length;
+  }
+}
+
+function _tkRowHtml(t, d, canDel) {
   const key = esc(t.key);
   const chips = [];
   d.subs.forEach(s => chips.push(`<span class="tk-chip">${esc(s)}</span>`));
@@ -244,7 +315,11 @@ function _tkRowHtml(t, d) {
   const prio = `<div>${esc(t.priority || '–')}</div><div class="tk-muted${d.prioMismatch ? ' tk-mismatch' : ''}">${d.prioTeam ? 'Team: ' + d.prioTeam : 'Team: –'}</div>`;
   const dec = t.quyetDinh ? `<span class="tk-dec is-${t.quyetDinh === 'Đưa vào kỳ' ? 'in' : t.quyetDinh === 'Bỏ' ? 'drop' : 'hold'}">${esc(t.quyetDinh)}</span>` : '<span class="tk-muted">Chưa chốt</span>';
 
-  return `<tr class="tk-row${d.open ? '' : ' is-done'}" onclick="tkOpenModal('${key}')">
+  const chk = canDel
+    ? `<input type="checkbox" class="tk-sel" data-key="${key}"${_tkSel.has(t.key) ? ' checked' : ''} aria-label="Chọn ${key}" onchange="tkToggleRow('${key}', this.checked)">`
+    : `<input type="checkbox" class="tk-sel" disabled title="Chỉ PO của ticket hoặc Admin được xóa">`;
+  return `<tr class="tk-row${d.open ? '' : ' is-done'}${_tkSel.has(t.key) ? ' is-sel' : ''}" onclick="tkOpenModal('${key}')">
+    <td class="tk-chk" onclick="event.stopPropagation()">${chk}</td>
     <td><a class="tk-key" href="${TK_JIRA_BROWSE}${key}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${key}</a><div class="tk-muted">${typeLine}</div></td>
     <td><div class="tk-sum">${esc(t.summary || '–')}</div>${chips.length ? `<div class="tk-chips">${chips.join('')}</div>` : ''}</td>
     <td title="${esc(lineTitle)}"><div><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b> <span class="tk-sys is-${esc(d.system.toLowerCase())}">${esc(d.system)}</span></div><div class="tk-muted">${esc(_tkPerson(d.po))}</div></td>
@@ -262,6 +337,9 @@ function tkSetPreset(p) { _tkPreset = p; _tkRenderBody(); }
 function tkSetLine(v)   { _tkLine = v; _tkRenderBody(); }
 function tkSetSys(v)    { _tkSys = v; _tkRenderBody(); }
 function tkSetKy(v)     { _tkKy = v; _tkRenderBody(); }
+function tkSetProject(v) { _tkProject = v; _tkRenderBody(); }
+// Chọn 1 trạng thái cụ thể → bỏ lọc "Đang mở" (để chọn Done/Closed vẫn thấy dòng)
+function tkSetStatus(v) { _tkStatus = v; if (v && _tkPreset === 'open') _tkPreset = 'all'; _tkRenderBody(); }
 function tkSearchInput(v) {
   _tkSearch = v;
   clearTimeout(tkSearchInput._t);
@@ -271,6 +349,51 @@ function tkSort(key) {
   if (_tkSort.key === key) _tkSort.dir = _tkSort.dir === 'asc' ? 'desc' : 'asc';
   else _tkSort = { key, dir: key === 'stale' ? 'desc' : 'asc' };
   _tkRenderBody();
+}
+
+/* ══════════════ chọn + xóa hàng loạt ══════════════ */
+
+function tkToggleRow(key, on) {
+  if (on) _tkSel.add(key); else _tkSel.delete(key);
+  const cb = document.querySelector(`.tk-sel[data-key="${key}"]`);
+  if (cb) cb.closest('tr').classList.toggle('is-sel', on);
+  _tkUpdateBulk();
+}
+
+function tkToggleAll(on) {
+  _tkSel = new Set(on ? _tkVisibleDel : []);
+  document.querySelectorAll('.tk-sel[data-key]').forEach(cb => {
+    cb.checked = _tkSel.has(cb.dataset.key);
+    cb.closest('tr').classList.toggle('is-sel', cb.checked);
+  });
+  _tkUpdateBulk();
+}
+
+function tkClearSel() { tkToggleAll(false); }
+
+async function tkDeleteSelected() {
+  if (!_tkSel.size) return;
+  const keys = [..._tkSel];
+  // Sub-task UI/BA/khác gộp dưới dòng cha → xóa theo cha (không để lại sub-task mồ côi)
+  const idx = _tkSubIdx();
+  const subs = [];
+  keys.forEach(k => (idx[k] || []).forEach(s => { if (!_tkSel.has(s.key)) subs.push(s.key); }));
+  const all = keys.concat([...new Set(subs)]);
+  const preview = keys.slice(0, 8).map(esc).join(', ') + (keys.length > 8 ? ` … (+${keys.length - 8})` : '');
+  const ok = await uiConfirm('Xóa ticket khỏi Backlog IT',
+    `Xóa <strong>${keys.length} ticket</strong>${subs.length ? ` + <strong>${subs.length} sub-task</strong> đi kèm` : ''} khỏi SHTD: ${preview}.<br>
+     Cột team (ưu tiên, quyết định, kỳ, ghi chú) của các ticket này mất theo. Ticket trên Jira không bị ảnh hưởng — nạp lại file Jira có ticket đó thì nó quay lại.`,
+    'danger', `Xóa ${all.length}`);
+  if (!ok) return;
+  if (typeof showLoading === 'function') showLoading('Đang xóa ticket…');
+  const res = await _gasTicketDeleteBulk(all);
+  if (typeof hideLoading === 'function') hideLoading();
+  _tkSel.clear();
+  if (!res.error) {
+    toast(`Đã xóa ${res.deleted} ticket${res.denied.length ? ` · ${res.denied.length} ticket không có quyền xóa: ${res.denied.slice(0, 5).join(', ')}` : ''}${res.offline ? ' (cục bộ)' : ''}.`,
+      res.denied.length || res.offline ? 'warning' : 'success', res.denied.length ? 7000 : 4000);
+  }
+  renderBacklogIt();
 }
 
 /* ══════════════ import / export ══════════════ */

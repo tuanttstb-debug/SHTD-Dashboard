@@ -298,7 +298,7 @@ function doPost(e) {
 
     // ── Backlog IT (ticket Jira DCB — hub AIOS D22) ──
     // Import: mọi role đã login (PO tự nạp file xuất Jira của line mình).
-    // Quyết định planning / ưu tiên team / kỳ: Admin + Teamlead. Xóa: Admin.
+    // Quyết định planning / ưu tiên team / kỳ: Admin + Teamlead. Xóa 1: Admin · xóa hàng loạt: Admin tất cả, người khác ticket mình là PO.
     if (action === 'ticket-read') {
       return _jsonResponse({ status: 'ok', values: ticketRead() });
     }
@@ -338,6 +338,18 @@ function doPost(e) {
       _bumpDomainVer('tickets');
       auditLog(tokenData, 'ticket-delete', body.key);
       return _jsonResponse({ status: 'ok' });
+    }
+
+    // Xóa hàng loạt: mọi role đã login — ticketDeleteBulk tự chặn (Admin: tất cả · khác: ticket mình là PO + sub-task của nó)
+    if (action === 'ticket-delete-bulk') {
+      if (!body.keys || !Array.isArray(body.keys) || !body.keys.length) {
+        throw new Error('ticket-delete-bulk: thiếu keys.');
+      }
+      var _tkDel = ticketDeleteBulk(body.keys, tokenData.u, tokenData.r);
+      if (_tkDel.deleted) _bumpDomainVer('tickets');
+      auditLog(tokenData, 'ticket-delete-bulk', 'deleted=' + _tkDel.deleted + ' denied=' + _tkDel.denied.length
+        + ' keys=' + body.keys.slice(0, 50).join(','));
+      return _jsonResponse({ status: 'ok', result: _tkDel });
     }
 
     // ── Dev Plan (Plan phát triển bản thân) ──
