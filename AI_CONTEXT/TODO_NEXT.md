@@ -2,16 +2,18 @@
 **Prepared**: 2026-10-29 (S94.8 — Backlog IT giao hàng loạt, v6.74)
 
 ## 🆕 S94.8 — Backlog IT: giao hàng loạt cho PO khác của team (v6.74) — CODE XONG + TEST PASS
-- [ ] [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) → hard-refresh `?v=20261029j` → chọn ticket → "Giao cho…" → Giao; kiểm cột AF "PO phụ trách" trên sheet.
+- [x] [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) — 2026-10-29 ✅
+- [ ] [TT] thử trên LIVE (`?v=20261029j`): chọn ticket → "Giao cho…" → Giao; kiểm cột AF "PO phụ trách" + danh sách đủ team Số.
 
 ## 🆕 S94.7 — Backlog IT: lọc Dự án · Trạng thái · Nhân sự + xóa hàng loạt theo quyền (v6.73) — CODE XONG + TEST PASS
-- [ ] [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) → hard-refresh `?v=20261029i` → thử xóa hàng loạt (User: chỉ ticket mình là PO · Admin: tất cả).
+- [x] [TT] redeploy GAS v6.73 — 2026-10-29 ✅
+- [ ] [CC] LIVE: nạp file Jira 320 ticket (S94.6) + xóa hàng loạt 9 dòng "Import lúc" hỏng.
 - [ ] [CC] nếu PO Jira không khớp họ tên User_Master (Display_Name khác tên Jira) → bổ sung cột ánh xạ tên Jira.
 
 
 ## 🆕 S94 — Backlog IT (ticket Jira DCB, v6.69) — CODE XONG + TEST PASS LOCAL
 - [x] Ticket_Master + import file Jira + derive label + lọc chuẩn + modal chốt + xuất planning + badge · `verify_backlog_it` 50/50.
-- [ ] [TT] redeploy GAS (TicketService.gs MỚI + Code.gs + CacheLayer.gs) → hard-refresh `?v=20261029`.
+- [x] [TT] redeploy GAS (TicketService.gs MỚI + Code.gs + CacheLayer.gs) — 2026-10-29 ✅
 - [ ] [CC] nghiệm thu LIVE với file xuất Jira thật của team (kỳ T12) → nhãn/line/sẵn sàng đúng.
 - [ ] Đợt 2: My Work hiện ticket thiếu điều kiện của PO · báo cáo DCB tuần (hub `build_dcb.js`) thêm khối ticket kỳ.
 - [ ] Nợ cũ: `verify_milestone_task` + `verify_task_init_popup` AUTH FAILED (có sẵn trước S94).
