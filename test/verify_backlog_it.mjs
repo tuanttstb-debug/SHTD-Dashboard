@@ -354,6 +354,9 @@ if (REAL && fs.existsSync(REAL)) {
   log('REAL-parse', real.n > 0 && real.rows.every(r => r[1]), `File thật: ${real.n} ticket, đủ line`);
 }
 
+const dts = await page.evaluate(() => [tkParseDate('Thu Oct 29 2026 15:55:00 GMT+0700 (GMT+07:00)'), tkParseDate('28/10/2026 16:56'), tkParseDate('2026-10-29 08:55')]);
+log('BI3-date-sheet', dts[0] === '2026-10-29' && dts[1] === '2026-10-28' && dts[2] === '2026-10-29', `String(Date) / dd/MM/yyyy HH:mm / ISO giờ → ${dts.join(' · ')}`);
+
 log('BIX-no-js-errors', jsErrors.length === 0, jsErrors.length ? jsErrors.join(' | ') : 'Không lỗi JS');
 
 console.log(`\n${passed} passed · ${failed} failed`);

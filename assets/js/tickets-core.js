@@ -83,8 +83,10 @@ function tkParseDate(v) {
   if (m) return _tkIso(+m[3], _TK_MON[m[2].toLowerCase()], +m[1]);
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+\d{1,2}:\d{2}/);   // bảng copy Jira (Outlook/Excel US): M/d/yyyy h:mm
   if (m) return _tkIso(+m[3], +m[1], +m[2]);
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);                 // ngày VN thuần: dd/MM/yyyy
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);                  // ngày VN: dd/MM/yyyy [HH:mm] (Sheets hiển thị)
   if (m) return _tkIso(+m[3], +m[2], +m[1]);
+  m = s.match(/^[A-Za-z]{3} ([A-Za-z]{3}) (\d{1,2}) (\d{4})/);       // String(Date) "Thu Oct 29 2026 …" (dòng ghi bởi GAS cũ)
+  if (m) return _tkIso(+m[3], _TK_MON[m[1].toLowerCase()], +m[2]);
   return '';
 }
 

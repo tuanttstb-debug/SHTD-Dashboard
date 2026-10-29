@@ -69,8 +69,10 @@ function ticketImport(rows, username) {
   try {
     var sheet = _tkSheet();
     var lastRow = sheet.getLastRow();
+    // getDisplayValues (KHÔNG getValues): Sheets tự đổi chuỗi ngày đã ghi sang Date →
+    // String(Date) ra "Thu Oct 29 2026 …" + lệch múi giờ khi ghi lại dòng cũ (LIVE 29/10).
     var cur = lastRow > 1
-      ? sheet.getRange(2, 1, lastRow - 1, TICKET_HEADER.length).getValues()
+      ? sheet.getRange(2, 1, lastRow - 1, TICKET_HEADER.length).getDisplayValues()
       : [];
     var idx = {};
     for (var i = 0; i < cur.length; i++) {
