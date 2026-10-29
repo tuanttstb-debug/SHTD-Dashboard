@@ -152,7 +152,7 @@ log('BI4-not-ready-ui', !der['DCB-90002'].ready && der['DCB-90002'].missing.join
 log('BI4-not-ready-all', der['DCB-90001'].missing.length === 4, `Ký số thiếu đủ 4 điều kiện (${der['DCB-90001'].missing.length})`);
 log('BI4-golive', der['DCB-90004'].golive === '202611' && der['DCB-90004'].kyEff === '202611', 'Expect_Golive_202611 → kỳ hiệu lực 202611');
 log('BI4-stale', der['DCB-90004'].staleDays === 44 && der['DCB-90004'].staleLevel === 'amber', `Không nhích ${der['DCB-90004'].staleDays} ngày → amber`);
-log('BI4-no-okr', der['DCB-90002'].warn.indexOf('Chưa gắn OKR') !== -1, 'Cảnh báo chưa gắn OKR');
+log('BI4-no-okr', !('okr' in der['DCB-90002']) && !der['DCB-90002'].warn.some(w => /OKR/.test(w)), 'Bỏ theo dõi OKR (anh chốt 29/10)');
 const mis = await page.evaluate(() => tkDerive({ summary: '[BLOL] x', labels: 'BLOL', priority: 'Medium', uuTien: '1', updated: '2026-08-01' }, new Date(2026, 9, 29)));
 log('BI4-prio-mismatch', mis.prioMismatch && mis.staleLevel === 'red', 'Jira Medium ↔ team 1 → lệch · 89 ngày → red');
 
@@ -176,7 +176,7 @@ await page.evaluate(() => navigateTo('backlog-it'));
 await page.waitForTimeout(300);
 log('BI1-nav', !!(await page.$('[data-view="backlog-it"]')), 'Nav item [data-view="backlog-it"]');
 log('BI1-section', await page.$eval('#view-backlog-it', el => el.style.display !== 'none'), 'Section hiển thị');
-log('BI1-stat', (await page.$$('.tk-stat')).length === 6, '6 thẻ số liệu');
+log('BI1-stat', (await page.$$('.tk-stat')).length === 5, '5 thẻ số liệu (bỏ OKR)');
 log('BI1-pf', !!(await page.$('#tkTeamFilter.pf-select')) && !!(await page.$('#tkUserFilter.pf-select')), 'Bộ lọc chuẩn Team + Nhân sự');
 const userOpts = await page.$$eval('#tkUserFilter option', os => os.map(o => o.textContent));
 log('BI6-pf-label', userOpts.length === 3 && userOpts.includes('Po Hai') && userOpts.includes('Po Mot'), `Nhân sự = đúng tên Reporter Jira: ${userOpts.slice(1).join(' | ')}`);
@@ -258,7 +258,7 @@ const ex = await page.evaluate(() => {
   return { head: aoa[0], row: aoa[1] };
 });
 const H = ex.head;
-log('BI10-head', H.includes('Sẵn sàng chuyển IT') && H.includes('Người làm UI') && H.includes('Người làm BA') && H.length === 26, `${H.length} cột bảng planning (có người làm UI/BA)`);
+log('BI10-head', H.includes('Sẵn sàng chuyển IT') && H.includes('Người làm UI') && H.includes('Người làm BA') && !H.includes('OKR') && H.length === 25, `${H.length} cột bảng planning (có người làm UI/BA)`);
 const cell = name => ex.row[H.indexOf(name)];
 log('BI10-row', ex.row[0] === 'BLOL' && cell('Sẵn sàng chuyển IT') === 'Đạt' && cell('Số ngày không nhích') === 44 && cell('PO (Reporter)') === 'Po Hai',
   `BLOL · ${cell('Sẵn sàng chuyển IT')} · ${cell('Số ngày không nhích')} ngày · PO ${cell('PO (Reporter)')}`);

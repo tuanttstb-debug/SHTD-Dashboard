@@ -5,7 +5,7 @@
 // Label chuẩn:
 //   Line      GNOL · BLOL · HSTD (Ký số) · ThauChi · SCF      Nhãn phụ  CKTC · IDNES · TT134 · GNOL_TuDong
 //   DCB_Task  đã chốt yêu cầu          Expect_Golive_YYYYMM · GOLIVE_YYYYMMDD (đã golive)
-//   OKR_<KR>  gắn OKR NPL              DXCT_QLCT · Dep_BPM · Dep_FCC · Dep_CCP
+//   DXCT_QLCT · Dep_BPM · Dep_FCC · Dep_CCP   (bỏ theo dõi OKR trên line dự án — anh chốt 29/10)
 // UI / TLPT: Sub-task "<KEY cha> [UI/UX]…" / "<KEY cha> [BA]…" (rule team 29/10) — label UI_*/TLPT_Xong cũ vẫn đọc.
 // PO = Reporter trên Jira.
 
@@ -219,7 +219,6 @@ function tkDerive(t, today, subIdx) {
   // GOLIVE_YYYYMMDD = ngày đã golive thật (label Jira đang dùng)
   const goned = labels.map(l => (l.match(/^GOLIVE_(\d{8})$/i) || [])[1]).filter(Boolean).sort();
   const golivedOn = goned.length ? `${goned[goned.length - 1].slice(0, 4)}-${goned[goned.length - 1].slice(4, 6)}-${goned[goned.length - 1].slice(6)}` : '';
-  const okr = labels.filter(l => /^OKR_/i.test(l));
   const deps = labels.filter(l => /^Dep_/i.test(l));
   const dxct = _tkHas(labels, 'DXCT_QLCT');
 
@@ -237,7 +236,6 @@ function tkDerive(t, today, subIdx) {
   const warn = [];
   if (!line) warn.push('Chưa có label line');
   if (lineLabels.length > 1) warn.push('Gắn nhiều line: ' + lineLabels.join(', '));
-  if (!okr.length) warn.push('Chưa gắn OKR');
   if (prioTeam && prioJira && prioTeam !== prioJira) warn.push(`Lệch ưu tiên (Jira ${t.priority} ↔ team ${prioTeam})`);
   // Vi phạm rule: cần UI / TLPT nhưng chưa log sub-task
   if (!isSub && !uiSubs.length && (uiMarked === 'Cần' || uiMarked === 'Đang')) warn.push('Thiếu Sub-task UI');
@@ -246,7 +244,7 @@ function tkDerive(t, today, subIdx) {
 
   return {
     labels, line, subs, ui, tlpt, uiBy, baBy, uiSubs, baSubs, isSub, parentKey, subKind,
-    dcbTask, golive, golivedOn, okr, deps, dxct,
+    dcbTask, golive, golivedOn, deps, dxct,
     open: tkIsOpen(t), ready: missing.length === 0, missing,
     staleDays, staleLevel, lastUpd, prioJira, prioTeam,
     prioMismatch: !!(prioTeam && prioJira && prioTeam !== prioJira),
@@ -408,13 +406,13 @@ function tkLooksHtml(name, text) {
 function tkExportRows(list, today, subIdx) {
   const head = ['Line', 'Nhãn phụ', 'Key', 'Loại issue', 'Summary', 'PO (Reporter)', 'Dev (Assignee)', 'Status',
     'Priority Jira', 'Ưu tiên team', 'UI', 'Người làm UI', 'TLPT (BA)', 'Người làm BA', 'DCB_Task', 'Tháng golive',
-    'Kỳ planning', 'Quyết định', 'Sẵn sàng chuyển IT', 'Thiếu', 'Cảnh báo', 'OKR', 'Phụ thuộc', 'Updated',
+    'Kỳ planning', 'Quyết định', 'Sẵn sàng chuyển IT', 'Thiếu', 'Cảnh báo', 'Phụ thuộc', 'Updated',
     'Số ngày không nhích', 'Ghi chú'];
   const rows = list.map(t => {
     const d = tkDerive(t, today, subIdx);
     return [TK_LINE_LABEL[d.line] || '', d.subs.join(', '), t.key, t.type, t.summary, d.po, tkPersonName(t.assignee), t.status,
       t.priority, t.uuTien, d.ui, d.uiBy.join(', '), d.tlpt, d.baBy.join(', '), d.dcbTask ? 'Có' : 'Chưa', d.golive,
-      t.ky, t.quyetDinh, d.ready ? 'Đạt' : 'Chưa', d.missing.join('; '), d.warn.join('; '), d.okr.join(', '),
+      t.ky, t.quyetDinh, d.ready ? 'Đạt' : 'Chưa', d.missing.join('; '), d.warn.join('; '),
       d.deps.join(', '), t.updated, d.staleDays == null ? '' : d.staleDays, t.note];
   });
   return [head].concat(rows);

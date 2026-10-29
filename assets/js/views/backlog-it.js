@@ -1,6 +1,6 @@
 // ── SHTD Dashboard – Backlog IT view (ticket Jira DCB) ──
 // Hub AIOS D22 (2026-10-29). Nhập liệu ở Jira (label chuẩn) → PO bấm "Nạp file Jira" →
-// màn này tự tính: sẵn sàng chuyển IT · số ngày không nhích · thiếu OKR · lệch ưu tiên.
+// màn này tự tính: sẵn sàng chuyển IT · số ngày không nhích · thiếu sub-task · lệch ưu tiên.
 // Trên SHTD chỉ chốt: ưu tiên team · quyết định planning · kỳ (Teamlead/Admin) + ghi chú.
 
 let _tkPreset = 'open';      // open | ready | notready | stale | all
@@ -72,7 +72,6 @@ function _tkApplyPreset(list) {
   if (_tkPreset === 'ready')    return list.filter(x => x.d.ready);
   if (_tkPreset === 'notready') return list.filter(x => !x.d.ready);
   if (_tkPreset === 'stale')    return list.filter(x => x.d.staleLevel === 'red');
-  if (_tkPreset === 'nookr')    return list.filter(x => !x.d.okr.length);
   return list;
 }
 
@@ -168,7 +167,6 @@ function _tkRenderStat(scope) {
     ready: open.filter(x => x.d.ready).length,
     notready: open.filter(x => !x.d.ready).length,
     stale: open.filter(x => x.d.staleLevel === 'red').length,
-    nookr: open.filter(x => !x.d.okr.length).length,
     all: scope.length,
   };
   const card = (key, label, cls) => `<button class="tk-stat ${cls}${_tkPreset === key ? ' is-on' : ''}" data-preset="${key}" onclick="tkSetPreset('${key}')">
@@ -178,7 +176,6 @@ function _tkRenderStat(scope) {
     card('ready', 'Sẵn sàng chuyển IT', 'is-good') +
     card('notready', 'Chưa sẵn sàng', n.notready ? 'is-warn' : '') +
     card('stale', `Trôi ≥ ${TK_STALE_RED} ngày`, n.stale ? 'is-bad' : '') +
-    card('nookr', 'Chưa gắn OKR', n.nookr ? 'is-warn' : '') +
     card('all', 'Tất cả (gồm Done)', '');
 }
 
@@ -220,9 +217,8 @@ function _tkRowHtml(t, d) {
   const key = esc(t.key);
   const chips = [];
   d.subs.forEach(s => chips.push(`<span class="tk-chip">${esc(s)}</span>`));
-  d.okr.forEach(s => chips.push(`<span class="tk-chip is-okr">${esc(s)}</span>`));
   if (d.dxct) chips.push('<span class="tk-chip is-dxct">ĐXCT</span>');
-  if (d.golivedOn) chips.push(`<span class="tk-chip is-okr">Đã golive ${fmtDate(d.golivedOn)}</span>`);
+  if (d.golivedOn) chips.push(`<span class="tk-chip is-good">Đã golive ${fmtDate(d.golivedOn)}</span>`);
   d.deps.forEach(s => chips.push(`<span class="tk-chip is-dep">${esc(s)}</span>`));
   d.warn.filter(w => w.indexOf('Lệch') === -1).forEach(w => chips.push(`<span class="tk-chip is-warn">${esc(w)}</span>`));
 
@@ -326,7 +322,7 @@ function tkShowGuide() {
       <div><b>Line</b> (bắt buộc 1): GNOL · BLOL · HSTD (Ký số) · ThauChi · SCF — nhãn phụ: CKTC · IDNES · TT134 · GNOL_TuDong</div>
       <div><b>DCB_Task</b>: đã chốt yêu cầu với IT</div>
       <div><b>Expect_Golive_YYYYMM</b>: tháng golive dự kiến · <b>GOLIVE_YYYYMMDD</b>: đã golive</div>
-      <div><b>OKR_&lt;KR&gt;</b> (vd OKR_KR2_Trustlist) · <b>DXCT_QLCT</b> · <b>Dep_BPM / Dep_FCC / Dep_CCP</b></div>
+      <div><b>DXCT_QLCT</b> · <b>Dep_BPM / Dep_FCC / Dep_CCP</b></div>
       <div style="margin-top:8px"><b>UI / TLPT = Sub-task</b> dưới ticket cha (Story/Improvement/Bug), assign người phụ trách:<br>
       &nbsp;· UI: <code>DCB-xxxxx [UI/UX]&lt;tên ticket cha&gt;</code><br>
       &nbsp;· TLPT: <code>DCB-xxxxx [BA]&lt;tên ticket cha&gt;</code><br>

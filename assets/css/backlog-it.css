@@ -12,7 +12,7 @@
 .tk-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ── Stat cards (bấm = lọc nhanh) ── */
-.tk-stat-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
+.tk-stat-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
 @media (max-width: 1100px) { .tk-stat-bar { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 560px)  { .tk-stat-bar { grid-template-columns: repeat(2, 1fr); } }
 .tk-stat {
@@ -57,7 +57,7 @@
 .tk-mismatch { color: var(--danger); font-weight: 700; }
 .tk-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .tk-chip { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-2); }
-.tk-chip.is-okr  { background: var(--success-bg); border-color: transparent; color: var(--success); }
+.tk-chip.is-good { background: var(--success-bg); border-color: transparent; color: var(--success); }
 .tk-chip.is-dxct { background: var(--info-bg); border-color: transparent; color: var(--info); }
 .tk-chip.is-dep  { background: var(--purple-bg); border-color: transparent; color: var(--purple); }
 .tk-chip.is-warn { background: var(--warning-bg); border-color: transparent; color: var(--warning); }
