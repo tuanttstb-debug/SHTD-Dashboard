@@ -10,6 +10,10 @@
 //   R..V (17..21) cột team — import KHÔNG đụng, sửa trên SHTD:
 //     Ưu tiên team, Quyết định planning, Kỳ planning, Initiative ID, Ghi chú
 //   W..X (22..23) Import lúc, Import bởi
+//
+// KHÔNG gọi setNumberFormat: sheet có thể ở dạng Bảng (cột đã nhập kiểu) → Sheets ném
+// "không thể đặt định dạng số…" lúc flush, try/catch không bắt được (bài học S67.2, LIVE 29/10).
+// Ngày Sheets tự đổi sang dd/MM/yyyy → client tkParseDate đọc được.
 
 var TICKET_SHEET_NAME = 'Ticket_Master';
 
@@ -32,8 +36,6 @@ function _tkSheet(ss) {
   var sheet = ss.getSheetByName(TICKET_SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(TICKET_SHEET_NAME);
-    // Toàn bộ là text thuần → Sheets không tự đổi '2026-10-28' sang ngày theo locale.
-    try { sheet.getRange(1, 1, sheet.getMaxRows(), TICKET_HEADER.length).setNumberFormat('@'); } catch (e) {}
     sheet.getRange(1, 1, 1, TICKET_HEADER.length).setValues([TICKET_HEADER]);
     sheet.setFrozenRows(1);
     SpreadsheetApp.flush();
@@ -101,14 +103,10 @@ function ticketImport(rows, username) {
       }
     }
     if (cur.length) {
-      var rng = sheet.getRange(2, 1, cur.length, TICKET_HEADER.length);
-      try { rng.setNumberFormat('@'); } catch (e) {}
-      rng.setValues(cur.map(_tkPad));
+      sheet.getRange(2, 1, cur.length, TICKET_HEADER.length).setValues(cur.map(_tkPad));
     }
     if (appendRows.length) {
-      var rng2 = sheet.getRange(cur.length + 2, 1, appendRows.length, TICKET_HEADER.length);
-      try { rng2.setNumberFormat('@'); } catch (e) {}
-      rng2.setValues(appendRows);
+      sheet.getRange(cur.length + 2, 1, appendRows.length, TICKET_HEADER.length).setValues(appendRows);
     }
     SpreadsheetApp.flush();
     return { added: added, updated: updated, total: cur.length + appendRows.length };
@@ -137,9 +135,7 @@ function ticketUpdate(key, patch) {
     for (var c in patch) {
       var ci = parseInt(c, 10);
       if (allowed.indexOf(ci) === -1) continue;
-      var cell = sheet.getRange(target, ci + 1);
-      try { cell.setNumberFormat('@'); } catch (e) {}
-      cell.setValue(patch[c] == null ? '' : String(patch[c]));
+      sheet.getRange(target, ci + 1).setValue(patch[c] == null ? '' : String(patch[c]));
     }
     SpreadsheetApp.flush();
   } finally {
