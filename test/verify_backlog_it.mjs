@@ -259,7 +259,86 @@ const ex = await page.evaluate(() => {
 log('BI10-head', ex.head.includes('Sẵn sàng chuyển IT') && ex.head.includes('Số ngày không nhích') && ex.head.length === 23, '23 cột bảng planning');
 log('BI10-row', ex.row[0] === 'BLOL' && ex.row[16] === 'Đạt' && ex.row[21] === 44, `BLOL · Đạt · 44 ngày (${ex.row[0]} · ${ex.row[16]} · ${ex.row[21]})`);
 
+/* ── BI11 — file HTML xuất Jira (Jira cơ quan chỉ cho xuất HTML) ── */
+const html = await page.evaluate(() => {
+  const doc = `<html><head><title>Jira</title></head><body>
+    <table border="1"><tr><td colspan="11"><img alt="Jira"></td></tr>
+      <tr><td colspan="11"><a href="#">Jira</a></td></tr>
+      <tr><td colspan="11">Displaying <strong>2</strong> issues at <strong>29/Oct/26 8:58 AM</strong>.</td></tr></table>
+    <issuetable-web-component data-content="issues"><table id="issuetable" border="1">
+      <thead><tr class="rowHeader">
+        <th class="colHeaderLink headerrow-issuetype" data-id="issuetype">
+            Issue Type
+        </th>
+        <th data-id="issuekey"> Key </th><th data-id="summary"> Summary </th><th data-id="description"> Description </th>
+        <th data-id="assignee"> Assignee </th><th data-id="reporter"> Reporter </th><th data-id="priority"> Priority </th>
+        <th data-id="status"> Status </th><th data-id="resolution"> Resolution </th><th data-id="created"> Created </th>
+        <th data-id="updated"> Updated </th><th data-id="labels"> Labels </th></tr></thead>
+      <tbody>
+        <tr id="issuerow1" data-issuekey="DCB-90101" class="issuerow">
+          <td class="issuetype">    Story
+</td>
+          <td class="issuekey"><a class="issue-link" href="#">DCB-90101</a></td>
+          <td class="summary"><p>
+                [KySoHSTD][APP] Ticket HTML giả lập
+    </p></td>
+          <td class="description">Dòng một<br>Dòng hai</td>
+          <td class="assignee">            Dev Mot &lt;TN-EDF.IT&gt;
+    </td>
+          <td class="reporter">Po Hai &lt;CVC-SPTDDN.CB&gt;</td>
+          <td class="priority">           High
+    </td>
+          <td class="status"><span class="jira-issue-status-lozenge">To Do</span></td>
+          <td class="resolution">    <em>Unresolved</em></td>
+          <td class="created"> 28/Oct/26 4:56 PM </td>
+          <td class="updated"> 28/Oct/26 4:56 PM </td>
+          <td class="labels">    HSTD</td>
+        </tr>
+        <tr id="issuerow2" data-issuekey="DCB-90102" class="issuerow">
+          <td class="issuetype">Story</td>
+          <td class="issuekey"><a class="issue-link" href="#">DCB-90102</a></td>
+          <td class="summary"><p>[KySoHSTD][WEB] Ticket đã golive</p></td>
+          <td class="description"></td>
+          <td class="assignee">Dev Mot &lt;TN-EDF.IT&gt;</td>
+          <td class="reporter">Po Hai &lt;CVC-SPTDDN.CB&gt;</td>
+          <td class="priority">Medium</td>
+          <td class="status"><span>Done</span></td>
+          <td class="resolution">Done</td>
+          <td class="created"> 03/Sep/26 9:10 AM </td>
+          <td class="updated"> 09/Oct/26 6:02 PM </td>
+          <td class="labels">    DCB, GOLIVE_20261009, HSTD, expect_Golive_202610</td>
+        </tr>
+      </tbody></table></issuetable-web-component></body></html>`;
+  const r = tkParseWorkbook(tkHtmlToWorkbook(doc));
+  const by = Object.fromEntries(r.tickets.map(t => [t.key, t]));
+  const d2 = by['DCB-90102'] ? tkDerive(by['DCB-90102'], new Date(2026, 9, 29)) : {};
+  return { n: r.tickets.length, sheets: r.sheets, a: by['DCB-90101'], b: by['DCB-90102'], d2,
+    looks: [tkLooksHtml('Jira 2026-10-29T08_58_09+0700.html', ''), tkLooksHtml('x.xlsx', 'PK')] };
+});
+log('BI11-count', html.n === 2 && html.sheets.length === 1 && html.sheets[0].indexOf('issuetable') === 0, `HTML: 2 ticket, chỉ bảng issuetable (${html.sheets.join(', ')})`);
+log('BI11-fields', html.a && html.a.type === 'Story' && html.a.summary === '[KySoHSTD][APP] Ticket HTML giả lập'
+  && html.a.status === 'To Do' && html.a.priority === 'High' && html.a.resolution === 'Unresolved', 'Bỏ khoảng trắng/xuống dòng thừa, đọc span trạng thái');
+log('BI11-entities', html.a && html.a.assignee === 'Dev Mot <TN-EDF.IT>', `&lt;…&gt; → "${html.a && html.a.assignee}"`);
+log('BI11-desc-br', html.a && html.a.desc === 'Dòng một\nDòng hai', 'Description giữ xuống dòng từ <br>');
+log('BI11-dates', html.a && html.a.created === '2026-10-28' && html.b.updated === '2026-10-09', `Ngày "28/Oct/26 4:56 PM" → ${html.a && html.a.created}`);
+log('BI11-labels', html.b && html.b.labels === 'DCB, GOLIVE_20261009, HSTD, expect_Golive_202610', `Labels: ${html.b && html.b.labels}`);
+log('BI11-golive', html.d2.golive === '202610' && html.d2.golivedOn === '2026-10-09' && html.d2.open === false, 'expect_Golive (chữ thường) → 202610 · GOLIVE_20261009 → đã golive · Done → đóng');
+log('BI11-detect', html.looks[0] === true && html.looks[1] === false, 'Nhận diện file .html');
+
 /* ── (tùy chọn) file thật, không commit ── */
+const REAL_HTML = process.env.TK_REAL_HTML;
+if (REAL_HTML && fs.existsSync(REAL_HTML)) {
+  const txt = fs.readFileSync(REAL_HTML, 'utf-8');
+  const realH = await page.evaluate((txt) => {
+    const r = tkParseWorkbook(tkHtmlToWorkbook(txt));
+    const today = new Date();
+    return { n: r.tickets.length, rows: r.tickets.map(t => { const d = tkDerive(t, today);
+      return [t.key, t.type, t.status, t.priority, d.line, t.created, t.updated, t.labels, d.golive, d.golivedOn, d.open ? 'mở' : 'đóng', d.ready ? 'Đạt' : 'Chưa: ' + d.missing.join('/')]; }) };
+  }, txt);
+  console.log(`\n   [HTML thật] ${realH.n} ticket`);
+  realH.rows.forEach(r => console.log('   ' + r.join(' | ')));
+  log('REAL-HTML', realH.n > 0 && realH.rows.every(r => r[4] && r[5] && r[6]), `HTML thật: ${realH.n} ticket, đủ line + ngày`);
+}
 const REAL = process.env.TK_REAL_FILE;
 if (REAL && fs.existsSync(REAL)) {
   const b64 = fs.readFileSync(REAL).toString('base64');

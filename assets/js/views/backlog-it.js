@@ -120,7 +120,7 @@ function renderBacklogIt() {
       <button class="btn btn-ghost btn-sm" onclick="tkShowGuide()"><i class="fa-solid fa-tags"></i> Quy ước label</button>
       <button class="btn btn-ghost btn-sm" onclick="tkExportExcel()"><i class="fa-solid fa-file-excel"></i> Xuất bảng planning</button>
       <button class="btn btn-primary btn-sm" onclick="document.getElementById('tkFileInput').click()"><i class="fa-solid fa-file-import"></i> Nạp file Jira</button>
-      <input type="file" id="tkFileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="tkHandleImport(event)">
+      <input type="file" id="tkFileInput" accept=".html,.htm,.xlsx,.xls,.csv" style="display:none" onchange="tkHandleImport(event)">
     </div>
   </div>
   <div id="tkStatBar" class="tk-stat-bar"></div>
@@ -189,7 +189,7 @@ function _tkRenderTable(list) {
   if (!wrap) return;
   if (!(dbTickets || []).length) {
     wrap.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-file-import"></i>
-      <div><b>Chưa có ticket.</b> Xuất filter Jira (Excel) gồm Key · Summary · Status · Priority · Assignee · Updated · Labels… rồi bấm <b>Nạp file Jira</b>.</div></div>`;
+      <div><b>Chưa có ticket.</b> Trên Jira: Export → <b>HTML report</b> (hoặc Excel) với cột Key · Summary · Status · Priority · Assignee · Updated · Labels… rồi bấm <b>Nạp file Jira</b>.</div></div>`;
     return;
   }
   if (!list.length) {
@@ -218,6 +218,7 @@ function _tkRowHtml(t, d) {
   d.subs.forEach(s => chips.push(`<span class="tk-chip">${esc(s)}</span>`));
   d.okr.forEach(s => chips.push(`<span class="tk-chip is-okr">${esc(s)}</span>`));
   if (d.dxct) chips.push('<span class="tk-chip is-dxct">ĐXCT</span>');
+  if (d.golivedOn) chips.push(`<span class="tk-chip is-okr">Đã golive ${fmtDate(d.golivedOn)}</span>`);
   d.deps.forEach(s => chips.push(`<span class="tk-chip is-dep">${esc(s)}</span>`));
   d.warn.filter(w => w.indexOf('Lệch') === -1).forEach(w => chips.push(`<span class="tk-chip is-warn">${esc(w)}</span>`));
 
@@ -263,15 +264,19 @@ function tkHandleImport(e) {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
+  const isHtml = tkLooksHtml(file.name, '');
   const reader = new FileReader();
   reader.onload = async ev => {
     let parsed;
     try {
-      const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
+      // Jira cơ quan chỉ cho xuất HTML ("Export → HTML report"); vẫn nhận Excel/CSV
+      const wb = isHtml
+        ? tkHtmlToWorkbook(ev.target.result)
+        : XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
       parsed = tkParseWorkbook(wb);
     } catch (err) { toast('Không đọc được file: ' + err.message, 'error'); return; }
     if (!parsed.tickets.length) {
-      toast('Không thấy cột Key + Summary trong file. Xuất lại filter Jira dạng Excel.', 'error', 6000);
+      toast('Không thấy cột Key + Summary trong file. Xuất lại filter Jira (HTML report hoặc Excel).', 'error', 6000);
       return;
     }
     const have = new Set((dbTickets || []).map(t => t.key));
@@ -289,7 +294,7 @@ function tkHandleImport(e) {
     toast(`Đã nạp: ${res.result.added} mới · ${res.result.updated} cập nhật${res.offline ? ' (cục bộ)' : ''}.`, res.offline ? 'warning' : 'success');
     renderBacklogIt();
   };
-  reader.readAsArrayBuffer(file);
+  if (isHtml) reader.readAsText(file, 'utf-8'); else reader.readAsArrayBuffer(file);
 }
 
 function tkExportExcel() {

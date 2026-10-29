@@ -152,6 +152,9 @@ function tkDerive(t, today) {
   const dcbTask = _tkHas(labels, 'DCB_Task');
   const golives = labels.map(l => (l.match(/^Expect_Golive_(\d{6})$/i) || [])[1]).filter(Boolean).sort();
   const golive = golives.length ? golives[golives.length - 1] : '';
+  // GOLIVE_YYYYMMDD = ngày đã golive thật (label Jira đang dùng)
+  const goned = labels.map(l => (l.match(/^GOLIVE_(\d{8})$/i) || [])[1]).filter(Boolean).sort();
+  const golivedOn = goned.length ? `${goned[goned.length - 1].slice(0, 4)}-${goned[goned.length - 1].slice(4, 6)}-${goned[goned.length - 1].slice(6)}` : '';
   const okr = labels.filter(l => /^OKR_/i.test(l));
   const deps = labels.filter(l => /^Dep_/i.test(l));
   const dxct = _tkHas(labels, 'DXCT_QLCT');
@@ -174,7 +177,7 @@ function tkDerive(t, today) {
   if (prioTeam && prioJira && prioTeam !== prioJira) warn.push(`Lệch ưu tiên (Jira ${t.priority} ↔ team ${prioTeam})`);
 
   return {
-    labels, line, subs, ui, tlpt, dcbTask, golive, okr, deps, dxct,
+    labels, line, subs, ui, tlpt, dcbTask, golive, golivedOn, okr, deps, dxct,
     open: tkIsOpen(t), ready: missing.length === 0, missing,
     staleDays, staleLevel, prioJira, prioTeam,
     prioMismatch: !!(prioTeam && prioJira && prioTeam !== prioJira),
@@ -294,6 +297,40 @@ function tkParseWorkbook(wb) {
     return t;
   });
   return { tickets, sheets, skipped };
+}
+
+/* ══════════════ đọc file HTML xuất Jira (Jira cơ quan chỉ cho xuất HTML) ══════════════ */
+
+// Ô bảng → chữ: <br> giữ xuống dòng, gom khoảng trắng mỗi dòng (ô Description nhiều dòng).
+function _tkCellText(cell) {
+  const c = cell.cloneNode(true);
+  c.querySelectorAll('br').forEach(b => b.replaceWith('\n'));
+  c.querySelectorAll('p,div,li').forEach(b => b.append('\n'));
+  return String(c.textContent || '')
+    .split('\n').map(x => x.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+}
+
+/**
+ * HTML "Export → HTML report" của Jira → workbook SheetJS (mỗi <table> 1 sheet),
+ * để dùng chung tkParseWorkbook (dò header Key + Summary, gộp theo Key).
+ * Bảng đầu (logo/filter/"Displaying N issues") tự bị bỏ vì không có header Key.
+ */
+function tkHtmlToWorkbook(html) {
+  const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+  const wb = XLSX.utils.book_new();
+  doc.querySelectorAll('table').forEach((tbl, i) => {
+    const aoa = [];
+    tbl.querySelectorAll('tr').forEach(tr => {
+      if (tr.closest('table') !== tbl) return;   // bỏ dòng của bảng lồng
+      aoa.push([...tr.children].filter(c => c.tagName === 'TD' || c.tagName === 'TH').map(_tkCellText));
+    });
+    if (aoa.length > 1) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), (tbl.id || 'table') + '_' + (i + 1));
+  });
+  return wb;
+}
+
+function tkLooksHtml(name, text) {
+  return /\.html?$/i.test(name || '') || /^\s*</.test(String(text || '').slice(0, 200));
 }
 
 /* ══════════════ bảng planning xuất Excel (gửi DCB) ══════════════ */
