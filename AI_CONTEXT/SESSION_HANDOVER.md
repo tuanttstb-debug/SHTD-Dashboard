@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-29 (S94.1–S94.4 — LIVE fix + HTML Jira + Sub-task UI/BA + PO = Reporter)
+**Model**: Claude Opus 5.5 · **Version**: v6.69 → **v6.71** · cùng phiên hub, sau test LIVE với anh
+
+- **Task completed:** (S94.1) LIVE lỗi "không thể đặt định dạng số của các ô trong cột đã nhập" → bỏ mọi `setNumberFormat` (sheet dạng Bảng, lỗi nổ lúc flush, try/catch không bắt — bài học S67.2) · (S94.2) nạp **HTML report** của Jira (Jira cơ quan chỉ cho xuất HTML): `tkHtmlToWorkbook` (DOMParser → SheetJS, bỏ bảng logo, giữ `<br>` Description) + label `GOLIVE_YYYYMMDD` · (S94.3) import đọc dòng cũ bằng `getDisplayValues` (getValues trả Date → "Thu Oct 29…" lệch múi giờ khi ghi lại) + client đọc chuỗi đó / `dd/MM/yyyy HH:mm` · (S94.4) **rule team anh chấn chỉnh 29/10:** PO log ticket cha, việc cần UI/TLPT log Sub-task assign người phụ trách — summary `<KEY cha> [UI/UX]…` / `<KEY cha> [BA]…` → ghép theo KEY đầu summary (HTML không có cột Parent), UI/TLPT suy từ sub-task (Done hết → Xong, có cái đã bắt đầu → Đang, còn lại Cần; không sub-task → Không cần), sub-task gộp dưới dòng cha (mồ côi hiện riêng), "không nhích" tính cả sub-task, cảnh báo "Thiếu Sub-task UI/BA" + sub-task thiếu thẻ · **PO = Reporter Jira** đúng tên (bỏ ép theo line) · xuất planning 26 cột (người làm UI/BA, cảnh báo).
+- **Files changed:** `backend/TicketService.gs` · `assets/js/{tickets-core,config}.js` · `assets/js/views/backlog-it.js` · `assets/css/backlog-it.css` · `index.html` (`?v=20261029e`) · `test/{verify_backlog_it,run_tests}.mjs`.
+- **Decision made:** anh 29/10 — UI/TLPT theo Sub-task, thẻ `[BA]` cho TLPT · PO hiển thị đúng tên Reporter · nhận file HTML.
+- **Blocker:** không — chờ [TT] redeploy GAS 1 lần (`TicketService.gs`: bỏ setNumberFormat + getDisplayValues).
+- **Next step:** [TT] redeploy → [CC] nạp lại `Planning T12.xlsx` + HTML mẫu sub-task trên LIVE (làm sạch 9 dòng "Import lúc" hỏng) → nghiệm thu.
+- **Regression risk:** Thấp — chỉ phân hệ Backlog IT. `verify_backlog_it` 70/70 + HTML thật 12 dòng (4 Story + 4 Sub-task UI + 4 Done). LIVE 29/10: nạp đè cùng mã giữ cột team, 0 trùng (v6.70).
+
+---
+
 # SESSION HANDOVER — 2026-10-29 (S94 — Backlog IT: ticket Jira DCB, hub AIOS D22)
 **Model**: Claude Opus 5.5 · **Version**: v6.68 → **v6.69** · khởi phát từ hub AIOS (`08_Work/W-2610-quy-trinh-team`, planning DCB kỳ T12 lần đầu)
 

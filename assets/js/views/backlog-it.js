@@ -18,30 +18,32 @@ function _tkCanLead() {
   return !!(u && (u.role === 'Admin' || u.role === 'Teamlead'));
 }
 
-function _tkName(username) {
-  if (typeof _appUsers !== 'undefined' && Array.isArray(_appUsers)) {
-    const u = _appUsers.find(x => (x.Username || '').toLowerCase() === String(username || '').toLowerCase());
-    if (u && u.Display_Name) return u.Display_Name;
-  }
-  return '';
-}
-
-// Chuẩn nhãn: "Tuantt4-Trần Thế Tuân" (SHTD lưu username hoa/thường lẫn → hạ thường trước khi gắn nhãn)
-function _tkPerson(username) {
-  return username ? PeopleFilter.label(String(username).toLowerCase(), _tkName(username)) : '–';
+// PO = Reporter trên Jira, hiển thị đúng tên Jira (không ép về username SHTD — anh chốt 29/10)
+function _tkPerson(name) {
+  return name || '–';
 }
 
 // "Dung Vu Van <TN-EDF.IT>" → "Dung Vu Van"
 function _tkShortName(s) {
-  return String(s || '').replace(/<[^>]*>/g, '').trim() || '–';
+  return tkPersonName(s) || '–';
 }
 
 function _tkKyLabel(k) {
   return k && k.length === 6 ? `T${parseInt(k.slice(4), 10)}/${k.slice(0, 4)}` : (k || '–');
 }
 
+// Ticket cha + sub-task "mồ côi" (không thấy cha trong dữ liệu). Sub-task có cha → gộp vào dòng cha.
 function _tkAll(today) {
-  return (dbTickets || []).map(t => ({ t, d: tkDerive(t, today) }));
+  const list = dbTickets || [];
+  const idx = tkSubIndex(list);
+  const keys = new Set(list.map(t => t.key));
+  return list
+    .filter(t => !(tkIsSubtask(t) && keys.has(tkParentKey(t))))
+    .map(t => ({ t, d: tkDerive(t, today, idx) }));
+}
+
+function _tkSubIdx() {
+  return tkSubIndex(dbTickets || []);
 }
 
 function _tkKyOptions(items) {
@@ -57,7 +59,8 @@ function _tkFiltered(items) {
   if (_tkKy) list = list.filter(x => x.d.kyEff === _tkKy);
   if (_tkSearch) {
     const q = _tkSearch.toLowerCase();
-    list = list.filter(x => (x.t.key + ' ' + x.t.summary + ' ' + x.t.labels + ' ' + x.t.assignee + ' ' + x.t.note).toLowerCase().includes(q));
+    const subText = x => x.d.uiSubs.concat(x.d.baSubs).map(s => s.key + ' ' + s.assignee).join(' ');
+    list = list.filter(x => (x.t.key + ' ' + x.t.summary + ' ' + x.t.labels + ' ' + x.t.assignee + ' ' + x.t.reporter + ' ' + x.t.note + ' ' + subText(x)).toLowerCase().includes(q));
   }
   return list;
 }
@@ -142,7 +145,7 @@ function renderBacklogIt() {
 
   _tkPf = PeopleFilter.bind({ team: 'tkTeamFilter', user: 'tkUserFilter', onChange: _tkRenderBody });
   const people = [];
-  all.forEach(x => { if (x.d.po) people.push({ username: x.d.po.toLowerCase(), name: _tkName(x.d.po), team: x.d.team }); });
+  all.forEach(x => { if (x.d.po) people.push({ username: x.d.po, name: '', team: x.d.team }); });
   _tkPf.setPeople(people);
   _tkRenderBody();
   tkUpdateBadge();
@@ -222,16 +225,22 @@ function _tkRowHtml(t, d) {
   d.deps.forEach(s => chips.push(`<span class="tk-chip is-dep">${esc(s)}</span>`));
   d.warn.filter(w => w.indexOf('Lệch') === -1).forEach(w => chips.push(`<span class="tk-chip is-warn">${esc(w)}</span>`));
 
-  const ready = d.ready
+  // Sub-task UI / BA gộp dưới ticket cha: trạng thái + người phụ trách + mã sub-task
+  const subLine = (label, state, subsList) => subsList.length
+    ? `<div class="tk-subline"><b>${label}</b> ${esc(state)} · ${subsList.map(s => `<a class="tk-key" href="${TK_JIRA_BROWSE}${esc(s.key)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(s.key)}</a> ${esc(_tkShortName(s.assignee))}`).join(', ')}</div>`
+    : '';
+  const ready = (d.ready
     ? '<span class="tk-ok"><i class="fa-solid fa-circle-check"></i> Đạt</span>'
-    : `<span class="tk-no"><i class="fa-solid fa-circle-xmark"></i> Chưa</span><div class="tk-missing">${d.missing.map(esc).join(' · ')}</div>`;
+    : `<span class="tk-no"><i class="fa-solid fa-circle-xmark"></i> Chưa</span><div class="tk-missing">${d.missing.map(esc).join(' · ')}</div>`)
+    + subLine('UI', d.ui, d.uiSubs) + subLine('BA', d.tlpt, d.baSubs);
   const stale = d.staleDays == null ? '–'
-    : `<span class="tk-stale ${d.staleLevel ? 'is-' + d.staleLevel : ''}">${d.staleDays} ngày</span><div class="tk-muted">${fmtDate(t.updated)}</div>`;
+    : `<span class="tk-stale ${d.staleLevel ? 'is-' + d.staleLevel : ''}">${d.staleDays} ngày</span><div class="tk-muted">${fmtDate(d.lastUpd)}</div>`;
+  const typeLine = d.isSub && d.parentKey ? `Sub-task của ${esc(d.parentKey)}` : esc(t.type || '');
   const prio = `<div>${esc(t.priority || '–')}</div><div class="tk-muted${d.prioMismatch ? ' tk-mismatch' : ''}">${d.prioTeam ? 'Team: ' + d.prioTeam : 'Team: –'}</div>`;
   const dec = t.quyetDinh ? `<span class="tk-dec is-${t.quyetDinh === 'Đưa vào kỳ' ? 'in' : t.quyetDinh === 'Bỏ' ? 'drop' : 'hold'}">${esc(t.quyetDinh)}</span>` : '<span class="tk-muted">Chưa chốt</span>';
 
   return `<tr class="tk-row${d.open ? '' : ' is-done'}" onclick="tkOpenModal('${key}')">
-    <td><a class="tk-key" href="${TK_JIRA_BROWSE}${key}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${key}</a><div class="tk-muted">${esc(t.type || '')}</div></td>
+    <td><a class="tk-key" href="${TK_JIRA_BROWSE}${key}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${key}</a><div class="tk-muted">${typeLine}</div></td>
     <td><div class="tk-sum">${esc(t.summary || '–')}</div>${chips.length ? `<div class="tk-chips">${chips.join('')}</div>` : ''}</td>
     <td><div><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b></div><div class="tk-muted">${esc(_tkPerson(d.po))}</div></td>
     <td><div>${esc(t.status || '–')}</div><div class="tk-muted" title="${esc(t.assignee)}">${esc(_tkShortName(t.assignee))}</div></td>
@@ -300,9 +309,9 @@ function tkHandleImport(e) {
 function tkExportExcel() {
   const list = _tkSorted(_tkApplyPreset(_tkFiltered(_tkAll(new Date()))));
   if (!list.length) { toast('Không có ticket để xuất.', 'warning'); return; }
-  const aoa = tkExportRows(list.map(x => x.t), new Date());
+  const aoa = tkExportRows(list.map(x => x.t), new Date(), _tkSubIdx());
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = aoa[0].map((h, i) => ({ wch: i === 4 ? 60 : i === 17 ? 36 : Math.max(10, h.length + 2) }));
+  ws['!cols'] = aoa[0].map((h, i) => ({ wch: i === 4 ? 60 : (h === 'Thiếu' || h === 'Cảnh báo') ? 36 : Math.max(10, h.length + 2) }));
   ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: aoa.length - 1, c: aoa[0].length - 1 } }) };
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Planning');
@@ -315,12 +324,15 @@ function tkShowGuide() {
     <div class="tk-guide">
       <div><b>Line</b> (bắt buộc 1): GNOL · BLOL · HSTD (Ký số) · ThauChi · SCF — nhãn phụ: CKTC · IDNES · TT134 · GNOL_TuDong</div>
       <div><b>DCB_Task</b>: đã chốt yêu cầu với IT</div>
-      <div><b>UI_Can</b> / <b>UI_Xong</b>: cần UI / UI đã xong (không gắn = không cần UI)</div>
-      <div><b>TLPT_Xong</b>: TLPT/SRS đã xong</div>
-      <div><b>Expect_Golive_YYYYMM</b>: tháng golive dự kiến</div>
+      <div><b>Expect_Golive_YYYYMM</b>: tháng golive dự kiến · <b>GOLIVE_YYYYMMDD</b>: đã golive</div>
       <div><b>OKR_&lt;KR&gt;</b> (vd OKR_KR2_Trustlist) · <b>DXCT_QLCT</b> · <b>Dep_BPM / Dep_FCC / Dep_CCP</b></div>
-      <div style="margin-top:8px"><b>Sẵn sàng chuyển IT</b> = DCB_Task + (không cần UI hoặc UI_Xong) + TLPT_Xong + Expect_Golive.<br>
-      Ticket không nhích ≥ ${TK_STALE_RED} ngày → chốt làm hoặc bỏ ở buổi planning.</div>
+      <div style="margin-top:8px"><b>UI / TLPT = Sub-task</b> dưới ticket cha (Story/Improvement/Bug), assign người phụ trách:<br>
+      &nbsp;· UI: <code>DCB-xxxxx [UI/UX]&lt;tên ticket cha&gt;</code><br>
+      &nbsp;· TLPT: <code>DCB-xxxxx [BA]&lt;tên ticket cha&gt;</code><br>
+      Không có sub-task = không cần. Sub-task Done hết → Xong.</div>
+      <div style="margin-top:8px"><b>Sẵn sàng chuyển IT</b> = DCB_Task + UI xong/không cần + TLPT xong/không cần + Expect_Golive.<br>
+      Ticket (tính cả sub-task) không nhích ≥ ${TK_STALE_RED} ngày → chốt làm hoặc bỏ ở buổi planning.<br>
+      Khi xuất Jira: filter <b>gồm cả Sub-task</b>.</div>
     </div>`, 'info', 'Đã hiểu');
 }
 
@@ -345,8 +357,11 @@ function tkOpenModal(key) {
   if (!t) return;
   _tkEnsureModal();
   _tkEditKey = key;
-  const d = tkDerive(t, new Date());
+  const d = tkDerive(t, new Date(), _tkSubIdx());
   const lead = _tkCanLead();
+  const subInfo = (label, state, list) => list.length
+    ? `<div class="tk-full"><span>Sub-task ${label} · ${esc(state)}</span>${list.map(s => `<a class="tk-key" href="${TK_JIRA_BROWSE}${esc(s.key)}" target="_blank" rel="noopener">${esc(s.key)}</a> ${esc(_tkShortName(s.assignee))} · ${esc(s.status)}`).join('<br>')}</div>`
+    : '';
   const dis = lead ? '' : ' disabled title="Teamlead/Admin chốt"';
   const inits = (db.initiatives || []).filter(i => !i.parentId && i.type !== 'milestone');
   const box = document.getElementById('tkModalBox');
@@ -360,17 +375,18 @@ function tkOpenModal(key) {
       <div class="modal-close" onclick="tkCloseModal()"><i class="fa-solid fa-xmark"></i></div>
     </div>
     <div class="tk-modal-info">
-      <div><span>Line · PO</span><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b> · ${esc(_tkPerson(d.po))}</div>
+      <div><span>Line · PO (Reporter)</span><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b> · ${esc(_tkPerson(d.po))}</div>
       <div><span>Dev</span>${esc(_tkShortName(t.assignee))}</div>
-      <div><span>Reporter</span>${esc(_tkShortName(t.reporter))}</div>
-      <div><span>Tạo · cập nhật</span>${fmtDate(t.created)} · ${fmtDate(t.updated)} (${d.staleDays == null ? '–' : d.staleDays + ' ngày'})</div>
+      <div><span>Tạo · nhích gần nhất</span>${fmtDate(t.created)} · ${fmtDate(d.lastUpd)} (${d.staleDays == null ? '–' : d.staleDays + ' ngày'})</div>
+      <div><span>UI · TLPT (BA)</span>${esc(d.ui)} · ${esc(d.tlpt)}</div>
       <div class="tk-full"><span>Labels</span>${esc(t.labels || '–')}</div>
-      <div class="tk-full"><span>Sẵn sàng chuyển IT</span>${d.ready ? '<b class="tk-ok">Đạt</b>' : '<b class="tk-no">Chưa</b> — ' + d.missing.map(esc).join(' · ')}</div>
+      ${subInfo('UI', d.ui, d.uiSubs)}${subInfo('BA', d.tlpt, d.baSubs)}
+      <div class="tk-full"><span>Sẵn sàng chuyển IT</span>${d.ready ? '<b class="tk-ok">Đạt</b>' : '<b class="tk-no">Chưa</b> — ' + d.missing.map(esc).join(' · ')}${d.warn.length ? '<br><span class="tk-mismatch">' + d.warn.map(esc).join(' · ') + '</span>' : ''}</div>
       ${t.desc ? `<div class="tk-full tk-desc"><span>Description</span>${esc(t.desc)}</div>` : ''}
     </div>
     <div class="tk-form">
-      <label>UI<select id="tkfUi" class="form-control form-control-sm">${_tkOpts(TK_UI_VALUES, t.ui, '– theo label –')}</select></label>
-      <label>TLPT<select id="tkfTlpt" class="form-control form-control-sm">${_tkOpts(TK_TLPT_VALUES, t.tlpt, '– theo label –')}</select></label>
+      <label>UI<select id="tkfUi" class="form-control form-control-sm">${_tkOpts(TK_UI_VALUES, t.ui, '– theo Sub-task –')}</select></label>
+      <label>TLPT<select id="tkfTlpt" class="form-control form-control-sm">${_tkOpts(TK_TLPT_VALUES, t.tlpt, '– theo Sub-task –')}</select></label>
       <label>Loại backlog<select id="tkfLoai" class="form-control form-control-sm">${_tkOpts(TK_LOAI_VALUES, t.loai, '–')}</select></label>
       <label>Ưu tiên team<select id="tkfUuTien" class="form-control form-control-sm"${dis}>${_tkOpts(['1', '2', '3'], t.uuTien, '–')}</select></label>
       <label>Quyết định planning<select id="tkfDec" class="form-control form-control-sm"${dis}>${_tkOpts(TK_DECISIONS, t.quyetDinh, 'Chưa chốt')}</select></label>
@@ -379,7 +395,7 @@ function tkOpenModal(key) {
       <label class="tk-full">Ghi chú<textarea id="tkfNote" class="form-control form-control-sm" rows="2">${esc(t.note)}</textarea></label>
     </div>
     <div class="tk-modal-foot">
-      <span class="tk-muted">Cột Jira sửa ở Jira rồi nạp lại file. UI/TLPT: ưu tiên label UI_Xong · TLPT_Xong.</span>
+      <span class="tk-muted">Cột Jira sửa ở Jira rồi nạp lại file. UI/TLPT lấy theo Sub-task [UI/UX] · [BA] trên Jira.</span>
       <button class="btn btn-ghost btn-sm" onclick="tkCloseModal()">Đóng</button>
       <button class="btn btn-primary btn-sm" onclick="tkSaveModal()"><i class="fa-solid fa-check"></i> Lưu</button>
     </div>`;

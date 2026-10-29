@@ -4,9 +4,10 @@
 //
 // Label chuẩn:
 //   Line      GNOL · BLOL · HSTD (Ký số) · ThauChi · SCF      Nhãn phụ  CKTC · IDNES · TT134 · GNOL_TuDong
-//   DCB_Task  đã chốt yêu cầu          UI_Can / UI_Xong   (không gắn = không cần UI)
-//   TLPT_Xong TLPT/SRS xong            Expect_Golive_YYYYMM
+//   DCB_Task  đã chốt yêu cầu          Expect_Golive_YYYYMM · GOLIVE_YYYYMMDD (đã golive)
 //   OKR_<KR>  gắn OKR NPL              DXCT_QLCT · Dep_BPM · Dep_FCC · Dep_CCP
+// UI / TLPT: Sub-task "<KEY cha> [UI/UX]…" / "<KEY cha> [BA]…" (rule team 29/10) — label UI_*/TLPT_Xong cũ vẫn đọc.
+// PO = Reporter trên Jira.
 
 let dbTickets = [];
 
@@ -33,10 +34,8 @@ const TK_TEAM = 'Số';
 const TK_LINES = ['GNOL', 'BLOL', 'HSTD', 'ThauChi', 'SCF'];
 const TK_LINE_LABEL = { GNOL: 'GNOL', BLOL: 'BLOL', HSTD: 'Ký số', ThauChi: 'Thấu chi', SCF: 'SCF' };
 const TK_SUBS = ['CKTC', 'IDNES', 'TT134', 'GNOL_TuDong'];
-// Người Làm theo line (04_Knowledge/people/TEAM_SO_HOA.md — Lead mọi line = TuanTT4)
-const TK_LINE_PO = { GNOL: 'DungLQ1', SCF: 'DungLQ1', BLOL: 'QuangNN3', ThauChi: 'QuangNN3', HSTD: 'TuanTT4' };
 const TK_UI_VALUES = ['Không cần', 'Cần', 'Đang', 'Xong'];
-const TK_TLPT_VALUES = ['Chưa', 'Đang', 'Xong'];
+const TK_TLPT_VALUES = ['Không cần', 'Cần', 'Đang', 'Xong'];
 const TK_LOAI_VALUES = ['Lỗi', 'Sửa nhỏ', 'Cần UI', 'Cần tài liệu', 'Tính năng'];
 const TK_DECISIONS = ['Đưa vào kỳ', 'Giữ backlog', 'Bỏ'];
 const TK_DONE_STATUS = ['done', 'closed', 'cancelled', 'canceled', 'rejected'];
@@ -132,15 +131,68 @@ function _tkDays(fromIso, today) {
   return Math.max(0, Math.round((t0 - d) / 86400000));
 }
 
+/* ── Sub-task UI / BA (rule team, anh chấn chỉnh 29/10) ──
+   PO log ticket cha (Story/Improvement/Bug); việc cần UI hoặc TLPT → PO log Sub-task, assign người phụ trách.
+   Summary sub-task = "<KEY cha> [UI/UX]<tên ticket cha>" · TLPT: "<KEY cha> [BA]<tên ticket cha>".
+   File HTML Jira không có cột Parent → ghép theo KEY ở đầu summary. */
+const _TK_KEY_RE = /^\s*([A-Z][A-Z0-9]+-\d+)\b/;
+const _TK_TODO_STATUS = ['to do', 'open', 'backlog', 'new', 'mở'];
+
+function tkIsSubtask(t) {
+  return /sub-?\s*task/i.test(String(t.type || ''));
+}
+
+function tkParentKey(t) {
+  if (!tkIsSubtask(t)) return '';
+  const m = String(t.summary || '').match(_TK_KEY_RE);
+  if (m) return m[1].toUpperCase();
+  const e = String(t.epic || '').trim().toUpperCase();   // export Excel có cột Parent
+  return /^[A-Z][A-Z0-9]+-\d+$/.test(e) ? e : '';
+}
+
+// 'UI' | 'BA' | '' theo thẻ trong summary sub-task
+function tkSubKind(t) {
+  const s = String(t.summary || '');
+  if (/\[\s*(UI\s*\/\s*UX|UI|UX)\s*\]/i.test(s)) return 'UI';
+  if (/\[\s*(BA|TLPT|SRS)\s*\]/i.test(s)) return 'BA';
+  return '';
+}
+
+// Map KEY cha → [sub-task] — truyền vào tkDerive để suy UI/TLPT
+function tkSubIndex(list) {
+  const idx = {};
+  (list || []).forEach(t => {
+    const p = tkParentKey(t);
+    if (p) (idx[p] = idx[p] || []).push(t);
+  });
+  return idx;
+}
+
+// Trạng thái gộp của nhóm sub-task: Xong (đều đóng) · Đang (có cái đã bắt đầu) · Cần (đều To Do)
+function _tkSubState(list) {
+  if (list.every(s => !tkIsOpen(s))) return 'Xong';
+  if (list.some(s => tkIsOpen(s) && _TK_TODO_STATUS.indexOf(String(s.status || '').trim().toLowerCase()) === -1)) return 'Đang';
+  return 'Cần';
+}
+
+// "Dung Vu Van <TN-EDF.IT>" → "Dung Vu Van"
+function tkPersonName(s) {
+  return String(s || '').replace(/<[^>]*>/g, '').trim();
+}
+
 /**
- * Suy ra các trường quản trị từ label (ưu tiên) → cột chuyển tiếp → tiền tố summary.
+ * Suy ra các trường quản trị. UI/TLPT: sub-task [UI/UX]/[BA] (ưu tiên) → label cũ → cột UI/TLPT trên SHTD/bảng tay.
+ * subIdx: kết quả tkSubIndex(toàn bộ ticket) — không truyền thì bỏ qua sub-task.
  * Không sửa `t`; trả object mới.
  */
-function tkDerive(t, today) {
+function tkDerive(t, today, subIdx) {
   today = today || new Date();
   const labels = tkLabels(t);
   const lineLabels = TK_LINES.filter(l => _tkHas(labels, l));
-  const fromSum = _tkLineFromSummary(t.summary);
+  const isSub = tkIsSubtask(t);
+  const parentKey = tkParentKey(t);
+  const subKind = isSub ? tkSubKind(t) : '';
+  const fromSum = _tkLineFromSummary(String(t.summary || '').replace(_TK_KEY_RE, '').replace(/^\s*\[\s*(UI\s*\/\s*UX|UI|UX|BA|TLPT|SRS)\s*\]/i, ''));
   let line = '';
   if (lineLabels.length === 1) line = lineLabels[0];
   else if (lineLabels.length > 1) line = lineLabels.indexOf(fromSum) !== -1 ? fromSum : lineLabels[0];
@@ -149,8 +201,18 @@ function tkDerive(t, today) {
   const subs = TK_SUBS.filter(s => _tkHas(labels, s));
   if (!subs.length && /^\s*\[\s*gnol\s*(tự động|tu dong|tudong)/i.test(t.summary || '')) subs.push('GNOL_TuDong');
 
-  let ui = _tkHas(labels, 'UI_Xong') ? 'Xong' : _tkHas(labels, 'UI_Can') ? 'Cần' : (t.ui || 'Không cần');
-  let tlpt = _tkHas(labels, 'TLPT_Xong') ? 'Xong' : (t.tlpt || 'Chưa');
+  const kids = (!isSub && subIdx && subIdx[t.key]) || [];
+  const uiSubs = kids.filter(s => tkSubKind(s) === 'UI');
+  const baSubs = kids.filter(s => tkSubKind(s) === 'BA');
+  // Đánh dấu "cần" từ label cũ / cột UI-TLPT (bảng tay PO, sửa trên SHTD) — dùng khi chưa có sub-task
+  const uiMarked = _tkHas(labels, 'UI_Xong') ? 'Xong' : _tkHas(labels, 'UI_Can') ? 'Cần' : (t.ui || '');
+  const tlMarked = _tkHas(labels, 'TLPT_Xong') ? 'Xong' : (t.tlpt || '');
+  const ui = uiSubs.length ? _tkSubState(uiSubs) : (uiMarked || 'Không cần');
+  const tlpt = baSubs.length ? _tkSubState(baSubs) : (tlMarked || 'Không cần');
+  const uiBy = [...new Set(uiSubs.map(s => tkPersonName(s.assignee)).filter(Boolean))];
+  const baBy = [...new Set(baSubs.map(s => tkPersonName(s.assignee)).filter(Boolean))];
+  // Ticket "nhích" khi sub-task của nó nhích
+  const lastUpd = [t.updated].concat(kids.map(s => s.updated)).filter(Boolean).sort().pop() || '';
   const dcbTask = _tkHas(labels, 'DCB_Task');
   const golives = labels.map(l => (l.match(/^Expect_Golive_(\d{6})$/i) || [])[1]).filter(Boolean).sort();
   const golive = golives.length ? golives[golives.length - 1] : '';
@@ -164,10 +226,10 @@ function tkDerive(t, today) {
   const missing = [];
   if (!dcbTask) missing.push('Chưa chốt YC (DCB_Task)');
   if (ui === 'Cần' || ui === 'Đang') missing.push('UI chưa xong');
-  if (tlpt !== 'Xong') missing.push('TLPT chưa xong');
+  if (tlpt === 'Cần' || tlpt === 'Đang' || tlpt === 'Chưa') missing.push('TLPT (BA) chưa xong');
   if (!golive) missing.push('Thiếu tháng golive');
 
-  const staleDays = _tkDays(t.updated, today);
+  const staleDays = _tkDays(lastUpd, today);
   const staleLevel = staleDays == null ? '' : staleDays >= TK_STALE_RED ? 'red' : staleDays >= TK_STALE_AMBER ? 'amber' : '';
   const prioJira = tkJiraPrioLevel(t.priority);
   const prioTeam = parseInt(t.uuTien, 10) || 0;
@@ -177,13 +239,19 @@ function tkDerive(t, today) {
   if (lineLabels.length > 1) warn.push('Gắn nhiều line: ' + lineLabels.join(', '));
   if (!okr.length) warn.push('Chưa gắn OKR');
   if (prioTeam && prioJira && prioTeam !== prioJira) warn.push(`Lệch ưu tiên (Jira ${t.priority} ↔ team ${prioTeam})`);
+  // Vi phạm rule: cần UI / TLPT nhưng chưa log sub-task
+  if (!isSub && !uiSubs.length && (uiMarked === 'Cần' || uiMarked === 'Đang')) warn.push('Thiếu Sub-task UI');
+  if (!isSub && !baSubs.length && (tlMarked === 'Chưa' || tlMarked === 'Đang' || tlMarked === 'Cần')) warn.push('Thiếu Sub-task BA');
+  if (isSub && !subKind) warn.push('Sub-task chưa có thẻ [UI/UX] hoặc [BA]');
 
   return {
-    labels, line, subs, ui, tlpt, dcbTask, golive, golivedOn, okr, deps, dxct,
+    labels, line, subs, ui, tlpt, uiBy, baBy, uiSubs, baSubs, isSub, parentKey, subKind,
+    dcbTask, golive, golivedOn, okr, deps, dxct,
     open: tkIsOpen(t), ready: missing.length === 0, missing,
-    staleDays, staleLevel, prioJira, prioTeam,
+    staleDays, staleLevel, lastUpd, prioJira, prioTeam,
     prioMismatch: !!(prioTeam && prioJira && prioTeam !== prioJira),
-    po: TK_LINE_PO[line] || '', team: TK_TEAM, warn,
+    // PO = Reporter trên Jira (đúng tên người log, không ép theo line — anh chốt 29/10)
+    po: tkPersonName(t.reporter), team: TK_TEAM, warn,
     // Kỳ hiệu lực: kỳ đã chốt ở planning, chưa chốt thì theo tháng golive dự kiến
     kyEff: (t.ky || golive || '').replace(/\D/g, '').slice(0, 6),
   };
@@ -337,16 +405,17 @@ function tkLooksHtml(name, text) {
 
 /* ══════════════ bảng planning xuất Excel (gửi DCB) ══════════════ */
 
-function tkExportRows(list, today) {
-  const head = ['Line', 'Nhãn phụ', 'Key', 'Loại issue', 'Summary', 'PO', 'Dev (Assignee)', 'Status',
-    'Priority Jira', 'Ưu tiên team', 'UI', 'TLPT', 'DCB_Task', 'Tháng golive', 'Kỳ planning', 'Quyết định',
-    'Sẵn sàng chuyển IT', 'Thiếu', 'OKR', 'Phụ thuộc', 'Updated', 'Số ngày không nhích', 'Ghi chú'];
+function tkExportRows(list, today, subIdx) {
+  const head = ['Line', 'Nhãn phụ', 'Key', 'Loại issue', 'Summary', 'PO (Reporter)', 'Dev (Assignee)', 'Status',
+    'Priority Jira', 'Ưu tiên team', 'UI', 'Người làm UI', 'TLPT (BA)', 'Người làm BA', 'DCB_Task', 'Tháng golive',
+    'Kỳ planning', 'Quyết định', 'Sẵn sàng chuyển IT', 'Thiếu', 'Cảnh báo', 'OKR', 'Phụ thuộc', 'Updated',
+    'Số ngày không nhích', 'Ghi chú'];
   const rows = list.map(t => {
-    const d = tkDerive(t, today);
-    return [TK_LINE_LABEL[d.line] || '', d.subs.join(', '), t.key, t.type, t.summary, d.po, t.assignee, t.status,
-      t.priority, t.uuTien, d.ui, d.tlpt, d.dcbTask ? 'Có' : 'Chưa', d.golive, t.ky, t.quyetDinh,
-      d.ready ? 'Đạt' : 'Chưa', d.missing.join('; '), d.okr.join(', '), d.deps.join(', '), t.updated,
-      d.staleDays == null ? '' : d.staleDays, t.note];
+    const d = tkDerive(t, today, subIdx);
+    return [TK_LINE_LABEL[d.line] || '', d.subs.join(', '), t.key, t.type, t.summary, d.po, tkPersonName(t.assignee), t.status,
+      t.priority, t.uuTien, d.ui, d.uiBy.join(', '), d.tlpt, d.baBy.join(', '), d.dcbTask ? 'Có' : 'Chưa', d.golive,
+      t.ky, t.quyetDinh, d.ready ? 'Đạt' : 'Chưa', d.missing.join('; '), d.warn.join('; '), d.okr.join(', '),
+      d.deps.join(', '), t.updated, d.staleDays == null ? '' : d.staleDays, t.note];
   });
   return [head].concat(rows);
 }

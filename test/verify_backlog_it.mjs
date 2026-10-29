@@ -142,10 +142,11 @@ const der = await page.evaluate(() => {
   const by = Object.fromEntries(window.__tkParsed.map(t => [t.key, tkDerive(t, today)]));
   return by;
 });
-log('BI4-line-summary', der['DCB-90001'].line === 'HSTD' && der['DCB-90001'].po === 'TuanTT4', 'Ký số: line HSTD → PO TuanTT4');
+log('BI4-line-summary', der['DCB-90001'].line === 'HSTD' && der['DCB-90001'].po === 'Po Hai', `Ký số: line HSTD · PO = Reporter "${der['DCB-90001'].po}"`);
 log('BI4-line-label', der['DCB-90002'].line === 'GNOL' && der['DCB-90002'].subs.indexOf('GNOL_TuDong') !== -1, 'GNOL + nhãn phụ GNOL_TuDong từ summary');
 log('BI4-multi-line', der['DCB-90003'].line === 'GNOL' && der['DCB-90003'].warn.some(w => w.indexOf('nhiều line') !== -1), 'Gắn BLOL+GNOL → chọn theo summary + cảnh báo');
-log('BI4-scf-summary', der['DCB-90005'].line === 'SCF' && der['DCB-90005'].po === 'DungLQ1', 'SCF từ summary → PO DungLQ1');
+log('BI4-scf-summary', der['DCB-90005'].line === 'SCF' && der['DCB-90005'].po === '', 'SCF từ summary · không có Reporter → PO trống (không ép theo line)');
+log('BI4-no-sub-warn', der['DCB-90001'].warn.indexOf('Thiếu Sub-task UI') !== -1 && der['DCB-90001'].warn.indexOf('Thiếu Sub-task BA') !== -1, 'Bảng tay cần UI + TLPT chưa xong mà chưa có sub-task → cảnh báo vi phạm');
 log('BI4-ready', der['DCB-90004'].ready === true, 'DCB_Task + không cần UI + TLPT_Xong + golive → Đạt');
 log('BI4-not-ready-ui', !der['DCB-90002'].ready && der['DCB-90002'].missing.join('|') === 'UI chưa xong', `Thiếu: ${der['DCB-90002'].missing.join(' · ')}`);
 log('BI4-not-ready-all', der['DCB-90001'].missing.length === 4, `Ký số thiếu đủ 4 điều kiện (${der['DCB-90001'].missing.length})`);
@@ -178,7 +179,7 @@ log('BI1-section', await page.$eval('#view-backlog-it', el => el.style.display !
 log('BI1-stat', (await page.$$('.tk-stat')).length === 6, '6 thẻ số liệu');
 log('BI1-pf', !!(await page.$('#tkTeamFilter.pf-select')) && !!(await page.$('#tkUserFilter.pf-select')), 'Bộ lọc chuẩn Team + Nhân sự');
 const userOpts = await page.$$eval('#tkUserFilter option', os => os.map(o => o.textContent));
-log('BI6-pf-label', userOpts.includes('Dunglq1-Lê Quang Dũng') && userOpts.includes('Tuantt4-Trần Thế Tuân'), `Nhãn Username-Họ tên: ${userOpts.slice(1).join(' | ')}`);
+log('BI6-pf-label', userOpts.length === 3 && userOpts.includes('Po Hai') && userOpts.includes('Po Mot'), `Nhân sự = đúng tên Reporter Jira: ${userOpts.slice(1).join(' | ')}`);
 let rows = await page.$$eval('.tk-row', els => els.length);
 log('BI6-rows-open', rows === 5, `Đang mở: 5 dòng (thực tế ${rows})`);
 await shot(page, '01_backlog_open');
@@ -195,9 +196,9 @@ await page.selectOption('#tkKyFilter', '202612');
 rows = await page.$$eval('.tk-row', els => els.length);
 log('BI6-ky', rows === 3, `Kỳ T12/2026 → 3 (DCB-90004 đã chốt kỳ 202612 + 2 golive T12) (thực tế ${rows})`);
 await page.selectOption('#tkKyFilter', '');
-await page.selectOption('#tkUserFilter', 'quangnn3');
+await page.selectOption('#tkUserFilter', 'po hai');
 rows = await page.$$eval('.tk-row', els => els.length);
-log('BI6-person', rows === 1, `Nhân sự Quangnn3 → 1 (thực tế ${rows})`);
+log('BI6-person', rows === 2, `Reporter "Po Hai" → 2 (thực tế ${rows})`);
 await page.selectOption('#tkUserFilter', '');
 await page.fill('#tkSearch', 'giả lập C');
 await page.waitForTimeout(300);
@@ -256,8 +257,47 @@ const ex = await page.evaluate(() => {
   const aoa = tkExportRows(dbTickets.filter(t => t.key === 'DCB-90004'), new Date(2026, 9, 29));
   return { head: aoa[0], row: aoa[1] };
 });
-log('BI10-head', ex.head.includes('Sẵn sàng chuyển IT') && ex.head.includes('Số ngày không nhích') && ex.head.length === 23, '23 cột bảng planning');
-log('BI10-row', ex.row[0] === 'BLOL' && ex.row[16] === 'Đạt' && ex.row[21] === 44, `BLOL · Đạt · 44 ngày (${ex.row[0]} · ${ex.row[16]} · ${ex.row[21]})`);
+const H = ex.head;
+log('BI10-head', H.includes('Sẵn sàng chuyển IT') && H.includes('Người làm UI') && H.includes('Người làm BA') && H.length === 26, `${H.length} cột bảng planning (có người làm UI/BA)`);
+const cell = name => ex.row[H.indexOf(name)];
+log('BI10-row', ex.row[0] === 'BLOL' && cell('Sẵn sàng chuyển IT') === 'Đạt' && cell('Số ngày không nhích') === 44 && cell('PO (Reporter)') === 'Po Hai',
+  `BLOL · ${cell('Sẵn sàng chuyển IT')} · ${cell('Số ngày không nhích')} ngày · PO ${cell('PO (Reporter)')}`);
+
+/* ── BI12 — Sub-task UI/BA (rule team 29/10) ── */
+const sub = await page.evaluate(() => {
+  const mk = o => Object.assign(rowToTicket(new Array(24).fill('')), o);
+  dbTickets = [
+    mk({ key: 'DCB-90201', type: 'Story', summary: '[KySoHSTD][APP] Cha có UI + BA', status: 'To Do', priority: 'High',
+         reporter: 'Po Hai <CVC-SPTDDN.CB>', updated: '2026-08-01', labels: 'HSTD, DCB_Task, Expect_Golive_202612' }),
+    mk({ key: 'DCB-90202', type: 'Sub-task', summary: 'DCB-90201 [UI/UX][KySoHSTD][APP] Cha có UI + BA', status: 'In Progress',
+         assignee: 'Thiet Ke <UI.IT>', reporter: 'Po Hai <CVC-SPTDDN.CB>', updated: '2026-10-28', labels: 'HSTD' }),
+    mk({ key: 'DCB-90203', type: 'Sub-task', summary: 'DCB-90201 [BA][KySoHSTD][APP] Cha có UI + BA', status: 'Done',
+         assignee: 'Ba Mot <BA.IT>', reporter: 'Po Hai <CVC-SPTDDN.CB>', updated: '2026-10-20', labels: 'HSTD' }),
+    mk({ key: 'DCB-90204', type: 'Sub-task', summary: 'DCB-99999 [UI/UX] Cha không có trong file', status: 'To Do',
+         reporter: 'Po Hai <CVC-SPTDDN.CB>', updated: '2026-10-28', labels: 'HSTD' }),
+    mk({ key: 'DCB-90205', type: 'Sub-task', summary: 'DCB-90201 Sub-task quên thẻ', status: 'To Do', reporter: 'Po Hai <CVC-SPTDDN.CB>', labels: 'HSTD' }),
+  ];
+  const idx = tkSubIndex(dbTickets);
+  const d1 = tkDerive(dbTickets[0], new Date(2026, 9, 29), idx);
+  const d5 = tkDerive(dbTickets[4], new Date(2026, 9, 29), idx);
+  // UI sub-task xong → ready
+  const done = dbTickets.map(t => t.key === 'DCB-90202' ? Object.assign({}, t, { status: 'Done' }) : t);
+  const d1b = tkDerive(done[0], new Date(2026, 9, 29), tkSubIndex(done));
+  renderBacklogIt();
+  const rowsTxt = [...document.querySelectorAll('.tk-row')].map(r => r.textContent);
+  return { idx: Object.keys(idx), d1, d5, d1b, nRows: rowsTxt.length, rowsTxt,
+    parentKind: [tkParentKey(dbTickets[1]), tkSubKind(dbTickets[1]), tkSubKind(dbTickets[2])] };
+});
+log('BI12-parent-key', sub.parentKind.join('|') === 'DCB-90201|UI|BA', `Ghép theo KEY đầu summary: ${sub.parentKind.join(' · ')}`);
+log('BI12-ui-state', sub.d1.ui === 'Đang' && sub.d1.uiBy.join() === 'Thiet Ke', `UI = ${sub.d1.ui} · ${sub.d1.uiBy.join()}`);
+log('BI12-ba-state', sub.d1.tlpt === 'Xong' && sub.d1.baBy.join() === 'Ba Mot', `TLPT (BA) = ${sub.d1.tlpt} · ${sub.d1.baBy.join()}`);
+log('BI12-not-ready', !sub.d1.ready && sub.d1.missing.join('|') === 'UI chưa xong', `Thiếu: ${sub.d1.missing.join(' · ')}`);
+log('BI12-ready-after', sub.d1b.ready === true, 'Sub-task UI Done → ticket cha Đạt');
+log('BI12-stale-sub', sub.d1.staleDays === 1, `Không nhích tính theo sub-task mới nhất: ${sub.d1.staleDays} ngày (cha cập nhật 01/08)`);
+log('BI12-rows', sub.nRows === 2 && sub.rowsTxt.some(t => t.includes('Sub-task của DCB-99999')), `Bảng: sub-task có cha gộp vào dòng cha, sub-task mồ côi hiện riêng (${sub.nRows} dòng)`);
+log('BI12-subline', sub.rowsTxt.some(t => t.includes('DCB-90202') && t.includes('Thiet Ke') && t.includes('DCB-90203')), 'Dòng cha hiện sub-task UI/BA + người phụ trách');
+log('BI12-untagged', sub.d5.warn.some(w => w.indexOf('[UI/UX]') !== -1), 'Sub-task thiếu thẻ [UI/UX]/[BA] → cảnh báo');
+await shot(page, '03_subtask');
 
 /* ── BI11 — file HTML xuất Jira (Jira cơ quan chỉ cho xuất HTML) ── */
 const html = await page.evaluate(() => {
@@ -332,8 +372,11 @@ if (REAL_HTML && fs.existsSync(REAL_HTML)) {
   const realH = await page.evaluate((txt) => {
     const r = tkParseWorkbook(tkHtmlToWorkbook(txt));
     const today = new Date();
-    return { n: r.tickets.length, rows: r.tickets.map(t => { const d = tkDerive(t, today);
-      return [t.key, t.type, t.status, t.priority, d.line, t.created, t.updated, t.labels, d.golive, d.golivedOn, d.open ? 'mở' : 'đóng', d.ready ? 'Đạt' : 'Chưa: ' + d.missing.join('/')]; }) };
+    const idx = tkSubIndex(r.tickets);
+    return { n: r.tickets.length, rows: r.tickets.map(t => { const d = tkDerive(t, today, idx);
+      return [t.key, t.type, t.status, t.priority, d.line, t.created, t.updated, t.labels, d.golive, d.golivedOn, d.open ? 'mở' : 'đóng',
+        d.isSub ? 'cha=' + d.parentKey + ' ' + d.subKind : 'UI=' + d.ui + (d.uiBy.length ? '(' + d.uiBy.join() + ')' : '') + ' TLPT=' + d.tlpt,
+        'PO=' + d.po, d.ready ? 'Đạt' : 'Chưa: ' + d.missing.join('/')]; }) };
   }, txt);
   console.log(`\n   [HTML thật] ${realH.n} ticket`);
   realH.rows.forEach(r => console.log('   ' + r.join(' | ')));
