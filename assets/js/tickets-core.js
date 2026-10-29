@@ -18,7 +18,9 @@ const TICKET_COLS = [
   'Ưu tiên team', 'Quyết định planning', 'Kỳ planning', 'Initiative ID', 'Ghi chú',
   'Import lúc', 'Import bởi',
   // v6.72 — nối đuôi (cột Jira, import ghi đè)
-  'Project', 'Component/s', 'Loại yêu cầu NV', 'Sub-Tasks', 'Ngày nhận yêu cầu', 'Ngày dự kiến golive', 'Resolved'
+  'Project', 'Component/s', 'Loại yêu cầu NV', 'Sub-Tasks', 'Ngày nhận yêu cầu', 'Ngày dự kiến golive', 'Resolved',
+  // v6.74 — cột team: PO phụ trách trên SHTD (username, giao hàng loạt; trống = theo Reporter Jira)
+  'PO phụ trách'
 ];
 const TK_FIELDS = [
   'key', 'type', 'summary', 'desc', 'status', 'resolution', 'priority',
@@ -26,10 +28,11 @@ const TK_FIELDS = [
   'ui', 'tlpt', 'loai',
   'uuTien', 'quyetDinh', 'ky', 'initId', 'note',
   'importedAt', 'importedBy',
-  'project', 'components', 'reqType', 'subKeys', 'receivedAt', 'goliveDate', 'resolvedAt'
+  'project', 'components', 'reqType', 'subKeys', 'receivedAt', 'goliveDate', 'resolvedAt',
+  'poAssign'
 ];
 // Cột lấy từ Jira (import ghi đè) — khớp _TK_JIRA_COLS ở TicketService.gs
-const TK_JIRA_FIELDS = TK_FIELDS.slice(0, 14).concat(TK_FIELDS.slice(24));
+const TK_JIRA_FIELDS = TK_FIELDS.slice(0, 14).concat(TK_FIELDS.slice(24, 31));
 const TK_DATE_FIELDS = ['created', 'updated', 'receivedAt', 'goliveDate', 'resolvedAt'];
 // Chỉ số cột ghi được trên SHTD (khớp TicketService.gs)
 const TK_COL = Object.fromEntries(TK_FIELDS.map((f, i) => [f, i]));

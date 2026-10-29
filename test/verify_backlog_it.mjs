@@ -12,6 +12,7 @@
  *  BI9  – Badge menu = ticket mở không nhích ≥ 60 ngày
  *  BI10 – Bảng planning xuất Excel: header + giá trị suy ra
  *  BI14 – Lọc Dự án · Trạng thái · Nhân sự theo họ tên SHTD + chọn/xóa hàng loạt (Admin tất cả, PO ticket mình) + GAS chặn quyền (v6.73)
+ *  BI15 – Giao hàng loạt cho PO khác của team (cột PO phụ trách; người nhận thành chủ; import giữ) (v6.74)
  *  BIX  – Không lỗi JS
  *
  * Dữ liệu test là GIẢ LẬP (repo public). Kiểm thêm file thật (không commit):
@@ -170,7 +171,7 @@ log('BI5-counts', imp.r.added === 4 && imp.r.updated === 1 && imp.n === 5, `adde
 log('BI5-jira-overwrite', imp.t4.summary.indexOf('Job giả lập D') !== -1 && imp.t4.status === 'To Do', 'Cột Jira ghi đè theo file');
 log('BI5-team-kept', imp.t4.uuTien === '1' && imp.t4.quyetDinh === 'Đưa vào kỳ' && imp.t4.ky === '202612' && imp.t4.note === 'giữ', 'Ưu tiên · quyết định · kỳ · ghi chú giữ nguyên');
 log('BI5-trans-kept', imp.t4.ui === 'Xong', 'Cột UI không bị xóa khi file không có giá trị');
-log('BI5-gas-payload', imp.wrote && imp.wrote.action === 'ticket-import' && imp.wrote.rows.length === 5 && imp.wrote.rows[0].length === 31, 'Gửi GAS ticket-import 5 dòng × 31 cột');
+log('BI5-gas-payload', imp.wrote && imp.wrote.action === 'ticket-import' && imp.wrote.rows.length === 5 && imp.wrote.rows[0].length === 32, 'Gửi GAS ticket-import 5 dòng × 32 cột');
 
 /* ── BI1/BI6 — render ── */
 await page.evaluate(() => navigateTo('backlog-it'));
@@ -512,25 +513,26 @@ log('BI14-local', del14.left.join() === 'BLOB-804,DCB-803', `Còn lại: ${del14
 // GAS: ticketDeleteBulk chặn quyền trên sheet giả lập
 const vm = await import('vm');
 const gasSrc = fs.readFileSync(path.join(__dirname, 'backend', 'TicketService.gs'), 'utf8');
-function gasRun(role, username, keys) {
-  const H = ['Key', 'Issue Type', 'Summary']; const pad = r => { const o = new Array(31).fill(''); r.forEach((v, i) => { o[i] = v; }); return o; };
+function gasRun(role, username, keys, steps) {
+  const H = ['Key', 'Issue Type', 'Summary']; const pad = r => { const o = new Array(32).fill(''); r.forEach((v, i) => { o[i] = v; }); return o; };
   const tk = (key, type, sum, rep, subs) => { const r = pad([key, type, sum]); r[8] = rep; r[27] = subs || ''; return r; };
   let data = [pad(['Key']),
     tk('DCB-801', 'Story', '[GNOL] A', 'Tuan Tran The <CG-SPTDDN.CB>', 'DCB-805'),
     tk('DCB-802', 'Sub-task', 'DCB-801 [UI/UX]A', 'Dung Le Quang <CVCC-SPTDDN.CB>'),
     tk('DCB-803', 'Story', '[BLOL] B', 'Dung Le Quang <CVCC-SPTDDN.CB>'),
     tk('DCB-805', 'Sub-task', 'Việc dev', 'Dung Le Quang <CVCC-SPTDDN.CB>')];
-  data[0] = pad(H); data[0][30] = 'Resolved';
-  const users = [['Username', 'Display_Name'], ['TuanTT4', 'Trần Thế Tuân'], ['DungLQ1', 'Lê Quang Dũng']];
+  data[0] = pad(H); data[0][31] = 'PO phụ trách';
+  const users = [['Username', 'Display_Name', 'Team', 'Active'], ['TuanTT4', 'Trần Thế Tuân', 'Số', 'TRUE'], ['DungLQ1', 'Lê Quang Dũng', 'Số', 'TRUE'], ['OldUser', 'Cũ', 'Số', 'FALSE']];
   const rng = (r, c, nr, nc) => ({
     getDisplayValues: () => data.slice(r - 1, r - 1 + nr).map(x => x.slice(c - 1, c - 1 + nc)),
-    setValues: v => { v.forEach((row, i) => { data[r - 1 + i] = row.slice(); }); },
+    setValues: v => { v.forEach((row, i) => { const t = data[r - 1 + i] || (data[r - 1 + i] = pad([])); row.forEach((x, j) => { t[c - 1 + j] = x; }); }); },
     clearContent: () => { data = data.slice(0, r - 1); },
   });
-  const sheet = { getMaxColumns: () => 31, getLastRow: () => data.length, getRange: rng, insertColumnsAfter() {}, setFrozenRows() {} };
+  const sheet = { getMaxColumns: () => 32, getLastRow: () => data.length, getRange: rng, insertColumnsAfter() {}, setFrozenRows() {} };
   const ctx = { SPREADSHEET_ID: 'x', USER_SHEET_NAME: 'User_Master', _acquireWriteLock: () => ({ releaseLock() {} }),
     SpreadsheetApp: { flush() {}, openById: () => ({ getSheetByName: n => n === 'User_Master' ? { getDataRange: () => ({ getDisplayValues: () => users }) } : sheet }) } };
   vm.createContext(ctx); vm.runInContext(gasSrc, ctx);
+  if (steps) return steps(ctx, () => data);
   const res = ctx.ticketDeleteBulk(keys, username, role);
   return { res, left: data.slice(1).map(r => r[0]) };
 }
@@ -541,6 +543,72 @@ const g2 = gasRun('User', 'DungLQ1', ['DCB-801']);
 log('BI14-gas-denied', g2.res.deleted === 0 && g2.res.denied.join() === 'DCB-801' && g2.left.length === 4, 'Xóa ticket người khác → bị chặn, sheet giữ nguyên');
 const g3 = gasRun('Admin', 'TuanTT4', ['DCB-801', 'DCB-803']);
 log('BI14-gas-admin', g3.res.deleted === 2 && !g3.res.denied.length && g3.left.join() === 'DCB-802,DCB-805', 'Admin xóa mọi ticket');
+
+/* ── BI15 — giao hàng loạt cho PO khác của team (cột PO phụ trách, v6.74) ── */
+// GAS: chủ ticket giao → người nhận thành chủ; người giao mất quyền; user không Active / không tồn tại → BAD_USER
+const g4 = gasRun(null, null, null, (ctx, data) => {
+  const a = ctx.ticketAssignBulk(['DCB-801', 'DCB-803'], 'dunglq1', 'TuanTT4', 'User');
+  const col = data().slice(1).map(r => r[0] + '=' + r[31]).join(',');
+  const afterTuan = ctx.ticketDeleteBulk(['DCB-801'], 'TuanTT4', 'User');
+  const afterDung = ctx.ticketDeleteBulk(['DCB-801', 'DCB-802'], 'DungLQ1', 'User');
+  let bad = ''; try { ctx.ticketAssignBulk(['DCB-803'], 'OldUser', 'TuanTT4', 'Admin'); } catch (e) { bad = e.message; }
+  let none = ''; try { ctx.ticketAssignBulk(['DCB-803'], 'khongco', 'TuanTT4', 'Admin'); } catch (e) { none = e.message; }
+  return { a, col, afterTuan, afterDung, bad, none, left: data().slice(1).map(r => r[0]).join(',') };
+});
+log('BI15-gas-assign', g4.a.assigned === 1 && g4.a.denied.join() === 'DCB-803' && g4.col.startsWith('DCB-801=DungLQ1,DCB-802=,DCB-803=,'),
+  `Tuân giao DCB-801 → ghi username chuẩn "DungLQ1" · DCB-803 (của Dũng) bị chặn: ${g4.col}`);
+log('BI15-gas-owner-moves', g4.afterTuan.deleted === 0 && g4.afterDung.deleted === 2 && g4.left === 'DCB-803,DCB-805',
+  'Sau khi giao: Tuân mất quyền · Dũng xóa được cha + sub-task');
+log('BI15-gas-bad-user', g4.bad === 'BAD_USER' && g4.none === 'BAD_USER', 'Người nhận không Active / không tồn tại → BAD_USER');
+
+// FE
+await login('Admin');
+const r15 = await page.evaluate(async () => {
+  const mk = (o) => Object.assign(rowToTicket(new Array(32).fill('')), o);
+  dbTickets = [
+    mk({ key: 'DCB-901', type: 'Story', summary: '[GNOL] A', status: 'To Do', project: 'Digital CB', reporter: 'Tuan Tran The <CG-SPTDDN.CB>', updated: '2026-10-20' }),
+    mk({ key: 'DCB-902', type: 'Story', summary: '[GNOL] B', status: 'To Do', project: 'Digital CB', reporter: 'Tuan Tran The <CG-SPTDDN.CB>', updated: '2026-10-20' }),
+    mk({ key: 'DCB-903', type: 'Story', summary: '[BLOL] C', status: 'To Do', project: 'Digital CB', reporter: 'Dung Le Quang <CVCC-SPTDDN.CB>', updated: '2026-10-20' }),
+  ];
+  _tkSel.clear(); _tkPreset = 'open'; renderBacklogIt();
+  return { opts: [...document.querySelectorAll('#tkAssignTo option')].map(o => o.value + '=' + o.textContent) };
+});
+log('BI15-team-list', r15.opts.length === 4 && r15.opts.includes('QuangNN3=QuangNN3-Nguyễn Ngọc Quang') && r15.opts[0] === '=Giao cho…',
+  `Ô "Giao cho…" = nhân sự team Số, nhãn chuẩn: ${r15.opts.slice(1).join(' | ')}`);
+await page.evaluate(() => { window.__tkWrites = []; window.uiConfirm = async () => true; });
+await page.check('.tk-sel[data-key="DCB-901"]');
+await page.check('.tk-sel[data-key="DCB-902"]');
+await page.click('#tkBulkBar .btn-bulk:not(.danger) >> text=Giao');
+await page.waitForTimeout(200);
+log('BI15-need-target', await page.evaluate(() => !window.__tkWrites.length && _tkSel.size === 2), 'Chưa chọn người nhận → không gửi, giữ lựa chọn');
+await shot(page, '05_bulk_assign');
+await page.selectOption('#tkAssignTo', 'QuangNN3');
+await page.click('#tkBulkBar .btn-bulk:not(.danger) >> text=Giao');
+await page.waitForTimeout(250);
+const a15 = await page.evaluate(() => ({
+  w: window.__tkWrites.find(x => x.action === 'ticket-assign-bulk'),
+  po: dbTickets.map(t => t.key + '=' + t.poAssign).join(','),
+  cell: [...document.querySelectorAll('.tk-row')].map(r => r.textContent).find(t => t.includes('DCB-901')) || '',
+}));
+log('BI15-payload', a15.w && a15.w.to === 'QuangNN3' && a15.w.keys.slice().sort().join() === 'DCB-901,DCB-902', `Gửi GAS: ${a15.w && a15.w.keys.join(', ')} → ${a15.w && a15.w.to}`);
+log('BI15-local', a15.po === 'DCB-901=QuangNN3,DCB-902=QuangNN3,DCB-903=', `Cục bộ: ${a15.po}`);
+log('BI15-cell', a15.cell.includes('QuangNN3-Nguyễn Ngọc Quang') && a15.cell.includes('Jira: Tuan Tran The'), 'Ô PO: người nhận (nhãn chuẩn) + "Jira: Reporter"');
+await page.selectOption('#tkUserFilter', 'quangnn3');
+rows = await page.$$eval('.tk-row', els => els.length);
+log('BI15-filter', rows === 2, `Lọc Nhân sự QuangNN3 → 2 ticket vừa giao (thực tế ${rows})`);
+await page.selectOption('#tkUserFilter', '');
+// Tuân (User) mất quyền với ticket đã giao; nạp lại Jira không xóa phần giao
+await login('User');
+await page.evaluate(() => { _tkSel.clear(); renderBacklogIt(); });
+const u15 = await page.$$eval('.tk-row', els => els.map(e => e.querySelector('.tk-key').textContent + ':' + !e.querySelector('.tk-sel').disabled).join(' · '));
+log('BI15-user-lost', u15.includes('DCB-901:false') && u15.includes('DCB-902:false'), `Tuân sau khi giao: ${u15}`);
+const keep15 = await page.evaluate(() => {
+  _mergeTicketsLocal([Object.assign(rowToTicket(new Array(32).fill('')), { key: 'DCB-901', summary: '[GNOL] A v2', status: 'In Progress', reporter: 'Tuan Tran The <CG-SPTDDN.CB>' })]);
+  const t = dbTickets.find(x => x.key === 'DCB-901');
+  return t.poAssign + '|' + t.status;
+});
+log('BI15-import-keeps', keep15 === 'QuangNN3|In Progress', `Nạp lại Jira: giữ PO phụ trách, cập nhật cột Jira (${keep15})`);
+await login('Admin');
 
 log('BIX-no-js-errors', jsErrors.length === 0, jsErrors.length ? jsErrors.join(' | ') : 'Không lỗi JS');
 

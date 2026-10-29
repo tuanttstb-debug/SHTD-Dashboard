@@ -1,5 +1,8 @@
 # TODO — NEXT SESSION
-**Prepared**: 2026-10-29 (S94.7 — Backlog IT lọc + xóa hàng loạt, v6.73)
+**Prepared**: 2026-10-29 (S94.8 — Backlog IT giao hàng loạt, v6.74)
+
+## 🆕 S94.8 — Backlog IT: giao hàng loạt cho PO khác của team (v6.74) — CODE XONG + TEST PASS
+- [ ] [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) → hard-refresh `?v=20261029j` → chọn ticket → "Giao cho…" → Giao; kiểm cột AF "PO phụ trách" trên sheet.
 
 ## 🆕 S94.7 — Backlog IT: lọc Dự án · Trạng thái · Nhân sự + xóa hàng loạt theo quyền (v6.73) — CODE XONG + TEST PASS
 - [ ] [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) → hard-refresh `?v=20261029i` → thử xóa hàng loạt (User: chỉ ticket mình là PO · Admin: tất cả).

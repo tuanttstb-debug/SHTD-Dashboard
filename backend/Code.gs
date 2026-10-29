@@ -352,6 +352,20 @@ function doPost(e) {
       return _jsonResponse({ status: 'ok', result: _tkDel });
     }
 
+    // Giao hàng loạt cho PO khác (cột PO phụ trách) — cùng luật quyền với xóa hàng loạt
+    if (action === 'ticket-assign-bulk') {
+      if (!body.keys || !Array.isArray(body.keys) || !body.keys.length || !body.to) {
+        throw new Error('ticket-assign-bulk: thiếu keys hoặc người nhận.');
+      }
+      var _tkAsg;
+      try { _tkAsg = ticketAssignBulk(body.keys, body.to, tokenData.u, tokenData.r); }
+      catch (e) { if (e.message === 'BAD_USER') return _jsonResponse({ status: 'error', error: 'BAD_USER' }); throw e; }
+      if (_tkAsg.assigned) _bumpDomainVer('tickets');
+      auditLog(tokenData, 'ticket-assign-bulk', 'to=' + body.to + ' assigned=' + _tkAsg.assigned + ' denied=' + _tkAsg.denied.length
+        + ' keys=' + body.keys.slice(0, 50).join(','));
+      return _jsonResponse({ status: 'ok', result: _tkAsg });
+    }
+
     // ── Dev Plan (Plan phát triển bản thân) ──
     // Ownership: chỉ PIC (chủ dòng) hoặc Admin được ghi/xóa.
     if (action === 'dev-read') {

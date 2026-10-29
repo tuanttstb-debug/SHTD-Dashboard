@@ -22,9 +22,10 @@ function _tkCanLead() {
   return !!(u && (u.role === 'Admin' || u.role === 'Teamlead'));
 }
 
-// Quyền xóa: Admin xóa mọi ticket · người khác chỉ ticket mình là PO (Reporter Jira khớp họ tên User_Master).
-// Server kiểm lại cùng luật (ticket-delete-bulk).
-function _tkCanDelete(x) {
+// Quyền thao tác hàng loạt (xóa · giao): Admin mọi ticket · người khác chỉ ticket mình là PO
+// (cột "PO phụ trách" là mình, hoặc cột trống và Reporter Jira khớp họ tên User_Master).
+// Server kiểm lại cùng luật (_tkOwnerCheck — ticket-delete-bulk / ticket-assign-bulk).
+function _tkCanManage(x) {
   const u = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   if (!u) return false;
   if (u.role === 'Admin') return true;
@@ -33,6 +34,18 @@ function _tkCanDelete(x) {
 
 function _tkUsers() {
   return typeof _appUsers !== 'undefined' && Array.isArray(_appUsers) ? _appUsers : [];
+}
+
+// Nhân sự nhận giao: user Active của team (TK_TEAM), nhãn chuẩn Username-Họ tên
+function _tkTeamUsers() {
+  const me = (typeof getCurrentUser === 'function' && getCurrentUser()) || {};
+  const has = t => _tkUsers().some(u => String(u.Team || '').trim() === t);
+  // Team Số; User_Master ghi khác → team của người đang đăng nhập
+  const team = has(TK_TEAM) ? TK_TEAM : String(me.team || '').trim();
+  return _tkUsers()
+    .filter(u => u.Username && (!team || String(u.Team || '').trim() === team))
+    .map(u => ({ username: String(u.Username), label: PeopleFilter.label(u.Username, u.Display_Name) }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'vi'));
 }
 
 // PO = Reporter trên Jira, hiển thị đúng tên Jira (không ép về username SHTD — anh chốt 29/10)
@@ -57,9 +70,14 @@ function _tkAll(today) {
   const keys = new Set(list.map(t => t.key));
   const users = _tkUsers(), byName = {};
   const userOf = po => (po in byName ? byName[po] : (byName[po] = tkUserOf(po, users)));
+  // PO phụ trách đã giao trên SHTD (ưu tiên) → Reporter Jira khớp họ tên
+  const byUser = u => {
+    const f = users.find(x => String(x.Username).toLowerCase() === u.toLowerCase());
+    return { username: f ? String(f.Username) : u, name: f ? String(f.Display_Name || '') : '', assigned: true };
+  };
   return list
     .filter(t => !(tkIsSubtask(t) && tkSubKind(t) && keys.has(tkParentKey(t))))
-    .map(t => { const d = tkDerive(t, today, idx); return { t, d, u: userOf(d.po) }; });
+    .map(t => { const d = tkDerive(t, today, idx); return { t, d, u: t.poAssign ? byUser(t.poAssign) : userOf(d.po) }; });
 }
 
 // Nhân sự phụ trách = PO: username SHTD nếu khớp họ tên, chưa khớp thì tên Jira
@@ -241,19 +259,25 @@ function _tkRenderTable(list) {
     return;
   }
   // Chỉ giữ chọn những ticket đang hiện + được xóa (đổi bộ lọc không xóa nhầm dòng đã khuất)
-  const canDel = new Set(list.filter(_tkCanDelete).map(x => x.t.key));
+  const canDel = new Set(list.filter(_tkCanManage).map(x => x.t.key));
   _tkSel = new Set([..._tkSel].filter(k => canDel.has(k)));
   _tkVisibleDel = [...canDel];
   if (!list.length) {
     wrap.innerHTML = `<div class="tk-empty"><i class="fa-solid fa-filter"></i><div>Không có ticket khớp bộ lọc.</div></div>`;
     return;
   }
-  const rows = list.map(x => _tkRowHtml(x.t, x.d, canDel.has(x.t.key))).join('');
+  const rows = list.map(x => _tkRowHtml(x.t, x.d, canDel.has(x.t.key), x.u)).join('');
+  const team = _tkTeamUsers();
   wrap.innerHTML = `
     <div class="bulk-bar tk-bulk" id="tkBulkBar">
       <i class="fa-solid fa-check-square"></i>
       <span class="bulk-bar-count" id="tkBulkCount"></span>
       <span class="bulk-spacer"></span>
+      <select id="tkAssignTo" class="form-control form-control-sm tk-assign-sel" aria-label="Giao cho nhân sự">
+        <option value="">Giao cho…</option>
+        ${team.map(u => `<option value="${esc(u.username)}">${esc(u.label)}</option>`).join('')}
+      </select>
+      <button class="btn-bulk" onclick="tkAssignSelected()"><i class="fa-solid fa-user-pen"></i> Giao</button>
       <button class="btn-bulk danger" onclick="tkDeleteSelected()"><i class="fa-solid fa-trash"></i> Xóa</button>
       <button class="btn-bulk" onclick="tkClearSel()" title="Bỏ chọn"><i class="fa-solid fa-xmark"></i></button>
     </div>
@@ -270,7 +294,7 @@ function _tkRenderTable(list) {
       ${_tkTh('ky', 'Kỳ · Quyết định', 128)}
     </tr></thead>
     <tbody>${rows}</tbody></table></div>
-    <div class="tk-foot">${list.length} ticket · bấm dòng để chốt ưu tiên / quyết định / ghi chú · tích ô đầu dòng để xóa hàng loạt (ticket mình là PO; Admin xóa mọi ticket)</div>`;
+    <div class="tk-foot">${list.length} ticket · bấm dòng để chốt ưu tiên / quyết định / ghi chú · tích ô đầu dòng để giao / xóa hàng loạt (ticket mình là PO; Admin mọi ticket)</div>`;
   _tkUpdateBulk();
 }
 
@@ -290,7 +314,7 @@ function _tkUpdateBulk() {
   }
 }
 
-function _tkRowHtml(t, d, canDel) {
+function _tkRowHtml(t, d, canDel, u) {
   const key = esc(t.key);
   const chips = [];
   d.subs.forEach(s => chips.push(`<span class="tk-chip">${esc(s)}</span>`));
@@ -322,7 +346,7 @@ function _tkRowHtml(t, d, canDel) {
     <td class="tk-chk" onclick="event.stopPropagation()">${chk}</td>
     <td><a class="tk-key" href="${TK_JIRA_BROWSE}${key}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${key}</a><div class="tk-muted">${typeLine}</div></td>
     <td><div class="tk-sum">${esc(t.summary || '–')}</div>${chips.length ? `<div class="tk-chips">${chips.join('')}</div>` : ''}</td>
-    <td title="${esc(lineTitle)}"><div><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b> <span class="tk-sys is-${esc(d.system.toLowerCase())}">${esc(d.system)}</span></div><div class="tk-muted">${esc(_tkPerson(d.po))}</div></td>
+    <td title="${esc(lineTitle)}"><div><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b> <span class="tk-sys is-${esc(d.system.toLowerCase())}">${esc(d.system)}</span></div>${_tkPoHtml(t, d, u)}</td>
     <td><div>${esc(t.status || '–')}</div><div class="tk-muted" title="${esc(t.assignee)}">${esc(_tkShortName(t.assignee))}</div></td>
     <td>${prio}</td>
     <td>${ready}</td>
@@ -370,6 +394,38 @@ function tkToggleAll(on) {
 }
 
 function tkClearSel() { tkToggleAll(false); }
+
+// Ô PO: đã giao trên SHTD → người nhận (đậm) + "Jira: Reporter"; chưa giao → tên Reporter Jira
+function _tkPoHtml(t, d, u) {
+  if (!t.poAssign) return `<div class="tk-muted">${esc(_tkPerson(d.po))}</div>`;
+  return `<div class="tk-po-assign" title="Giao trên SHTD · Reporter Jira: ${esc(d.po || '–')}"><i class="fa-solid fa-user-pen"></i> ${esc(PeopleFilter.label(u.username, u.name))}</div>`
+    + `<div class="tk-muted">Jira: ${esc(_tkPerson(d.po))}</div>`;
+}
+
+async function tkAssignSelected() {
+  if (!_tkSel.size) return;
+  const sel = document.getElementById('tkAssignTo');
+  const to = sel ? sel.value : '';
+  if (!to) { toast('Chọn nhân sự nhận ở ô "Giao cho…".', 'warning'); if (sel) sel.focus(); return; }
+  const keys = [..._tkSel];
+  const label = sel.options[sel.selectedIndex].textContent;
+  const me = (typeof getCurrentUser === 'function' && getCurrentUser()) || {};
+  const ok = await uiConfirm('Giao ticket cho PO khác',
+    `Giao <strong>${keys.length} ticket</strong> cho <strong>${esc(label)}</strong>.<br>
+     Người nhận thành PO phụ trách trên SHTD (lọc Nhân sự, quyền giao / xóa)${me.role === 'Admin' ? '' : ' — bạn sẽ không còn quyền với các ticket này'}.
+     Reporter trên Jira giữ nguyên; nạp lại file Jira không làm mất phần giao.`,
+    'info', `Giao ${keys.length} ticket`);
+  if (!ok) return;
+  if (typeof showLoading === 'function') showLoading('Đang giao ticket…');
+  const res = await _gasTicketAssignBulk(keys, to);
+  if (typeof hideLoading === 'function') hideLoading();
+  _tkSel.clear();
+  if (!res.error) {
+    toast(`Đã giao ${res.assigned} ticket cho ${label}${res.denied.length ? ` · ${res.denied.length} ticket không có quyền: ${res.denied.slice(0, 5).join(', ')}` : ''}${res.offline ? ' (cục bộ)' : ''}.`,
+      res.denied.length || res.offline ? 'warning' : 'success', res.denied.length ? 7000 : 4000);
+  }
+  renderBacklogIt();
+}
 
 async function tkDeleteSelected() {
   if (!_tkSel.size) return;
@@ -506,6 +562,7 @@ function tkOpenModal(key) {
     <div class="tk-modal-info">
       <div><span>Line (theo ${esc(d.lineSrc || '–')}) · Hệ thống</span><b>${esc(TK_LINE_LABEL[d.line] || '–')}</b> · ${esc(d.system || '–')}</div>
       <div><span>PO (Reporter) · Dev</span>${esc(_tkPerson(d.po))} · ${esc(_tkShortName(t.assignee))}</div>
+      ${t.poAssign ? `<div><span>PO phụ trách (giao trên SHTD)</span>${esc(PeopleFilter.label(t.poAssign, (_tkUsers().find(x => String(x.Username).toLowerCase() === t.poAssign.toLowerCase()) || {}).Display_Name))}</div>` : ''}
       <div><span>Project</span>${esc(t.project || '–')}</div>
       <div><span>Component</span>${esc(t.components || '–')}</div>
       <div><span>Nhận YC · Tạo · nhích gần nhất</span>${fmtDate(t.receivedAt)}${d.receivedDays == null ? '' : ' (' + d.receivedDays + ' ngày)'} · ${fmtDate(t.created)} · ${fmtDate(d.lastUpd)} (${d.staleDays == null ? '–' : d.staleDays + ' ngày'})</div>

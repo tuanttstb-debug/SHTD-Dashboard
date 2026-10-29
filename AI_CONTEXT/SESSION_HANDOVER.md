@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-29 (S94.8 — Backlog IT: giao hàng loạt cho PO khác của team)
+**Model**: Claude Opus 5.5 · **Version**: v6.73 → **v6.74** · anh yêu cầu sau khi redeploy GAS v6.73
+
+- **Task completed:** thanh hàng loạt thêm ô **"Giao cho…"** (nhân sự team Số, nhãn `Username-Họ tên`; User_Master ghi team khác → team người đăng nhập) + nút **Giao** · `Ticket_Master` nối cột **AF (31) "PO phụ trách"** (username SHTD, cột team: import không đụng, `ticket-update` không sửa, chỉ ghi qua `ticket-assign-bulk`) · chủ ticket = PO phụ trách (nếu có) → Reporter khớp họ tên · ô PO hiện người nhận + "Jira: Reporter" · lọc Nhân sự theo PO phụ trách · GAS: gộp luật quyền `_tkOwnerCheck` (xóa + giao), `ticketAssignBulk` chỉ ghi 1 cột, người nhận phải có trong User_Master + Active (`BAD_USER`).
+- **Files changed:** `backend/{TicketService.gs, Code.gs}` · `assets/js/{tickets-core,api,config}.js` (`TK_JIRA_FIELDS` = slice(24, 31) để cột mới không bị import ghi đè) · `assets/js/views/backlog-it.js` · `assets/css/backlog-it.css` · `index.html` (`?v=20261029j`) · `test/{verify_backlog_it,run_tests}.mjs`.
+- **Decision made:** giao xong người nhận thành chủ (lọc, giao tiếp, xóa); người giao mất quyền trừ Admin · Reporter Jira giữ nguyên, nạp lại file không mất phần giao.
+- **Blocker:** chờ [TT] redeploy GAS (`TicketService.gs` + `Code.gs`) — sheet tự thêm cột AF ở lần gọi đầu.
+- **Next step:** [TT] redeploy → thử giao 2–3 ticket cho Quang/anh Dũng trên LIVE.
+- **Regression risk:** Thấp — chỉ phân hệ Backlog IT; schema nối đuôi. `verify_backlog_it` 110/110 (+11 BI15) · full suite 36/38 (2 AUTH FAILED có sẵn trước S94).
+
+---
+
 # SESSION HANDOVER — 2026-10-29 (S94.7 — Backlog IT: lọc Dự án · Trạng thái · Nhân sự theo họ tên SHTD + chọn/xóa hàng loạt theo quyền)
 **Model**: Claude Opus 5.5 · **Version**: v6.72 → **v6.73** · anh yêu cầu sau khi redeploy GAS v6.72
 

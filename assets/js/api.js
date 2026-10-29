@@ -933,7 +933,7 @@ function _mergeTicketsLocal(list) {
       updated++;
     } else {
       const t = Object.assign({}, inc);
-      TK_LEAD_FIELDS.concat(['initId', 'note']).forEach(f => { t[f] = ''; });
+      TK_LEAD_FIELDS.concat(['initId', 'note', 'poAssign']).forEach(f => { t[f] = ''; });
       dbTickets.push(t); byKey.set(t.key, t);
       added++;
     }
@@ -971,6 +971,28 @@ async function _gasTicketUpdate(key, patch) {
   } catch (e) {
     toast('⚠️ ' + e.message + ' — đã lưu cục bộ.', 'warning', 6000);
     return false;
+  }
+}
+
+// Giao hàng loạt cho PO khác (cột "PO phụ trách"). Cùng luật quyền với xóa. → { assigned, denied, offline }
+async function _gasTicketAssignBulk(keys, to) {
+  const want = new Set(keys);
+  const apply = (skip) => dbTickets.forEach(t => { if (want.has(t.key) && !skip.has(t.key)) t.poAssign = to; });
+  if (!GS_WEBAPP_URL || !getAuthSession()) {
+    apply(new Set()); persistTickets();
+    return { assigned: want.size, denied: [], offline: true };
+  }
+  try {
+    const json = await gasWrite({ action: 'ticket-assign-bulk', keys, to });
+    if (json.status !== 'ok') throw new Error(json.error === 'BAD_USER' ? 'Nhân sự nhận không có trong danh sách user.' : (json.error || 'ticket-assign-bulk lỗi'));
+    const r = json.result || {};
+    const denied = new Set(r.denied || []);
+    apply(denied); persistTickets();
+    await readTickets();
+    return { assigned: r.assigned != null ? r.assigned : want.size - denied.size, denied: [...denied], offline: false };
+  } catch (e) {
+    toast('⚠️ Không giao được: ' + e.message, 'error', 6000);
+    return { assigned: 0, denied: keys, offline: false, error: true };
   }
 }
 

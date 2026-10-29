@@ -55,6 +55,8 @@
 .tk-chk input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); vertical-align: middle; }
 .tk-chk input:disabled { cursor: not-allowed; opacity: .35; }
 .tk-bulk { position: sticky; top: 0; z-index: 3; }
+.tk-assign-sel { width: auto; max-width: 260px; height: 30px; font-size: 12px; background: var(--surface); color: var(--text); }
+.tk-po-assign { font-size: 12px; font-weight: 700; color: var(--primary); }
 .tk-key { font-family: var(--mono); font-weight: 600; color: var(--primary); text-decoration: none; }
 .tk-key:hover { text-decoration: underline; }
 .tk-sum { font-weight: 600; line-height: 1.35; }
