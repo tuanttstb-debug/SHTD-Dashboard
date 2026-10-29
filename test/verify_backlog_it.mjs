@@ -294,7 +294,9 @@ log('BI12-ba-state', sub.d1.tlpt === 'Xong' && sub.d1.baBy.join() === 'Ba Mot', 
 log('BI12-not-ready', !sub.d1.ready && sub.d1.missing.join('|') === 'UI chưa xong', `Thiếu: ${sub.d1.missing.join(' · ')}`);
 log('BI12-ready-after', sub.d1b.ready === true, 'Sub-task UI Done → ticket cha Đạt');
 log('BI12-stale-sub', sub.d1.staleDays === 1, `Không nhích tính theo sub-task mới nhất: ${sub.d1.staleDays} ngày (cha cập nhật 01/08)`);
-log('BI12-rows', sub.nRows === 2 && sub.rowsTxt.some(t => t.includes('Sub-task của DCB-99999')), `Bảng: sub-task có cha gộp vào dòng cha, sub-task mồ côi hiện riêng (${sub.nRows} dòng)`);
+log('BI12-rows', sub.nRows === 3 && sub.rowsTxt.some(t => t.includes('Sub-task của DCB-99999'))
+  && sub.rowsTxt.some(t => t.includes('DCB-90205') && t.includes('[UI/UX]')) && !sub.rowsTxt.some(t => t.startsWith('DCB-90202')),
+  `Bảng: sub-task UI/BA gộp vào cha · mồ côi + thiếu thẻ hiện riêng kèm cảnh báo (${sub.nRows} dòng)`);
 log('BI12-subline', sub.rowsTxt.some(t => t.includes('DCB-90202') && t.includes('Thiet Ke') && t.includes('DCB-90203')), 'Dòng cha hiện sub-task UI/BA + người phụ trách');
 log('BI12-untagged', sub.d5.warn.some(w => w.indexOf('[UI/UX]') !== -1), 'Sub-task thiếu thẻ [UI/UX]/[BA] → cảnh báo');
 await shot(page, '03_subtask');

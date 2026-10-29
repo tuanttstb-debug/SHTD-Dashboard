@@ -32,13 +32,14 @@ function _tkKyLabel(k) {
   return k && k.length === 6 ? `T${parseInt(k.slice(4), 10)}/${k.slice(0, 4)}` : (k || '–');
 }
 
-// Ticket cha + sub-task "mồ côi" (không thấy cha trong dữ liệu). Sub-task có cha → gộp vào dòng cha.
+// Ticket cha + sub-task "mồ côi" (không thấy cha) hoặc thiếu thẻ [UI/UX]/[BA] (để thấy cảnh báo).
+// Sub-task UI/BA có cha → gộp vào dòng cha.
 function _tkAll(today) {
   const list = dbTickets || [];
   const idx = tkSubIndex(list);
   const keys = new Set(list.map(t => t.key));
   return list
-    .filter(t => !(tkIsSubtask(t) && keys.has(tkParentKey(t))))
+    .filter(t => !(tkIsSubtask(t) && tkSubKind(t) && keys.has(tkParentKey(t))))
     .map(t => ({ t, d: tkDerive(t, today, idx) }));
 }
 
