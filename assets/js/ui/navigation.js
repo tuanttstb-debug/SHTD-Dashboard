@@ -150,6 +150,7 @@ function navigateTo(view) {
   if (view === 'initiative-tracker')   renderInitiativeTracker();
   if (view === 'issue-tracker')        renderIssueTracker();
   if (view === 'dev-plan')             renderDevPlan();
+  if (view === 'backlog-it')           renderBacklogIt();
   if (view === 'h2-dashboard')         { if (typeof _ensureH2Loaded === 'function') _ensureH2Loaded(); renderH2Dashboard(); }
   if (view === 'h2-tracker')           { if (typeof _ensureH2Loaded === 'function') _ensureH2Loaded(); renderH2Tracker(); }
   if (view === 'h2-review')            { if (typeof _ensureH2Loaded === 'function') _ensureH2Loaded(); renderH2Review(); }

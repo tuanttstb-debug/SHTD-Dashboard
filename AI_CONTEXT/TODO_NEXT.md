@@ -1,6 +1,13 @@
 # TODO — NEXT SESSION
 **Prepared**: 2026-10-13 (S93 — AI Assistant tuning)
 
+## 🆕 S94 — Backlog IT (ticket Jira DCB, v6.69) — CODE XONG + TEST PASS LOCAL
+- [x] Ticket_Master + import file Jira + derive label + lọc chuẩn + modal chốt + xuất planning + badge · `verify_backlog_it` 50/50.
+- [ ] [TT] redeploy GAS (TicketService.gs MỚI + Code.gs + CacheLayer.gs) → hard-refresh `?v=20261029`.
+- [ ] [CC] nghiệm thu LIVE với file xuất Jira thật của team (kỳ T12) → nhãn/line/sẵn sàng đúng.
+- [ ] Đợt 2: My Work hiện ticket thiếu điều kiện của PO · báo cáo DCB tuần (hub `build_dcb.js`) thêm khối ticket kỳ.
+- [ ] Nợ cũ: `verify_milestone_task` + `verify_task_init_popup` AUTH FAILED (có sẵn trước S94).
+
 ## 🆕 S93 — AI Assistant tuning (v6.68) — CODE XONG + TEST PASS LOCAL
 - [x] `AiService.gs` viết lại (bundle + định tuyến tất định + context lọc + Flash-Lite/thinking low/429 nhảy model) · `Code.gs` route · FE đồng hồ giây · test routing 35/35 + resilience 56/56.
 - [x] [TT] redeploy GAS + LIVE OK 2026-10-13.

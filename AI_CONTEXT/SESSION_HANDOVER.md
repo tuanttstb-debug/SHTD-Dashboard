@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-10-29 (S94 — Backlog IT: ticket Jira DCB, hub AIOS D22)
+**Model**: Claude Opus 5.5 · **Version**: v6.68 → **v6.69** · khởi phát từ hub AIOS (`08_Work/W-2610-quy-trinh-team`, planning DCB kỳ T12 lần đầu)
+
+- **Task completed:** phân hệ mới **Backlog IT (Jira)** (nhóm Quản lý công việc): sheet `Ticket_Master` 24 cột · nạp file xuất Jira (dò header ở mọi sheet, gộp theo Key, đọc cả bảng tay PO; Labels nhiều cột; ngày Date/ISO/"28/Oct/26"/M/d/yyyy/dd/MM/yyyy/serial) · suy ra từ label chuẩn: line → PO (TEAM_SO_HOA), nhãn phụ, UI/TLPT, DCB_Task, Expect_Golive, OKR_, Dep_, sẵn sàng chuyển IT + lý do thiếu, số ngày không nhích (30 vàng/60 đỏ), lệch ưu tiên · 6 thẻ lọc nhanh + lọc chuẩn Team → Nhân sự (port `people-filter.js` từ AIUS, nhãn `Dunglq1-Lê Quang Dũng`) + line + kỳ · modal chốt ưu tiên/quyết định/kỳ (Teamlead/Admin, GAS chặn role) + ghi chú/UI/TLPT/Initiative · xuất bảng planning 23 cột · badge menu ticket mở ≥ 60 ngày.
+- **Files changed:** MỚI `backend/TicketService.gs` · `assets/js/{tickets-core,people-filter}.js` · `assets/js/views/backlog-it.js` · `assets/css/backlog-it.css` · `test/verify_backlog_it.mjs` — SỬA `backend/Code.gs` (batch-read `tickets` + ticket-read/import/update/delete) · `backend/CacheLayer.gs` (domain ver `tickets`) · `assets/js/{api,app,config,i18n}.js` · `assets/js/ui/navigation.js` · `index.html` (`?v=20261029`) · `test/run_tests.mjs`.
+- **Decision made:** hub D22 — Jira là nơi nhập duy nhất (label chuẩn), SHTD chỉ chốt ưu tiên team/quyết định/kỳ; import ghi đè cột Jira, giữ cột team, KHÔNG xóa ticket vắng mặt (mỗi PO nạp line mình); được lưu cả Description (anh duyệt). Sheet tạo mới đặt định dạng text `@` để Sheets không đổi ngày theo locale.
+- **Blocker:** không — chờ [TT] redeploy GAS.
+- **Next step:** [TT] redeploy GAS (thêm `TicketService.gs`, cập nhật `Code.gs` + `CacheLayer.gs`, giữ deployment cũ) → hard-refresh → Backlog IT → Nạp file Jira của team (hạn 17h 29/10) → [CC] nghiệm thu LIVE + bảng planning kỳ T12 cho anh chốt sáng 30/10. Đợt 2: nối My Work + báo cáo DCB tuần (`build_dcb.js` hub).
+- **Regression risk:** Thấp — phân hệ tách riêng; chạm chung chỉ batch-read (thêm domain, client cũ/GAS cũ fallback `ticket-read` lỗi êm) + renderAll (gọi badge có guard). Test: `verify_backlog_it` 50/50 + file thật 12 ticket (TK_REAL_FILE, không commit) · full suite 36/38 — 2 lỗi `verify_milestone_task` + `verify_task_init_popup` AUTH FAILED **có sẵn trên cây sạch** (đã chạy lại trên worktree HEAD 29/10). Data-boundary: test dùng ticket giả lập (repo public).
+
+---
+
 # SESSION HANDOVER — 2026-10-13 (S93 — AI Assistant tuning nhanh + tiết kiệm token, gói free)
 **Model**: Claude Opus 5.5 · **Version**: v6.67 → **v6.68** · khởi phát từ hub AIOS (`/enter shtd`)
 

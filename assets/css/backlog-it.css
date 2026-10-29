@@ -1,0 +1,94 @@
+/* ── Backlog IT (ticket Jira DCB) — tk- prefix · v6.69 ── */
+
+/* Bộ lọc chuẩn Team + Nhân sự (port từ ai-usecase-platform, luật hub ui-filter-standard) */
+.pf-select { min-width: 150px; max-width: 240px; }
+.pf-select--team { max-width: 160px; }
+
+.tk-page { padding: 4px 0 40px; }
+.tk-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.tk-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text); }
+.tk-title i { color: var(--primary); }
+.tk-sub { font-size: 13px; color: var(--text-2); margin-top: 3px; }
+.tk-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Stat cards (bấm = lọc nhanh) ── */
+.tk-stat-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
+@media (max-width: 1100px) { .tk-stat-bar { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 560px)  { .tk-stat-bar { grid-template-columns: repeat(2, 1fr); } }
+.tk-stat {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; cursor: pointer; text-align: left; font: inherit; color: inherit;
+  transition: var(--transition);
+}
+.tk-stat:hover { border-color: var(--primary-light); }
+.tk-stat:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.tk-stat.is-on { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-xlight); }
+.tk-stat-num { font-size: 22px; font-weight: 800; line-height: 1.1; color: var(--text); }
+.tk-stat-lbl { font-size: 12px; color: var(--text-2); }
+.tk-stat.is-good .tk-stat-num { color: var(--success); }
+.tk-stat.is-warn .tk-stat-num { color: var(--warning); }
+.tk-stat.is-bad  .tk-stat-num { color: var(--danger); }
+
+/* ── Toolbar ── */
+.tk-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.tk-toolbar .form-control { width: auto; }
+.tk-search { flex: 1; min-width: 200px; }
+
+/* ── Table: fit-one-screen (table-layout fixed, chữ xuống dòng) ── */
+.tk-table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.tk-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; background: var(--surface); white-space: normal; }  /* table.css đặt nowrap toàn cục */
+@media (max-width: 900px) { .tk-table { min-width: 900px; } }
+.tk-table thead th {
+  position: sticky; top: 0; background: var(--surface2); z-index: 1;
+  padding: 9px 10px; text-align: left; font-size: 12px; font-weight: 700; color: var(--text-2);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.tk-sortable { cursor: pointer; user-select: none; }
+.tk-arrow { font-size: 9px; color: var(--primary); }
+.tk-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text); overflow-wrap: anywhere; }
+.tk-row { cursor: pointer; }
+.tk-row:hover td { background: var(--primary-xlight); }
+.tk-row.is-done td { opacity: .6; }
+.tk-key { font-family: var(--mono); font-weight: 600; color: var(--primary); text-decoration: none; }
+.tk-key:hover { text-decoration: underline; }
+.tk-sum { font-weight: 600; line-height: 1.35; }
+.tk-muted { font-size: 12px; color: var(--text-2); }
+.tk-mismatch { color: var(--danger); font-weight: 700; }
+.tk-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tk-chip { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-2); }
+.tk-chip.is-okr  { background: var(--success-bg); border-color: transparent; color: var(--success); }
+.tk-chip.is-dxct { background: var(--info-bg); border-color: transparent; color: var(--info); }
+.tk-chip.is-dep  { background: var(--purple-bg); border-color: transparent; color: var(--purple); }
+.tk-chip.is-warn { background: var(--warning-bg); border-color: transparent; color: var(--warning); }
+.tk-ok { color: var(--success); font-weight: 700; }
+.tk-no { color: var(--danger); font-weight: 700; }
+.tk-missing { font-size: 12px; color: var(--text-2); margin-top: 2px; line-height: 1.35; }
+.tk-stale { font-weight: 700; }
+.tk-stale.is-amber { color: var(--warning); }
+.tk-stale.is-red   { color: var(--danger); }
+.tk-dec { display: inline-block; margin-top: 3px; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+.tk-dec.is-in   { background: var(--success-bg); color: var(--success); }
+.tk-dec.is-hold { background: var(--warning-bg); color: var(--warning); }
+.tk-dec.is-drop { background: var(--danger-bg); color: var(--danger); }
+.tk-foot { font-size: 12px; color: var(--text-2); margin-top: 8px; }
+.tk-empty { display: flex; gap: 12px; align-items: center; padding: 28px; border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-2); background: var(--surface); }
+.tk-empty i { font-size: 22px; color: var(--primary); }
+.tk-guide div { margin-bottom: 4px; text-align: left; font-size: 13px; }
+
+/* ── Modal ── */
+#tkModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
+#tkModal.open { display: flex; }
+.tk-modal-box { background: var(--surface); color: var(--text); border-radius: 16px; padding: 22px 26px; width: 100%; max-width: 760px; max-height: 92vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+.tk-modal-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.tk-modal-title { font-size: 16px; font-weight: 700; margin-top: 4px; line-height: 1.35; }
+.tk-modal-info { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; font-size: 13px; padding: 12px; background: var(--surface2); border-radius: var(--radius-sm); margin-bottom: 14px; }
+.tk-modal-info span { display: block; font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .3px; }
+.tk-modal-info .tk-full, .tk-form .tk-full { grid-column: 1 / -1; }
+.tk-desc { white-space: pre-wrap; max-height: 160px; overflow-y: auto; }
+.tk-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 14px; }
+.tk-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: var(--text-2); }
+.tk-form .form-control { font-weight: 400; color: var(--text); }
+.tk-modal-foot { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 16px; }
+.tk-modal-foot .tk-muted { margin-right: auto; }
+@media (max-width: 640px) { .tk-form, .tk-modal-info { grid-template-columns: 1fr; } }

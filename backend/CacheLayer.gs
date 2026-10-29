@@ -34,7 +34,8 @@ var _DOMAIN_VER_KEYS = {
   issues:      'SHTD_VER_issues',
   dev:         'SHTD_VER_dev',
   initiatives: 'SHTD_VER_initiatives',
-  users:       'SHTD_VER_users'
+  users:       'SHTD_VER_users',
+  tickets:     'SHTD_VER_tickets'
 };
 
 // Version hiện tại của 1 domain. notifs: bám GLOBAL (đổi mỗi write, payload nhỏ + client còn

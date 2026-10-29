@@ -43,6 +43,7 @@ async function startApp() {
   loadCasesFromCache();
   loadIssuesFromCache();
   loadDevFromCache();
+  if (typeof loadTicketsFromCache === 'function') loadTicketsFromCache();
   loadNotifsFromCache();
   if (typeof loadH2FromCache === 'function') loadH2FromCache();
   setupListeners();
@@ -66,7 +67,7 @@ async function _startupSync() {
   // Phase 2: THỬ 1 request gộp (batch-read) trước.
   let ok = false;
   try {
-    ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);
+    ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs', 'tickets']);
   } catch (e) {
     // Lỗi MẠNG (timeout/fetch) → giữ cache + nút "Thử lại"; KHÔNG fallback (tránh double-timeout).
     console.warn('[SHTD] batch-read lỗi mạng:', e && e.message);
@@ -86,6 +87,7 @@ async function _startupSync() {
     readInitiatives,
     readCases,
     readIssues,
+    readTickets,
     () => readDev().then(() => {
       if (document.getElementById('view-my-work')?.style.display === 'contents') renderMyWork();
       if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
@@ -175,6 +177,8 @@ function renderAll() {
   if (document.getElementById('view-kpi-overview')?.style.display === 'contents') renderKpiOverview();
   if (document.getElementById('view-owner-analysis')?.style.display === 'contents') renderOwnerAnalysis();
   if (document.getElementById('view-dev-plan')?.style.display === 'contents') renderDevPlan();
+  if (document.getElementById('view-backlog-it')?.style.display === 'contents') renderBacklogIt();
+  else if (typeof tkUpdateBadge === 'function') tkUpdateBadge();
   if (_qvIsOpen) renderQuickView();
   if (typeof renderNotifBell === 'function') renderNotifBell();
   document.getElementById('sbCount').textContent = db.tasks.length + ' task';
@@ -265,10 +269,10 @@ async function syncDB() {
   showLoading('Đang đồng bộ dữ liệu từ Sheets… (mạng nội bộ có thể chậm, vui lòng chờ)');
   try {
     // Phase 2: 1 request gộp. Nếu GAS chưa hỗ trợ → fallback read lẻ.
-    const ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs']);
+    const ok = await readAll(['tasks', 'cases', 'issues', 'dev', 'initiatives', 'users', 'notifs', 'tickets']);
     if (!ok) {
       await Promise.all([
-        readFromHandle(), readCases(), readIssues(), readDev(), readInitiatives(), readNotifications(),
+        readFromHandle(), readCases(), readIssues(), readDev(), readInitiatives(), readNotifications(), readTickets(),
       ]);
     }
     // Sync = mốc "bắt buộc cập nhật" → refresh H2 nếu đã mở trong phiên (không load liên tục).
@@ -287,6 +291,7 @@ async function uiClearCache() {
   localStorage.removeItem('shtd_v2');
   localStorage.removeItem('shtd_notifs_v1');
   db.tasks = []; db.initiatives = []; dbCases = []; dbDev = []; dbNotifs = [];
+  if (typeof dbTickets !== 'undefined') dbTickets = [];
   document.getElementById('btnConnect').innerHTML = '<i class="fa-brands fa-google"></i> Kết nối GG Sheets';
   document.getElementById('btnConnect').className = 'btn btn-outline btn-sm';
   document.getElementById('btnSync').style.display = 'none';

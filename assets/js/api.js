@@ -234,6 +234,7 @@ async function readAll(domains) {
       cases:       !!(typeof dbCases !== 'undefined' && dbCases && dbCases.length),
       issues:      !!(typeof dbIssues !== 'undefined' && dbIssues && dbIssues.length),
       dev:         !!(typeof dbDev !== 'undefined' && dbDev && dbDev.length),
+      tickets:     !!(typeof dbTickets !== 'undefined' && dbTickets && dbTickets.length),
       initiatives: !!(db.initiatives && db.initiatives.length),
       users:       !!(typeof _appUsers !== 'undefined' && _appUsers && _appUsers.length),
     };
@@ -284,6 +285,12 @@ async function readAll(domains) {
       persistDev();
     }
   } catch (e) { console.warn('readAll dev:', e.message); }
+  try {
+    if (d.tickets && Array.isArray(d.tickets.values)) {
+      _parseTicketArray(d.tickets.values);
+      persistTickets();
+    }
+  } catch (e) { console.warn('readAll tickets:', e.message); }
   try {
     if (d.users && Array.isArray(d.users.rows)) {
       const header = d.users.header || [];
@@ -880,6 +887,91 @@ function loadDevFromCache() {
     const cached = localStorage.getItem('shtd_dev_v1');
     if (cached) dbDev = JSON.parse(cached);
   } catch(e) {}
+}
+
+/* ══════════════════════════════════════════
+   BACKLOG IT API  (ticket Jira DCB — Ticket_Master)
+   Import file xuất Jira (upsert theo Key) · sửa cột quản trị · cache cục bộ.
+══════════════════════════════════════════ */
+
+function _parseTicketArray(rows) {
+  dbTickets = (rows || []).length <= 1 ? [] : rows.slice(1).map(rowToTicket).filter(t => t.key);
+}
+
+async function readTickets() {
+  if (!GS_WEBAPP_URL) return;
+  try {
+    const json = await gasPost({ action: 'ticket-read' }, GAS_READ_TIMEOUT_MS);
+    if (json.status !== 'ok') return;
+    _parseTicketArray(json.values);
+    persistTickets();
+  } catch (e) {
+    console.warn('readTickets error:', e.message);
+  }
+}
+
+function persistTickets() {
+  try { localStorage.setItem('shtd_tickets_v1', JSON.stringify(dbTickets)); } catch (e) {}
+}
+
+function loadTicketsFromCache() {
+  try {
+    const cached = localStorage.getItem('shtd_tickets_v1');
+    if (cached) dbTickets = JSON.parse(cached);
+  } catch (e) {}
+}
+
+// Gộp vào bộ nhớ cục bộ theo đúng luật server (cột Jira ghi đè, cột team giữ nguyên).
+function _mergeTicketsLocal(list) {
+  const byKey = new Map(dbTickets.map(t => [t.key, t]));
+  let added = 0, updated = 0;
+  list.forEach(inc => {
+    const cur = byKey.get(inc.key);
+    if (cur) {
+      TK_FIELDS.slice(0, 14).forEach(f => { cur[f] = inc[f] || ''; });
+      ['ui', 'tlpt', 'loai'].forEach(f => { if (inc[f]) cur[f] = inc[f]; });
+      updated++;
+    } else {
+      const t = Object.assign({}, inc);
+      TK_LEAD_FIELDS.concat(['initId', 'note']).forEach(f => { t[f] = ''; });
+      dbTickets.push(t); byKey.set(t.key, t);
+      added++;
+    }
+  });
+  persistTickets();
+  return { added, updated, total: dbTickets.length };
+}
+
+async function _gasTicketImport(list) {
+  const res = _mergeTicketsLocal(list);
+  if (!GS_WEBAPP_URL || !getAuthSession()) return { result: res, offline: true };
+  try {
+    const json = await gasWrite({ action: 'ticket-import', rows: list.map(ticketToRow) }, { timeoutMs: GAS_READ_TIMEOUT_MS });
+    if (json.status !== 'ok') throw new Error(json.error || 'ticket-import lỗi');
+    await readTickets();
+    return { result: json.result || res, offline: false };
+  } catch (e) {
+    toast('⚠️ GAS lỗi: ' + e.message + ' — ticket đã lưu cục bộ, bấm Đồng bộ để thử lại.', 'warning', 7000);
+    return { result: res, offline: true };
+  }
+}
+
+// patch: { field: value } (field ∈ ui/tlpt/loai/uuTien/quyetDinh/ky/initId/note)
+async function _gasTicketUpdate(key, patch) {
+  const t = dbTickets.find(x => x.key === key);
+  if (t) Object.assign(t, patch);
+  persistTickets();
+  if (!GS_WEBAPP_URL || !getAuthSession()) return true;
+  const colPatch = {};
+  Object.keys(patch).forEach(f => { if (TK_COL[f] != null) colPatch[TK_COL[f]] = patch[f]; });
+  try {
+    const json = await gasWrite({ action: 'ticket-update', key, patch: colPatch });
+    if (json.status !== 'ok') throw new Error(json.error === 'FORBIDDEN' ? 'Chỉ Teamlead/Admin được chốt ưu tiên, quyết định, kỳ.' : (json.error || 'ticket-update lỗi'));
+    return true;
+  } catch (e) {
+    toast('⚠️ ' + e.message + ' — đã lưu cục bộ.', 'warning', 6000);
+    return false;
+  }
 }
 
 /* ══════════════════════════════════════════

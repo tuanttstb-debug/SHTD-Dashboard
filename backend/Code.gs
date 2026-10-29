@@ -130,6 +130,7 @@ function doPost(e) {
       if (_pick.users)        _bd.users       = userList(_bss);
       if (_pick.notifs)       _bd.notifs      = notifRead(tokenData.u, _bss);
       if (_pick.h2)           _bd.h2          = h2ReadAll(_bss);
+      if (_pick.tickets)      _bd.tickets     = { values: ticketRead(_bss) };
       return _jsonResponse({ status: 'ok', ver: _cur, vers: _curVers, serverTs: _getTaskTs(), data: _bd });
     }
 
@@ -292,6 +293,50 @@ function doPost(e) {
       issueDeleteRow(body.issueId);
       _bumpDomainVer('issues');
       auditLog(tokenData, 'issue-delete', body.issueId + (body.issueName ? ' | ' + body.issueName : ''));
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    // ── Backlog IT (ticket Jira DCB — hub AIOS D22) ──
+    // Import: mọi role đã login (PO tự nạp file xuất Jira của line mình).
+    // Quyết định planning / ưu tiên team / kỳ: Admin + Teamlead. Xóa: Admin.
+    if (action === 'ticket-read') {
+      return _jsonResponse({ status: 'ok', values: ticketRead() });
+    }
+
+    if (action === 'ticket-import') {
+      if (!body.rows || !Array.isArray(body.rows) || !body.rows.length) {
+        throw new Error('ticket-import: thiếu rows.');
+      }
+      var _tkRes = ticketImport(body.rows, tokenData.u);
+      _bumpDomainVer('tickets');
+      auditLog(tokenData, 'ticket-import', 'added=' + _tkRes.added + ' updated=' + _tkRes.updated);
+      return _jsonResponse({ status: 'ok', result: _tkRes });
+    }
+
+    if (action === 'ticket-update') {
+      if (!body.key || !body.patch || typeof body.patch !== 'object') {
+        throw new Error('ticket-update: thiếu key hoặc patch.');
+      }
+      var _tkLeadCols = ['17', '18', '19'];   // Ưu tiên team · Quyết định planning · Kỳ planning
+      if (tokenData.r !== 'Admin' && tokenData.r !== 'Teamlead') {
+        for (var _pc in body.patch) {
+          if (_tkLeadCols.indexOf(String(_pc)) !== -1) {
+            return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
+          }
+        }
+      }
+      ticketUpdate(body.key, body.patch);
+      _bumpDomainVer('tickets');
+      auditLog(tokenData, 'ticket-update', body.key);
+      return _jsonResponse({ status: 'ok' });
+    }
+
+    if (action === 'ticket-delete') {
+      if (tokenData.r !== 'Admin') return _jsonResponse({ status: 'error', error: 'FORBIDDEN' });
+      if (!body.key) throw new Error('ticket-delete: thiếu key.');
+      ticketDelete(body.key);
+      _bumpDomainVer('tickets');
+      auditLog(tokenData, 'ticket-delete', body.key);
       return _jsonResponse({ status: 'ok' });
     }
 
