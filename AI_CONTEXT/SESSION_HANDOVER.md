@@ -1,3 +1,15 @@
+# SESSION HANDOVER — 2026-11-10 (S95 — UI/UX v2: chuẩn hóa nút / ô nhập / bảng toàn app)
+**Model**: Claude Opus 5.5 · **Version**: v6.74 → **v6.75** · anh giao từ hub AIOS, làm 1 lượt (chỉ giao diện)
+
+- **Task completed:** đo hiện trạng (12 mức chiều cao, 13/21 hàng lệch) → kế hoạch → làm 1 lượt theo anh: thang `--ctl-h` cho mọi nút/ô/select/segmented, `ui-v2.css` nạp cuối, gỡ 38 style viết thẳng, phông Be Vietnam Pro, độ rộng cột bảng theo dữ liệu LIVE (đo trên tab anh đã đăng nhập, chỉ đếm ký tự) · audit thành test chặn.
+- **Files changed:** `assets/css/{tokens,components,forms,table,responsive,dev-plan,executive-summary}.css` · MỚI `assets/css/ui-v2.css` · `assets/js/views/{tasks,case-pipeline,issue-tracker,initiative-tracker,performance,backlog-it,action-plan,user-management}.js` · `assets/js/config.js` · `index.html` (phông, link ui-v2, mọi `?v=20261110`) · MỚI `test/audit_uiux_controls.mjs` · `test/run_tests.mjs` · MỚI `design-system/shtd-dashboard/PHUONG_AN_VA_KE_HOACH.md`.
+- **Decision made:** giữ tím-cam (D02) · thang 28/32/36 laptop, ≥40 điện thoại · không thêm/bớt nút · ô tên dài hiện 2 dòng (tooltip giữ tên đủ).
+- **Blocker:** không — thuần FE, không redeploy GAS.
+- **Next step:** [TT] hard-refresh LIVE kiểm 5 màn chính · [CC] màn KPI (dữ liệu giả chưa phủ) soát lại trên LIVE khi anh báo · màn mới phải qua `audit_uiux_controls`.
+- **Regression risk:** Thấp–trung bình: nút cao thêm 2–6px ở vài màn; ô tên 2 dòng làm hàng bảng cao hơn; phông mới hơi khác dáng. Test cũ xanh (trừ 2 AUTH có sẵn), audit sạch 23 màn × 2 khổ.
+
+---
+
 # SESSION HANDOVER — 2026-10-29 (S94.8 — Backlog IT: giao hàng loạt cho PO khác của team)
 **Model**: Claude Opus 5.5 · **Version**: v6.73 → **v6.74** · anh yêu cầu sau khi redeploy GAS v6.73
 

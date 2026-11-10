@@ -1,0 +1,59 @@
+/* ===== UI/UX v2 — KHUNG CHUẨN ĐIỀU KHIỂN (nạp CUỐI CÙNG, sau mọi file CSS màn) =====
+   Mục tiêu: mọi nút / ô nhập / select / nhóm nút chuyển chế độ cùng thang chiều cao
+   --ctl-h (36px) · --ctl-h-sm (32px) · --ctl-h-xs (28px); điện thoại ≤768px: ≥ 40px (responsive.css).
+   Luật cho màn mới: dùng .btn / .btn-sm / .form-control / .form-control-sm, KHÔNG tự đặt padding dọc cho nút.
+   Kiểm: node test/audit_uiux_controls.mjs (0 hàng lệch). Kế hoạch: design-system/shtd-dashboard/PHUONG_AN_VA_KE_HOACH.md */
+
+/* ── 1. Nhóm nút chuyển chế độ (segmented): nhóm cao đúng thang, nút con lấp đầy ── */
+.scope-toggle,.mw-view-toggle,.cp-view-toggle,.ap-period-group,.ap-rag-group{
+  display:inline-flex;align-items:stretch;height:var(--ctl-h);
+  border:1px solid var(--border-strong);border-radius:var(--radius-sm);overflow:hidden;flex-shrink:0;
+}
+.scope-btn,.mw-view-btn,.cp-view-btn,.ap-period-btn,.ap-rag-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  height:auto;padding:0 12px;line-height:1;font-size:12px;font-weight:600;white-space:nowrap;
+}
+.it-trend-toggle{display:inline-flex;align-items:stretch;height:var(--ctl-h);padding:3px;gap:3px;}
+.it-trend-btn{display:inline-flex;align-items:center;height:auto;padding:0 12px;line-height:1;}
+
+/* ── 2. Điều khiển riêng của từng màn → về thang ── */
+.mw-team-filter{height:var(--ctl-h);padding:0 28px 0 10px;border-color:var(--border-strong);}
+.mw-state-sel{height:var(--ctl-h-sm);padding:0 24px 0 8px;border-color:var(--border-strong);}
+.bld-ghost-link{height:var(--ctl-h-sm);padding:0 10px;display:inline-flex;align-items:center;gap:6px;}
+.ai-chat-clear-btn{height:var(--ctl-h-sm);padding:0 12px;display:inline-flex;align-items:center;gap:6px;}
+.ai-chat-suggestion{min-height:var(--ctl-h-sm);padding:6px 14px;display:inline-flex;align-items:center;line-height:1.3;text-align:left;}
+.init-toggle-btn{min-height:var(--ctl-h);padding:0 14px;}
+.tk-assign-sel{height:var(--ctl-h-sm);}
+
+/* ── 3. Thanh công cụ: trong cùng một hàng, mọi nút/ô cao bằng nhau (nút nhỏ lên cỡ chuẩn) ── */
+.toolbar-right > .btn-sm,
+.toolbar-right > .form-control-sm,
+.toolbar-right > .btn-group > .btn-sm{height:var(--ctl-h);}
+.toolbar-right > *,.filter-bar > *{flex-shrink:0;}
+
+/* ── 4. Ô tên / tiêu đề trong bảng: xuống dòng tối đa 2 dòng thay vì cắt "…"
+   Độ rộng theo dữ liệu LIVE 10/11/2026 (độ dài ký tự trung vị / p90):
+   Task 50/82 · Issue 67/72 → --lg · Case 35/57 → mặc định · popup → --sm ── */
+td.cell-name{white-space:normal;min-width:200px;max-width:300px;}
+td.cell-name--lg{min-width:260px;max-width:360px;}
+td.cell-name--sm{min-width:150px;max-width:240px;}
+.clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;overflow-wrap:anywhere;}
+/* Stage case (p90 32 ký tự) và nguyên nhân Issue (46) cho xuống dòng */
+#cpTable td:nth-child(3){white-space:normal;min-width:120px;max-width:170px;}
+.it-stat-table td:nth-child(2){white-space:normal;}
+/* Thanh lọc nhiều ô (Case 8 ô): ô lọc hẹp hơn một chút để nút xóa lọc không rơi xuống hàng riêng ở laptop 14" */
+@media (max-width:1536px){ .filter-group{min-width:96px;} }
+/* Bảng dày: đệm ô gọn hơn một chút để đỡ tràn ngang ở laptop 14" */
+@media (max-width:1536px){
+  th{padding:10px 12px;}
+  td{padding:10px 12px;}
+}
+
+/* ── 5. Điện thoại: chip gợi ý, nhóm chuyển chế độ cuộn ngang thay vì tràn ── */
+@media (max-width:768px){
+  .scope-toggle,.mw-view-toggle,.cp-view-toggle,.ap-period-group,.ap-rag-group,.it-trend-toggle{max-width:100%;overflow-x:auto;}
+  td.cell-name,td.cell-name--lg{min-width:180px;max-width:240px;}
+  /* Tab preset (Đang làm / Quá hạn / Tất cả): 1 hàng cuộn ngang thay vì vỡ nhiều hàng */
+  .preset-bar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+  .preset-bar::-webkit-scrollbar{display:none;}
+}

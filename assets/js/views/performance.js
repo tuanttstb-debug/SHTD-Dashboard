@@ -17,7 +17,7 @@ function openPerfTaskPopup(key) {
       ? `<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--text-3);">${t('perf.empty')}</td></tr>`
       : tasks.map(t => `<tr onclick="editTask('${esc(t.id)}')" style="cursor:pointer;">
           <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${esc(t.id)}</span></td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${esc(t.name)}">${esc(t.name)}</td>
+          <td class="cell-name" title="${esc(t.name)}"><div class="clamp-2">${esc(t.name)}</div></td>
           <td>${esc(t.initiative||'–')}</td>
           <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 6px;border-radius:4px;font-weight:600;">${esc(t.category||'–')}</span></td>
           <td>${t.milestone?`<span style="font-size:11px;background:var(--primary-xlight);padding:2px 6px;border-radius:3px;color:var(--primary);font-weight:700;">${esc(t.milestone)}</span>`:'–'}</td>

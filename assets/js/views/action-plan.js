@@ -161,7 +161,7 @@ function _apToolbar(team, itemCount, initCount) {
       <div style="font-size:17px;font-weight:800;">Action Plan</div>
       <div class="ap-filter-bar">
         ${isAdminUser
-          ? `<select class="form-control" style="font-size:12px;padding:5px 10px;width:auto;height:auto;"
+          ? `<select class="form-control" style="font-size:12px;width:auto;"
                onchange="_apSetTeam(this.value)">
                <option value="" ${team === '' ? 'selected' : ''}>${t('ap.all-teams')}</option>
                ${teamOpts}

@@ -268,7 +268,7 @@ function _itRenderTable() {
       const isBreach = i.trangThai !== 'Đã xử lý' && i.deadline && new Date(i.deadline) < today;
       return `<tr class="${isBreach ? 'row-overdue' : ''}" onclick="openIssueViewPopup('${esc(i.id)}')" style="cursor:pointer;">
         <td style="font-family:monospace;font-size:11px;color:var(--text-3);">${esc(i.id)}</td>
-        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(i.tieuDe)}">${esc(i.tieuDe)}</td>
+        <td class="cell-name cell-name--lg" title="${esc(i.tieuDe)}"><div class="clamp-2">${esc(i.tieuDe)}</div></td>
         <td><span class="it-system-badge">${esc(i.heTong||'–')}</span></td>
         <td><span class="it-severity-badge it-sev-${(i.mucDo||'').toLowerCase()}">${esc(i.mucDo||'–')}</span></td>
         <td><span class="it-status-chip it-st-${_itStatusClass(i.trangThai)}">${esc(i.trangThai||'–')}</span></td>

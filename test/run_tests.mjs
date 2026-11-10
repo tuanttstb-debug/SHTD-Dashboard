@@ -49,6 +49,7 @@ const SUITES = [
   'verify_filter_cascade.mjs',  // 23 tests  S23
   'verify_import_rbac.mjs',     // 15 tests  S23
   'verify_modal_layout.mjs',    //  9 tests  S23
+  'audit_uiux_controls.mjs',    // UI/UX v2 (v6.75) — 23 màn × 1366/390: 0 hàng nút lệch, control trên thang 28/32/36/40, 0 tràn ngang
 ];
 
 const SEP = '='.repeat(62);

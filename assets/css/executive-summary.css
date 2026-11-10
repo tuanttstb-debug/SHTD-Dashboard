@@ -150,7 +150,8 @@
 .es-init-table tr:last-child td { border-bottom: none; }
 .es-init-table tr:hover td { background: var(--surface2); }
 
-.es-init-name { font-weight: 700; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* tên initiative LIVE 10/11: trung vị 21, p90 44 ký tự → tối đa 2 dòng trong 320px */
+.es-init-name { font-weight: 700; min-width: 200px; max-width: 320px; white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
 /* Progress bar (wider) */
 .es-prog-wide { display: flex; align-items: center; gap: 10px; }

@@ -54,15 +54,15 @@ function renderInitiativeTracker() {
             ${t('task.scope.all')}
           </button>
         </div>
-        <select id="initSelCat" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('cat',this.value)">
+        <select id="initSelCat" class="form-control" style="font-size:12px;width:auto;" onchange="_initSetFilter('cat',this.value)">
           <option value="">${t('it.filter.all-cat')}</option>
           ${_initCategoryOptions()}
         </select>
-        <select id="initSelAcc" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('acc',this.value)">
+        <select id="initSelAcc" class="form-control" style="font-size:12px;width:auto;" onchange="_initSetFilter('acc',this.value)">
           <option value="">${t('it.filter.all-acc')}</option>
           ${_initAccountableOptions()}
         </select>
-        <select id="initSelStatus" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="_initSetFilter('status',this.value)">
+        <select id="initSelStatus" class="form-control" style="font-size:12px;width:auto;" onchange="_initSetFilter('status',this.value)">
           <option value="">${t('it.filter.all-status')}</option>
           <option value="Active">Active</option>
           <option value="Done">Done</option>
@@ -281,9 +281,9 @@ function _initBuildMilestoneList(parentId, milestones) {
         </div>
         ${ms.deadline ? `<span class="init-ms-deadline"><i class="fa-solid fa-calendar" style="margin-right:3px;"></i>${fmtDate(ms.deadline)}</span>` : ''}
         <span class="init-status-chip ${dotClass}" style="font-size:10px;padding:1px 6px;">${_esc(ms.status||'Chưa bắt đầu')}</span>
-        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa milestone"><i class="fa-solid fa-pen"></i></button>
-        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--danger);" onclick="_initDeleteMilestone('${_esc(ms.id)}')" title="Xóa milestone"><i class="fa-solid fa-trash"></i></button>
-        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> Task</button>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="_initOpenModal('${_esc(ms.id)}')" title="Sửa milestone"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;color:var(--danger);" onclick="_initDeleteMilestone('${_esc(ms.id)}')" title="Xóa milestone"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;color:var(--primary);" onclick="openTaskModalForMilestone('${_esc(ms.id)}','${_esc(parentId)}')" title="Thêm task vào milestone này"><i class="fa-solid fa-plus"></i> Task</button>
         <button class="init-ms-task-btn${btnExtra}" id="ms-task-btn-${_esc(ms.id)}" onclick="_initToggleMsTaskPanel('${_esc(ms.id)}')">
           <i class="fa-solid fa-list-check"></i> ${msTasks.length} task
           <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i>
@@ -895,7 +895,7 @@ function openInitSummaryPopup(type) {
                         onmouseover="this.style.background='var(--bg)'"
                         onmouseout="this.style.background=''">
               <td style="padding:8px 6px;font-family:var(--mono);color:var(--primary);font-weight:700;white-space:nowrap;">${_esc(i.id)}</td>
-              <td style="padding:8px 6px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${_esc(i.name || '')}">${_esc(i.name || '–')}</td>
+              <td class="cell-name cell-name--sm" style="padding:8px 6px;" title="${_esc(i.name || '')}"><div class="clamp-2">${_esc(i.name || '–')}</div></td>
               <td style="padding:8px 6px;white-space:nowrap;font-size:12px;">${_esc(i.accountable || '–')}</td>
               <td style="padding:8px 6px;white-space:nowrap;font-size:12px;${od ? 'color:var(--danger);font-weight:600;' : ''}">${_esc(i.deadline || '–')}</td>
               <td style="padding:8px 6px;text-align:center;font-family:var(--mono);font-weight:700;">${i.pct != null ? i.pct : 0}%</td>

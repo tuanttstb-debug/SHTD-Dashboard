@@ -1,4 +1,9 @@
 # TODO — NEXT SESSION
+## 🆕 S95 — UI/UX v2 chuẩn hóa nút / ô nhập / bảng (v6.75) — CODE XONG + TEST PASS + ĐÃ PUSH
+- [ ] [TT] hard-refresh LIVE → kiểm Quản lý Task · Case Pipeline · Backlog IT · Phê duyệt BLĐ · Action plan (laptop + điện thoại).
+- [ ] [CC] soát màn KPI (tổng quan, tiến độ, owner, chi nhánh, RM) trên LIVE với dữ liệu thật — dữ liệu giả local chưa phủ.
+- [ ] [CC] dọn dần ~845 style viết thẳng còn lại (không chặn — audit đã giữ chiều cao nút/ô).
+
 **Prepared**: 2026-10-29 (S94.8 — Backlog IT giao hàng loạt, v6.74)
 
 ## 🆕 S94.8 — Backlog IT: giao hàng loạt cho PO khác của team (v6.74) — CODE XONG + TEST PASS

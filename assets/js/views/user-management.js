@@ -40,17 +40,17 @@ async function renderUserManagement() {
       <div class="filter-group" style="min-width:150px;max-width:220px;">
         <div class="filter-label">${t('common.search')}</div>
         <input type="text" id="umSearch" class="form-control" oninput="umSearchChange()"
-          placeholder="${t('um.filter.search-ph')}" style="font-size:12px;padding:7px 10px;">
+          placeholder="${t('um.filter.search-ph')}" style="font-size:12px;">
       </div>
       <div class="filter-group">
         <div class="filter-label">Team</div>
-        <select id="umFilterTeam" class="form-control" onchange="umFilterChange()" style="font-size:12px;padding:7px 10px;">
+        <select id="umFilterTeam" class="form-control" onchange="umFilterChange()" style="font-size:12px;">
           <option value="">${t('common.all')}</option>
         </select>
       </div>
       <div class="filter-group">
         <div class="filter-label">Role</div>
-        <select id="umFilterRole" class="form-control" onchange="umFilterChange()" style="font-size:12px;padding:7px 10px;">
+        <select id="umFilterRole" class="form-control" onchange="umFilterChange()" style="font-size:12px;">
           <option value="">${t('common.all')}</option>
           <option value="Admin">Admin</option>
           <option value="Teamlead">Teamlead</option>
@@ -59,7 +59,7 @@ async function renderUserManagement() {
       </div>
       <div class="filter-group">
         <div class="filter-label">${t('um.col.status')}</div>
-        <select id="umFilterStatus" class="form-control" onchange="umFilterChange()" style="font-size:12px;padding:7px 10px;">
+        <select id="umFilterStatus" class="form-control" onchange="umFilterChange()" style="font-size:12px;">
           <option value="">${t('common.all')}</option>
           <option value="active">${t('um.status.active')}</option>
           <option value="inactive">${t('um.status.inactive')}</option>

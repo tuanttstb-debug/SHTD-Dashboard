@@ -416,7 +416,7 @@ function _cpRenderTable() {
 
       return `<tr onclick="cpOpenDetail('${esc(c.id)}')" class="${rc === 'red' ? 'row-overdue' : ''}">
         <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;font-size:12px;">${esc(c.id || '–')}</span></td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.caseName || '')}"><strong>${esc(c.caseName || '–')}</strong></td>
+        <td class="cell-name" title="${esc(c.caseName || '')}"><strong class="clamp-2">${esc(c.caseName || '–')}</strong></td>
         <td><span class="cp-stage-chip group-${grp}">${esc(c.stage || '–')}</span></td>
         <td>${esc(c.team || '–')}</td>
         <td style="white-space:nowrap;">${esc(c.pic || '–')}</td>
@@ -827,7 +827,7 @@ function openCpSummaryPopup(type) {
                         onmouseover="this.style.background='var(--bg-2)'"
                         onmouseout="this.style.background=''">
               <td style="padding:8px 6px;font-family:var(--mono);color:var(--primary);font-weight:700;white-space:nowrap;">${esc(c.id)}</td>
-              <td style="padding:8px 6px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.caseName || '')}">${esc(c.caseName || '–')}</td>
+              <td class="cell-name cell-name--sm" style="padding:8px 6px;" title="${esc(c.caseName || '')}"><div class="clamp-2">${esc(c.caseName || '–')}</div></td>
               <td style="padding:8px 6px;"><span class="cp-stage-chip group-${grp}" style="font-size:10px;">${esc(c.stage || '–')}</span></td>
               <td style="padding:8px 6px;white-space:nowrap;font-size:12px;">${esc(c.pic || '–')}</td>
               <td style="padding:8px 6px;white-space:nowrap;font-size:12px;${rc === 'red' ? 'color:var(--danger);font-weight:600;' : ''}">${fmtDate(c.deadline) || '–'}</td>

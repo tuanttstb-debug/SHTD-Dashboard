@@ -241,7 +241,7 @@ function renderTaskTable() {
       return `<tr class="${ovCls} ${sel}" onclick="rowClick(event,'${t.id}')">
         <td onclick="event.stopPropagation()"><input type="checkbox" data-id="${t.id}" ${selectedIds.has(t.id)?'checked':''} onchange="toggleSelect('${t.id}',this.checked)"></td>
         <td><span style="font-family:var(--mono);color:var(--primary);font-weight:700;">${esc(t.id||'–')}</span></td>
-        <td style="max-width:220px;" title="${esc(t.name)}"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(t.name)}${_recurChip}</div>${_pb ? `<div onclick="event.stopPropagation()" style="margin-top:4px;">${_pb}</div>` : ''}</td>
+        <td class="cell-name cell-name--lg" title="${esc(t.name)}"><div class="clamp-2">${esc(t.name)}${_recurChip}</div>${_pb ? `<div onclick="event.stopPropagation()" style="margin-top:4px;">${_pb}</div>` : ''}</td>
         <td>${init}</td>
         <td><span style="font-size:11px;background:var(--info-bg);color:var(--info);padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;">${esc(t.category||'–')}</span></td>
         <td>${esc(t.team||'–')}</td>

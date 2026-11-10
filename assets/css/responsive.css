@@ -44,6 +44,10 @@
   /* Quick View topbar btn hidden on mobile — FAB (⚡ bottom-right) replaces it */
   .qv-topbar-btn{display:none !important;}
 
+  /* Điện thoại: mọi nút/ô nhập ≥ 40px (UI/UX v2) */
+  :root{--ctl-h:40px;--ctl-h-sm:40px;--ctl-h-xs:36px;}
+  .form-control{font-size:14px;}
+
   .form-grid{grid-template-columns:1fr;}
   .kpi-grid{grid-template-columns:1fr 1fr;}
   .dash-grid{grid-template-columns:1fr;}
@@ -77,7 +81,7 @@
 
 @media(max-width:480px){
   .kpi-grid{grid-template-columns:1fr;}
-  .toolbar-right .btn{font-size:12px;padding:7px 10px;}
+  .toolbar-right .btn{font-size:12px;padding:0 10px;}
   /* Topbar shrinks to 56px — adjust content padding and sticky thead accordingly */
   .topbar{height:56px;}
   .content{padding-top:68px;}

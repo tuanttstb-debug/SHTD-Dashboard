@@ -284,14 +284,14 @@ function _tkRenderTable(list) {
     <div class="tk-table-scroll"><table class="tk-table">
     <thead><tr>
       <th class="tk-chk" style="width:36px"><input type="checkbox" id="tkChkAll" aria-label="Chọn tất cả ticket được xóa"${canDel.size ? '' : ' disabled title="Không có ticket bạn được xóa trong danh sách"'} onchange="tkToggleAll(this.checked)"></th>
-      ${_tkTh('key', 'Ticket', 108)}
+      ${_tkTh('key', 'Ticket', 100)}
       ${_tkTh('summary', 'Nội dung')}
-      ${_tkTh('line', 'Line · PO', 150)}
-      ${_tkTh('status', 'Jira', 118)}
-      ${_tkTh('prio', 'Ưu tiên', 86)}
-      ${_tkTh('ready', 'Sẵn sàng chuyển IT', 178)}
-      ${_tkTh('stale', 'Không nhích', 92)}
-      ${_tkTh('ky', 'Kỳ · Quyết định', 128)}
+      ${_tkTh('line', 'Line · PO', 140)}
+      ${_tkTh('status', 'Jira', 104)}
+      ${_tkTh('prio', 'Ưu tiên', 80)}
+      ${_tkTh('ready', 'Sẵn sàng chuyển IT', 148)}
+      ${_tkTh('stale', 'Không nhích', 84)}
+      ${_tkTh('ky', 'Kỳ · Quyết định', 104)}
     </tr></thead>
     <tbody>${rows}</tbody></table></div>
     <div class="tk-foot">${list.length} ticket · bấm dòng để chốt ưu tiên / quyết định / ghi chú · tích ô đầu dòng để giao / xóa hàng loạt (ticket mình là PO; Admin mọi ticket)</div>`;

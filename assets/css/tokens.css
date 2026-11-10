@@ -43,7 +43,12 @@
   --shadow-lg: 0 16px 40px rgba(0,0,0,0.14);
   --transition: all .22s cubic-bezier(.4,0,.2,1);
 
-  --font: 'DM Sans', sans-serif;
+  --font: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+
+  /* Thang chiều cao điều khiển (UI/UX v2 — mọi nút/ô nhập/select dùng chung) */
+  --ctl-h: 36px;
+  --ctl-h-sm: 32px;
+  --ctl-h-xs: 28px;
   --mono: 'DM Mono', monospace;
 }
 [data-theme="dark"] {

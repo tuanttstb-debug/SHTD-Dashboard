@@ -4,32 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Web nội bộ – TT Sản Phẩm & Giải Pháp Tín Dụng</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="assets/css/tokens.css?v=20260826">
-<link rel="stylesheet" href="assets/css/base.css?v=20260826">
-<link rel="stylesheet" href="assets/css/layout.css?v=20260904">
-<link rel="stylesheet" href="assets/css/components.css?v=20260826">
-<link rel="stylesheet" href="assets/css/forms.css?v=20260826">
-<link rel="stylesheet" href="assets/css/table.css?v=20260826">
-<link rel="stylesheet" href="assets/css/gantt.css?v=20260826">
-<link rel="stylesheet" href="assets/css/quickview.css?v=20260826">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260826">
-<link rel="stylesheet" href="assets/css/kpi.css?v=20260826">
-<link rel="stylesheet" href="assets/css/initiative.css?v=20260826">
-<link rel="stylesheet" href="assets/css/auth.css?v=20260826">
-<link rel="stylesheet" href="assets/css/ai-chat.css?v=20260904b">
-<link rel="stylesheet" href="assets/css/executive-summary.css?v=20260826">
-<link rel="stylesheet" href="assets/css/bld-queue.css?v=20260826">
-<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20260826">
-<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20260826">
-<link rel="stylesheet" href="assets/css/my-work.css?v=20260901b">
-<link rel="stylesheet" href="assets/css/dev-plan.css?v=20260826">
-<link rel="stylesheet" href="assets/css/h2.css?v=20260826">
-<link rel="stylesheet" href="assets/css/notifications.css?v=20260826">
-<link rel="stylesheet" href="assets/css/backlog-it.css?v=20261029j">
+<link rel="stylesheet" href="assets/css/tokens.css?v=20261110">
+<link rel="stylesheet" href="assets/css/base.css?v=20261110">
+<link rel="stylesheet" href="assets/css/layout.css?v=20261110">
+<link rel="stylesheet" href="assets/css/components.css?v=20261110">
+<link rel="stylesheet" href="assets/css/forms.css?v=20261110">
+<link rel="stylesheet" href="assets/css/table.css?v=20261110">
+<link rel="stylesheet" href="assets/css/gantt.css?v=20261110">
+<link rel="stylesheet" href="assets/css/quickview.css?v=20261110">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20261110">
+<link rel="stylesheet" href="assets/css/kpi.css?v=20261110">
+<link rel="stylesheet" href="assets/css/initiative.css?v=20261110">
+<link rel="stylesheet" href="assets/css/auth.css?v=20261110">
+<link rel="stylesheet" href="assets/css/ai-chat.css?v=20261110">
+<link rel="stylesheet" href="assets/css/executive-summary.css?v=20261110">
+<link rel="stylesheet" href="assets/css/bld-queue.css?v=20261110">
+<link rel="stylesheet" href="assets/css/case-pipeline.css?v=20261110">
+<link rel="stylesheet" href="assets/css/issue-tracker.css?v=20261110">
+<link rel="stylesheet" href="assets/css/my-work.css?v=20261110">
+<link rel="stylesheet" href="assets/css/dev-plan.css?v=20261110">
+<link rel="stylesheet" href="assets/css/h2.css?v=20261110">
+<link rel="stylesheet" href="assets/css/notifications.css?v=20261110">
+<link rel="stylesheet" href="assets/css/backlog-it.css?v=20261110">
+<link rel="stylesheet" href="assets/css/ui-v2.css?v=20261110">
 
 </head>
 <body>
@@ -323,7 +324,7 @@
       <!-- Dashboard filter bar -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
         <div style="font-size:13px;font-weight:600;color:var(--text-2);white-space:nowrap;"><i class="fa-solid fa-calendar-week" style="margin-right:5px;color:var(--primary);"></i><span data-i18n="dash.filter.label">Xem theo tuần:</span></div>
-        <select id="dashFilterTuan" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="renderDashboard()">
+        <select id="dashFilterTuan" class="form-control" style="font-size:13px;width:auto;min-width:160px;" onchange="renderDashboard()">
           <option value="" data-i18n="dash.filter.all-tasks">📊 Tất cả task</option>
           <option value="__thisweek__" data-i18n="dash.filter.this-week">📅 Tuần này</option>
         </select>
@@ -509,7 +510,7 @@
             <div class="card-title">Sức khỏe từng Initiative</div>
             <div class="card-subtitle">Sắp xếp theo mức độ rủi ro — Đỏ trước</div>
           </div>
-          <select id="esInitCatFilter" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="esFilterInitCat(this.value)"></select>
+          <select id="esInitCatFilter" class="form-control" style="font-size:12px;width:auto;" onchange="esFilterInitCat(this.value)"></select>
         </div>
         <div class="table-wrap">
           <table class="es-init-table">
@@ -543,10 +544,10 @@
         </div>
         <div class="bld-filter-bar">
           <span class="bld-filter-label"><i class="fa-solid fa-filter" style="margin-right:4px;"></i><span data-i18n="bld.filter.label">Lọc:</span></span>
-          <select id="bldFilterTeam" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:140px;" onchange="_bldFilterTeam=this.value;renderBldQueue()">
+          <select id="bldFilterTeam" class="form-control" style="font-size:13px;width:auto;min-width:140px;" onchange="_bldFilterTeam=this.value;renderBldQueue()">
             <option value="">Tất cả đội</option>
           </select>
-          <select id="bldFilterInit" class="form-control" style="font-size:13px;padding:7px 12px;width:auto;min-width:160px;" onchange="_bldFilterInit=this.value;renderBldQueue()">
+          <select id="bldFilterInit" class="form-control" style="font-size:13px;width:auto;min-width:160px;" onchange="_bldFilterInit=this.value;renderBldQueue()">
             <option value="">Tất cả sáng kiến</option>
           </select>
         </div>
@@ -661,48 +662,48 @@
         <div class="filter-bar">
           <div class="filter-group" style="min-width:120px;max-width:200px;">
             <div class="filter-label" data-i18n="cp.filter.search">Tìm case</div>
-            <input type="text" id="cpSearch" class="form-control" oninput="cpSearchChange()" placeholder="ID / tên / PIC…" style="font-size:12px;padding:7px 10px;">
+            <input type="text" id="cpSearch" class="form-control" oninput="cpSearchChange()" placeholder="ID / tên / PIC…" style="font-size:12px;">
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="cp.filter.stage">Stage</div>
-            <select id="cpFilterStage" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterStage" class="form-control" onchange="cpFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="filter.team">Team</div>
-            <select id="cpFilterTeam" class="form-control" onchange="cpFilterTeamChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterTeam" class="form-control" onchange="cpFilterTeamChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="cp.filter.pic">PIC</div>
-            <select id="cpFilterPic" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterPic" class="form-control" onchange="cpFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="cp.filter.dvkd">ĐVKD</div>
-            <select id="cpFilterDvkd" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterDvkd" class="form-control" onchange="cpFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Tuần BC</div>
-            <select id="cpFilterTuanBC" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterTuanBC" class="form-control" onchange="cpFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="cp.filter.loai">Loại hình</div>
-            <select id="cpFilterLoai" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterLoai" class="form-control" onchange="cpFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>Món</option><option>Dự án</option><option>HMTD</option><option>Rà soát</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="cp.filter.rag">RAG</div>
-            <select id="cpFilterRag" class="form-control" onchange="cpFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="cpFilterRag" class="form-control" onchange="cpFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option value="Đỏ">🔴 Đỏ</option>
               <option value="Vàng">🟡 Vàng</option>
@@ -851,32 +852,32 @@
         <div class="filter-bar">
           <div class="filter-group" style="min-width:130px;max-width:220px;">
             <div class="filter-label">Tìm kiếm</div>
-            <input type="text" id="itFSearch" class="form-control" oninput="itFilterChange()" placeholder="ID / tiêu đề / nguyên nhân…" style="font-size:12px;padding:7px 10px;">
+            <input type="text" id="itFSearch" class="form-control" oninput="itFilterChange()" placeholder="ID / tiêu đề / nguyên nhân…" style="font-size:12px;">
           </div>
           <div class="filter-group">
             <div class="filter-label">Hệ thống</div>
-            <select id="itFSystem" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="itFSystem" class="form-control" onchange="itFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>BIZ</option><option>BPM DXGN</option><option>BPM QTGN</option><option>Khác</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Loại</div>
-            <select id="itFType" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="itFType" class="form-control" onchange="itFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>Bug</option><option>Performance</option><option>Data</option><option>Config</option><option>Other</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Mức độ</div>
-            <select id="itFSeverity" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="itFSeverity" class="form-control" onchange="itFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label">Trạng thái</div>
-            <select id="itFStatus" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="itFStatus" class="form-control" onchange="itFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>Mới</option><option>Đang xử lý</option><option>Dev xử lý</option>
               <option>Testing</option><option>UAT</option><option>Đã xử lý</option><option>Tạm dừng</option>
@@ -884,7 +885,7 @@
           </div>
           <div class="filter-group">
             <div class="filter-label">Phòng ban</div>
-            <select id="itFDept" class="form-control" onchange="itFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="itFDept" class="form-control" onchange="itFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>BIZ</option><option>Dev1</option><option>Dev3</option><option>Other</option>
             </select>
@@ -983,17 +984,17 @@
         <div class="filter-bar">
           <div class="filter-group" style="min-width:80px;max-width:110px;">
             <div class="filter-label" data-i18n="filter.id">Mã Task</div>
-            <input type="text" id="filterId" class="form-control" oninput="onFilterChange()" placeholder="Tìm ID…" style="font-size:12px;padding:7px 10px;">
+            <input type="text" id="filterId" class="form-control" oninput="onFilterChange()" placeholder="Tìm ID…" style="font-size:12px;">
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="filter.initiative">Initiative</div>
-            <select id="filterInit" class="form-control" onchange="onFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="filterInit" class="form-control" onchange="onFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="filter.team">Team</div>
-            <select id="filterTeam" class="form-control" onchange="onFilterTeamChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="filterTeam" class="form-control" onchange="onFilterTeamChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option>Số</option><option>CV</option>
               <option>BL</option>
@@ -1002,13 +1003,13 @@
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="filter.pic">PIC Responsible</div>
-            <select id="filterPic" class="form-control" onchange="onFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="filterPic" class="form-control" onchange="onFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
             </select>
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="filter.state">Trạng thái</div>
-            <select id="filterState" class="form-control" onchange="onFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="filterState" class="form-control" onchange="onFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option value="Chưa bắt đầu" data-i18n="state.not-started">Chưa bắt đầu</option>
               <option value="Đang thực hiện" data-i18n="state.in-progress">Đang thực hiện</option>
@@ -1020,14 +1021,14 @@
           </div>
           <div class="filter-group">
             <div class="filter-label" data-i18n="filter.rag">Health (RAG)</div>
-            <select id="filterRag" class="form-control" onchange="onFilterChange()" style="font-size:12px;padding:7px 10px;">
+            <select id="filterRag" class="form-control" onchange="onFilterChange()" style="font-size:12px;">
               <option value="">Tất cả</option>
               <option value="Green">Green</option><option value="Amber">Amber</option><option value="Red">Red</option>
             </select>
           </div>
           <div class="filter-group" style="min-width:130px;max-width:170px;">
             <div class="filter-label" data-i18n="filter.tuanbc">Tuần BC</div>
-            <select id="filterTuanBC" class="form-control" style="font-size:12px;padding:7px 10px;" onchange="onFilterChange()">
+            <select id="filterTuanBC" class="form-control" style="font-size:12px;" onchange="onFilterChange()">
               <option value="">Tất cả</option>
               <option value="__thisweek__" data-i18n="filter.thisweek">📅 Tuần này</option>
             </select>
@@ -1086,11 +1087,11 @@
         <div class="card-header">
           <div><div class="card-title">Timeline (Gantt Chart)</div><div class="card-subtitle" id="ganttSubtitle">Hiển thị tiến độ theo thời gian</div></div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <select id="ganttFilterTeam" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="renderGantt()">
+            <select id="ganttFilterTeam" class="form-control" style="font-size:12px;width:auto;" onchange="renderGantt()">
               <option value="">Tất cả Team</option>
               <option>Số</option><option>CV</option><option>BL</option>
             </select>
-            <select id="ganttFilterInit" class="form-control" style="font-size:12px;padding:6px 10px;width:auto;" onchange="renderGantt()">
+            <select id="ganttFilterInit" class="form-control" style="font-size:12px;width:auto;" onchange="renderGantt()">
               <option value="">Tất cả Initiative</option>
             </select>
           </div>
@@ -2153,53 +2154,53 @@
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
-<script src="assets/js/i18n.js?v=20261029j"></script>
-<script src="assets/js/config.js?v=20261029j"></script>
-<script src="assets/js/constants.js?v=20260929"></script>
-<script src="assets/js/tickets-core.js?v=20261029j"></script>
-<script src="assets/js/people-filter.js?v=20261029"></script>
-<script src="assets/js/helpers.js?v=20261005b"></script>
-<script src="assets/js/storage.js?v=20260826c"></script>
-<script src="assets/js/parsers.js?v=20260826"></script>
-<script src="assets/js/auth.js?v=20260826b"></script>
-<script src="assets/js/api.js?v=20261029j"></script>
-<script src="assets/js/ui/toast.js?v=20260826"></script>
-<script src="assets/js/ui/modal.js?v=20260826"></script>
-<script src="assets/js/ui/theme.js?v=20260826"></script>
-<script src="assets/js/ui/navigation.js?v=20261029"></script>
-<script src="assets/js/crud.js?v=20260826"></script>
-<script src="assets/js/bulk.js?v=20260826"></script>
-<script src="assets/js/views/dashboard.js?v=20260826"></script>
-<script src="assets/js/views/tasks.js?v=20260907c"></script>
-<script src="assets/js/views/gantt.js?v=20261005b"></script>
-<script src="assets/js/views/performance.js?v=20261005b"></script>
-<script src="assets/js/views/quickview.js?v=20260907c"></script>
-<script src="assets/js/report.js?v=20260826"></script>
-<script src="assets/js/kpi-data.js?v=20260826"></script>
-<script src="assets/js/kpi-parser.js?v=20260826"></script>
-<script src="assets/js/views/kpi-overview.js?v=20260826"></script>
-<script src="assets/js/views/action-plan.js?v=20260826"></script>
-<script src="assets/js/views/kpi-progress.js?v=20260826"></script>
-<script src="assets/js/views/owner-analysis.js?v=20260826"></script>
-<script src="assets/js/views/branch-analysis.js?v=20260826"></script>
-<script src="assets/js/views/rm-analysis.js?v=20260826"></script>
-<script src="assets/js/initiatives.js?v=20260826b"></script>
-<script src="assets/js/h2-core.js?v=20260826"></script>
-<script src="assets/js/views/h2-tracker.js?v=20260907c"></script>
-<script src="assets/js/views/h2-dashboard.js?v=20260826"></script>
-<script src="assets/js/views/h2-review.js?v=20260826"></script>
-<script src="assets/js/views/initiative-tracker.js?v=20260907c"></script>
-<script src="assets/js/views/ai-chat.js?v=20261013"></script>
-<script src="assets/js/views/user-management.js?v=20260826"></script>
-<script src="assets/js/views/executive-summary.js?v=20260826"></script>
-<script src="assets/js/views/bld-queue.js?v=20261005b"></script>
-<script src="assets/js/views/case-pipeline.js?v=20260912"></script>
-<script src="assets/js/views/issue-tracker.js?v=20260904"></script>
-<script src="assets/js/views/my-work.js?v=20261005b"></script>
-<script src="assets/js/views/dev-plan.js?v=20260826"></script>
-<script src="assets/js/views/backlog-it.js?v=20261029j"></script>
-<script src="assets/js/views/notifications.js?v=20260826"></script>
-<script src="assets/js/app.js?v=20261029"></script>
+<script src="assets/js/i18n.js?v=20261110"></script>
+<script src="assets/js/config.js?v=20261110"></script>
+<script src="assets/js/constants.js?v=20261110"></script>
+<script src="assets/js/tickets-core.js?v=20261110"></script>
+<script src="assets/js/people-filter.js?v=20261110"></script>
+<script src="assets/js/helpers.js?v=20261110"></script>
+<script src="assets/js/storage.js?v=20261110"></script>
+<script src="assets/js/parsers.js?v=20261110"></script>
+<script src="assets/js/auth.js?v=20261110"></script>
+<script src="assets/js/api.js?v=20261110"></script>
+<script src="assets/js/ui/toast.js?v=20261110"></script>
+<script src="assets/js/ui/modal.js?v=20261110"></script>
+<script src="assets/js/ui/theme.js?v=20261110"></script>
+<script src="assets/js/ui/navigation.js?v=20261110"></script>
+<script src="assets/js/crud.js?v=20261110"></script>
+<script src="assets/js/bulk.js?v=20261110"></script>
+<script src="assets/js/views/dashboard.js?v=20261110"></script>
+<script src="assets/js/views/tasks.js?v=20261110"></script>
+<script src="assets/js/views/gantt.js?v=20261110"></script>
+<script src="assets/js/views/performance.js?v=20261110"></script>
+<script src="assets/js/views/quickview.js?v=20261110"></script>
+<script src="assets/js/report.js?v=20261110"></script>
+<script src="assets/js/kpi-data.js?v=20261110"></script>
+<script src="assets/js/kpi-parser.js?v=20261110"></script>
+<script src="assets/js/views/kpi-overview.js?v=20261110"></script>
+<script src="assets/js/views/action-plan.js?v=20261110"></script>
+<script src="assets/js/views/kpi-progress.js?v=20261110"></script>
+<script src="assets/js/views/owner-analysis.js?v=20261110"></script>
+<script src="assets/js/views/branch-analysis.js?v=20261110"></script>
+<script src="assets/js/views/rm-analysis.js?v=20261110"></script>
+<script src="assets/js/initiatives.js?v=20261110"></script>
+<script src="assets/js/h2-core.js?v=20261110"></script>
+<script src="assets/js/views/h2-tracker.js?v=20261110"></script>
+<script src="assets/js/views/h2-dashboard.js?v=20261110"></script>
+<script src="assets/js/views/h2-review.js?v=20261110"></script>
+<script src="assets/js/views/initiative-tracker.js?v=20261110"></script>
+<script src="assets/js/views/ai-chat.js?v=20261110"></script>
+<script src="assets/js/views/user-management.js?v=20261110"></script>
+<script src="assets/js/views/executive-summary.js?v=20261110"></script>
+<script src="assets/js/views/bld-queue.js?v=20261110"></script>
+<script src="assets/js/views/case-pipeline.js?v=20261110"></script>
+<script src="assets/js/views/issue-tracker.js?v=20261110"></script>
+<script src="assets/js/views/my-work.js?v=20261110"></script>
+<script src="assets/js/views/dev-plan.js?v=20261110"></script>
+<script src="assets/js/views/backlog-it.js?v=20261110"></script>
+<script src="assets/js/views/notifications.js?v=20261110"></script>
+<script src="assets/js/app.js?v=20261110"></script>
   <div class="qv-fab">
   <span class="qv-fab-tooltip">Quick View (Q)</span>
   <button class="qv-fab-btn" id="qvFabBtn" onclick="openQuickView()" title="Quick View Panel (Q)">

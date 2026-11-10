@@ -54,7 +54,7 @@
   letter-spacing: .4px;
 }
 .dev-filter-search { flex: 1; min-width: 180px; }
-.form-control-sm { padding: 6px 10px; font-size: 13px; height: auto; }
+/* .form-control-sm: chuyển về forms.css (UI/UX v2) */
 
 /* ── Table ──
    UI_CONCEPT: fit-one-screen. `table-layout:fixed` + width:100% keeps the table
