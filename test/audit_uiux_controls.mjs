@@ -70,7 +70,7 @@ for (const width of WIDTHS) {
       // nhóm nút chuyển chế độ (segmented) đo theo cả nhóm; thẻ thống kê (.tk-stat) không phải nút điều khiển
       const SEG = '.scope-toggle,.mw-view-toggle,.cp-view-toggle,.ap-period-group,.ap-rag-group,.it-trend-toggle';
       const raw = [...scope.querySelectorAll('button, select, input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]):not([type=file]), a.btn')]
-        .filter(vis).filter(c => !c.closest('.tk-stat, .init-toggle-bar, .popup-tabs, .preset-bar, .page-btn'));
+        .filter(vis).filter(c => !c.closest('.tk-stat, .init-toggle-bar, .init-done-header, .popup-tabs, .preset-bar, .page-btn'));
       const ctrls = [...new Set(raw.map(c => (c.parentElement && c.parentElement.matches(SEG)) ? c.parentElement : c))];
       const heights = {};
       ctrls.forEach(c => { const h = Math.round(c.getBoundingClientRect().height); heights[h] = (heights[h] || 0) + 1; });

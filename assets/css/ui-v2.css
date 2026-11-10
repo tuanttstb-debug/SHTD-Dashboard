@@ -24,6 +24,11 @@
 .ai-chat-suggestion{min-height:var(--ctl-h-sm);padding:6px 14px;display:inline-flex;align-items:center;line-height:1.3;text-align:left;}
 .init-toggle-btn{min-height:var(--ctl-h);padding:0 14px;}
 .tk-assign-sel{height:var(--ctl-h-sm);}
+/* Hàng gọn trong thẻ (mốc H2, task định kỳ My Work): dùng cỡ xs 28px — phát hiện trên LIVE 10/11 (21–22px, lệch 28 hàng) */
+.h2-ms-tasktoggle{height:var(--ctl-h-xs);padding:0 10px;}
+.h2-ms-row .btn-sm,.h2-ms-addtask{height:var(--ctl-h-xs);}
+.h2-ms-row .btn-sm.btn-ghost{padding:0 8px;}
+.rt-period-btn{height:var(--ctl-h-xs);padding:0 10px;display:inline-flex;align-items:center;gap:4px;line-height:1;}
 
 /* ── 3. Thanh công cụ: trong cùng một hàng, mọi nút/ô cao bằng nhau (nút nhỏ lên cỡ chuẩn) ── */
 .toolbar-right > .btn-sm,
